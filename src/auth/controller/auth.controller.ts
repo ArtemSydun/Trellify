@@ -27,7 +27,7 @@ export class AuthController {
   @Get('reset-password/:token')
   public resetPassword(
     @Param('token') token: string,
-  ): Promise<DefaultResponse<null>> {
+  ): Promise<DefaultResponse<string>> {
     return this.authService.resetPassword(token);
   }
 
