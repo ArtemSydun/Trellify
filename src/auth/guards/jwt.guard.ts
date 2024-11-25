@@ -1,18 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
+  constructor() {
     super();
   }
 
   handleRequest(err, user) {
     if (err || !user) {
-      throw err || new UnauthorizedException();
+      throw err || new UnauthorizedException('Invalid or missing JWT token');
     }
-
     return user;
   }
 }

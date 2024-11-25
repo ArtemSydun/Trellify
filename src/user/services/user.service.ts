@@ -9,7 +9,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { randomUUID } from 'crypto';
 import { User } from '../entities/user.entity';
-import { hashPassword } from 'src/common/helpers/hashing';
+import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
@@ -67,8 +67,14 @@ export class UserService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    return await this.userRepository.updateById(id, updateUserDto);
+  async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
+    let updatedUser = { ...updateUserDto };
+
+    if (updateUserDto.trelloToken) {
+      updatedUser.trelloToken = encryptText(updateUserDto.trelloToken, userId);
+    }
+
+    return await this.userRepository.updateById(userId, updatedUser);
   }
 
   public async resetPassword(id: string, newPassword: string): Promise<void> {
