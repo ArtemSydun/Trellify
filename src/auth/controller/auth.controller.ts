@@ -8,7 +8,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   login(
@@ -32,7 +32,7 @@ export class AuthController {
   }
 
   @Get('confirm')
-  async confirmRegistration(@Query('token') token: string) {
+  async confirmRegistration(@Query('token') token: string): Promise<DefaultResponse<null>> {
     return this.authService.confirmRegistration(token);
   }
 }

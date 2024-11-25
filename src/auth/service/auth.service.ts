@@ -25,7 +25,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
-  ) {}
+  ) { }
 
   public async login(
     loginUserDto: LoginUserDto,
@@ -59,7 +59,7 @@ export class AuthService {
 
   public async confirmRegistration(
     token: string,
-  ): Promise<{ message: string }> {
+  ): Promise<DefaultResponse<null>> {
     const decoded = this.jwtService.verify(token);
 
     const { email, password, ...userData } = decoded;
@@ -77,7 +77,7 @@ export class AuthService {
     };
     await this.userService.createUser(newUser);
 
-    return { message: 'User registered successfully' };
+    return { message: 'User registered successfully', statusCode: HttpStatus.OK };
   }
 
   public async forgotPassword(
@@ -101,7 +101,7 @@ export class AuthService {
     };
   }
 
-  public async resetPassword(token: string): Promise<any> {
+  public async resetPassword(token: string): Promise<DefaultResponse<string>> {
     try {
       const { id } = this.jwtService.verify(token);
       const newPassword = generateRandomPassword();
@@ -109,7 +109,8 @@ export class AuthService {
 
       return {
         message: 'Password changed successfully',
-        newPassword,
+        statusCode: HttpStatus.OK,
+        data: `Your new password [${newPassword}]`,
       };
     } catch (err) {
       throw err;

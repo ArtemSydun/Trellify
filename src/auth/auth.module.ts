@@ -8,6 +8,7 @@ import { User, UserSchema } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/services/user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from 'src/mailer/mailer.module';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 @Module({
   imports: [
@@ -23,11 +24,11 @@ import { MailerModule } from 'src/mailer/mailer.module';
       useFactory: async (
         configService: ConfigService,
       ): Promise<JwtModuleOptions> => {
-        const secret = configService.get<string>('JWT_SECRET');
+        const secret = configService.get<string>(configServiceEnum.JWT_SECRET);
         return {
           secret,
           signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '6h',
+            expiresIn: configService.get<string>(configServiceEnum.JWT_EXPIRES_IN) || '12h',
           },
         };
       },

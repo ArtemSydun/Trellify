@@ -13,6 +13,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserService } from '../services/user.service';
 import { User } from '../entities/user.entity';
+import { DefaultResponse } from 'src/common/interfaces/responses';
 
 
 @Controller('user')
@@ -20,7 +21,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto): Promise<string> {
+  create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
     return this.userService.initiateUserRegistration(createUserDto);
   }
 

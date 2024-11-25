@@ -6,15 +6,16 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger('Emails');
-  
+
   constructor(
     private readonly mailerService: MailService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   public getLink(host: string, port: string, route: string, message: string) {
     return `<a href=${host}:${port}/${route}>${message}</a>`;
@@ -23,8 +24,8 @@ export class MailerService {
   public async sendDistribution(
     sender: string,
     receiver: string,
-    distribution: { subject: string, html: string }, 
-  ): Promise<{ message: string; statusCode: number }> {
+    distribution: { subject: string, html: string },
+  ): Promise<DefaultResponse<null>> {
     try {
       const { subject, html } = distribution;
 
@@ -49,12 +50,12 @@ export class MailerService {
   public async sendResetPasswordLink(
     email: string,
     token: string,
-  ): Promise<string> {
+  ): Promise<DefaultResponse<null>> {
     try {
       const resetLink = `http://${this.configService.get<string>(
         'HOST',
       )}:${this.configService.get<string>('PORT')}/auth/reset-password/${token}`;
-      
+
       await this.mailerService.sendMail({
         to: email,
         from: this.configService.get<string>('MAILER_SENDER'),
@@ -65,7 +66,10 @@ export class MailerService {
 
       this.logger.verbose(`Forgot password mail sent to ${email}`);
 
-      return `Password reset link sent to ${email}`;
+      return {
+        message: `Password reset link sent to ${email}`,
+        statusCode: HttpStatus.OK,
+      };
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}: ${error.message}`);
       throw new BadRequestException(error.message);

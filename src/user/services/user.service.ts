@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { MailerService } from 'src/mailer/services/mailer.service';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
 export class UserService {
@@ -20,9 +22,9 @@ export class UserService {
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService
-  ) {}
+  ) { }
 
-  public async createUser(createUserDto: CreateUserDto) {
+  public async createUser(createUserDto: CreateUserDto): Promise<User> {
     const userByEmail = await this.userRepository.findOneByEmail(
       createUserDto.email,
     );
@@ -81,7 +83,7 @@ export class UserService {
 
   public async initiateUserRegistration(
     createUserDto: CreateUserDto,
-  ): Promise<string> {
+  ): Promise<DefaultResponse<null>> {
     const userByEmail = await this.userRepository.findOneByEmail(
       createUserDto.email,
     );
@@ -111,6 +113,9 @@ export class UserService {
       },
     );
 
-    return `Confirmation link sent to your email ${createUserDto.email}`;
+    return {
+      message: `Confirmation link sent to your email ${createUserDto.email}`,
+      statusCode: HttpStatus.OK,
+    };
   }
 }
