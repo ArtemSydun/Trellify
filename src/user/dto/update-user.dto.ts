@@ -5,11 +5,11 @@ import { WebhookInterface } from 'src/trello/interfaces/webhook.interface';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
     @Optional()
-    trelloToken: string;
+    trelloToken?: string;
 
     @Optional()
-    trelloUserId: string;
+    trelloUserId?: string;
 
     @Optional()
-    webhooks: WebhookInterface[];
+    webhooks?: WebhookInterface[];
 }

@@ -5,7 +5,7 @@ import { WebhookInterface } from 'src/trello/interfaces/webhook.interface';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class User {
   @Prop({ default: randomUUID()})
   id: string;

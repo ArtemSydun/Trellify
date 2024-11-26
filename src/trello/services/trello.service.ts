@@ -38,22 +38,19 @@ export class TrelloService {
     }
 
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
-    // console.log('Decrypted User Token:', decryptedUserToken);
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${userPersonalWebhookURL}&idModel=${boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
-    // console.log('Trello Webhook URL:', url);
+
 
     try {
       const response = await axios.post(url);
-      console.log('Webhook Response:', response.data);
+      console.log('Webhook created: ', response.data);
 
       const updatedUser = {
-        ...user,
         webhooks: user.webhooks ? [...user.webhooks, response.data] : [response.data],
       };
 
       await this.userService.updateUserById(userId, updatedUser);
-      // console.log('Updated User:', updatedUser);
 
       return {
         message: 'Webhook created successfully',
@@ -71,13 +68,12 @@ export class TrelloService {
     const user = await this.userService.findUserById(userId);
     const updatedWebhooks = user.webhooks ? user.webhooks.filter(webhook => webhook.id !== webhookId) : [];
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
-    // if (updatedWebhooks.length === user.webhooks.length) {
-    //   throw new NotFoundException(`Webhook ${webhookId} does not exists`);
-    // }
+    if (updatedWebhooks.length === user.webhooks.length) {
+      throw new NotFoundException(`Webhook ${webhookId} does not exists`);
+    }
 
     await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
     const updatedUser = {
-      ...user,
       webhooks: updatedWebhooks
     };
 

@@ -37,7 +37,7 @@ export class TrelloWebhooksController {
     @Param('userId') userId: string,
     @Body() payload: any
   ) {
-    console.log(`Received webhook for userId: ${userId}`, payload);
+    console.log(`Received webhook action for userId: ${userId}`, payload);
 
     return { status: 'success' };
   }
