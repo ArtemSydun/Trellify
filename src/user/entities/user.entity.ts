@@ -20,7 +20,10 @@ export class User {
   trelloToken: string;
 
   @Prop({ required: false })
-  webhooks: WebhookInterface[]
+  trelloUserId: string;
+  
+  @Prop({ required: false })
+  webhooks: WebhookInterface[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

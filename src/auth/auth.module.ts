@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { TrelloService } from 'src/trello/services/trello.service';
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     MailerModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository, UserService, JwtStrategy],
+  providers: [AuthService, UserRepository, UserService, JwtStrategy, TrelloService],
   exports: [JwtModule]
 })
 export class AuthModule { }

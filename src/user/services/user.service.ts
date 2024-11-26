@@ -1,6 +1,8 @@
 import {
   ConflictException,
+  forwardRef,
   HttpStatus,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,6 +17,7 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { TrelloService } from 'src/trello/services/trello.service';
 
 @Injectable()
 export class UserService {
@@ -22,7 +25,9 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject(forwardRef(() => TrelloService))
+    private readonly trelloService: TrelloService,
   ) {
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
   }
@@ -75,6 +80,13 @@ export class UserService {
 
     if (updateUserDto.trelloToken) {
       updatedUser.trelloToken = encryptText(updateUserDto.trelloToken, this.encryptionKey);
+
+      try {
+        const trelloProfile = await this.trelloService.findMemberProfile(userId);
+        updatedUser.trelloUserId = trelloProfile.data.id;
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     return await this.userRepository.updateById(userId, updatedUser);
