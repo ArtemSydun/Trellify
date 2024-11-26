@@ -29,7 +29,6 @@ export function encryptText(plainText: string, secretKey: string): string {
 }
 
 export function decryptText(encryptedText: string, secretKey: string): string {
-
   const bytes = CryptoJS.AES.decrypt(encryptedText, secretKey);
   return bytes.toString(CryptoJS.enc.Utf8);
 }

@@ -18,11 +18,14 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
 export class UserService {
+  private readonly encryptionKey: string;
   constructor(private readonly userRepository: UserRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService
-  ) { }
+  ) {
+    this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
+  }
 
   public async createUser(createUserDto: CreateUserDto): Promise<User> {
     const userByEmail = await this.userRepository.findOneByEmail(
@@ -71,7 +74,7 @@ export class UserService {
     let updatedUser = { ...updateUserDto };
 
     if (updateUserDto.trelloToken) {
-      updatedUser.trelloToken = encryptText(updateUserDto.trelloToken, userId);
+      updatedUser.trelloToken = encryptText(updateUserDto.trelloToken, this.encryptionKey);
     }
 
     return await this.userRepository.updateById(userId, updatedUser);

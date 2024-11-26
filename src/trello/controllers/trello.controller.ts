@@ -11,9 +11,9 @@ export class TrelloController {
   @Post('webhook')
   createTrelloWebhook(
     @Req() req,
-    @Body() boardId
+    @Body() body
   ) {
-    return this.trelloService.createTrelloWebhook(req.user.userId, boardId);
+    return this.trelloService.createTrelloWebhook(req.user.userId, body.boardId);
   }
 
   @Post('webhook/:userId')
@@ -28,7 +28,13 @@ export class TrelloController {
 
   @Get('webhook/:id')
   findOne(@Param('id') id: string) {
-    return this.trelloService.findOne(+id);
+    return 0;
+  };
+
+  @UseGuards(JwtAuthGuard)
+  @Get('members/:id/boards')
+  async findBoardsMemberBelongsTo(@Req() req, @Param('id') trelloMemberId: string) {
+    return await this.trelloService.findBoardsMemberBelongsTo(req.user.userId, trelloMemberId);
   }
 
   @Patch('webhook/:id')
@@ -36,8 +42,9 @@ export class TrelloController {
     return this.trelloService.update(+id, updateTrelloDto);
   }
 
+  @UseGuards(JwtAuthGuard )
   @Delete('webhook/:id')
   removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.trelloService.removeTrelloWebhook(req.user.id, webhookId);
+    return this.trelloService.removeTrelloWebhook(req.user.userId, webhookId);
   }
 }
