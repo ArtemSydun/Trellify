@@ -1,6 +1,4 @@
 import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-// delete http service in case replacing with axios
-import { HttpService } from '@nestjs/axios';
 import { UserService } from 'src/user/services/user.service';
 import { ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
