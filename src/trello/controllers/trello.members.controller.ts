@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, HttpStatus } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
-import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 
 @Controller('trello/members')
@@ -14,10 +13,14 @@ export class TrelloMembersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id/boards')
-  findBoardsMemberBelongsTo(@Req() req, @Param('id') trelloMemberId: string) {
-    return this.trelloService.findBoardsMemberBelongsTo(req.user.userId, trelloMemberId);
+  @Get('boards/my')
+  findBoardsMemberBelongsTo(@Req() req) {
+    return this.trelloService.findBoardsMemberBelongsTo(req.user.userId);
   }
 
-
+  @UseGuards(JwtAuthGuard)
+  @Get('cards/my')
+  findCardsMemberRelatedTo(@Req() req) {
+    return this.trelloService.findMemberRelatedCards(req.user.userId);
+  }
 }

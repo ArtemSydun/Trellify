@@ -85,10 +85,10 @@ export class TrelloService {
     }
   }
 
-  async findBoardsMemberBelongsTo(userId: string, trelloMemberId: string) {
+  async findBoardsMemberBelongsTo(userId: string) {
     const user = await this.userService.findUserById(userId);
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
-    const url = `${trelloApiLink}/members/${trelloMemberId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const url = `${trelloApiLink}/members/${user.trelloUserId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
       const response = await axios.get(url);
@@ -135,6 +135,27 @@ export class TrelloService {
 
     } catch (err) {
       console.error('Error fetching user trello profile info:', err.response ? err.response.data : err.message);
+      throw new BadRequestException(err.response ? err.response.data : err.message);
+    }
+  }
+
+  async findMemberRelatedCards(userId: string) {
+    const user = await this.userService.findUserById(userId);
+
+    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+
+    const url = `${trelloApiLink}/members/${user.trelloUserId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+
+    try {
+      const response = await axios.get(url);
+
+      return {
+        message: 'Member related cards',
+        statusCode: HttpStatus.OK,
+        data: response.data
+      }
+    } catch (err) {
+      console.error('Error creating webhook:', err.response ? err.response.data : err.message);
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }
