@@ -12,4 +12,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
     @Optional()
     webhooks?: WebhookInterface[];
+
+    @Optional()
+    telegramUsername?: string;
+
+    @Optional()
+    telegramChatId?: string;
 }
