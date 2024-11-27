@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, Http
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { WebhookInterface } from '../interfaces/webhook.interface';
 
 @Controller('trello/webhook')
 export class TrelloWebhooksController {
@@ -44,8 +45,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto, @Req() req) {
-    console.log(updateWebhookDto);
+  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: WebhookInterface, @Req() req) {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
