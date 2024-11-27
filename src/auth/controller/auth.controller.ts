@@ -13,6 +13,7 @@ import { Errors } from 'src/common/constants/enums';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  @Post('login')
   @ApiOkResponse({
     description: 'Successfully logged in',
     type: LoginUserResponseDto,
@@ -38,13 +39,13 @@ export class AuthController {
       },
     },
   })
-  @Post('login')
   login(
     @Body() loginCredentials: LoginUserDto,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
     return this.authService.login(loginCredentials);
   }
 
+  @Post('forgot-password')
   @ApiOkResponse({
     description: 'Password reset email sent successfully',
     schema: {
@@ -62,13 +63,13 @@ export class AuthController {
     },
   })
   @ApiCustomNotFoundResponse('User', 'email')
-  @Post('forgot-password')
   public forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<DefaultResponse<null>> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
+  @Get('reset-password/:token')
   @ApiOkResponse({
     description: 'Password changed successfully',
     schema: {
@@ -90,13 +91,13 @@ export class AuthController {
     },
   })
   @ApiCustomNotFoundResponse('User', 'id')
-  @Get('reset-password/:token')
   public resetPassword(
     @Param('token') token: string,
   ): Promise<DefaultResponse<string>> {
     return this.authService.resetPassword(token);
   }
 
+  @Get('confirm')
   @ApiOkResponse({
     description: 'User registered successfully',
     schema: {
@@ -114,7 +115,6 @@ export class AuthController {
     },
   })
   @ApiCustomConflictResponse('User', 'email')
-  @Get('confirm')
   async confirmRegistration(@Query('token') token: string): Promise<DefaultResponse<null>> {
     return this.authService.confirmRegistration(token);
   }
