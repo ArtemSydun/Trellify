@@ -24,6 +24,12 @@ export class User {
   
   @Prop({ required: false })
   webhooks: WebhookInterface[];
+
+  @Prop({ required: false })
+  telegramUsername: string;
+
+  @Prop({ required: false })
+  telegramChatId: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
