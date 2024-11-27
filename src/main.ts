@@ -25,9 +25,10 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
 
-  await app.listen(configService.get(configServiceEnum.PORT) ?? 3005);
-  logger.log(`Application is running on http://localhost:${configService.get(configServiceEnum.PORT)}`);
-  logger.log(`Application docs is running on http://localhost:${configService.get(configServiceEnum.PORT)}/docs`)
+  const PORT = configService.get(configServiceEnum.PORT) || 3005;
+  await app.listen(PORT);
+  logger.log(`Application is running on http://localhost:${PORT}`);
+  logger.log(`Application docs is running on http://localhost:${PORT}/docs`)
 
 }
 bootstrap();
