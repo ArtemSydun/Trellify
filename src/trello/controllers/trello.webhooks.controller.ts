@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, HttpStatus, Put } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -37,16 +37,17 @@ export class TrelloWebhooksController {
     @Param('userId') userId: string,
     @Body() payload: any
   ) {
-    console.log(`Received webhook action for userId: ${userId}`, payload);
+    console.log(`Received webhook action for userId: ${userId}`, JSON.stringify(payload, null, 2));
 
     return { status: 'success' };
   }
 
-
-  // @Patch('webhook/:id')
-  // update(@Param('id') id: string, @Body() updateTrelloDto) {
-  //   return this.trelloService.update(+id, updateTrelloDto);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Put(':id')
+  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto, @Req() req) {
+    console.log(updateWebhookDto);
+    return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
