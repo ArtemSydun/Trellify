@@ -57,7 +57,7 @@ export class UserService {
   public async findUserById(id: string): Promise<User> {
     const user = await this.userRepository.findOneById(id);
 
-    if (!user) throw new NotFoundException(`User with id ${id} is not found`);
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
 
     return user;
   }
@@ -66,7 +66,7 @@ export class UserService {
     const user = await this.userRepository.findOneByEmail(email);
 
     if (!user)
-      throw new NotFoundException(`User with email ${email} is not found`);
+      throw new NotFoundException(`User with email ${email} not found`);
 
     return user;
   }
@@ -109,7 +109,7 @@ export class UserService {
       createUserDto.email,
     );
     if (userByEmail) {
-      throw new ConflictException(`User ${createUserDto.email} already exists`);
+      throw new ConflictException(`User ${createUserDto.email} already exist`);
     }
     const payload = {
       email: createUserDto.email,

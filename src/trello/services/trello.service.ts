@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from 'src/user/services/user.service';
 import { ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
@@ -11,7 +11,7 @@ import { WebhookInterface } from '../interfaces/webhook.interface';
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
  *  token=personal token of each user which he can get by authorizing here
- *  https://trello.com/1/authorize?expiration=1day&scope=read&response_type=token&key={YourAPIKey}
+ *  https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&key={YourAPIKey}
  */
 
 @Injectable()
@@ -32,8 +32,9 @@ export class TrelloService {
   async createTrelloWebhook(userId: string, boardId: string): Promise<DefaultResponse<any>> {
     const userPersonalWebhookURL = `${this.webhookCallbackURL}/${userId}`;
     const user = await this.userService.findUserById(userId);
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
+
+    if (user.webhooks.find(webhook => webhook.idModel === boardId)) {
+      throw new ConflictException(`Webhook ${boardId} already exist`);
     }
 
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
@@ -70,7 +71,7 @@ export class TrelloService {
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
 
     if (!webhookToUpdate) {
-      throw new NotFoundException(`Webhook ${webhookId} not found`);
+      throw new NotFoundException(`Webhook with id ${webhookId} not found`);
     }
 
     const url = `${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`;

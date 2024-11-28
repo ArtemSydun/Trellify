@@ -1,13 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, HttpStatus, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { WebhookInterface } from '../interfaces/webhook.interface';
+import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 
 @Controller('trello/webhook')
 export class TrelloWebhooksController {
   constructor(private readonly trelloService: TrelloService) { }
 
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomConflictResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
   @Post()
   createTrelloWebhook(
@@ -17,6 +20,7 @@ export class TrelloWebhooksController {
     return this.trelloService.createTrelloWebhook(req.user.userId, body.boardId);
   }
 
+  @ApiCustomUnathorizedResponse()
   @UseGuards(JwtAuthGuard)
   @Get('list')
   getUserWebhooksList(@Req() req) {
@@ -43,12 +47,16 @@ export class TrelloWebhooksController {
     return { status: 'success' };
   }
 
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: WebhookInterface, @Req() req) {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {

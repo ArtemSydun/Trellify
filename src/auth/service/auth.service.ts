@@ -4,7 +4,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from '../dto/login.dto';
 import { User } from 'src/user/entities/user.entity';
@@ -32,11 +31,6 @@ export class AuthService {
   ): Promise<{ accessToken: string; user: Partial<User> }> {
     const user = await this.userService.findUserByEmail(loginUserDto.email);
 
-    if (!user) {
-      throw new UnauthorizedException(
-        `User ${loginUserDto.email} does not exist`,
-      );
-    }
     const isCredentialsValid = await verifyPassword(
       loginUserDto.password,
       user.password,
@@ -64,12 +58,6 @@ export class AuthService {
 
     const { email, password, ...userData } = decoded;
 
-    const doesUserExist = await this.userService.doesUserExist(email);
-
-    if (doesUserExist) {
-      throw new ConflictException(`User ${email} already exists`);
-    }
-
     const newUser = {
       email,
       password,
@@ -96,7 +84,7 @@ export class AuthService {
     await this.mailService.sendResetPasswordLink(user.email, token);
 
     return {
-      message: 'Password reset email sent',
+      message: `Password reset email sent on ${user.email}`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -110,7 +98,7 @@ export class AuthService {
       return {
         message: 'Password changed successfully',
         statusCode: HttpStatus.OK,
-        data: `Your new password [${newPassword}]`,
+        data: `Your new password: ${newPassword}`,
       };
     } catch (err) {
       throw err;
