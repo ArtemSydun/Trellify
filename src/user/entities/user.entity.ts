@@ -44,11 +44,11 @@ export class User {
 
   @ApiProperty({
     description: 'List of webhooks for the user',
-    type: [Object], // You can change this to [WebhookInterface] if WebhookInterface is a valid type.
+    type: [String],
     required: false,
   })
-  @Prop({ required: false })
-  webhooks: WebhookInterface[];
+  @Prop({ required: false, default: [] })
+  webhooks: string[];
 
   @ApiProperty({
     description: 'Telegram username of the user',

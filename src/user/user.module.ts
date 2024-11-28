@@ -13,8 +13,8 @@ import { TrelloModule } from 'src/trello/trello.module';
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MailerModule,
-    AuthModule,
-    forwardRef(() => TrelloModule)
+    forwardRef(() => AuthModule),
+    forwardRef(() => TrelloModule),
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],

@@ -75,21 +75,22 @@ export class UserService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-    let updatedUser = { ...updateUserDto };
+  async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
+    let updatedUserProps = { ...updateUserDto };
 
     if (updateUserDto.trelloToken) {
-      updatedUser.trelloToken = encryptText(updateUserDto.trelloToken, this.encryptionKey);
+      updatedUserProps.trelloToken = encryptText(updateUserDto.trelloToken, this.encryptionKey);
 
-      try {
-        const trelloProfile = await this.trelloService.findMemberProfile(userId);
-        updatedUser.trelloUserId = trelloProfile.data.id;
-      } catch (err) {
-        console.log(err);
-      }
+      const trelloProfile = await this.trelloService.findMemberProfile(userId);
+      updatedUserProps.trelloUserId = trelloProfile.data.id;
     }
+    const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
 
-    return await this.userRepository.updateById(userId, updatedUser);
+    return {
+      message: `User ${userId} updated successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser,
+    }
   }
 
   public async resetPassword(id: string, newPassword: string): Promise<void> {
@@ -138,5 +139,9 @@ export class UserService {
       message: `Confirmation link sent to your email ${createUserDto.email}`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
+    return this.userRepository.findUsersByWebhook(webhookId);
   }
 }

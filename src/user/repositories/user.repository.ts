@@ -9,7 +9,7 @@ export class UserRepository {
   constructor(
     @InjectModel(User.name)
     private UserModel: Model<User>,
-  ) {}
+  ) { }
 
   async findOneByEmail(email: string): Promise<User> {
     return this.UserModel.findOne({ email }).lean().exec();
@@ -45,5 +45,9 @@ export class UserRepository {
 
   async getAll(): Promise<User[]> {
     return this.UserModel.find();
+  }
+
+  async findUsersByWebhook(webhookId: string): Promise<User[]> {
+    return this.UserModel.find({ webhooks: { $in: [webhookId] } }).exec();
   }
 }

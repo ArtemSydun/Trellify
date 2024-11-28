@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put } from 
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { WebhookInterface } from '../interfaces/webhook.interface';
 import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import { WebhookDto } from '../dto/create-webhook.dto';
 
 @Controller('trello/webhook')
 export class TrelloWebhooksController {
@@ -51,15 +51,23 @@ export class TrelloWebhooksController {
   @ApiCustomNotFoundResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: WebhookInterface, @Req() req) {
+  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: WebhookDto, @Req() req) {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
-  @Delete(':id')
+  @Delete('delete/:id')
   removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {
     return this.trelloService.removeTrelloWebhook(req.user.userId, webhookId);
+  }
+
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('Webhook', 'id')
+  @UseGuards(JwtAuthGuard)
+  @Post('disconnect/:webhookId')
+  disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<null>> {
+    return this.trelloService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
   }
 }
