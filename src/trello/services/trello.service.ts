@@ -6,9 +6,7 @@ import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello.links';
-import { WebhookInterface } from '../interfaces/webhook.interface';
 import { TrelloWebhookRepository } from '../repositories/webhook.repository';
-import { subscribe } from 'diagnostics_channel';
 import { TrelloWebhook } from '../entities/webhook.entity';
 import { WebhookDto } from '../dto/create-webhook.dto';
 
@@ -34,34 +32,52 @@ export class TrelloService {
     this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
   }
 
-  async createTrelloWebhook(userId: string, boardId: string): Promise<DefaultResponse<any>> {
+  async createTrelloWebhook(userId: string, boardId: string): Promise<DefaultResponse<TrelloWebhook>> {
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
-    console.log(webhook);
-
     const user = await this.userService.findUserById(userId);
 
-    if (user.webhooks.find(userWebhook => userWebhook === boardId)) {
-      throw new ConflictException(`Webhook ${boardId} already exist`);
+    if (user.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+      throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
     }
 
     const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
+    if (webhook) {
+      if (!webhook.subscribers.includes(user.trelloUserId)) {
+        webhook.subscribers.push(user.trelloUserId);
+      }
+
+      await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers });
+
+      if (!user.webhooks.includes(webhook.id)) {
+        user.webhooks.push(webhook.id);
+      }
+
+      await this.userService.updateUserById(userId, { webhooks: user.webhooks });
+
+      return {
+        message: 'Webhook already exists, user added to subscribers',
+        statusCode: HttpStatus.OK,
+        data: webhook,
+      };
+    }
+  
     try {
       const response = await axios.post(url);
       console.log('Webhook created: ', response.data);
-      const boardInfoUrl = `${trelloApiLink}/boards/${response.data.idModel}?key=${this.trelloApiKey}&token=${decryptedUserToken}`
 
+      const boardInfoUrl = `${trelloApiLink}/boards/${response.data.idModel}?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
       const connectedBoard = await axios.get(boardInfoUrl);
 
       const createdWebhook = {
         ...response.data,
         boardName: connectedBoard.data.name,
         subscribers: [user.trelloUserId]
-      }
+      };
 
       const updatedUser = {
         webhooks: user.webhooks ? [...user.webhooks, response.data.id] : [response.data.id],
@@ -69,7 +85,7 @@ export class TrelloService {
 
       await Promise.all([
         this.userService.updateUserById(userId, updatedUser),
-        this.trelloWebhookRepository.create(createdWebhook)
+        this.trelloWebhookRepository.create(createdWebhook),
       ]);
 
       return {
@@ -84,10 +100,9 @@ export class TrelloService {
     }
   }
 
+
   async updateTrelloWebhook(userId: string, webhookId: string, webhookUpdateDto: WebhookDto): Promise<DefaultResponse<TrelloWebhook>> {
     const user = await this.userService.findUserById(userId);
-
-    const webhookToUpdate = await this.findWebhookById(webhookId);
 
     const { boardName, subscribers, ...apiWebhookProperties } = webhookUpdateDto;
 

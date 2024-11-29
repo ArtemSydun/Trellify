@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TrelloWebhook } from '../entities/webhook.entity';
+import { WebhookDto } from '../dto/create-webhook.dto';
 
 
 @Injectable()
@@ -30,7 +31,7 @@ export class TrelloWebhookRepository {
     return updatedTrelloWebhook;
   }
 
-  async create(webhook): Promise<TrelloWebhook> {
+  async create(webhook: WebhookDto): Promise<TrelloWebhook> {
     return await this.TrelloWebhookModel.create(webhook);
   }
 
