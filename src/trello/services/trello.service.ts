@@ -33,8 +33,6 @@ export class TrelloService {
   }
 
   async createTrelloWebhook(userId: string, boardId: string): Promise<DefaultResponse<TrelloWebhook>> {
-    console.log(boardId);
-
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
@@ -44,9 +42,7 @@ export class TrelloService {
       throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
     }
 
-    console.log('error');
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
