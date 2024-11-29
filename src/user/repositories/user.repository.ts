@@ -47,7 +47,7 @@ export class UserRepository {
     return this.UserModel.find();
   }
 
-  async findUsersByWebhook(webhookId: string): Promise<User[]> {
+  async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
     return this.UserModel.find({ webhooks: { $in: [webhookId] } }).exec();
   }
 }
