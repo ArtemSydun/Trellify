@@ -9,7 +9,7 @@ export class TrelloSettings {
         required: false,
     })
     @Prop({ required: false })
-    token: string;
+    token?: string;
 
     @ApiProperty({
         description: 'Trello user ID associated with the user',
@@ -17,7 +17,7 @@ export class TrelloSettings {
         required: false,
     })
     @Prop({ required: false })
-    userId: string;
+    userId?: string;
 
     @ApiProperty({
         description: 'List of webhooks for the user',
@@ -25,5 +25,5 @@ export class TrelloSettings {
         required: false,
     })
     @Prop({ required: false, type: [String] })
-    webhooks: string[];
+    webhooks?: string[];
 }

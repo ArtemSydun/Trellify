@@ -77,9 +77,6 @@ export class UserService {
 
   async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.findUserById(userId);
-    let trelloToken = userToUpdate.trello.token
-      ? userToUpdate.trello.token
-      : encryptText(updateUserDto.trello.token, this.encryptionKey);
 
     const updatedUserProps: Partial<User> = {};
 
@@ -87,16 +84,21 @@ export class UserService {
       if (key === 'trello' && value) {
         updatedUserProps.trello = { ...userToUpdate.trello, ...value };
 
+        if (value.token) {
+          if (!userToUpdate.trello.token || userToUpdate.trello.token !== value.token) {
+            updatedUserProps.trello.token = encryptText(value.token, this.encryptionKey);
+          } else {
+            updatedUserProps.trello.token = userToUpdate.trello.token;
+          }
+        }
+
+        const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
         const trelloProfile = await this.trelloService.findMemberProfile(userId, trelloToken);
+
         updatedUserProps.trello.userId = trelloProfile.id;
 
         if (value.webhooks) {
           updatedUserProps.trello.webhooks = value.webhooks;
-        }
-
-        if (value.token) {
-          updatedUserProps.trello.token = encryptText(value.token, this.encryptionKey);
-          trelloToken = updatedUserProps.trello.token;
         }
       } else if (key === 'telegram' && value) {
         updatedUserProps.telegram = { ...userToUpdate.telegram, ...value };

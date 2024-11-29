@@ -150,9 +150,7 @@ export class TrelloService {
       : [];
 
     const updatedUser = {
-      telegram: userToUpdate.telegram,
       trello: {
-        ...userToUpdate.trello,
         webhooks: updatedUserWebhooks
       }
     };
@@ -225,16 +223,13 @@ export class TrelloService {
 
   async findMemberWebhooks(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
-
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
     const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
 
     try {
       const response = await axios.get(url);
 
       return response.data;
-
     } catch (err) {
       console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
       throw new BadRequestException(err.response ? err.response.data : err.message);

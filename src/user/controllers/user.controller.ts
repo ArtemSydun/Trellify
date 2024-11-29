@@ -45,17 +45,7 @@ export class UserController {
   }
 
 
-  //should be admin only routes
-  // @Get()
-  // findAll(): Promise<User[]> {
-  //   return this.userService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string): Promise<User> {
-  //   return this.userService.findUserById(id);
-  // }
-
+  
   @Patch(':id')
   @ApiOkResponse({
     description: 'User updated successfully',
@@ -78,4 +68,15 @@ export class UserController {
   updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
     return this.userService.updateUserById(id, updateUserDto);
   }
+
+  //should be admin only routes
+  // @Get()
+  // findAll(): Promise<User[]> {
+  //   return this.userService.findAll();
+  // }
+  
+  // @Get(':id')
+  // findOne(@Param('id') id: string): Promise<User> {
+  //   return this.userService.findUserById(id);
+  // }
 }

@@ -10,9 +10,9 @@ import { TrelloSettings } from './trello.settings.dto';
 export class UpdateUserDto extends PartialType(CreateUserDto) {
     @ApiPropertyOptional()
     @Optional()
-    trello: TrelloSettings
+    trello?: TrelloSettings
 
     @ApiPropertyOptional({ type: TelegramSettings})
     @Optional()
-    telegram: TelegramSettings
+    telegram?: TelegramSettings
 }
