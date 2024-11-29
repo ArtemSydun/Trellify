@@ -1,11 +1,9 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   HttpStatus,
 } from '@nestjs/common';
@@ -13,10 +11,11 @@ import {
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserService } from '../services/user.service';
-import { User } from '../entities/user.entity';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiCustomConflictResponse, ApiCustomNotFoundResponse } from 'src/common/decorators/swagger.decorators';
+import { User } from '../entities/user.entity';
 
 
 @Controller('user')
@@ -40,6 +39,7 @@ export class UserController {
       },
     },
   })
+  @ApiCustomConflictResponse('User', 'email')
   create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
     return this.userService.initiateUserRegistration(createUserDto);
   }
@@ -56,9 +56,26 @@ export class UserController {
   //   return this.userService.findUserById(id);
   // }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  @ApiOkResponse({
+    description: 'User updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK
+        },
+      },
+    },
+  })
+  @ApiCustomNotFoundResponse('User', 'id')
+  @UseGuards(JwtAuthGuard)
+  updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
     return this.userService.updateUserById(id, updateUserDto);
   }
 }

@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
 import { Optional } from '@nestjs/common';
-import { WebhookDto, WebhookInterface } from 'src/trello/interfaces/webhook.interface';
+import { WebhookInterface } from 'src/trello/interfaces/webhook.interface';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
@@ -13,9 +13,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @Optional()
     trelloUserId?: string;
 
-    @ApiPropertyOptional({ type: [WebhookDto]})
+    @ApiPropertyOptional({ type: [String]})
     @Optional()
-    webhooks?: WebhookInterface[];
+    webhooks?: string[];
 
     @ApiPropertyOptional()
     @Optional()
