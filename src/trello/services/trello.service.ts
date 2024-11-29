@@ -33,31 +33,43 @@ export class TrelloService {
   }
 
   async createTrelloWebhook(userId: string, boardId: string): Promise<DefaultResponse<TrelloWebhook>> {
+    console.log(boardId);
+
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
     const user = await this.userService.findUserById(userId);
 
-    if (user.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+    if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
       throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
     }
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    console.log('error');
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     if (webhook) {
-      if (!webhook.subscribers.includes(user.trelloUserId)) {
-        webhook.subscribers.push(user.trelloUserId);
+      if (!webhook.subscribers.includes(user.trello.userId)) {
+        webhook.subscribers.push(user.trello.userId);
       }
 
       await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers });
 
-      if (!user.webhooks.includes(webhook.id)) {
-        user.webhooks.push(webhook.id);
+      if (!user.trello.webhooks.includes(webhook.id)) {
+        user.trello.webhooks.push(webhook.id);
       }
 
-      await this.userService.updateUserById(userId, { webhooks: user.webhooks });
+      const updatedUserProps = {
+        telegram: user.telegram,
+        trello: {
+          ...user.trello,
+          webhooks: user.trello.webhooks,
+        }
+      }
+
+      await this.userService.updateUserById(userId, updatedUserProps);
 
       return {
         message: 'Webhook already exists, user added to subscribers',
@@ -65,7 +77,7 @@ export class TrelloService {
         data: webhook,
       };
     }
-  
+
     try {
       const response = await axios.post(url);
       console.log('Webhook created: ', response.data);
@@ -76,11 +88,15 @@ export class TrelloService {
       const createdWebhook = {
         ...response.data,
         boardName: connectedBoard.data.name,
-        subscribers: [user.trelloUserId]
+        subscribers: [user.trello.userId]
       };
 
       const updatedUser = {
-        webhooks: user.webhooks ? [...user.webhooks, response.data.id] : [response.data.id],
+        telegram: user.telegram,
+        trello: {
+          ...user.trello,
+          webhooks: user.trello.webhooks ? [...user.trello.webhooks, response.data.id] : [response.data.id],
+        }
       };
 
       await Promise.all([
@@ -100,13 +116,12 @@ export class TrelloService {
     }
   }
 
-
   async updateTrelloWebhook(userId: string, webhookId: string, webhookUpdateDto: WebhookDto): Promise<DefaultResponse<TrelloWebhook>> {
     const user = await this.userService.findUserById(userId);
 
     const { boardName, subscribers, ...apiWebhookProperties } = webhookUpdateDto;
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
     const url = `${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
@@ -130,21 +145,25 @@ export class TrelloService {
     const userToUpdate = await this.userService.findUserById(userId);
     const webhookToUpdate = await this.findWebhookById(webhookId);
 
-    if (!userToUpdate.webhooks.find(userWebhook => userWebhook === webhookId)) {
+    if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhookId)) {
       throw new NotFoundException(`Webhook ${webhookId} not found`);
     }
 
-    const updatedUserWebhooks = userToUpdate.webhooks
-      ? userToUpdate.webhooks.filter(userWebhook => userWebhook !== webhookId)
+    const updatedUserWebhooks = userToUpdate.trello.webhooks
+      ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook !== webhookId)
       : [];
 
     const updatedUser = {
-      webhooks: updatedUserWebhooks
+      telegram: userToUpdate.telegram,
+      trello: {
+        ...userToUpdate.trello,
+        webhooks: updatedUserWebhooks
+      }
     };
 
     const updatedWebhookSubscribers = {
       subscribers: webhookToUpdate.subscribers ?
-        webhookToUpdate.subscribers.filter(subscriberId => subscriberId !== userToUpdate.trelloUserId)
+        webhookToUpdate.subscribers.filter(subscriberId => subscriberId !== userToUpdate.trello.userId)
         : []
     };
 
@@ -163,14 +182,20 @@ export class TrelloService {
     const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
 
     const updatePromises = usersConnectedToWebhook.map(async (user) => {
-      const updatedWebhooks = user.webhooks.filter(userWebhook => userWebhook !== webhookId);
-      const updatedUser = { webhooks: updatedWebhooks };
+      const updatedWebhooks = user.trello.webhooks.filter(userWebhook => userWebhook !== webhookId);
+      const updatedUser = {
+        telegram: user.telegram,
+        trello: {
+          ...user.trello,
+          webhooks: updatedWebhooks,
+        }
+      };
       await this.userService.updateUserById(user.id, updatedUser);
     });
 
     await Promise.all(updatePromises);
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
 
     try {
@@ -190,8 +215,8 @@ export class TrelloService {
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
-    const url = `${trelloApiLink}/members/${user.trelloUserId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+    const url = `${trelloApiLink}/members/${user.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
       const response = await axios.get(url);
@@ -205,7 +230,7 @@ export class TrelloService {
   async findMemberWebhooks(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
     const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
 
@@ -220,17 +245,17 @@ export class TrelloService {
     }
   }
 
-  async findMemberProfile(userId: string): Promise<any> {
+  async findMemberProfile(userId: string, token?: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    const decryptedUserToken = token
+      ? decryptText(token, this.encryptionKey)
+      : decryptText(user.trello.token, this.encryptionKey);
 
     try {
       const response = await axios.get(`${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
 
-      return {
-        id: response.data.id
-      }
+      return response.data
 
     } catch (err) {
       console.error('Error fetching user trello profile info:', err.response ? err.response.data : err.message);
@@ -241,9 +266,9 @@ export class TrelloService {
   async findMemberRelatedCards(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
 
-    const decryptedUserToken = decryptText(user.trelloToken, this.encryptionKey);
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
-    const url = `${trelloApiLink}/members/${user.trelloUserId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const url = `${trelloApiLink}/members/${user.trello.userId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
       const response = await axios.get(url);

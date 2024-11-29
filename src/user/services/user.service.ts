@@ -11,7 +11,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { randomUUID } from 'crypto';
 import { User } from '../entities/user.entity';
-import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { decryptText, encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
@@ -76,21 +76,42 @@ export class UserService {
   }
 
   async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
-    let updatedUserProps = { ...updateUserDto };
+    const userToUpdate = await this.findUserById(userId);
+    let trelloToken = userToUpdate.trello.token
+      ? userToUpdate.trello.token
+      : encryptText(updateUserDto.trello.token, this.encryptionKey);
 
-    if (updateUserDto.trelloToken) {
-      updatedUserProps.trelloToken = encryptText(updateUserDto.trelloToken, this.encryptionKey);
+    const updatedUserProps: Partial<User> = {};
 
-      const trelloProfile = await this.trelloService.findMemberProfile(userId);
-      updatedUserProps.trelloUserId = trelloProfile.data.id;
+    for (const [key, value] of Object.entries(updateUserDto)) {
+      if (key === 'trello' && value) {
+        updatedUserProps.trello = { ...userToUpdate.trello, ...value };
+
+        const trelloProfile = await this.trelloService.findMemberProfile(userId, trelloToken);
+        updatedUserProps.trello.userId = trelloProfile.id;
+
+        if (value.webhooks) {
+          updatedUserProps.trello.webhooks = value.webhooks;
+        }
+
+        if (value.token) {
+          updatedUserProps.trello.token = encryptText(value.token, this.encryptionKey);
+          trelloToken = updatedUserProps.trello.token;
+        }
+      } else if (key === 'telegram' && value) {
+        updatedUserProps.telegram = { ...userToUpdate.telegram, ...value };
+      } else if (value !== undefined) {
+        updatedUserProps[key] = value;
+      }
     }
+
     const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
 
     return {
       message: `User ${userId} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
-    }
+    };
   }
 
   public async resetPassword(id: string, newPassword: string): Promise<void> {
@@ -115,6 +136,15 @@ export class UserService {
     const payload = {
       email: createUserDto.email,
       password: createUserDto.password,
+      telegram: {
+        username: null,
+        chatId: null,
+      },
+      trello: {
+        userId: null,
+        token: null,
+        webhooks: []
+      }
     };
 
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });
@@ -142,6 +172,6 @@ export class UserService {
   }
 
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.userRepository.findUsersByWebhook(webhookId);
+    return this.userRepository.findUsersConnectedToWebhook(webhookId);
   }
 }
