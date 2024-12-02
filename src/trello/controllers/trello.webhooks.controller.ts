@@ -38,7 +38,7 @@ export class TrelloWebhooksController {
   createTrelloWebhook(
     @Req() req,
     @Body() body: CreateWebhookDto
-  ) {
+  ): Promise<DefaultResponse<Webhook>> {
     return this.trelloService.createTrelloWebhook(req.user.userId, body);
   }
 
@@ -99,7 +99,7 @@ export class TrelloWebhooksController {
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
   @UseGuards(JwtAuthGuard)
-  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: Webhook, @Req() req) {
+  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: Webhook, @Req() req): Promise<DefaultResponse<Webhook>> {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
