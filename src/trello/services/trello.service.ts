@@ -27,7 +27,7 @@ export class TrelloService {
     private readonly configService: ConfigService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
   ) {
-    this.webhookCallbackURL = this.configService.get(configServiceEnum.NGROK_APP_LINK) + `/trello/webhook`;
+    this.webhookCallbackURL = this.configService.get(configServiceEnum.API_LINK) + `/trello/webhook`;
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
     this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
   }

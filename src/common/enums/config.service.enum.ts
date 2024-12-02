@@ -3,7 +3,8 @@ export const enum configServiceEnum {
   DB_PASSWORD = 'MONGO_INITDB_ROOT_PASSWORD',
   MONGODB_URI = 'MONGODB_URI',
 
-  PORT = 'PORT',
+  ENV = 'NODE_ENV',
+  PORT = 'NODE_PORT',
   HOST = 'HOST',
 
   JWT_EXPIRES_IN = 'JWT_EXPIRES_IN',
@@ -17,5 +18,5 @@ export const enum configServiceEnum {
   MAILER_PORT = 'MAILER_PORT',
 
   TRELLO_API_KEY = 'TRELLO_API_KEY',
-  NGROK_APP_LINK = 'NGROK_APP_LINK'
+  API_LINK = 'API_LINK'
 }
