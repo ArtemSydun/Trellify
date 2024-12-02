@@ -152,8 +152,7 @@ export class UserService {
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });
 
     const confirmationLink = this.mailerService.getLink(
-      this.configService.get(configServiceEnum.HOST),
-      this.configService.get(configServiceEnum.PORT),
+      this.configService.get(configServiceEnum.API_LINK),
       `auth/confirm?token=${token}`,
       'Confirm your email',
     );

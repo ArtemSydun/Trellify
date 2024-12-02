@@ -5,7 +5,6 @@ export const enum configServiceEnum {
 
   ENV = 'NODE_ENV',
   PORT = 'NODE_PORT',
-  HOST = 'HOST',
 
   JWT_EXPIRES_IN = 'JWT_EXPIRES_IN',
   JWT_SECRET = 'JWT_SECRET',
