@@ -50,7 +50,7 @@ export class UserService {
     return await this.userRepository.create(newUser);
   }
 
-  async findAll(): Promise<User[]> {
+  public async findAll(): Promise<User[]> {
     return await this.userRepository.getAll();
   }
 
@@ -75,7 +75,7 @@ export class UserService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
+  public async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.findUserById(userId);
 
     const updatedUserProps: Partial<User> = {};

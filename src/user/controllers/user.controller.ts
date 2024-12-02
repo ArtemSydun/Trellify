@@ -13,8 +13,8 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserService } from '../services/user.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiOkResponse } from '@nestjs/swagger';
-import { ApiCustomConflictResponse, ApiCustomNotFoundResponse } from 'src/common/decorators/swagger.decorators';
+import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 
 
@@ -45,7 +45,7 @@ export class UserController {
   }
 
 
-  
+
   @Patch(':id')
   @ApiOkResponse({
     description: 'User updated successfully',
@@ -60,9 +60,14 @@ export class UserController {
           type: 'number',
           example: HttpStatus.OK
         },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
       },
     },
   })
+  @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   @UseGuards(JwtAuthGuard)
   updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
@@ -74,7 +79,7 @@ export class UserController {
   // findAll(): Promise<User[]> {
   //   return this.userService.findAll();
   // }
-  
+
   // @Get(':id')
   // findOne(@Param('id') id: string): Promise<User> {
   //   return this.userService.findUserById(id);

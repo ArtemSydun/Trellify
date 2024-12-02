@@ -1,29 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { TrelloWebhook } from '../entities/webhook.entity';
-import { WebhookDto } from '../dto/create-webhook.dto';
+import { Webhook } from '../entities/webhook.entity';
 
 
 @Injectable()
 export class TrelloWebhookRepository {
   constructor(
-    @InjectModel(TrelloWebhook.name)
-    private TrelloWebhookModel: Model<TrelloWebhook>,
-  ) {}
+    @InjectModel(Webhook.name)
+    private TrelloWebhookModel: Model<Webhook>,
+  ) { }
 
-  async findOneByBoardId(idModel: string): Promise<TrelloWebhook> {
+  async findOneByBoardId(idModel: string): Promise<Webhook> {
     return this.TrelloWebhookModel.findOne({ idModel }).lean().exec();
   }
 
-  async findOneById(id: string): Promise<TrelloWebhook> {
+  async findOneById(id: string): Promise<Webhook> {
     return this.TrelloWebhookModel.findOne({ id }).lean().exec();
+  }
+
+  async findWebhooksConnectedToUser(trelloUserId: string): Promise<Webhook[]> {
+    return this.TrelloWebhookModel.find({
+      subscribers: { $in: [trelloUserId] },
+    }).exec();
   }
 
   async updateById(
     id: string,
-    updateData: Partial<TrelloWebhook>,
-  ): Promise<TrelloWebhook> {
+    updateData: Partial<Webhook>,
+  ): Promise<Webhook> {
     const updatedTrelloWebhook = await this.TrelloWebhookModel
       .findOneAndUpdate({ id }, { $set: updateData }, { new: true, lean: true })
       .exec();
@@ -31,7 +36,7 @@ export class TrelloWebhookRepository {
     return updatedTrelloWebhook;
   }
 
-  async create(webhook: WebhookDto): Promise<TrelloWebhook> {
+  async create(webhook: Webhook): Promise<Webhook> {
     return await this.TrelloWebhookModel.create(webhook);
   }
 
@@ -39,7 +44,7 @@ export class TrelloWebhookRepository {
     return this.TrelloWebhookModel.findOneAndDelete({ id });
   }
 
-  async getAll(): Promise<TrelloWebhook[]> {
+  async getAll(): Promise<Webhook[]> {
     return this.TrelloWebhookModel.find();
   }
 }

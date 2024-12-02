@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop } from '@nestjs/mongoose';
-import { WebhookDto } from 'src/trello/dto/create-webhook.dto';
+import { Webhook } from 'src/trello/entities/webhook.entity';
 
 export class TrelloSettings {
     @ApiProperty({
@@ -21,7 +21,7 @@ export class TrelloSettings {
 
     @ApiProperty({
         description: 'List of webhooks for the user',
-        type: WebhookDto,
+        type: [Webhook],
         required: false,
     })
     @Prop({ required: false, type: [String] })

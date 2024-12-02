@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Schema({ timestamps: true, collection: 'trello_webhooks' })
-export class TrelloWebhook {
+export class Webhook {
     @ApiProperty({
         description: 'Unique identifier for the webhook',
         example: '6748311e20b49e848f710448',
@@ -68,4 +68,4 @@ export class TrelloWebhook {
     subscribers: string[];
 }
 
-export const TrelloWebhookSchema = SchemaFactory.createForClass(TrelloWebhook);
+export const WebhookSchema = SchemaFactory.createForClass(Webhook);
