@@ -12,6 +12,11 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+#db
+/mongodb
+.docker-compose.yml
+
+
 # OS
 .DS_Store
 
@@ -40,7 +45,6 @@ lerna-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
-.env.local
 
 # temp directory
 .temp
