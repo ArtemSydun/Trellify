@@ -15,11 +15,11 @@ export class TrelloMembersController {
   @Get('profile')
   @ApiCustomNotFoundResponse('User', 'id')
   @ApiOkResponse({
-    description: 'List of member boards',
+    description: 'Trello member profile',
     type: TrelloMember,
   })
   @ApiCustomUnathorizedResponse()
-  getTrelloMemberProfile(@Req() req) {
+  getTrelloMemberProfile(@Req() req): Promise<TrelloMember> {
     return this.trelloService.findMemberProfile(req.user.userId);
   }
 
@@ -29,7 +29,7 @@ export class TrelloMembersController {
     description: 'List of member boards',
     type: [Board],
   })
-  findBoardsMemberBelongsTo(@Req() req) {
+  findBoardsMemberBelongsTo(@Req() req): Promise<Board[]> {
     return this.trelloService.findBoardsMemberBelongsTo(req.user.userId);
   }
 
@@ -39,7 +39,7 @@ export class TrelloMembersController {
     description: 'List of member cards',
     type: [TrelloCard],
   })
-  findCardsMemberRelatedTo(@Req() req) {
+  findCardsMemberRelatedTo(@Req() req): Promise<TrelloCard[]> {
     return this.trelloService.findMemberRelatedCards(req.user.userId);
   }
 }
