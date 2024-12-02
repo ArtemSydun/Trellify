@@ -60,7 +60,7 @@ export function ApiCustomConflictResponse(entityName: string, property: string) 
                     },
                     statusCode: {
                         type: 'number',
-                        example: HttpStatus.NOT_FOUND,
+                        example: HttpStatus.CONFLICT,
                     },
                 },
             },
