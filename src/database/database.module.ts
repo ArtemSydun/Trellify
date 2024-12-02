@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
-// @TODO - remove before deploy to PROD
 import * as mongoose from 'mongoose';
-mongoose.set('debug', true);
+
+//do not enable db debugging on prod
+if (process.env.NODE_ENV === 'dev') {
+  mongoose.set('debug', true);
+}
 
 @Module({
   imports: [
@@ -12,7 +16,7 @@ mongoose.set('debug', true);
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
+        uri: configService.get<string>(configServiceEnum.MONGODB_URI),
       }),
       inject: [ConfigService],
     }),

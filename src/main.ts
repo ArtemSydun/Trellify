@@ -27,8 +27,7 @@ async function bootstrap() {
 
   const PORT = configService.get(configServiceEnum.PORT) || 3005;
   await app.listen(PORT);
-  logger.log(`Application is running on http://localhost:${PORT}`);
-  logger.log(`Application docs is running on http://localhost:${PORT}/docs`)
-
+  logger.log(`Application is running on ${configService.get(configServiceEnum.API_LINK)}`);
+  logger.log(`Application docs is running on ${configService.get(configServiceEnum.API_LINK)}/docs`)
 }
 bootstrap();
