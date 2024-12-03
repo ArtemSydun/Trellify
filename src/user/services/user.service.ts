@@ -80,7 +80,7 @@ export class UserService {
     if (reqUser.role !== UserRoles.admin) {
       delete updateUserDto.role;
     }
-    
+
     const userToUpdate = await this.findUserById(userId);
 
     const updatedUserProps: Partial<User> = {};
