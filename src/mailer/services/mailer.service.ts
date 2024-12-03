@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
@@ -17,8 +18,8 @@ export class MailerService {
     private readonly configService: ConfigService,
   ) { }
 
-  public getLink(host: string, port: string, route: string, message: string) {
-    return `<a href=${host}:${port}/${route}>${message}</a>`;
+  public getLink(apiUrl: string, route: string, message: string) {
+    return `<a href=${apiUrl}/${route}>${message}</a>`;
   }
 
   public async sendDistribution(
@@ -52,9 +53,7 @@ export class MailerService {
     token: string,
   ): Promise<DefaultResponse<null>> {
     try {
-      const resetLink = `http://${this.configService.get<string>(
-        'HOST',
-      )}:${this.configService.get<string>('PORT')}/auth/reset-password/${token}`;
+      const resetLink = `${this.configService.get(configServiceEnum.API_LINK)}/auth/reset-password/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
