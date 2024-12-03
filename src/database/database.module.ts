@@ -8,7 +8,7 @@ import { SeederService } from './seeders/user.seeder';
 import { User, UserSchema } from 'src/user/entities/user.entity';
 
 //do not enable db debugging on prod
-if (process.env.NODE_ENV === 'dev') {
+if (process.env.BACKEND_ENV === 'dev') {
   mongoose.set('debug', true);
 }
 

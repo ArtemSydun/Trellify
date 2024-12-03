@@ -22,8 +22,8 @@ export class SeederService implements OnModuleInit {
         try {
             console.log('Seeding database...');
 
-            const adminEmail = this.configService.get<string>(configServiceEnum.SUPERADMIN_EMAIL);
-            const adminPassword = this.configService.get<string>(configServiceEnum.SUPERADMIN_PASSWORD);
+            const adminEmail = this.configService.get<string>(configServiceEnum.MONGODB_SUPERADMIN_EMAIL);
+            const adminPassword = this.configService.get<string>(configServiceEnum.MONGODB_SUPERADMIN_PASSWORD);
             const otherProps = {
                 telegram: {
                     username: null,

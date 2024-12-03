@@ -7,7 +7,7 @@ import { ForgotPasswordDto } from '../dto/forgotPassword.dto';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
-import { Errors } from 'src/common/constants/enums';
+import { Errors } from 'src/common/enums/errors.enum';
 
 @Controller('auth')
 export class AuthController {

@@ -28,7 +28,7 @@ export class TrelloService {
     private readonly configService: ConfigService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
   ) {
-    this.webhookCallbackURL = this.configService.get(configServiceEnum.API_LINK) + `/trello/webhook`;
+    this.webhookCallbackURL = this.configService.get(configServiceEnum.BACKEND_LINK) + `/trello/webhooks`;
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
     this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
   }
@@ -38,16 +38,20 @@ export class TrelloService {
     const webhook = await this.trelloWebhookRepository.findOneByBoardId(createWebhookDto.boardId);
 
     const user = await this.userService.findUserById(userId);
+    console.log(webhook);
 
-    if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
-      throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
-    }
+    console.log('id2')
 
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${createWebhookDto.boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     if (webhook) {
+      if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+        throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
+      }
+
       if (!webhook.subscribers.includes(user.trello.userId)) {
         webhook.subscribers.push(user.trello.userId);
       }
@@ -74,6 +78,9 @@ export class TrelloService {
         data: webhook,
       };
     }
+
+
+    console.log('id3')
 
     try {
       const response = await axios.post(url);

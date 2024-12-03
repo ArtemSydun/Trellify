@@ -1,42 +1,79 @@
+// actions which are without proper "translationKey" (detailed action type)
+// updateComment ("unknown"),  deleteComment ("unknown")
+// some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing all labels from card
+// createCheckItem ("unknown"), 
+
 export enum TrelloWebhookActions {
-    REMOVE_MEMBER_FROM_CARD = 'removeMemberFromCard',
-    ADD_MEMBER_TO_CARD = 'addMemberToCard',
-    MOVE_CARD_FROM_BOARD = 'moveCardFromBoard',
-    MOVE_CARD_TO_BOARD = 'moveCardToBoard',
-    UPDATE_CARD = 'updateCard',
-    COMMENT_CARD = 'commentCard',
-    DELETE_COMMENT = 'deleteComment',
+    CARD_MEMBER_REMOVED = 'removeMemberFromCard',
+    CARD_MEMBER_ADDED = 'addMemberToCard',
+    CARD_MOVED_FROM_BOARD = 'moveCardFromBoard',
+    CARD_MOVED_TO_BOARD = 'moveCardToBoard',
+    CARD_UPDATED = 'updateCard',
+    CARD_DELETED = 'deleteCard',
+    CARD_COMMENT_ADDED = 'commentCard',
+    CARD_COMMENT_REMOVED = 'deleteComment',
 
-    ADD_ATTACHMENT_TO_CARD = 'addAttachmentToCard',
-    DELETE_ATTACHMENT_FROM_CARD = 'deleteAttachmentFromCard',
+    CARD_ATTACHMENT_ADDED = 'addAttachmentToCard',
+    CARD_ATTACHMENT_REMOVED = 'deleteAttachmentFromCard',
 
-    ADD_CHECKLIST = 'addChecklistToCard',
-    CREATE_CHECKLIST_ITEM = 'createCheckItem',
-    UPDATE_CHECKLIST_ITEM_DUE = 'updateCheckItemDue',
-    UPDATE_CHECKLIST_ITEM_STATE = 'updateCheckItemStateOnCard',
-    UPDATE_CHECKLIST_ITEM_MEMBER = 'updateMemberOnCheckItem',
+    CARD_LABEL_ADDED = 'addLabelToCard',
+    CARD_LABEL_REMOVED = 'removeLabelFromCard',
+
+    CARD_CHECKLIST_ADDED = 'addChecklistToCard',
+    CHECKLIST_ITEM_CREATED = 'createCheckItem',
+    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
+    CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
+    CHECKLIST_ITEM_MEMBER_UPDATED = 'updateMemberOnCheckItem',
+    CHECKLIST_ITEM_CONVERTED_TO_CARD = 'convertToCardFromCheckItem',
+    CHECKLIST_DELETED_FROM_CARD = 'removeChecklistFromCard',
+
+    LIST_CREATED = 'createList',
+    LIST_UPDATED = 'updateList',
 }
+
 
 export enum DetailedAction {
-    CHANGED_CARD_DESCRIPTION = 'action_changed_description_of_card',
-    RENAMED_CARD = 'action_renamed_card',
+    CARD_CREATED = 'action_create_card',
+    CARD_RENAMED = 'action_renamed_card',
+    CARD_ARCHIVED = 'action_archived_card',
+    CARD_DELETED = 'action_delete_card',
+    CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
+    CARD_MEMBER_JOINED = 'action_member_joined_card',
+    CARD_MEMBER_REMOVED = 'action_removed_member_from_card',
+    CARD_MEMBER_LEFT = 'action_member_left_card',
 
-    COMMENTED_CARD = 'action_comment_on_card',
-    ADDED_ATTACHMENT_TO_CARD = 'action_add_attachment_to_card',
-    ADDED_DUE_DATE = 'action_added_a_due_date',
-    CHANGED_DUE_DATE = 'action_changed_a_due_date',
-    REMOVED_DUE_DATE = 'action_removed_a_due_date',
+    CARD_COMMENT_ADDED = 'action_comment_on_card',
+    CARD_ATTACHMENT_ADDED = 'action_add_attachment_to_card',
+    CARD_DUE_DATE_ADDED = 'action_added_a_due_date',
+    CARD_DUE_DATE_CHANGED = 'action_changed_a_due_date',
+    CARD_DUE_DATE_REMOVED = 'action_removed_a_due_date',
 
-    ADDED_START_DATE = 'action_added_a_start_date',
-    CHANGED_START_DATE = 'action_changed_a_start_date',
-    REMOVED_START_DATE = 'action_removed_a_start_date',
+    CARD_START_DATE_ADDED = 'action_added_a_start_date',
+    CARD_START_DATE_CHANGED = 'action_changed_a_start_date',
+    CARD_START_DATE_REMOVED = 'action_removed_a_start_date',
 
-    MOVED_CARD_TO_LIST = 'action_move_card_from_list_to_list',
+    CARD_MOVED_TO_LIST = 'action_move_card_from_list_to_list',
 
-    ADDED_CHECKLIST_TO_CARD = 'action_add_checklist_to_card',
-    UPDATED_CHECKLIST_ITEM_DUE = 'action_update_checkitem_due',
-    UPDATED_CHECKLIST_ITEM_MEMBER = 'action_member_joined_checkitem',
-    REMOVED_CHECKLIST_ITEM_MEMBER = 'action_removed_member_from_checkitem',
-    CHANGED_CHECKLIST_ITEM_STATE_COMPLETED = 'action_completed_checkitem',
-    CHANGED_CHECKLIST_ITEM_STATE_INCOMPLETED = 'action_marked_checkitem_incomplete',
+    // this actions do not have notification properties
+    CARD_MOVED_LOWER = 'action_moved_card_lower',
+    CARD_MOVED_HIGHER = 'action_moved_card_higher',
+
+    CARD_LABEL_ADDED = 'action_add_label_to_card',
+    CARD_LABEL_REMOVED = 'action_remove_label_from_card',
+
+    CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
+    CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
+    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
+    CHECKLIST_ITEM_MEMBER_ADDED = 'action_member_joined_checkitem',
+    CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
+    CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'action_completed_checkitem',
+    CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'action_marked_checkitem_incomplete',
+    CHECKLIST_ITEM_CONVERTED_TO_CARD = 'action_convert_to_card_from_checkitem',
+
+    LIST_CREATED = 'action_added_list_to_board',
+    LIST_MOVED_LEFT = 'action_moved_list_left',
+    LIST_MOVED_RIGHT = 'action_moved_list_right',
+    LIST_ARCHIVED = 'action_archived_list',
+    LIST_RENAMED = 'action_renamed_list',
 }
+

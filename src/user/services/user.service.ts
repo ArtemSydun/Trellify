@@ -77,7 +77,7 @@ export class UserService {
   }
 
   public async updateUserById(userId: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
-    if (reqUser.role !== UserRoles.admin) {
+    if (reqUser?.role !== UserRoles.admin) {
       delete updateUserDto.role;
     }
 
@@ -157,7 +157,7 @@ export class UserService {
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });
 
     const confirmationLink = this.mailerService.getLink(
-      this.configService.get(configServiceEnum.API_LINK),
+      this.configService.get(configServiceEnum.BACKEND_LINK),
       `auth/confirm?token=${token}`,
       'Confirm your email',
     );
