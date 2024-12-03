@@ -9,6 +9,7 @@ import { trelloApiLink } from 'src/common/constants/trello.links';
 import { TrelloWebhookRepository } from '../repositories/webhook.repository';
 import { Webhook } from '../entities/webhook.entity';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
+import { User } from 'src/user/entities/user.entity';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -227,7 +228,7 @@ export class TrelloService {
 
     return webhooks
 
-    // in case if you need find all webhooks from trello which is not in db
+    // in case if you need find all webhooks from trello which is user created
     // const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
     // const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
 

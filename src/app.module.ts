@@ -5,7 +5,6 @@ import { UserModule } from './user/user.module';
 import { TrelloModule } from './trello/trello.module';
 import { AuthModule } from './auth/auth.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({

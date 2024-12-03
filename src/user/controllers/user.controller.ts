@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -16,7 +17,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
-
 
 @Controller('user')
 export class UserController {
@@ -44,8 +44,6 @@ export class UserController {
     return this.userService.initiateUserRegistration(createUserDto);
   }
 
-
-
   @Patch(':id')
   @ApiOkResponse({
     description: 'User updated successfully',
@@ -70,8 +68,8 @@ export class UserController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   @UseGuards(JwtAuthGuard)
-  updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
-    return this.userService.updateUserById(id, updateUserDto);
+  updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req): Promise<DefaultResponse<User>> {
+    return this.userService.updateUserById(id, updateUserDto, req.user);
   }
 
   //should be admin only routes
