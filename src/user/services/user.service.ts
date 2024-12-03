@@ -11,13 +11,14 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repositories/user.repository';
 import { randomUUID } from 'crypto';
 import { User } from '../entities/user.entity';
-import { decryptText, encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
+import { UserRoles } from '../interfaces/role.enum';
 
 @Injectable()
 export class UserService {
@@ -75,7 +76,11 @@ export class UserService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  public async updateUserById(userId: string, updateUserDto: UpdateUserDto): Promise<DefaultResponse<User>> {
+  public async updateUserById(userId: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
+    if (reqUser.role !== UserRoles.admin) {
+      delete updateUserDto.role;
+    }
+    
     const userToUpdate = await this.findUserById(userId);
 
     const updatedUserProps: Partial<User> = {};
