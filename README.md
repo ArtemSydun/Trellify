@@ -14,7 +14,7 @@
 | Env                           | Description                                                     |
 |-------------------------------|-----------------------------------------------------------------|
 | **App settings:**             |                                                                 |             
-| BACKEND_ENV                   | Specifies the environment: development, staging, or production. |
+| NODE_ENV                   | Specifies the environment: development, staging, or production. |
 | BACKEND_PORT                  | The port on which the backend server listens.                   |
 | BACKEND_HOST_PORT             | The port exposed on the host machine.                           |
 | BACKEND_LINK                  | URL for the backend's external link.                            |

@@ -3,6 +3,8 @@
 // some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing all labels from card
 // createCheckItem ("unknown"), 
 
+
+// commented actions do not have notification properties
 export enum TrelloWebhookActions {
     CARD_MEMBER_REMOVED = 'removeMemberFromCard',
     CARD_MEMBER_ADDED = 'addMemberToCard',
@@ -11,7 +13,8 @@ export enum TrelloWebhookActions {
     CARD_UPDATED = 'updateCard',
     CARD_DELETED = 'deleteCard',
     CARD_COMMENT_ADDED = 'commentCard',
-    CARD_COMMENT_REMOVED = 'deleteComment',
+    // CARD_COMMENT_REMOVED = 'deleteComment',
+
 
     CARD_ATTACHMENT_ADDED = 'addAttachmentToCard',
     CARD_ATTACHMENT_REMOVED = 'deleteAttachmentFromCard',
@@ -21,7 +24,7 @@ export enum TrelloWebhookActions {
 
     CARD_CHECKLIST_ADDED = 'addChecklistToCard',
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
-    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
+    // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
     CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
     CHECKLIST_ITEM_MEMBER_UPDATED = 'updateMemberOnCheckItem',
     CHECKLIST_ITEM_CONVERTED_TO_CARD = 'convertToCardFromCheckItem',
@@ -29,6 +32,10 @@ export enum TrelloWebhookActions {
 
     LIST_CREATED = 'createList',
     LIST_UPDATED = 'updateList',
+
+    BOARD_MEMBER_REMOVED = 'removeMemberFromBoard',
+    // BOARD_UPDATED = 'updateBoard',
+    // BOARD_DELETED = 'removeFromOrganizationBoard',
 }
 
 
@@ -37,33 +44,34 @@ export enum DetailedAction {
     CARD_RENAMED = 'action_renamed_card',
     CARD_ARCHIVED = 'action_archived_card',
     CARD_DELETED = 'action_delete_card',
-    CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
-    CARD_MEMBER_JOINED = 'action_member_joined_card',
+    // CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
+    CARD_MEMBER_ADDED = 'action_added_member_to_card',
     CARD_MEMBER_REMOVED = 'action_removed_member_from_card',
-    CARD_MEMBER_LEFT = 'action_member_left_card',
+    // CARD_MEMBER_JOINED = 'action_member_joined_card',
+    // CARD_MEMBER_LEFT = 'action_member_left_card',
 
     CARD_COMMENT_ADDED = 'action_comment_on_card',
     CARD_ATTACHMENT_ADDED = 'action_add_attachment_to_card',
     CARD_DUE_DATE_ADDED = 'action_added_a_due_date',
     CARD_DUE_DATE_CHANGED = 'action_changed_a_due_date',
-    CARD_DUE_DATE_REMOVED = 'action_removed_a_due_date',
+    // CARD_DUE_DATE_REMOVED = 'action_removed_a_due_date',
 
     CARD_START_DATE_ADDED = 'action_added_a_start_date',
     CARD_START_DATE_CHANGED = 'action_changed_a_start_date',
-    CARD_START_DATE_REMOVED = 'action_removed_a_start_date',
+    // CARD_START_DATE_REMOVED = 'action_removed_a_start_date',
 
     CARD_MOVED_TO_LIST = 'action_move_card_from_list_to_list',
 
-    // this actions do not have notification properties
-    CARD_MOVED_LOWER = 'action_moved_card_lower',
-    CARD_MOVED_HIGHER = 'action_moved_card_higher',
+
+    // CARD_MOVED_LOWER = 'action_moved_card_lower',
+    // CARD_MOVED_HIGHER = 'action_moved_card_higher',
 
     CARD_LABEL_ADDED = 'action_add_label_to_card',
-    CARD_LABEL_REMOVED = 'action_remove_label_from_card',
+    CARD_LABEL_REMOVED = 'action_remove_label_from_card', 
 
     CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
     CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
-    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
+    // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
     CHECKLIST_ITEM_MEMBER_ADDED = 'action_member_joined_checkitem',
     CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
     CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'action_completed_checkitem',
@@ -75,5 +83,10 @@ export enum DetailedAction {
     LIST_MOVED_RIGHT = 'action_moved_list_right',
     LIST_ARCHIVED = 'action_archived_list',
     LIST_RENAMED = 'action_renamed_list',
+
+    BOARD_MEMBER_REMOVED = 'action_removed_from_board',
+    // BOARD_CLOSED = 'action_closed_board',
+    // BOARD_REOPENED = 'action_reopened_board',
+    // BOARD_DELETED = 'action_remove_from_organization_board',
 }
 
