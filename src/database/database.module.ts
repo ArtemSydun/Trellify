@@ -4,6 +4,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 import * as mongoose from 'mongoose';
+import { SeederService } from './seeders/user.seeder';
+import { User, UserSchema } from 'src/user/entities/user.entity';
 
 //do not enable db debugging on prod
 if (process.env.NODE_ENV === 'dev') {
@@ -20,7 +22,11 @@ if (process.env.NODE_ENV === 'dev') {
       }),
       inject: [ConfigService],
     }),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+    ]),
   ],
+  providers: [SeederService],
   exports: [MongooseModule],
 })
 export class DatabaseModule { }

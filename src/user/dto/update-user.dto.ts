@@ -4,6 +4,7 @@ import { Optional } from '@nestjs/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TelegramSettings } from './telegram.settings.dto';
 import { TrelloSettings } from './trello.settings.dto';
+import { UserRoles } from '../interfaces/role.enum';
 
 // @Optional() decorator for nested objects here do not work properly, nest js do not support it
 // https://github.com/nestjs/swagger/issues/2382
@@ -15,4 +16,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @ApiPropertyOptional({ type: TelegramSettings})
     @Optional()
     telegram?: TelegramSettings
+
+    @ApiPropertyOptional({ type: String, enum: UserRoles})
+    @Optional()
+    role?: UserRoles
 }

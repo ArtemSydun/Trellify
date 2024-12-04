@@ -9,6 +9,7 @@ import { trelloApiLink } from 'src/common/constants/trello.links';
 import { TrelloWebhookRepository } from '../repositories/webhook.repository';
 import { Webhook } from '../entities/webhook.entity';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
+import { User } from 'src/user/entities/user.entity';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -27,7 +28,7 @@ export class TrelloService {
     private readonly configService: ConfigService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
   ) {
-    this.webhookCallbackURL = this.configService.get(configServiceEnum.API_LINK) + `/trello/webhook`;
+    this.webhookCallbackURL = this.configService.get(configServiceEnum.BACKEND_LINK) + `/trello/webhooks`;
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
     this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
   }
@@ -38,15 +39,15 @@ export class TrelloService {
 
     const user = await this.userService.findUserById(userId);
 
-    if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
-      throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
-    }
-
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
     const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${createWebhookDto.boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     if (webhook) {
+      if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+        throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
+      }
+
       if (!webhook.subscribers.includes(user.trello.userId)) {
         webhook.subscribers.push(user.trello.userId);
       }
@@ -84,6 +85,7 @@ export class TrelloService {
       const createdWebhook = {
         ...response.data,
         boardName: connectedBoard.data.name,
+        authorToken: user.trello.token,
         subscribers: [user.trello.userId]
       };
 
@@ -175,6 +177,8 @@ export class TrelloService {
 
     const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
 
+    console.log(usersConnectedToWebhook);
+
     const updatePromises = usersConnectedToWebhook.map(async (user) => {
       const updatedWebhooks = user.trello.webhooks.filter(userWebhook => userWebhook !== webhookId);
       const updatedUser = {
@@ -184,7 +188,10 @@ export class TrelloService {
           webhooks: updatedWebhooks,
         }
       };
-      await this.userService.updateUserById(user.id, updatedUser);
+
+      console.log('updatedWebhooks', updatedWebhooks);
+      const userUpdated = await this.userService.updateUserById(user.id, updatedUser);
+      console.log('updatedUser', userUpdated);
     });
 
     await Promise.all(updatePromises);
@@ -223,22 +230,22 @@ export class TrelloService {
 
   async findMemberWebhooks(userId: string): Promise<Webhook[]> {
     const user = await this.userService.findUserById(userId);
-    const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(user.trello.userId);
+    // const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(user.trello.userId);
 
-    return webhooks
+    // return webhooks
 
-    // in case if you need find all webhooks from trello which is not in db
-    // const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-    // const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
+    // in case if you need find all webhooks from trello which is user created
+    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+    const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
 
-    // try {
-    //   const response = await axios.get(url);
+    try {
+      const response = await axios.get(url);
 
-    //   return response.data;
-    // } catch (err) {
-    //   console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
-    //   throw new BadRequestException(err.response ? err.response.data : err.message);
-    // }
+      return response.data;
+    } catch (err) {
+      console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
+      throw new BadRequestException(err.response ? err.response.data : err.message);
+    }
   }
 
   async findMemberProfile(userId: string, token?: string): Promise<any> {

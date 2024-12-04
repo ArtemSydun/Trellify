@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { randomUUID } from 'crypto';
 import { TelegramSettings } from '../dto/telegram.settings.dto';
 import { TrelloSettings } from '../dto/trello.settings.dto';
+import { UserRoles } from '../interfaces/role.enum';
 
 @Schema({ timestamps: true })
 export class User {
@@ -26,6 +27,9 @@ export class User {
   })
   @Prop({ required: true })
   password: string;
+
+  @Prop({ type: String, enum: UserRoles, default: UserRoles.user })
+  role: UserRoles
 
   @Prop({ type: TrelloSettings, required: false })
   trello: TrelloSettings;
