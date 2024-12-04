@@ -6,9 +6,6 @@ import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathori
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import { ApiExcludeEndpoint, ApiOkResponse, ApiResponse, getSchemaPath } from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from 'src/user/interfaces/role.enum';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {

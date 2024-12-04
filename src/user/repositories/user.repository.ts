@@ -48,6 +48,6 @@ export class UserRepository {
   }
 
   async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.UserModel.find({ webhooks: { $in: [webhookId] } }).exec();
+    return this.UserModel.find({ 'trello.webhooks': { $in: [webhookId] } }).exec();
   }
 }

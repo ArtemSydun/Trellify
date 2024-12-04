@@ -60,6 +60,13 @@ export class Webhook {
     boardName: string;
 
     @ApiProperty({
+        description: 'Webhook creator token',
+        example: 'webhook creator crypted token'
+    })
+    @Prop({ required: true })
+    authorToken: string;
+
+    @ApiProperty({
         description: 'List of Trello user IDs who are subscribed to this webhook.',
         type: [String],
         example: ['userId1', 'userId2', 'userId3'],

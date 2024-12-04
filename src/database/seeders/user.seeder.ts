@@ -22,8 +22,8 @@ export class SeederService implements OnModuleInit {
         try {
             console.log('Seeding database...');
 
-            const adminEmail = this.configService.get<string>(configServiceEnum.SUPERADMIN_EMAIL);
-            const adminPassword = this.configService.get<string>(configServiceEnum.SUPERADMIN_PASSWORD);
+            const adminEmail = this.configService.get<string>(configServiceEnum.MONGODB_SUPERADMIN_EMAIL);
+            const adminPassword = this.configService.get<string>(configServiceEnum.MONGODB_SUPERADMIN_PASSWORD);
             const otherProps = {
                 telegram: {
                     username: null,
@@ -37,10 +37,10 @@ export class SeederService implements OnModuleInit {
             }
 
             const adminUsers = [
-                { email: adminEmail, password: adminPassword, role: UserRoles.admin, ...otherProps },
+                { email: adminEmail, password: adminPassword, role: UserRoles.superadmin, ...otherProps },
             ];
 
-            const existingAdmins = await this.userModel.find({ role: UserRoles.admin });
+            const existingAdmins = await this.userModel.find({ role: UserRoles.superadmin });
             if (existingAdmins.length === 0) {
                 console.log('No admin users found, seeding...');
 
