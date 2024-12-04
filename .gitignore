@@ -2,7 +2,6 @@
 /dist
 /node_modules
 /build
-
 # Logs
 logs
 *.log
@@ -12,13 +11,12 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-#db
-/mongodb
-.docker-compose.yml
-
-
 # OS
 .DS_Store
+
+#DB
+/mongodb
+docker-compose.yml
 
 # Tests
 /coverage

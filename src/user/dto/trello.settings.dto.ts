@@ -26,4 +26,7 @@ export class TrelloSettings {
     })
     @Prop({ required: false, type: [String] })
     webhooks?: string[];
+
+    @Prop({ required: false })
+    notifications?: [];
 }

@@ -2,7 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { HttpStatus } from '@nestjs/common';
 import { error } from 'console';
-import { Errors } from '../constants/enums';
+import { Errors } from '../enums/errors.enum';
 
 /**
  * Custom decorator to provide a custom response schema with dynamic message and status code.
