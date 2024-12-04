@@ -19,6 +19,10 @@ export class UserRepository {
     return this.UserModel.findOne({ id }).lean().exec();
   }
 
+  async findOneByTrelloId(trelloUserId: string): Promise<User> {
+    return this.UserModel.findOne({ 'trello.user.userId': trelloUserId });
+}
+
   async existsByEmail(email: string): Promise<boolean> {
     const user = await this.UserModel.findOne({ email }).lean().exec();
     return user !== null;

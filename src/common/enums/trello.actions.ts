@@ -3,6 +3,8 @@
 // some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing all labels from card
 // createCheckItem ("unknown"), 
 
+import { toCamelCase } from "../helpers/camelCase";
+
 
 // commented actions do not have notification properties
 export enum TrelloWebhookActions {
@@ -38,8 +40,7 @@ export enum TrelloWebhookActions {
     // BOARD_DELETED = 'removeFromOrganizationBoard',
 }
 
-
-export enum DetailedAction {
+export enum TrelloWebhookDetailedActions {
     CARD_CREATED = 'action_create_card',
     CARD_RENAMED = 'action_renamed_card',
     CARD_ARCHIVED = 'action_archived_card',
@@ -67,7 +68,7 @@ export enum DetailedAction {
     // CARD_MOVED_HIGHER = 'action_moved_card_higher',
 
     CARD_LABEL_ADDED = 'action_add_label_to_card',
-    CARD_LABEL_REMOVED = 'action_remove_label_from_card', 
+    CARD_LABEL_REMOVED = 'action_remove_label_from_card',
 
     CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
     CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
@@ -90,3 +91,6 @@ export enum DetailedAction {
     // BOARD_DELETED = 'action_remove_from_organization_board',
 }
 
+export type NotificationType = {
+    [key in TrelloWebhookDetailedActions]?: string[];
+};

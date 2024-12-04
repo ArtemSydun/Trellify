@@ -62,6 +62,14 @@ export class UserService {
 
     return user;
   }
+  
+  public async findUserByTrelloId(trelloUserId: string): Promise<User> {
+    const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
+
+    if (!userByTrelloId) throw new NotFoundException(`User with TrelloId ${trelloUserId} not found`);
+
+    return userByTrelloId;
+  }
 
   public async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOneByEmail(email);

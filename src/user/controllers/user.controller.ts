@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpStatus,
   Req,
+  Get,
 } from '@nestjs/common';
 
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -78,8 +79,8 @@ export class UserController {
   //   return this.userService.findAll();
   // }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string): Promise<User> {
-  //   return this.userService.findUserById(id);
-  // }
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<User> {
+    return this.userService.findUserById(id);
+  }
 }

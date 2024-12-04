@@ -5,11 +5,11 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import axios from 'axios';
-import { trelloApiLink } from 'src/common/constants/trello.links';
 import { TrelloWebhookRepository } from '../repositories/webhook.repository';
 import { Webhook } from '../entities/webhook.entity';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { User } from 'src/user/entities/user.entity';
+import { trelloApiLink, actionsEnabledByDefault } from 'src/common/constants/trello';
+import { initializeUserNotificationState, updateWebhookNotifications, initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -52,7 +52,11 @@ export class TrelloService {
         webhook.subscribers.push(user.trello.userId);
       }
 
-      await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers });
+      const defaultUserNotifications = initializeUserNotificationState(actionsEnabledByDefault);
+
+      const updatedNotifications = updateWebhookNotifications(user.trello.userId, webhook.notifications, defaultUserNotifications)
+
+      await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers, notifications: updatedNotifications });
 
       if (!user.trello.webhooks.includes(webhook.id)) {
         user.trello.webhooks.push(webhook.id);
@@ -86,7 +90,8 @@ export class TrelloService {
         ...response.data,
         boardName: connectedBoard.data.name,
         authorToken: user.trello.token,
-        subscribers: [user.trello.userId]
+        subscribers: [user.trello.userId],
+        notifications: initializeNotificationArrays(user.trello.userId)
       };
 
       const updatedUser = {
@@ -163,8 +168,15 @@ export class TrelloService {
         : []
     };
 
+    const notificationsBooleans = Object.keys(webhookToUpdate.notifications).reduce((acc, key) => {
+      acc[key] = false;
+      return acc;
+    }, {} as { [key: string]: boolean });
+
+    const updatedNotifications = updateWebhookNotifications(userToUpdate.trello.userId, webhookToUpdate.notifications, notificationsBooleans)
+
     await this.userService.updateUserById(userId, updatedUser);
-    await this.trelloWebhookRepository.updateById(webhookId, updatedWebhookSubscribers)
+    await this.trelloWebhookRepository.updateById(webhookId, { ...updatedWebhookSubscribers, notifications: updatedNotifications })
 
     return {
       message: `Webhook ${webhookId} disconnected successfully`,
@@ -177,8 +189,6 @@ export class TrelloService {
 
     const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
 
-    console.log(usersConnectedToWebhook);
-
     const updatePromises = usersConnectedToWebhook.map(async (user) => {
       const updatedWebhooks = user.trello.webhooks.filter(userWebhook => userWebhook !== webhookId);
       const updatedUser = {
@@ -189,15 +199,12 @@ export class TrelloService {
         }
       };
 
-      console.log('updatedWebhooks', updatedWebhooks);
-      const userUpdated = await this.userService.updateUserById(user.id, updatedUser);
-      console.log('updatedUser', userUpdated);
+      await this.userService.updateUserById(user.id, updatedUser);
     });
 
     await Promise.all(updatePromises);
 
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
 
     try {
       await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
@@ -230,22 +237,22 @@ export class TrelloService {
 
   async findMemberWebhooks(userId: string): Promise<Webhook[]> {
     const user = await this.userService.findUserById(userId);
-    // const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(user.trello.userId);
+    const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(user.trello.userId);
 
-    // return webhooks
+    return webhooks
 
     // in case if you need find all webhooks from trello which is user created
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-    const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
+    // const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+    // const url = `${trelloApiLink}/tokens/${decryptedUserToken}/webhooks?key=${this.trelloApiKey}`;
 
-    try {
-      const response = await axios.get(url);
+    // try {
+    //   const response = await axios.get(url);
 
-      return response.data;
-    } catch (err) {
-      console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    //   return response.data;
+    // } catch (err) {
+    //   console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
+    //   throw new BadRequestException(err.response ? err.response.data : err.message);
+    // }
   }
 
   async findMemberProfile(userId: string, token?: string): Promise<any> {
