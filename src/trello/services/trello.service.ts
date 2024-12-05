@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UserService } from 'src/user/services/user.service';
+import { UsersService } from 'src/user/services/users.service';
 import { ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { decryptText } from 'src/common/helpers/hashing';
@@ -23,8 +23,8 @@ export class TrelloService {
   private readonly encryptionKey: string;
   private readonly trelloApiKey: string;
   constructor(
-    @Inject(forwardRef(() => UserService))
-    private readonly userService: UserService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly userService: UsersService,
     private readonly configService: ConfigService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
   ) {

@@ -2,6 +2,7 @@ import { actionsEnabledByDefault } from "../constants/trello";
 import { NotificationType, TrelloWebhookDetailedActions } from "../enums/trello.actions";
 import { toCamelCase } from "./camelCase";
 
+// this function takes trelloUserId of webhook creator and initialize notifications object with empty arrays
 export const initializeNotificationArrays = (trelloUserId: string): NotificationType => {
     return Object.entries(TrelloWebhookDetailedActions).reduce((acc, [key, value]) => {
         const camelCaseKey = toCamelCase(key, '_'); // Convert to camelCase
@@ -19,6 +20,7 @@ export const initializeNotificationArrays = (trelloUserId: string): Notification
     }, {} as NotificationType);
 };
 
+// this function creates list of basic notifications for user when he connects to webhook
 export const initializeUserNotificationState = (enabledActions: TrelloWebhookDetailedActions[]): { [key: string]: boolean } => {
     return Object.keys(TrelloWebhookDetailedActions).reduce((acc, key) => {
       const camelCaseKey = toCamelCase(key, '_');
@@ -30,6 +32,10 @@ export const initializeUserNotificationState = (enabledActions: TrelloWebhookDet
     }, {} as { [key: string]: boolean });
   };
 
+
+// this functions takes trelloUserId to save in notification arrays, 
+// webhookNotifications which is current notification arrays of webhook, 
+// and userNotificationsUpdate which is object with notifications user want to track
 export const updateWebhookNotifications = (
     trelloUserId: string,
     webhookNotifications: NotificationType,

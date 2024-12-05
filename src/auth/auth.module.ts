@@ -9,7 +9,7 @@ import { MailerModule } from 'src/mailer/mailer.module';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TrelloModule } from 'src/trello/trello.module';
-import { UserModule } from 'src/user/user.module';
+import { UsersModule } from 'src/user/users.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { UserModule } from 'src/user/user.module';
     }),
     MailerModule,
     forwardRef(() => TrelloModule),
-    forwardRef(() => UserModule)
+    forwardRef(() => UsersModule)
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

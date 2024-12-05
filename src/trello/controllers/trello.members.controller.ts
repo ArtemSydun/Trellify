@@ -6,8 +6,7 @@ import { ApiOkResponse } from '@nestjs/swagger';
 import { Board } from '../dto/board.dto';
 import { TrelloMember } from '../dto/member.dto';
 import { TrelloCard } from '../dto/card.dto';
-import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from 'src/user/interfaces/role.enum';
+
 
 @UseGuards(JwtAuthGuard)
 @Controller('trello/members')
@@ -36,7 +35,6 @@ export class TrelloMembersController {
   }
 
   @Get('cards/my')
-  @UseGuards(JwtAuthGuard)
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'List of member cards',

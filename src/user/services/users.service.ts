@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserRepository } from '../repositories/user.repository';
+import { UsersRepository } from '../repositories/users.repository';
 import { randomUUID } from 'crypto';
 import { User } from '../entities/user.entity';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
@@ -21,9 +21,9 @@ import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   private readonly encryptionKey: string;
-  constructor(private readonly userRepository: UserRepository,
+  constructor(private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -60,9 +60,38 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
 
-    return user;
+    const userWithoutPass = {
+      ...user,
+    }
+
+    delete userWithoutPass.password
+
+    return userWithoutPass;
   }
-  
+
+  public async findUserProfile(id: string): Promise<User> {
+    const user = await this.userRepository.findOneById(id);
+
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    const userWithoutSensitiveData = {
+      ...user,
+      password: 'hidden',
+      trello: {
+        ...user.trello,
+        token: 'hidden',
+        userId: 'hidden',
+      },
+      telegram: {
+        ...user.telegram,
+        username: 'hidden',
+        chatId: 'hidden',
+      },
+    };
+
+    return userWithoutSensitiveData;
+  }
+
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
     const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
 
@@ -85,7 +114,7 @@ export class UserService {
   }
 
   public async updateUserById(userId: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
-    if (reqUser?.role !== UserRoles.admin) {
+    if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
 

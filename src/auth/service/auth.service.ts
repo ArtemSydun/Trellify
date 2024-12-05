@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from '../dto/login.dto';
 import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/services/user.service';
+import { UsersService } from 'src/user/services/users.service';
 
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
@@ -21,7 +21,7 @@ import { MailerService } from 'src/mailer/services/mailer.service';
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userService: UserService,
+    private readonly userService: UsersService,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
   ) { }

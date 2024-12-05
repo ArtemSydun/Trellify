@@ -95,3 +95,31 @@ export function ApiCustomUnathorizedResponse() {
         })
     );
 }
+
+export function ApiCustomForbiddenResponse() {
+    const messageTemplate = `Forbidden resource`;
+
+    return applyDecorators(
+        ApiResponse({
+            status: HttpStatus.FORBIDDEN,
+            description: `Forbidden`,
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        example: messageTemplate,
+                    },
+                    error: {
+                        type: 'string',
+                        example: Errors.FORBIDDEN
+                    },
+                    statusCode: {
+                        type: 'number',
+                        example: HttpStatus.FORBIDDEN,
+                    },
+                },
+            },
+        })
+    );
+}
