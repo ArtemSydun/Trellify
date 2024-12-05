@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
-import { UserModule } from './user/user.module';
+import { UsersModule } from './user/users.module';
 import { TrelloModule } from './trello/trello.module';
 import { AuthModule } from './auth/auth.module';
 
@@ -13,7 +13,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     DatabaseModule,
     AuthModule,
-    UserModule,
+    UsersModule,
     TrelloModule
   ],
   controllers: [],

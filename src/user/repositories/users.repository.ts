@@ -5,7 +5,7 @@ import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 
 @Injectable()
-export class UserRepository {
+export class UsersRepository {
   constructor(
     @InjectModel(User.name)
     private UserModel: Model<User>,
@@ -18,6 +18,10 @@ export class UserRepository {
   async findOneById(id: string): Promise<User> {
     return this.UserModel.findOne({ id }).lean().exec();
   }
+
+  async findOneByTrelloId(trelloUserId: string): Promise<User> {
+    return this.UserModel.findOne({ 'trello.user.userId': trelloUserId });
+}
 
   async existsByEmail(email: string): Promise<boolean> {
     const user = await this.UserModel.findOne({ email }).lean().exec();

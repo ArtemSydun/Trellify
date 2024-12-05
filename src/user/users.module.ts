@@ -1,13 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
 
-import { UserController } from './controllers/user.controller';
-import { UserService } from './services/user.service';
-import { UserRepository } from './repositories/user.repository';
+
+import { UsersService } from './services/users.service';
+
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './entities/user.entity';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { TrelloModule } from 'src/trello/trello.module';
+import { UsersController } from './controllers/users.controller';
+import { UsersRepository } from './repositories/users.repository';
 
 @Module({
   imports: [
@@ -16,8 +18,8 @@ import { TrelloModule } from 'src/trello/trello.module';
     forwardRef(() => AuthModule),
     forwardRef(() => TrelloModule),
   ],
-  controllers: [UserController],
-  providers: [UserService, UserRepository],
-  exports: [UserService]
+  controllers: [UsersController],
+  providers: [UsersService, UsersRepository],
+  exports: [UsersService]
 })
-export class UserModule { }
+export class UsersModule { }
