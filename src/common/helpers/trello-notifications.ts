@@ -4,7 +4,7 @@ import { toCamelCase } from "./camelCase";
 
 export const initializeNotificationArrays = (trelloUserId: string): NotificationType => {
     return Object.entries(TrelloWebhookDetailedActions).reduce((acc, [key, value]) => {
-        const camelCaseKey = toCamelCase(key); // Convert to camelCase
+        const camelCaseKey = toCamelCase(key, '_'); // Convert to camelCase
 
         // Check if the action value is in the actionsEnabledByDefault array
         if (actionsEnabledByDefault.includes(value)) {
@@ -21,7 +21,7 @@ export const initializeNotificationArrays = (trelloUserId: string): Notification
 
 export const initializeUserNotificationState = (enabledActions: TrelloWebhookDetailedActions[]): { [key: string]: boolean } => {
     return Object.keys(TrelloWebhookDetailedActions).reduce((acc, key) => {
-      const camelCaseKey = toCamelCase(key);
+      const camelCaseKey = toCamelCase(key, '_');
       // Check if the action is in the enabled actions list
       if (enabledActions.includes(TrelloWebhookDetailedActions[key as keyof typeof TrelloWebhookDetailedActions])) {
         acc[camelCaseKey] = true; // Set the value to true for actions enabled by default
