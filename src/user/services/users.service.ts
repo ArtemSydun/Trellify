@@ -151,7 +151,9 @@ export class UsersService {
     }
 
     const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
-
+    
+    delete updatedUser.password;
+  
     return {
       message: `User ${userId} updated successfully`,
       statusCode: HttpStatus.OK,
@@ -227,7 +229,22 @@ export class UsersService {
     }
 
     delete user.password;
-    
+
     return user;
+  }
+
+  public async connectUserTelegram(userId: string, chatId: number, username: string): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.findUserById(userId);
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, { telegram: { 
+      chatId,
+      username,
+    }})
+
+    return {
+      message: `Telegram ${username} connected successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser
+    }
   }
 }

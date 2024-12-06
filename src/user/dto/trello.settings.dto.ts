@@ -21,7 +21,7 @@ export class TrelloSettings {
 
     @ApiProperty({
         description: 'List of webhooks for the user',
-        type: [Webhook],
+        example: ['webhook1, webhook2, webhook3'],
         required: false,
     })
     @Prop({ required: false, type: [String] })

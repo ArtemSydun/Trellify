@@ -22,6 +22,8 @@ export enum TrelloWebhookActions {
     CARD_LABEL_REMOVED = 'removeLabelFromCard',
 
     CARD_CHECKLIST_ADDED = 'addChecklistToCard',
+    
+    //unknown action detailed type, separate handler
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
     // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
     CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
@@ -38,7 +40,7 @@ export enum TrelloWebhookActions {
 }
 
 export enum TrelloWebhookDetailedActions {
-    CARD_CREATED = 'action_create_card',
+    // CARD_CREATED = 'action_create_card',
     CARD_RENAMED = 'action_renamed_card',
     CARD_ARCHIVED = 'action_archived_card',
     CARD_DELETED = 'action_delete_card',
@@ -76,11 +78,11 @@ export enum TrelloWebhookDetailedActions {
     CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'action_marked_checkitem_incomplete',
     CHECKLIST_ITEM_CONVERTED_TO_CARD = 'action_convert_to_card_from_checkitem',
 
-    LIST_CREATED = 'action_added_list_to_board',
-    LIST_MOVED_LEFT = 'action_moved_list_left',
-    LIST_MOVED_RIGHT = 'action_moved_list_right',
-    LIST_ARCHIVED = 'action_archived_list',
-    LIST_RENAMED = 'action_renamed_list',
+    // LIST_CREATED = 'action_added_list_to_board',
+    // LIST_MOVED_LEFT = 'action_moved_list_left',
+    // LIST_MOVED_RIGHT = 'action_moved_list_right',
+    // LIST_ARCHIVED = 'action_archived_list',
+    // LIST_RENAMED = 'action_renamed_list',
 
     BOARD_MEMBER_REMOVED = 'action_removed_from_board',
     // BOARD_CLOSED = 'action_closed_board',

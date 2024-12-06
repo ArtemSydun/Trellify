@@ -22,11 +22,6 @@ export class User {
   @Prop({ required: true })
   email: string;
 
-  @ApiProperty({
-    description: 'Encrypted password of the user',
-    example: 'encryptedPassword123',
-    required: true,
-  })
   @Prop({ required: true })
   password: string;
 
