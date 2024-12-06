@@ -23,14 +23,14 @@ export const initializeNotificationArrays = (trelloUserId: string): Notification
 // this function creates list of basic notifications for user when he connects to webhook
 export const initializeUserNotificationState = (enabledActions: TrelloWebhookDetailedActions[]): { [key: string]: boolean } => {
     return Object.keys(TrelloWebhookDetailedActions).reduce((acc, key) => {
-      const camelCaseKey = toCamelCase(key, '_');
-      // Check if the action is in the enabled actions list
-      if (enabledActions.includes(TrelloWebhookDetailedActions[key as keyof typeof TrelloWebhookDetailedActions])) {
-        acc[camelCaseKey] = true; // Set the value to true for actions enabled by default
-      }
-      return acc;
+        const camelCaseKey = toCamelCase(key, '_');
+        // Check if the action is in the enabled actions list
+        if (enabledActions.includes(TrelloWebhookDetailedActions[key as keyof typeof TrelloWebhookDetailedActions])) {
+            acc[camelCaseKey] = true; // Set the value to true for actions enabled by default
+        }
+        return acc;
     }, {} as { [key: string]: boolean });
-  };
+};
 
 
 // this functions takes trelloUserId to save in notification arrays, 

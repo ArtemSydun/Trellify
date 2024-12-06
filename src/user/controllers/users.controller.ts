@@ -26,6 +26,29 @@ import { UserRoles } from '../interfaces/role.enum';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
+  //should be admin only routes
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @ApiOkResponse({
+    description: 'All users list',
+    type: [User]
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  findAll(): Promise<User[]> {
+    return this.usersService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Get(':id')
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  findOne(@Param('id') id: string): Promise<User> {
+    return this.usersService.findUserById(id);
+  }
 
   @Post()
   @ApiOkResponse({
@@ -88,29 +111,5 @@ export class UsersController {
   @ApiCustomNotFoundResponse('User', 'id')
   updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req): Promise<DefaultResponse<User>> {
     return this.usersService.updateUserById(id, updateUserDto, req.user);
-  }
-
-  //should be admin only routes
-  @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.admin, UserRoles.superadmin)
-  @ApiOkResponse({
-    description: 'All users list',
-    type: [User]
-  })
-  @ApiCustomForbiddenResponse()
-  @ApiCustomUnathorizedResponse()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll();
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.admin, UserRoles.superadmin)
-  @Get(':id')
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomForbiddenResponse()
-  @ApiCustomNotFoundResponse('User', 'id')
-  findOne(@Param('id') id: string): Promise<User> {
-    return this.usersService.findUserById(id);
   }
 }

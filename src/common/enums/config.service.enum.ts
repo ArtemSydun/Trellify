@@ -21,5 +21,5 @@ export const enum configServiceEnum {
   MAILER_PORT = 'MAILER_PORT',
 
   TRELLO_API_KEY = 'TRELLO_API_KEY',
-  
+  TELEGRAM_BOT_TOKEN = 'TELEGRAM_BOT_TOKEN'
 }

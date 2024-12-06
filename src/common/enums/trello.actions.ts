@@ -3,9 +3,6 @@
 // some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing all labels from card
 // createCheckItem ("unknown"), 
 
-import { toCamelCase } from "../helpers/camelCase";
-
-
 // commented actions do not have notification properties
 export enum TrelloWebhookActions {
     CARD_MEMBER_REMOVED = 'removeMemberFromCard',

@@ -19,6 +19,7 @@ import { JwtService } from '@nestjs/jwt';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
+import { UserSearchPath } from '../interfaces/query.enum';
 
 @Injectable()
 export class UsersService {
@@ -85,7 +86,7 @@ export class UsersService {
       telegram: {
         ...user.telegram,
         username: 'hidden',
-        chatId: 'hidden',
+        chatId: 0,
       },
     };
 
@@ -216,5 +217,17 @@ export class UsersService {
 
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
     return this.userRepository.findUsersConnectedToWebhook(webhookId);
+  }
+
+  public async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
+    const user = await this.userRepository.findUserByNestedProperty(path, value);
+
+    if (!user) {
+      throw new NotFoundException(`User with property ${path}: ${value} not found`);
+    }
+
+    delete user.password;
+    
+    return user;
   }
 }

@@ -10,6 +10,9 @@ import { Webhook } from '../entities/webhook.entity';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import { trelloApiLink, actionsEnabledByDefault } from 'src/common/constants/trello';
 import { initializeUserNotificationState, updateWebhookNotifications, initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
+import { InjectBot } from 'nestjs-telegraf';
+import { Context, Telegraf } from 'telegraf';
+import { UpdateWebhookDto } from '../dto/update-webhook.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -23,6 +26,7 @@ export class TrelloService {
   private readonly encryptionKey: string;
   private readonly trelloApiKey: string;
   constructor(
+    @InjectBot() private readonly bot: Telegraf<Context>,
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
@@ -119,19 +123,16 @@ export class TrelloService {
     }
   }
 
-  async updateTrelloWebhook(userId: string, webhookId: string, webhookUpdateDto: Webhook): Promise<DefaultResponse<Webhook>> {
+  async updateTrelloWebhook(userId: string, webhookId: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
     const user = await this.userService.findUserById(userId);
 
-    const { boardName, subscribers, ...apiWebhookProperties } = webhookUpdateDto;
-
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
-    const url = `${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const webhookToUpdate = await this.findWebhookById(webhookId);
+    const updatedNotifications = updateWebhookNotifications(user.trello.userId,
+      webhookToUpdate.notifications,
+      updateWebhookDto.notifications)
 
     try {
-      const response = await axios.put(url, apiWebhookProperties)
-
-      const updatedWebhook = await this.trelloWebhookRepository.updateById(webhookId, { ...response.data, boardName, subscribers });
+      const updatedWebhook = await this.trelloWebhookRepository.updateById(webhookId, { ...updateWebhookDto, notifications: updatedNotifications });
 
       return {
         message: `Webhook ${webhookId} updated successfully`,
@@ -141,6 +142,19 @@ export class TrelloService {
     } catch (err) {
       console.error('Error updating webhook:', err.response ? err.response.data : err.message);
       throw new BadRequestException(err.response ? err.response.data : err.message);
+    }
+  }
+
+  async handleTrelloWebhook(webhookAction: any): Promise<any> {
+    console.log(webhookAction);
+    try {
+      console.log(webhookAction?.action?.idMemberCreator);
+      const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
+      console.log(userCreator);
+      await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
+    } catch (error) {
+      console.log(error);
+      // return { status: 'error', message: 'Failed to send message to Telegram' };
     }
   }
 
