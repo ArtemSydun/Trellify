@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Req,
   Get,
+  Query,
 } from '@nestjs/common';
 
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -15,7 +16,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiForbiddenResponse, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { ApiCustomConflictResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -40,9 +41,48 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    description: 'Telegram connected successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Telegram {{username}} connected successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  @Get('telegram')
+  handleTelegramQuery(
+    @Req() req,
+    @Query('chatId') chatId: string,
+    @Query('username') username: string,
+  ) {
+    console.log(req.user.userId);
+    return this.usersService.connectUserTelegram(req.user.userId, parseInt(chatId), username);
+  }
+
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Get(':id')
+  @ApiOkResponse({
+    description: 'User by id',
+    type: User
+  })
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')

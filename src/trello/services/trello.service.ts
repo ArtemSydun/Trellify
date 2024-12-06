@@ -146,15 +146,39 @@ export class TrelloService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    console.log(webhookAction);
+    console.log(JSON.stringify(webhookAction, null, 2));
+    const cardId = webhookAction?.action?.data?.card?.id;
+    const webhook = await this.trelloWebhookRepository.findOneById(webhookAction?.webhook?.id);
+    const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
+    // const action = webhookAction?.action?.type
+    // switch(action){
+    //   case: 
+    // }
     try {
-      console.log(webhookAction?.action?.idMemberCreator);
-      const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
-      console.log(userCreator);
-      await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
+      if (cardId) {
+        const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
+      }
+      // console.log(webhookAction?.action?.idMemberCreator);
+      // const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
+      // console.log(userCreator);
+      // await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
     } catch (error) {
       console.log(error);
       // return { status: 'error', message: 'Failed to send message to Telegram' };
+    }
+  }
+
+  async handleTrelloCardAction(webhook: Webhook, cardId: string, trelloToken: string): Promise<any> {
+    const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${trelloToken}`;
+
+    
+
+    try {
+      const response = await axios.get(url);
+
+      console.log(response);
+    } catch (error) {
+      
     }
   }
 

@@ -49,6 +49,7 @@ export class UsersRepository {
       .findOneAndUpdate({ id }, { $set: updateData }, { new: true, lean: true })
       .exec();
 
+    delete updatedUser.password;
     return updatedUser;
   }
 
