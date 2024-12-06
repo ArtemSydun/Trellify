@@ -8,7 +8,6 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 @Module({
   imports: [
-    ConfigModule,
     NodeMailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

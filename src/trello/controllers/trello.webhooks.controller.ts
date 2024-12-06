@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put, HttpStatus, Patch } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -9,10 +9,12 @@ import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UpdateWebhookDto } from '../dto/update-webhook.dto';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
-  constructor(private readonly trelloService: TrelloService) { }
+  constructor(private readonly trelloService: TrelloService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -56,29 +58,31 @@ export class TrelloWebhooksController {
     return this.trelloService.findMemberWebhooks(req.user.userId);
   }
 
-  @Get(':userId')
+  @Get(':boardId')
   @ApiExcludeEndpoint()
   handleWebhookCreation(
-    @Param('userId') userId: string,
+    @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    console.log(`Created webhook for: ${userId}`, payload);
+    console.log(`Created webhook for: ${boardId}`, payload);
 
     return { status: 'success' };
   }
 
-  @Post(':userId')
+  @Post(':boardId')
   @ApiExcludeEndpoint()
-  handleWebhook(
-    @Param('userId') userId: string,
+  async handleWebhook(
+    @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    console.log(`Received webhook action for userId: ${userId}`, JSON.stringify(payload, null, 2));
+    // console.log(`Received webhook action for boardId: ${boardId}`, JSON.stringify(payload, null, 2));
+
+    await this.trelloService.handleTrelloWebhook(payload);
 
     return { status: 'success' };
   }
 
-  @Put(':id')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
@@ -102,7 +106,7 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: Webhook, @Req() req): Promise<DefaultResponse<Webhook>> {
+  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Req() req): Promise<DefaultResponse<Webhook>> {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 

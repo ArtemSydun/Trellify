@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { NotificationType } from 'src/common/enums/trello.actions';
 import { Schema as MongooseSchema } from 'mongoose';
 import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
 

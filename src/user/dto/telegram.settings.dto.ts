@@ -14,10 +14,10 @@ export class TelegramSettings {
 
     @ApiProperty({
         description: 'Telegram chat ID of the user',
-        example: '1234567890',
+        example: 1234567890,
         required: false,
     })
     @Optional()
     @Prop({ required: false })
-    chatId?: string;
+    chatId?: number;
 }
