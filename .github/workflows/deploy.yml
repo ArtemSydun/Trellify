@@ -31,9 +31,8 @@ jobs:
           port: 22
           script: |
             cd ${{ secrets.SERVER_PROJECT_PATH }}
-            git checkout staging
-            git pull origin staging
+            git pull
             cd ..
-            docker-compose build backend
-            docker-compose up -d backend
+            docker compose build backend
+            docker compose up -d backend
 
