@@ -1,6 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TrelloService } from './services/trello.service';
-import { UserModule } from 'src/user/user.module';
+import { UsersModule } from 'src/user/users.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { TrelloMembersController } from './controllers/trello.members.controller';
 import { TrelloWebhooksController } from './controllers/trello.webhooks.controller';
@@ -10,7 +10,7 @@ import { TrelloWebhookRepository } from './repositories/webhook.repository';
 
 @Module({
   imports: [
-    forwardRef(() => UserModule),
+    forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
 

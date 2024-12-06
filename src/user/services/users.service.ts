@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserRepository } from '../repositories/user.repository';
+import { UsersRepository } from '../repositories/users.repository';
 import { randomUUID } from 'crypto';
 import { User } from '../entities/user.entity';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
@@ -19,11 +19,12 @@ import { JwtService } from '@nestjs/jwt';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
+import { UserSearchPath } from '../interfaces/query.enum';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   private readonly encryptionKey: string;
-  constructor(private readonly userRepository: UserRepository,
+  constructor(private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -60,7 +61,44 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with id ${id} not found`);
 
-    return user;
+    const userWithoutPass = {
+      ...user,
+    }
+
+    delete userWithoutPass.password
+
+    return userWithoutPass;
+  }
+
+  public async findUserProfile(id: string): Promise<User> {
+    const user = await this.userRepository.findOneById(id);
+
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    const userWithoutSensitiveData = {
+      ...user,
+      password: 'hidden',
+      trello: {
+        ...user.trello,
+        token: 'hidden',
+        userId: 'hidden',
+      },
+      telegram: {
+        ...user.telegram,
+        username: 'hidden',
+        chatId: 0,
+      },
+    };
+
+    return userWithoutSensitiveData;
+  }
+
+  public async findUserByTrelloId(trelloUserId: string): Promise<User> {
+    const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
+
+    if (!userByTrelloId) throw new NotFoundException(`User with TrelloId ${trelloUserId} not found`);
+
+    return userByTrelloId;
   }
 
   public async findUserByEmail(email: string): Promise<User> {
@@ -77,7 +115,7 @@ export class UserService {
   }
 
   public async updateUserById(userId: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
-    if (reqUser?.role !== UserRoles.admin) {
+    if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
 
@@ -113,7 +151,9 @@ export class UserService {
     }
 
     const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
-
+    
+    delete updatedUser.password;
+  
     return {
       message: `User ${userId} updated successfully`,
       statusCode: HttpStatus.OK,
@@ -179,5 +219,32 @@ export class UserService {
 
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
     return this.userRepository.findUsersConnectedToWebhook(webhookId);
+  }
+
+  public async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
+    const user = await this.userRepository.findUserByNestedProperty(path, value);
+
+    if (!user) {
+      throw new NotFoundException(`User with property ${path}: ${value} not found`);
+    }
+
+    delete user.password;
+
+    return user;
+  }
+
+  public async connectUserTelegram(userId: string, chatId: number, username: string): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.findUserById(userId);
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, { telegram: { 
+      chatId,
+      username,
+    }})
+
+    return {
+      message: `Telegram ${username} connected successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser
+    }
   }
 }

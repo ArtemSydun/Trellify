@@ -1,1 +1,0 @@
-export const trelloApiLink = 'https://api.trello.com/1';

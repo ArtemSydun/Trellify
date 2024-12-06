@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
+import { Schema as MongooseSchema } from 'mongoose';
+import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
 
 @Schema({ timestamps: true, collection: 'trello_webhooks' })
 export class Webhook {
@@ -19,14 +21,14 @@ export class Webhook {
 
     @ApiProperty({
         description: 'Unique identifier for the Trello model associated with the webhook, e.g., a board or a list.',
-        example: '673ef22130ed24174d378374',
+        example: '1111122130ed24174d378374',
     })
     @Prop({ required: true })
     idModel: string;
 
     @ApiProperty({
         description: 'Callback URL that Trello will send events to when they occur on the associated model.',
-        example: 'https://2f51-185-208-231-18.ngrok-free.app/trello/webhook/e3ea1236-1ee7-4bba-bc5e-20334a4ed7b4',
+        example: 'https://api-link/trello/webhook/e3ea1236-1ee7-4bba-bc5e-20334a4ed7b4',
     })
     @Prop({ required: true })
     callbackURL: string;
@@ -73,6 +75,14 @@ export class Webhook {
     })
     @Prop({ type: [String], required: true })
     subscribers: string[];
+
+    @ApiProperty({
+        description: 'Notifications for various events with user IDs for each event.',
+        type: Object,
+        example: initializeNotificationArrays('userId')
+    })
+    @Prop({ type: MongooseSchema.Types.Mixed, required: false })
+    notifications: Record<string, string[]>;
 }
 
 export const WebhookSchema = SchemaFactory.createForClass(Webhook);
