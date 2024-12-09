@@ -28,9 +28,9 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   //should be admin only routes
-  @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Get()
   @ApiOkResponse({
     description: 'All users list',
     type: [User]
@@ -63,9 +63,9 @@ export class UsersController {
     },
   })
 
+  @Get('telegram')
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  @Get('telegram')
   handleTelegramQuery(
     @Req() req,
     @Query('chatId') chatId: string,

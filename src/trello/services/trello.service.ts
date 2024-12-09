@@ -222,9 +222,10 @@ export class TrelloService {
     }
   }
 
-  async removeTrelloWebhook(userId: string, webhookId: string): Promise<DefaultResponse<null>> {
-    const user = await this.userService.findUserById(userId);
-
+  async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
+    const webhookToDelete = await this.findWebhookById(webhookId);
+    
+    const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
     const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
 
     const updatePromises = usersConnectedToWebhook.map(async (user) => {
@@ -242,10 +243,8 @@ export class TrelloService {
 
     await Promise.all(updatePromises);
 
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
     try {
-      await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
+      await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${webhookAuthorToken}`);
 
       await this.trelloWebhookRepository.delete(webhookId);
 

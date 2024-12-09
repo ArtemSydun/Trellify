@@ -82,8 +82,8 @@ export class TrelloWebhooksController {
     return { status: 'success' };
   }
 
-  @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @Patch(':id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook updated successfully',
@@ -110,9 +110,9 @@ export class TrelloWebhooksController {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
-  @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
+  @Delete('delete/:id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook disconnected and deleted from all users',
@@ -131,8 +131,8 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.trelloService.removeTrelloWebhook(req.user.userId, webhookId);
+  removeWebhookById(@Param('id') webhookId: string): Promise<DefaultResponse<null>> {
+    return this.trelloService.removeTrelloWebhook(webhookId);
   }
 
   @Post('disconnect/:webhookId')
