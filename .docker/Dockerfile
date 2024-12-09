@@ -1,7 +1,7 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
-COPY package*.json tsconfig.json ./
+COPY package.json .
 RUN npm install
 COPY . .
 RUN npm run build
@@ -9,7 +9,7 @@ RUN npm run build
 FROM node:20-alpine AS prod
 
 WORKDIR /app
-COPY package*.json tsconfig.json ./
+COPY package.json  .
 RUN npm install
 COPY --from=build /app/dist  ./dist
 EXPOSE 3000
