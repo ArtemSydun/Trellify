@@ -71,7 +71,6 @@ export class UsersController {
     @Query('chatId') chatId: string,
     @Query('username') username: string,
   ) {
-    console.log(req.user.userId);
     return this.usersService.connectUserTelegram(req.user.userId, parseInt(chatId), username);
   }
 

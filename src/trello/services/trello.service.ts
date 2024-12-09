@@ -157,6 +157,9 @@ export class TrelloService {
     try {
       if (cardId) {
         const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
+        const response = await axios.get(url);
+
+        console.log('card data', response?.data?.idMembers);
       }
       console.log(webhookAction?.action?.idMemberCreator);
       const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
