@@ -28,6 +28,15 @@ export class AuthService {
     private readonly mailService: MailerService,
   ) { }
 
+  private verifyToken(token: string): any {
+    try {
+      const decoded = this.jwtService.verify(token);
+      return decoded;
+    } catch (err) {
+      throw new BadRequestException('Your token is not valid or expired');
+    }
+  }
+
   public async login(
     loginUserDto: LoginUserDto,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
@@ -56,7 +65,7 @@ export class AuthService {
   public async confirmRegistration(
     token: string,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.jwtService.verify(token);
+    const decoded = this.verifyToken(token);
 
     const { email, password, ...userData } = decoded;
 
@@ -97,8 +106,8 @@ export class AuthService {
     if (newPassword !== repeatPassword)
       throw new BadRequestException(`Password and repeat password does not match`);
 
-    const { id } = this.jwtService.verify(token);
-    await this.userService.resetPassword(id, newPassword);
+    const { sub } = this.verifyToken(token);
+    await this.userService.resetPassword(sub, newPassword);
 
     return {
       message: 'Password changed successfully',
