@@ -62,10 +62,7 @@ export class TrelloWebhooksController {
   @ApiExcludeEndpoint()
   handleWebhookCreation(
     @Param('boardId') boardId: string,
-    @Body() payload: any
   ) {
-    console.log(`Created webhook for: ${boardId}`, payload);
-
     return { status: 'success' };
   }
 
@@ -75,8 +72,6 @@ export class TrelloWebhooksController {
     @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    // console.log(`Received webhook action for boardId: ${boardId}`, JSON.stringify(payload, null, 2));
-
     await this.trelloService.handleTrelloWebhook(payload);
 
     return { status: 'success' };

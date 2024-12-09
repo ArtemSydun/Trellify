@@ -1,3 +1,5 @@
+import { Context, Telegraf } from "telegraf";
+
 export const validateText = (text: string): boolean => {
     let result = false;
   
@@ -41,3 +43,9 @@ export const validateText = (text: string): boolean => {
     return result;
   };
   
+  export const sendMessageToUser = async (bot: Telegraf<Context>, user: any, action: string) => {
+    if (user.telegram.chatId) {
+      await bot.telegram.sendMessage(user.telegram.chatId,
+        `Hello! Action ${action} happened on Trello card.`);
+    }
+  };
