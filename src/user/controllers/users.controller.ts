@@ -11,13 +11,12 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { ApiCustomConflictResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import { ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -28,9 +27,9 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   //should be admin only routes
-  @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Get()
   @ApiOkResponse({
     description: 'All users list',
     type: [User]
@@ -63,15 +62,14 @@ export class UsersController {
     },
   })
 
+  @Get('telegram')
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  @Get('telegram')
   handleTelegramQuery(
     @Req() req,
     @Query('chatId') chatId: string,
     @Query('username') username: string,
   ) {
-    console.log(req.user.userId);
     return this.usersService.connectUserTelegram(req.user.userId, parseInt(chatId), username);
   }
 
@@ -90,27 +88,7 @@ export class UsersController {
     return this.usersService.findUserById(id);
   }
 
-  @Post()
-  @ApiOkResponse({
-    description: 'Confirmation link sent',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Confirmation link sent to your email mail@mail.com',
-        },
-        statusCode: {
-          type: 'number',
-          example: HttpStatus.OK
-        },
-      },
-    },
-  })
-  @ApiCustomConflictResponse('User', 'email')
-  create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    return this.usersService.initiateUserRegistration(createUserDto);
-  }
+
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)

@@ -62,10 +62,7 @@ export class TrelloWebhooksController {
   @ApiExcludeEndpoint()
   handleWebhookCreation(
     @Param('boardId') boardId: string,
-    @Body() payload: any
   ) {
-    console.log(`Created webhook for: ${boardId}`, payload);
-
     return { status: 'success' };
   }
 
@@ -75,15 +72,13 @@ export class TrelloWebhooksController {
     @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    // console.log(`Received webhook action for boardId: ${boardId}`, JSON.stringify(payload, null, 2));
-
     await this.trelloService.handleTrelloWebhook(payload);
 
     return { status: 'success' };
   }
 
-  @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @Patch(':id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook updated successfully',
@@ -110,9 +105,9 @@ export class TrelloWebhooksController {
     return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
-  @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
+  @Delete('delete/:id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook disconnected and deleted from all users',
@@ -131,8 +126,8 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.trelloService.removeTrelloWebhook(req.user.userId, webhookId);
+  removeWebhookById(@Param('id') webhookId: string): Promise<DefaultResponse<null>> {
+    return this.trelloService.removeTrelloWebhook(webhookId);
   }
 
   @Post('disconnect/:webhookId')

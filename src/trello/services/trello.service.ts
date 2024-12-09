@@ -13,6 +13,9 @@ import { initializeUserNotificationState, updateWebhookNotifications, initialize
 import { InjectBot } from 'nestjs-telegraf';
 import { Context, Telegraf } from 'telegraf';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
+import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions';
+import { toCamelCase } from 'src/common/helpers/camelCase';
+import { sendMessageToUser } from 'src/common/helpers/telegram';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -147,38 +150,68 @@ export class TrelloService {
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
     console.log(JSON.stringify(webhookAction, null, 2));
+
     const cardId = webhookAction?.action?.data?.card?.id;
     const webhook = await this.trelloWebhookRepository.findOneById(webhookAction?.webhook?.id);
-    const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
-    // const action = webhookAction?.action?.type
-    // switch(action){
-    //   case: 
-    // }
-    try {
-      if (cardId) {
-        const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
-      }
-      // console.log(webhookAction?.action?.idMemberCreator);
-      // const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
-      // console.log(userCreator);
-      // await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
-    } catch (error) {
-      console.log(error);
-      // return { status: 'error', message: 'Failed to send message to Telegram' };
+    const action = webhookAction?.action?.display?.translationKey;
+    const targetMember = webhookAction?.action?.member;
+
+    let enumKey = null;
+
+    if (Object.values(TrelloWebhookDetailedActions).includes(action)) {
+      enumKey = toCamelCase(Object.keys(TrelloWebhookDetailedActions)
+        .find(key => TrelloWebhookDetailedActions[key] === action), '_');
     }
-  }
 
-  async handleTrelloCardAction(webhook: Webhook, cardId: string, trelloToken: string): Promise<any> {
-    const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${trelloToken}`;
+    const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
 
-    
+    if (subscribedMembers.length === 0) {
+      console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
+      return;
+    }
 
-    try {
-      const response = await axios.get(url);
+    if (targetMember) {
+      try {
+        const targetUser = await this.userService.findUserByTrelloId(targetMember.id);
+        await sendMessageToUser(this.bot, targetUser, action);
+        return;
+      } catch (err) {
+        console.error(`Error fetching user data for target member ${targetMember.id}:`, err);
+      }
+    }
 
-      console.log(response);
-    } catch (error) {
-      
+    // If cardId is available and we have subscribed members, process card members
+    if (cardId && subscribedMembers.length !== 0) {
+      const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
+      const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
+
+      let cardMembers: string[] = [];
+      try {
+        const response = await axios.get(url);
+        cardMembers = response?.data?.idMembers || [];
+      } catch (err) {
+        console.error('Error fetching card data:', err);
+      }
+
+      console.log('Card members:', cardMembers);
+
+      const membersToNotify = cardMembers.filter(memberId =>
+        subscribedMembers.includes(memberId));
+
+      const userPromises = membersToNotify.map(async (memberId) => {
+        try {
+          const user = await this.userService.findUserByTrelloId(memberId);
+          await sendMessageToUser(this.bot, user, action);
+        } catch (err) {
+          console.error(`Error fetching user data for member ${memberId}:`, err);
+        }
+      });
+
+      try {
+        await Promise.all(userPromises);
+      } catch (err) {
+        console.error('Error sending messages:', err);
+      }
     }
   }
 
@@ -222,9 +255,10 @@ export class TrelloService {
     }
   }
 
-  async removeTrelloWebhook(userId: string, webhookId: string): Promise<DefaultResponse<null>> {
-    const user = await this.userService.findUserById(userId);
+  async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
+    const webhookToDelete = await this.findWebhookById(webhookId);
 
+    const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
     const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
 
     const updatePromises = usersConnectedToWebhook.map(async (user) => {
@@ -242,10 +276,8 @@ export class TrelloService {
 
     await Promise.all(updatePromises);
 
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
-
     try {
-      await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
+      await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${webhookAuthorToken}`);
 
       await this.trelloWebhookRepository.delete(webhookId);
 
