@@ -97,7 +97,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
-  @Post('reset-password')
+  @Post('reset-password/:token')
   @ApiOkResponse({
     description: 'Password changed successfully',
     schema: {
@@ -118,11 +118,10 @@ export class AuthController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomBadRequestResponse('Invalid token', 'Your token is not valid or expired')
   public resetPassword(
-    @Headers('authorization') token: string,
+    @Param('token') token: string,
     @Body() resetPasswordDto: ResetPasswordDto
   ): Promise<DefaultResponse<null>> {
-    const cleanToken = token?.startsWith('Bearer ') ? token.split(' ')[1] : token;
-    return this.authService.resetPassword(cleanToken, resetPasswordDto);
+    return this.authService.resetPassword(token, resetPasswordDto);
   }
 
   @Get('confirm/:token')

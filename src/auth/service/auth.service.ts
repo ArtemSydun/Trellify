@@ -15,7 +15,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { verifyPassword, generateRandomPassword } from 'src/common/helpers/hashing';
+import { verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 
