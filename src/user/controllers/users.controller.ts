@@ -90,27 +90,7 @@ export class UsersController {
     return this.usersService.findUserById(id);
   }
 
-  @Post()
-  @ApiOkResponse({
-    description: 'Confirmation link sent',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Confirmation link sent to your email mail@mail.com',
-        },
-        statusCode: {
-          type: 'number',
-          example: HttpStatus.OK
-        },
-      },
-    },
-  })
-  @ApiCustomConflictResponse('User', 'email')
-  create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    return this.usersService.initiateUserRegistration(createUserDto);
-  }
+
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)

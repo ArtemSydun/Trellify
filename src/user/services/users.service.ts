@@ -198,7 +198,7 @@ export class UsersService {
 
     const confirmationLink = this.mailerService.getLink(
       this.configService.get(configServiceEnum.BACKEND_LINK),
-      `auth/confirm?token=${token}`,
+      `auth/confirm/${token}`,
       'Confirm your email',
     );
 

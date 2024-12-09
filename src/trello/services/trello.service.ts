@@ -158,10 +158,10 @@ export class TrelloService {
       if (cardId) {
         const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
       }
-      // console.log(webhookAction?.action?.idMemberCreator);
-      // const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
-      // console.log(userCreator);
-      // await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
+      console.log(webhookAction?.action?.idMemberCreator);
+      const userCreator = await this.userService.findUserByTrelloId(webhookAction?.action?.idMemberCreator);
+      console.log(userCreator);
+      await this.bot.telegram.sendMessage(userCreator.telegram.chatId, `Hello. Action ${webhookAction?.action?.display?.translationKey} happened`);
     } catch (error) {
       console.log(error);
       // return { status: 'error', message: 'Failed to send message to Telegram' };
