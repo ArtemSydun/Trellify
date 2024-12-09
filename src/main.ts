@@ -12,6 +12,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
+  app.enableCors({
+    origin: '*',  // Allow all origins, only for testing purposes, change later
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Trello notification bot')
     .setDescription('Trello bot description')
@@ -25,6 +29,7 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
 
+  
   const BACKEND_PORT = configService.get(configServiceEnum.BACKEND_PORT) || 3005;
   await app.listen(BACKEND_PORT);
   logger.log(`Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`);
