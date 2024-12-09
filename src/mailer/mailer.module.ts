@@ -17,7 +17,7 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
           tls: {
             rejectUnauthorized: false,
           },
-          secure: true,
+          secure: false,
           auth: {
             user: configService.get<string>(configServiceEnum.MAILER_SENDER),
             pass: configService.get<string>(configServiceEnum.MAILER_PASSWORD),
