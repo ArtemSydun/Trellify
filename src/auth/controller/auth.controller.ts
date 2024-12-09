@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 
 import { AuthService } from '../service/auth.service';
 import { LoginUserDto, LoginUserResponseDto } from '../dto/login.dto';
 import { User } from 'src/user/entities/user.entity';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import { ApiBadRequestResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { Errors } from 'src/common/enums/errors.enum';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UsersService } from 'src/user/services/users.service';
@@ -97,8 +97,7 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('reset-password')
+  @Post('reset-password')
   @ApiOkResponse({
     description: 'Password changed successfully',
     schema: {
@@ -117,11 +116,13 @@ export class AuthController {
   })
   @ApiCustomNotFoundResponse('User', 'id')
   @ApiCustomUnathorizedResponse()
+  @ApiCustomBadRequestResponse('Invalid token', 'Your token is not valid or expired')
   public resetPassword(
-    @Param('token') token: string,
+    @Headers('authorization') token: string,
     @Body() resetPasswordDto: ResetPasswordDto
   ): Promise<DefaultResponse<null>> {
-    return this.authService.resetPassword(token, resetPasswordDto);
+    const cleanToken = token?.startsWith('Bearer ') ? token.split(' ')[1] : token;
+    return this.authService.resetPassword(cleanToken, resetPasswordDto);
   }
 
   @Get('confirm/:token')
