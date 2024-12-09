@@ -52,7 +52,6 @@ export class TelegramController {
 
     try {
       const user: User = await this.userService.findUserByProperty(UserSearchPath.TelegramChatId, chatId);
-      console.log('user', user);
 
     } catch (err) {
 

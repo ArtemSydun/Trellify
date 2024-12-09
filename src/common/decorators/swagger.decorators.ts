@@ -95,6 +95,31 @@ export function ApiCustomUnathorizedResponse() {
         })
     );
 }
+export function ApiCustomBadRequestResponse(description: string, message: string) {
+    return applyDecorators(
+        ApiResponse({
+            status: HttpStatus.BAD_REQUEST,
+            description,
+            schema: {
+                type: 'object',
+                properties: {
+                    message: {
+                        type: 'string',
+                        example: message,
+                    },
+                    error: {
+                        type: 'string',
+                        example: Errors.UNATHORIZED
+                    },
+                    statusCode: {
+                        type: 'number',
+                        example: HttpStatus.UNAUTHORIZED,
+                    },
+                },
+            },
+        })
+    );
+}
 
 export function ApiCustomForbiddenResponse() {
     const messageTemplate = `Forbidden resource`;
@@ -112,11 +137,11 @@ export function ApiCustomForbiddenResponse() {
                     },
                     error: {
                         type: 'string',
-                        example: Errors.FORBIDDEN
+                        example: Errors.BAD_REQUEST
                     },
                     statusCode: {
                         type: 'number',
-                        example: HttpStatus.FORBIDDEN,
+                        example: HttpStatus.BAD_REQUEST,
                     },
                 },
             },
