@@ -55,11 +55,16 @@ export class UsersService {
     return await this.userRepository.create(newUser);
   }
 
-  // public async deleteUser(userId: string): Promise<DefaultResponse<string>> {
+  public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
+    await this.trelloService.disconnectFromAllTrelloWebhooks(userId);
 
-
-
-  // }
+    await this.userRepository.delete(userId);
+    
+    return {
+      message: `User ${userId} was delete successfully`,
+      statusCode: HttpStatus.OK,
+    }
+  }
 
   public async findAll(): Promise<User[]> {
     return await this.userRepository.getAll();
@@ -288,5 +293,4 @@ export class UsersService {
       }
     }
   }
-
 }

@@ -274,60 +274,61 @@ export class TrelloService {
 
   async disconnectFromAllTrelloWebhooks(userId: string): Promise<DefaultResponse<string>> {
     const userToDelete = await this.userService.findUserById(userId);
-
+  
     if (!userToDelete?.trello?.webhooks || userToDelete.trello.webhooks.length === 0) {
       throw new NotFoundException(`No webhooks found for user ${userId}`);
     }
-
+  
     const webhooksToClear = userToDelete.trello.webhooks;
-
-    const webhookUpdatePromises = webhooksToClear.map(async (webhookId) => {
-      const webhookToUpdate = await this.findWebhookById(webhookId);
-
-      if (!webhookToUpdate) {
-        throw new NotFoundException(`Webhook ${webhookId} not found`);
-      }
-
-      const updatedWebhookSubscribers = {
-        subscribers: webhookToUpdate.subscribers
-          ? webhookToUpdate.subscribers.filter(subscriberId => subscriberId !== userToDelete.trello.userId)
-          : []
+  
+    const bulkUpdateOperations = webhooksToClear.map(webhookId => {
+      return {
+        updateOne: {
+          filter: { id: webhookId },
+          update: {
+            $pull: { 'subscribers': userToDelete.trello.userId },
+  
+            $set: {
+              'notifications': Object.keys(userToDelete.trello.notifications || {}).reduce((acc, key) => {
+                // For each notification key, filter out the userId from the corresponding array
+                acc[key] = (userToDelete.trello.notifications[key] || []).filter(id => id !== userToDelete.trello.userId);
+                return acc;
+              }, {} as { [key: string]: string[] }),  // Set the filtered notifications object
+            },
+          },
+        },
       };
-
-      const notificationsBooleans = Object.keys(webhookToUpdate.notifications).reduce((acc, key) => {
-        acc[key] = false;
-        return acc;
-      }, {} as { [key: string]: boolean });
-
-      const updatedNotifications = updateWebhookNotifications(userToDelete.trello.userId, webhookToUpdate.notifications, notificationsBooleans);
-
-      await this.trelloWebhookRepository.updateById(webhookId, {
-        ...updatedWebhookSubscribers,
-        notifications: updatedNotifications
-      });
     });
-
-    await Promise.all(webhookUpdatePromises);
-
-    const updatedUser = {
-      trello: {
-        webhooks: []
+  
+    try {
+      if (bulkUpdateOperations.length > 0) {
+        await this.trelloWebhookRepository.bulkUpdateWebhooks(bulkUpdateOperations);
       }
-    };
-
-    await this.userService.updateUserById(userId, updatedUser);
-
-    return {
-      message: `User ${userId} disconnected from all Trello webhooks successfully`,
-      statusCode: HttpStatus.OK,
-    };
+  
+      const updatedUser = {
+        trello: {
+          webhooks: [],
+        },
+      };
+  
+      await this.userService.updateUserById(userId, updatedUser);
+  
+      return {
+        message: `User ${userId} disconnected from all Trello webhooks successfully`,
+        statusCode: HttpStatus.OK,
+      };
+  
+    } catch (err) {
+      console.error('Error during bulk update of webhooks:', err);
+      throw new BadRequestException('Error disconnecting from all Trello webhooks');
+    }
   }
-
+  
   async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
     const webhookToDelete = await this.findWebhookById(webhookId);
 
     const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
-        
+
     try {      
       await this.userService.removeWebhookFromAllUsers(webhookToDelete.id);
 
@@ -344,7 +345,6 @@ export class TrelloService {
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }
-
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
