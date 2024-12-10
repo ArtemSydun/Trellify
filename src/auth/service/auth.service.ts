@@ -106,8 +106,9 @@ export class AuthService {
     if (newPassword !== repeatPassword)
       throw new BadRequestException(`Password and repeat password does not match`);
 
-    const { sub } = this.verifyToken(token);
-    await this.userService.resetPassword(sub, newPassword);
+    const { id } = this.verifyToken(token);
+
+    await this.userService.resetPassword(id, newPassword);
 
     return {
       message: 'Password changed successfully',

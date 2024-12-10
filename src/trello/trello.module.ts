@@ -7,6 +7,7 @@ import { TrelloWebhooksController } from './controllers/trello.webhooks.controll
 import { MongooseModule } from '@nestjs/mongoose';
 import { Webhook, WebhookSchema } from './entities/webhook.entity';
 import { TrelloWebhookRepository } from './repositories/webhook.repository';
+import { ActionsService } from './services/actions.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { TrelloWebhookRepository } from './repositories/webhook.repository';
 
   ],
   controllers: [TrelloMembersController, TrelloWebhooksController],
-  providers: [TrelloService, TrelloWebhookRepository],
-  exports: [TrelloService, TrelloWebhookRepository]
+  providers: [TrelloService, TrelloWebhookRepository, ActionsService],
+  exports: [TrelloService, TrelloWebhookRepository, ActionsService]
 })
 export class TrelloModule { }
