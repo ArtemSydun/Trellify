@@ -281,24 +281,28 @@ export class TrelloService {
   
     const webhooksToClear = userToDelete.trello.webhooks;
   
-    const bulkUpdateOperations = webhooksToClear.map(webhookId => {
+    //we create array of mongo operations to call them later in one request 
+    const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
+      const updateObject: any = {
+        $pull: { 'subscribers': userToDelete.trello.userId },
+      };
+  
+      const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
+  
+      //remove userId from all notifications in each webhook.notifications object
+      if (webhook && webhook.notifications) {
+        Object.keys(webhook.notifications).forEach(notificationType => {
+          updateObject.$pull[`notifications.${notificationType}`] = userToDelete.trello.userId;
+        });
+      }
+  
       return {
         updateOne: {
           filter: { id: webhookId },
-          update: {
-            $pull: { 'subscribers': userToDelete.trello.userId },
-  
-            $set: {
-              'notifications': Object.keys(userToDelete.trello.notifications || {}).reduce((acc, key) => {
-                // For each notification key, filter out the userId from the corresponding array
-                acc[key] = (userToDelete.trello.notifications[key] || []).filter(id => id !== userToDelete.trello.userId);
-                return acc;
-              }, {} as { [key: string]: string[] }),  // Set the filtered notifications object
-            },
-          },
+          update: updateObject,
         },
       };
-    });
+    }));
   
     try {
       if (bulkUpdateOperations.length > 0) {
@@ -324,12 +328,14 @@ export class TrelloService {
     }
   }
   
+
+
   async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
     const webhookToDelete = await this.findWebhookById(webhookId);
 
     const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
 
-    try {      
+    try {
       await this.userService.removeWebhookFromAllUsers(webhookToDelete.id);
 
       await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${webhookAuthorToken}`);

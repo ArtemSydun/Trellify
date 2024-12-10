@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put, HttpStatus, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, HttpStatus, Patch } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';

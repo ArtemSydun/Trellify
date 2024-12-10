@@ -20,8 +20,6 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
-import { updateWebhookNotifications } from 'src/common/helpers/trello-notifications';
-import { TrelloWebhookRepository } from 'src/trello/repositories/webhook.repository';
 
 @Injectable()
 export class UsersService {
@@ -32,7 +30,6 @@ export class UsersService {
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => TrelloService))
     private readonly trelloService: TrelloService,
-    private readonly trelloWebhookRepository: TrelloWebhookRepository
   ) {
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
   }

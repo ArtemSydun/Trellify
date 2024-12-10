@@ -1,14 +1,6 @@
 import { UsersService } from 'src/user/services/users.service';
-import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
-import { decryptText } from 'src/common/helpers/hashing';
-import axios from 'axios';
-import { TrelloWebhookRepository } from '../repositories/webhook.repository';
-import { trelloApiLink, actionsEnabledByDefault } from 'src/common/constants/trello';
-import { InjectBot } from 'nestjs-telegraf';
 import { Context, Telegraf } from 'telegraf';
 import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.enum';
-import { toCamelCase } from 'src/common/helpers/camelCase';
 import { sendMessageToUser } from 'src/common/helpers/telegram';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { TrelloService } from './trello.service';
@@ -21,20 +13,12 @@ import { TrelloService } from './trello.service';
 
 @Injectable()
 export class ActionsService {
-    private readonly webhookCallbackURL: string;
-    private readonly encryptionKey: string;
-    private readonly trelloApiKey: string;
     constructor(
-        @InjectBot() private readonly bot: Telegraf<Context>,
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
-        private readonly configService: ConfigService,
         @Inject(forwardRef(() => TrelloService))
         private readonly trelloService: TrelloService,
     ) {
-        this.webhookCallbackURL = this.configService.get(configServiceEnum.BACKEND_LINK) + `/trello/webhooks`;
-        this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
-        this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
     }
 
     async handleTargetAction(targetMember: any, bot: Telegraf<Context>, webhookAction: any) {
