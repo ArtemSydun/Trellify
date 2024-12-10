@@ -20,8 +20,6 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
-import { updateWebhookNotifications } from 'src/common/helpers/trello-notifications';
-import { TrelloWebhookRepository } from 'src/trello/repositories/webhook.repository';
 
 @Injectable()
 export class UsersService {
@@ -32,7 +30,6 @@ export class UsersService {
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => TrelloService))
     private readonly trelloService: TrelloService,
-    private readonly trelloWebhookRepository: TrelloWebhookRepository
   ) {
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
   }
@@ -55,11 +52,16 @@ export class UsersService {
     return await this.userRepository.create(newUser);
   }
 
-  // public async deleteUser(userId: string): Promise<DefaultResponse<string>> {
-    
+  public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
+    await this.trelloService.disconnectFromAllTrelloWebhooks(userId);
 
+    await this.userRepository.delete(userId);
     
-  // }
+    return {
+      message: `User ${userId} was delete successfully`,
+      statusCode: HttpStatus.OK,
+    }
+  }
 
   public async findAll(): Promise<User[]> {
     return await this.userRepository.getAll();
@@ -256,6 +258,36 @@ export class UsersService {
       message: `Telegram ${username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser
+    }
+  }
+
+  public async removeWebhookFromAllUsers(webhookId: string) {
+    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
+
+    const bulkUpdateOperations = usersConnectedToWebhook.map(user => {
+      return {
+        updateOne: {
+          filter: { id: user.id },
+          update: {
+            $pull: {
+              'trello.webhooks': webhookId,
+            },
+          },
+        },
+      };
+    });
+
+    try {
+      if (bulkUpdateOperations.length > 0) {
+        const result = await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
+        console.log('Bulk update result:', result);
+      }
+    } catch (err) {
+      console.error('Error during bulk update:', err.message || err);
+
+      if (err.name === 'BulkWriteError') {
+        console.error('Bulk write error:', err.writeErrors); 
+      }
     }
   }
 }

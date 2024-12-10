@@ -137,11 +137,11 @@ export function ApiCustomForbiddenResponse() {
                     },
                     error: {
                         type: 'string',
-                        example: Errors.BAD_REQUEST
+                        example: Errors.FORBIDDEN
                     },
                     statusCode: {
                         type: 'number',
-                        example: HttpStatus.BAD_REQUEST,
+                        example: HttpStatus.FORBIDDEN,
                     },
                 },
             },
