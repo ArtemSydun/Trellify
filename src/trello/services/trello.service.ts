@@ -13,9 +13,10 @@ import { initializeUserNotificationState, updateWebhookNotifications, initialize
 import { InjectBot } from 'nestjs-telegraf';
 import { Context, Telegraf } from 'telegraf';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
-import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions';
+import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { sendMessageToUser } from 'src/common/helpers/telegram';
+import { ActionsService } from './actions.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -33,6 +34,8 @@ export class TrelloService {
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => ActionsService))
+    private readonly actionsService: ActionsService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
   ) {
     this.webhookCallbackURL = this.configService.get(configServiceEnum.BACKEND_LINK) + `/trello/webhooks`;
@@ -128,20 +131,28 @@ export class TrelloService {
 
   async updateTrelloWebhook(userId: string, webhookId: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
     const user = await this.userService.findUserById(userId);
-
     const webhookToUpdate = await this.findWebhookById(webhookId);
-    const updatedNotifications = updateWebhookNotifications(user.trello.userId,
-      webhookToUpdate.notifications,
-      updateWebhookDto.notifications)
+
+    let updatedNotifications;
+    if (updateWebhookDto.notifications) {
+      updatedNotifications = updateWebhookNotifications(user.trello.userId,
+        webhookToUpdate.notifications,
+        updateWebhookDto.notifications);
+    } else {
+      updatedNotifications = webhookToUpdate.notifications;
+    }
 
     try {
-      const updatedWebhook = await this.trelloWebhookRepository.updateById(webhookId, { ...updateWebhookDto, notifications: updatedNotifications });
+      const updatedWebhook = await this.trelloWebhookRepository.updateById(webhookId, {
+        ...updateWebhookDto,
+        notifications: updatedNotifications
+      });
 
       return {
         message: `Webhook ${webhookId} updated successfully`,
         statusCode: HttpStatus.OK,
         data: updatedWebhook
-      }
+      };
     } catch (err) {
       console.error('Error updating webhook:', err.response ? err.response.data : err.message);
       throw new BadRequestException(err.response ? err.response.data : err.message);
@@ -156,8 +167,15 @@ export class TrelloService {
     const action = webhookAction?.action?.display?.translationKey;
     const targetMember = webhookAction?.action?.member;
 
+    if (!action || !webhook) {
+      console.log('Missing action or webhook data.');
+      return;
+    }
+
     let enumKey = null;
 
+    // check if enum value includes action we got from webhook and then 
+    // transform enum key CARD_CREATED for example into cardCreated (to match db structure)
     if (Object.values(TrelloWebhookDetailedActions).includes(action)) {
       enumKey = toCamelCase(Object.keys(TrelloWebhookDetailedActions)
         .find(key => TrelloWebhookDetailedActions[key] === action), '_');
@@ -165,22 +183,21 @@ export class TrelloService {
 
     const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
 
-    if (subscribedMembers.length === 0) {
-      console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
+    if (!subscribedMembers) {
+      console.log(`Action ${action} is not supported by this API`);
       return;
     }
 
+    if (subscribedMembers && subscribedMembers.length === 0) {
+      console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
+      return;
+    } 
+
     if (targetMember) {
-      try {
-        const targetUser = await this.userService.findUserByTrelloId(targetMember.id);
-        await sendMessageToUser(this.bot, targetUser, action);
-        return;
-      } catch (err) {
-        console.error(`Error fetching user data for target member ${targetMember.id}:`, err);
-      }
+      return await this.actionsService.handleTargetAction(targetMember, this.bot, webhookAction);
     }
 
-    // If cardId is available and we have subscribed members, process card members
+    // If cardId is available and we have subscribed members to this action, process card members
     if (cardId && subscribedMembers.length !== 0) {
       const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
       const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
@@ -254,6 +271,12 @@ export class TrelloService {
       statusCode: HttpStatus.OK,
     }
   }
+
+  // async disconnectFromAllTrelloWebhooks(userId: string, webhookId: string): Promise<DefaultResponse<string>> {
+  //   const userToDelete = await this.userService.findUserById(userId);
+
+  //   const webhooksToClear = userToDelete.trello?.webhooks;
+  // }
 
   async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
     const webhookToDelete = await this.findWebhookById(webhookId);
