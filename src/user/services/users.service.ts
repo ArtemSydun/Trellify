@@ -56,9 +56,9 @@ export class UsersService {
   }
 
   // public async deleteUser(userId: string): Promise<DefaultResponse<string>> {
-    
 
-    
+
+
   // }
 
   public async findAll(): Promise<User[]> {
@@ -258,4 +258,35 @@ export class UsersService {
       data: updatedUser
     }
   }
+
+  public async removeWebhookFromAllUsers(webhookId: string) {
+    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
+
+    const bulkUpdateOperations = usersConnectedToWebhook.map(user => {
+      return {
+        updateOne: {
+          filter: { id: user.id },
+          update: {
+            $pull: {
+              'trello.webhooks': webhookId,
+            },
+          },
+        },
+      };
+    });
+
+    try {
+      if (bulkUpdateOperations.length > 0) {
+        const result = await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
+        console.log('Bulk update result:', result);
+      }
+    } catch (err) {
+      console.error('Error during bulk update:', err.message || err);
+
+      if (err.name === 'BulkWriteError') {
+        console.error('Bulk write error:', err.writeErrors); 
+      }
+    }
+  }
+
 }

@@ -191,7 +191,7 @@ export class TrelloService {
     if (subscribedMembers && subscribedMembers.length === 0) {
       console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
       return;
-    } 
+    }
 
     if (targetMember) {
       return await this.actionsService.handleTargetAction(targetMember, this.bot, webhookAction);
@@ -272,34 +272,65 @@ export class TrelloService {
     }
   }
 
-  // async disconnectFromAllTrelloWebhooks(userId: string, webhookId: string): Promise<DefaultResponse<string>> {
-  //   const userToDelete = await this.userService.findUserById(userId);
+  async disconnectFromAllTrelloWebhooks(userId: string): Promise<DefaultResponse<string>> {
+    const userToDelete = await this.userService.findUserById(userId);
 
-  //   const webhooksToClear = userToDelete.trello?.webhooks;
-  // }
+    if (!userToDelete?.trello?.webhooks || userToDelete.trello.webhooks.length === 0) {
+      throw new NotFoundException(`No webhooks found for user ${userId}`);
+    }
+
+    const webhooksToClear = userToDelete.trello.webhooks;
+
+    const webhookUpdatePromises = webhooksToClear.map(async (webhookId) => {
+      const webhookToUpdate = await this.findWebhookById(webhookId);
+
+      if (!webhookToUpdate) {
+        throw new NotFoundException(`Webhook ${webhookId} not found`);
+      }
+
+      const updatedWebhookSubscribers = {
+        subscribers: webhookToUpdate.subscribers
+          ? webhookToUpdate.subscribers.filter(subscriberId => subscriberId !== userToDelete.trello.userId)
+          : []
+      };
+
+      const notificationsBooleans = Object.keys(webhookToUpdate.notifications).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {} as { [key: string]: boolean });
+
+      const updatedNotifications = updateWebhookNotifications(userToDelete.trello.userId, webhookToUpdate.notifications, notificationsBooleans);
+
+      await this.trelloWebhookRepository.updateById(webhookId, {
+        ...updatedWebhookSubscribers,
+        notifications: updatedNotifications
+      });
+    });
+
+    await Promise.all(webhookUpdatePromises);
+
+    const updatedUser = {
+      trello: {
+        webhooks: []
+      }
+    };
+
+    await this.userService.updateUserById(userId, updatedUser);
+
+    return {
+      message: `User ${userId} disconnected from all Trello webhooks successfully`,
+      statusCode: HttpStatus.OK,
+    };
+  }
 
   async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
     const webhookToDelete = await this.findWebhookById(webhookId);
 
     const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
-    const usersConnectedToWebhook = await this.userService.findUsersConnectedToWebhook(webhookId);
+        
+    try {      
+      await this.userService.removeWebhookFromAllUsers(webhookToDelete.id);
 
-    const updatePromises = usersConnectedToWebhook.map(async (user) => {
-      const updatedWebhooks = user.trello.webhooks.filter(userWebhook => userWebhook !== webhookId);
-      const updatedUser = {
-        telegram: user.telegram,
-        trello: {
-          ...user.trello,
-          webhooks: updatedWebhooks,
-        }
-      };
-
-      await this.userService.updateUserById(user.id, updatedUser);
-    });
-
-    await Promise.all(updatePromises);
-
-    try {
       await axios.delete(`${trelloApiLink}/webhooks/${webhookId}?key=${this.trelloApiKey}&token=${webhookAuthorToken}`);
 
       await this.trelloWebhookRepository.delete(webhookId);
@@ -313,6 +344,7 @@ export class TrelloService {
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }
+
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
