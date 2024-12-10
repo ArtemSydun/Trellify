@@ -9,6 +9,7 @@ import {
   Req,
   Get,
   Query,
+  Delete,
 } from '@nestjs/common';
 
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -88,7 +89,31 @@ export class UsersController {
     return this.usersService.findUserById(id);
   }
 
-
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @ApiOkResponse({
+    description: 'User deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User {{id}} deleted successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK
+        },
+      },
+    },
+  })
+  @ApiCustomForbiddenResponse()
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  @Delete(':id')
+  deleteUserById(@Param('id') id: string): Promise<DefaultResponse<string>> {
+    return this.usersService.deleteUserById(id);
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
