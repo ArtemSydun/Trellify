@@ -150,5 +150,4 @@ export class ActionsService {
             console.error('Error handling board action:', error);
         }
     }
-
 }
