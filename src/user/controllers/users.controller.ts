@@ -73,6 +73,17 @@ export class UsersController {
     return this.usersService.connectUserTelegram(req.user.userId, parseInt(chatId), username);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/profile')
+  @ApiOkResponse({
+    description: 'User profile',
+    type: [User]
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  getUserProfile(@Req() req): Promise<Partial<User>> {
+    return this.usersService.findUserProfile(req.user.userId);
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
@@ -112,18 +123,6 @@ export class UsersController {
   @ApiCustomNotFoundResponse('User', 'id')
   deleteUserById(@Param('id') id: string): Promise<DefaultResponse<string>> {
     return this.usersService.deleteUserById(id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('/profile')
-  @ApiOkResponse({
-    description: 'User profile',
-    type: [User]
-  })
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomNotFoundResponse('User', 'id')
-  getUserProfile(@Req() req): Promise<Partial<User>> {
-    return this.usersService.findUserProfile(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
