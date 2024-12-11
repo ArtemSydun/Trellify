@@ -53,7 +53,7 @@ export class MailerService {
     token: string,
   ): Promise<DefaultResponse<null>> {
     try {
-      const resetLink = `${this.configService.get(configServiceEnum.BACKEND_LINK)}/auth/reset-password/${token}`;
+      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/reset-password/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
