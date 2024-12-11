@@ -56,7 +56,7 @@ export class UsersService {
     await this.trelloService.disconnectFromAllTrelloWebhooks(userId);
 
     await this.userRepository.delete(userId);
-    
+
     return {
       message: `User ${userId} was delete successfully`,
       statusCode: HttpStatus.OK,
@@ -81,27 +81,18 @@ export class UsersService {
     return userWithoutPass;
   }
 
-  public async findUserProfile(id: string): Promise<User> {
-    const user = await this.userRepository.findOneById(id);
+  public async findUserProfile(userId: string): Promise<Partial<User>> {
+    const user = await this.userRepository.findOneById(userId);
 
-    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
-    const userWithoutSensitiveData = {
-      ...user,
-      password: 'hidden',
-      trello: {
-        ...user.trello,
-        token: 'hidden',
-        userId: 'hidden',
-      },
-      telegram: {
-        ...user.telegram,
-        username: 'hidden',
-        chatId: 0,
-      },
+    const { id, email, role, trello } = user;
+
+    return {
+      id, email, role, trello: {
+        userId: trello.userId || ''
+      }
     };
-
-    return userWithoutSensitiveData;
   }
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
@@ -286,7 +277,7 @@ export class UsersService {
       console.error('Error during bulk update:', err.message || err);
 
       if (err.name === 'BulkWriteError') {
-        console.error('Bulk write error:', err.writeErrors); 
+        console.error('Bulk write error:', err.writeErrors);
       }
     }
   }
