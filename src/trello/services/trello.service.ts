@@ -160,7 +160,7 @@ export class TrelloService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    console.log(JSON.stringify(webhookAction, null, 2));
+    // console.log(JSON.stringify(webhookAction, null, 2));
 
     const targetCard = webhookAction?.action?.data?.card;
     const targetBoard = webhookAction?.action?.data?.board;
@@ -170,8 +170,8 @@ export class TrelloService {
     const actionType = webhookAction?.action?.display?.translationKey;
     const targetMember = webhookAction?.action?.member;
 
-    console.log('target card: ', targetCard);
-    console.log('target board: ', targetBoard);
+    // console.log('target card: ', targetCard);
+    // console.log('target board: ', targetBoard);
 
     if (!actionType || !webhook) {
       console.log('Missing action or webhook data.');
@@ -226,15 +226,16 @@ export class TrelloService {
     }
 
     // Handle card actions (if targetCard is available)
-    if (targetCard && subscribedMembers.length !== 0) {
+    if (!targetMember && targetCard && subscribedMembers.length !== 0) {
       console.log(`Handling card ${actionType} action...`);
       console.log(targetCard);
 
       const cardData = await this.findCardById(authorizedToken, targetCard.id);
 
-      console.log('Card data:', cardData);
+      // console.log('Card data:', cardData);
 
       const cardMembers: string[] = cardData.idMembers || [];
+
       const membersToNotify = cardMembers.filter(memberId =>
         subscribedMembers.includes(memberId));
 
@@ -259,9 +260,9 @@ export class TrelloService {
         targetMember.id,
         this.bot,
         boardData,
-        targetCard ? await this.findCardById(authorizedToken, targetCard.id) : null,
         actionType,
-        webhook.id
+        webhook.id,
+        targetCard ? await this.findCardById(authorizedToken, targetCard.id) : null
       );
     }
   }
@@ -413,7 +414,6 @@ export class TrelloService {
   async findCardById(token: string, cardId: string): Promise<any> {
     const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${token}`;
 
-    console.log(url);
     const response = await axios.get(url);
     try {
       return response.data;

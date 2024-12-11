@@ -47,6 +47,9 @@ export const validateUserLastName = (userLastName: string): boolean => {
 export const sendMessageToUser = async (bot: Telegraf<Context>, user: User, message: string, html?: boolean) => {
   if (user.telegram.chatId) {
     const parseMode = html ? 'HTML' : 'Markdown';
+    console.log('before sending message');
+
     await bot.telegram.sendMessage(user.telegram.chatId, message, { parse_mode: parseMode });
+    console.log('after sending message');
   }
 };

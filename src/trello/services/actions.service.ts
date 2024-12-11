@@ -31,8 +31,11 @@ export class ActionsService {
     ) {
         try {
             const targetUser = await this.userService.findUserByTrelloId(userTrelloId);
-            const userInitials = targetUser.telegram?.username || targetUser.email;
-
+            const userInitials = targetUser.email;
+            
+            console.log('actionType: ', actionType);
+            console.log('targetUser: ', targetUser);
+            console.log('userInitials: ', userInitials);
             const targetActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
                     `${userInitials} you were deleted from card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}-${cardData?.name})`,
@@ -44,6 +47,7 @@ export class ActionsService {
 
             const message = targetActionMessages[actionType];
 
+            console.log('message: ', message);
             if (message) {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
                     await this.trelloService.disconnectFromTrelloWebhook(targetUser.id, webhookId);
@@ -53,7 +57,7 @@ export class ActionsService {
                 console.log(`Unsupported target action: ${actionType}`);
             }
         } catch (error) {
-            console.error('Error handling target action:', error);
+            console.error('Error handling target action:', error.message);
         }
     }
 
