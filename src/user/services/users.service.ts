@@ -70,28 +70,18 @@ export class UsersService {
     return userWithoutPass;
   }
 
-  public async findUserProfile(id: string): Promise<User> {
-    const user = await this.userRepository.findOneById(id);
+  public async findUserProfile(userId: string): Promise<Partial<User>> {
+    const user = await this.userRepository.findOneById(userId);
 
-    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    if (!user) throw new NotFoundException(`User with id ${userId} not found`);
 
-    const userWithoutSensitiveData = {
-      ...user,
-      password: 'hidden',
-      trello: {
-        ...user.trello,
-        token: 'hidden',
-        userId: 'hidden',
-      },
-      telegram: {
-        ...user.telegram,
-        username: 'hidden',
-        chatId: 0,
-      },
-    };
+    const { id, email, role, trello } = user;
 
-    return userWithoutSensitiveData;
+    return { id, email, role, trello: {
+      userId: trello.userId || ''
+    } };
   }
+
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
     const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
@@ -151,9 +141,9 @@ export class UsersService {
     }
 
     const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
-    
+
     delete updatedUser.password;
-  
+
     return {
       message: `User ${userId} updated successfully`,
       statusCode: HttpStatus.OK,
@@ -236,10 +226,12 @@ export class UsersService {
   public async connectUserTelegram(userId: string, chatId: number, username: string): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.findUserById(userId);
 
-    const updatedUser = await this.userRepository.updateById(userToUpdate.id, { telegram: { 
-      chatId,
-      username,
-    }})
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      telegram: {
+        chatId,
+        username,
+      }
+    })
 
     return {
       message: `Telegram ${username} connected successfully`,

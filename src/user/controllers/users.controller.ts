@@ -76,6 +76,18 @@ export class UsersController {
   }
 
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/profile')
+  @ApiOkResponse({
+    description: 'User profile',
+    type: [User]
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  getUserProfile(@Req() req): Promise<Partial<User>> {
+    return this.usersService.findUserProfile(req.user.userId);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Get(':id')
@@ -110,19 +122,6 @@ export class UsersController {
   @ApiCustomConflictResponse('User', 'email')
   create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
     return this.usersService.initiateUserRegistration(createUserDto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
-  @Get('/profile')
-  @ApiOkResponse({
-    description: 'User profile',
-    type: [User]
-  })
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomNotFoundResponse('User', 'id')
-  getUserProfile(@Req() req): Promise<User> {
-    return this.usersService.findUserProfile(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
