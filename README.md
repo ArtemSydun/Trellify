@@ -14,10 +14,11 @@
 | Env                           | Description                                                     |
 |-------------------------------|-----------------------------------------------------------------|
 | **App settings:**             |                                                                 |             
-| NODE_ENV                   | Specifies the environment: development, staging, or production. |
+| NODE_ENV                      | Specifies the environment: development, staging, or production. |
 | BACKEND_PORT                  | The port on which the backend server listens.                   |
 | BACKEND_HOST_PORT             | The port exposed on the host machine.                           |
 | BACKEND_LINK                  | URL for the backend's external link.                            |
+| FRONTEND_LINK                 | URL for the frontend's external link.                           |
 | **Database settings:**        |                                                                 |
 | MONGODB_URI                   | The connection URI for the MongoDB database.                    |
 | MONGODB_USERNAME              | Username for authenticating with MongoDB.                       |
@@ -36,3 +37,6 @@
 | MAILER_PORT                   | Port for the mailer's SMTP server.                              |
 | **Trello settings:**          |                                                                 |
 | TRELLO_API_KEY                | API key for interacting with Trello.                            |
+| **Telegram settings:**        |                                                                 |
+| TELEGRAM_BOT_TOKEN            | Telegram bot token for notifications                            |
+
