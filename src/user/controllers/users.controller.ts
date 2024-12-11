@@ -122,7 +122,7 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  getUserProfile(@Req() req): Promise<User> {
+  getUserProfile(@Req() req): Promise<Partial<User>> {
     return this.usersService.findUserProfile(req.user.userId);
   }
 
