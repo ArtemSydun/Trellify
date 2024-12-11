@@ -253,4 +253,50 @@ export class Notifications {
   @IsBoolean()
   @IsOptional()
   boardMemberRemoved?: boolean;
+
+  @ApiProperty({
+    description: 'Notification for when a board member invitation is joined.',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  boardMemberInvitationJoined?: boolean;
+
+  @ApiProperty({
+    description: 'Notification for when a board member leaves.',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  boardMemberLeft?: boolean;
+
+  @ApiProperty({
+    description: 'Notification for when a new board member joins.',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  boardMemberJoined?: boolean;
+
+  @ApiProperty({
+    description: 'Notification for when a board admin is added.',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  boardAdminAdded?: boolean;
+
+  @ApiProperty({
+    description: 'Notification for when a board member is given a normal role.',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  boardMemberNormalRoleAdded?: boolean;
+
 }

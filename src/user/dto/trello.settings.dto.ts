@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop } from '@nestjs/mongoose';
-import { Notifications } from 'src/trello/dto/notifications.dto';
 
 export class TrelloSettings {
     @ApiProperty({

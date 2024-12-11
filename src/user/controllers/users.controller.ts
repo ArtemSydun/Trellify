@@ -42,6 +42,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('telegram')
   @ApiOkResponse({
     description: 'Telegram connected successfully',
     schema: {
@@ -62,8 +63,6 @@ export class UsersController {
       },
     },
   })
-
-  @Get('telegram')
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   handleTelegramQuery(
@@ -91,6 +90,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
+  @Delete(':id')
   @ApiOkResponse({
     description: 'User deleted successfully',
     schema: {
@@ -110,13 +110,11 @@ export class UsersController {
   @ApiCustomForbiddenResponse()
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  @Delete(':id')
   deleteUserById(@Param('id') id: string): Promise<DefaultResponse<string>> {
     return this.usersService.deleteUserById(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
+  @UseGuards(JwtAuthGuard)
   @Get('/profile')
   @ApiOkResponse({
     description: 'User profile',
