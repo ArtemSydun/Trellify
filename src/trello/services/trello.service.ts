@@ -162,75 +162,110 @@ export class TrelloService {
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
     console.log(JSON.stringify(webhookAction, null, 2));
 
-    const cardId = webhookAction?.action?.data?.card?.id;
+    const targetCard = webhookAction?.action?.data?.card;
+    const targetBoard = webhookAction?.action?.data?.board;
     const webhook = await this.trelloWebhookRepository.findOneById(webhookAction?.webhook?.id);
-    const action = webhookAction?.action?.display?.translationKey;
+    const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
+
+    const actionType = webhookAction?.action?.display?.translationKey;
     const targetMember = webhookAction?.action?.member;
 
-    if (!action || !webhook) {
+    console.log('target card: ', targetCard);
+    console.log('target board: ', targetBoard);
+
+    if (!actionType || !webhook) {
       console.log('Missing action or webhook data.');
       return;
     }
 
     let enumKey = null;
 
-    // check if enum value includes action we got from webhook and then 
-    // transform enum key CARD_CREATED for example into cardCreated (to match db structure)
-    if (Object.values(TrelloWebhookDetailedActions).includes(action)) {
+    // Check if enum value includes action we got from webhook and transform enum key (CARD_CREATED -> cardCreated)
+    if (Object.values(TrelloWebhookDetailedActions).includes(actionType)) {
       enumKey = toCamelCase(Object.keys(TrelloWebhookDetailedActions)
-        .find(key => TrelloWebhookDetailedActions[key] === action), '_');
+        .find(key => TrelloWebhookDetailedActions[key] === actionType), '_');
     }
 
     const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
 
-    if (!subscribedMembers) {
-      console.log(`Action ${action} is not supported by this API`);
+    if (!enumKey) {
+      console.log(`Action ${actionType} is not supported by this API`);
       return;
     }
 
-    if (subscribedMembers && subscribedMembers.length === 0) {
+    if (subscribedMembers.length === 0) {
       console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
       return;
     }
 
-    if (targetMember) {
-      return await this.actionsService.handleTargetAction(targetMember, this.bot, webhookAction);
+    let boardData = null;
+    if (targetBoard) {
+      boardData = await this.findBoardById(authorizedToken, targetBoard.id);
     }
 
-    // If cardId is available and we have subscribed members to this action, process card members
-    if (cardId && subscribedMembers.length !== 0) {
-      const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
-      const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${authorizedToken}`;
+    // Handle board actions (if targetCard is not present)
+    if (!targetCard && targetBoard && subscribedMembers.length !== 0) {
+      console.log('Handling board action...');
 
-      let cardMembers: string[] = [];
-      try {
-        const response = await axios.get(url);
-        cardMembers = response?.data?.idMembers || [];
-      } catch (err) {
-        console.error('Error fetching card data:', err);
-      }
+      const boardMembers: any[] = boardData?.memberships || [];
+      const membersToNotify = boardMembers.filter(admin =>
+        subscribedMembers.includes(admin.id));
 
-      console.log('Card members:', cardMembers);
+      console.log('Members to notify:', membersToNotify);
 
-      const membersToNotify = cardMembers.filter(memberId =>
-        subscribedMembers.includes(memberId));
-
-      const userPromises = membersToNotify.map(async (memberId) => {
-        try {
-          const user = await this.userService.findUserByTrelloId(memberId);
-          await sendMessageToUser(this.bot, user, action);
-        } catch (err) {
-          console.error(`Error fetching user data for member ${memberId}:`, err);
-        }
+      // Notify board members
+      const userPromises = membersToNotify.map(async (member) => {
+        await this.actionsService.handleAdminActions(member.id, this.bot, boardData, actionType, member.id);
       });
 
       try {
         await Promise.all(userPromises);
       } catch (err) {
-        console.error('Error sending messages:', err);
+        console.error('Error sending messages to admins:', err);
       }
     }
+
+    // Handle card actions (if targetCard is available)
+    if (targetCard && subscribedMembers.length !== 0) {
+      console.log(`Handling card ${actionType} action...`);
+      console.log(targetCard);
+
+      const cardData = await this.findCardById(authorizedToken, targetCard.id);
+
+      console.log('Card data:', cardData);
+
+      const cardMembers: string[] = cardData.idMembers || [];
+      const membersToNotify = cardMembers.filter(memberId =>
+        subscribedMembers.includes(memberId));
+
+      console.log('Members to notify:', membersToNotify);
+
+      // Notify card members
+      const userPromises = membersToNotify.map(async (member) => {
+        await this.actionsService.handleCardActions(member, this.bot, cardData, actionType);
+      });
+
+      try {
+        await Promise.all(userPromises);
+      } catch (err) {
+        console.error('Error sending messages to card members:', err);
+      }
+    }
+
+    // Handle target user action (only when targetMember is present)
+    if (targetMember) {
+      // Only pass `boardData` to `handleTargetAction` if it's already fetched
+      await this.actionsService.handleTargetAction(
+        targetMember.id,
+        this.bot,
+        boardData,
+        targetCard ? await this.findCardById(authorizedToken, targetCard.id) : null,
+        actionType,
+        webhook.id
+      );
+    }
   }
+
 
   async disconnectFromTrelloWebhook(userId: string, webhookId: string): Promise<DefaultResponse<null>> {
     const userToUpdate = await this.userService.findUserById(userId);
@@ -274,28 +309,28 @@ export class TrelloService {
 
   async disconnectFromAllTrelloWebhooks(userId: string): Promise<DefaultResponse<string>> {
     const userToDelete = await this.userService.findUserById(userId);
-  
+
     if (!userToDelete?.trello?.webhooks || userToDelete.trello.webhooks.length === 0) {
       throw new NotFoundException(`No webhooks found for user ${userId}`);
     }
-  
+
     const webhooksToClear = userToDelete.trello.webhooks;
-  
+
     //we create array of mongo operations to call them later in one request 
     const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
       const updateObject: any = {
         $pull: { 'subscribers': userToDelete.trello.userId },
       };
-  
+
       const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
-  
+
       //remove userId from all notifications in each webhook.notifications object
       if (webhook && webhook.notifications) {
         Object.keys(webhook.notifications).forEach(notificationType => {
           updateObject.$pull[`notifications.${notificationType}`] = userToDelete.trello.userId;
         });
       }
-  
+
       return {
         updateOne: {
           filter: { id: webhookId },
@@ -303,32 +338,30 @@ export class TrelloService {
         },
       };
     }));
-  
+
     try {
       if (bulkUpdateOperations.length > 0) {
         await this.trelloWebhookRepository.bulkUpdateWebhooks(bulkUpdateOperations);
       }
-  
+
       const updatedUser = {
         trello: {
           webhooks: [],
         },
       };
-  
+
       await this.userService.updateUserById(userId, updatedUser);
-  
+
       return {
         message: `User ${userId} disconnected from all Trello webhooks successfully`,
         statusCode: HttpStatus.OK,
       };
-  
+
     } catch (err) {
       console.error('Error during bulk update of webhooks:', err);
       throw new BadRequestException('Error disconnecting from all Trello webhooks');
     }
   }
-  
-
 
   async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
     const webhookToDelete = await this.findWebhookById(webhookId);
@@ -363,6 +396,29 @@ export class TrelloService {
       return response.data
     } catch (err) {
       throw err;
+    }
+  }
+
+  async findBoardById(token: string, boardId: string): Promise<any> {
+    const url = `${trelloApiLink}/boards/${boardId}?key=${this.trelloApiKey}&token=${token}`;
+
+    const response = await axios.get(url);
+    try {
+      return response.data;
+    } catch (err) {
+      console.error('Error fetching board data:', err);
+    }
+  }
+
+  async findCardById(token: string, cardId: string): Promise<any> {
+    const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${token}`;
+
+    console.log(url);
+    const response = await axios.get(url);
+    try {
+      return response.data;
+    } catch (err) {
+      console.error('Error fetching card data:', err);
     }
   }
 

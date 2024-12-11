@@ -25,6 +25,7 @@ export enum TrelloWebhookActions {
     
     //unknown action detailed type, separate handler
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
+    CHECKLIST_COPY = 'copyChecklist',
     // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
     CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
     CHECKLIST_ITEM_MEMBER_UPDATED = 'updateMemberOnCheckItem',

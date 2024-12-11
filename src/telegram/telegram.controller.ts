@@ -43,9 +43,6 @@ export class TelegramController {
     const chatId: number = ctx?.update?.message?.from?.id;
     const username: string = ctx?.update?.message?.chat?.username;
 
-    console.log(JSON.stringify(ctx?.update, null, 2));
-    console.log(ctx);
-
     if (!chatId) {
       await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
     }
