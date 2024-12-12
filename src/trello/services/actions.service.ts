@@ -1,6 +1,6 @@
 import { UsersService } from 'src/user/services/users.service';
 import { Context, Telegraf } from 'telegraf';
-import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.enum';
+import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { sendMessageToUser } from 'src/common/helpers/telegram';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
