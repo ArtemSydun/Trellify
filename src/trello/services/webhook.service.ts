@@ -17,6 +17,7 @@ import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.en
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { ActionsService } from './actions.service';
 import { TrelloService } from './trello.service';
+import { SharedConfigService } from './shared.config.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -33,16 +34,16 @@ export class WebhookService {
         @InjectBot() private readonly bot: Telegraf<Context>,
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
-        private readonly configService: ConfigService,
+        private readonly sharedConfigService: SharedConfigService,
         @Inject(forwardRef(() => ActionsService))
         private readonly actionsService: ActionsService,
         @Inject(forwardRef(() => TrelloService))
         private readonly trelloService: TrelloService,
         private readonly trelloWebhookRepository: TrelloWebhookRepository,
     ) {
-        this.webhookCallbackURL = this.configService.get(configServiceEnum.BACKEND_LINK) + `/trello/webhooks`;
-        this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
-        this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
+        const webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
+        const encryptionKey = this.sharedConfigService.getEncryptionKey();
+        const trelloApiKey = this.sharedConfigService.getTrelloApiKey();
     }
 
     async createTrelloWebhook(userId: string, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
@@ -133,7 +134,7 @@ export class WebhookService {
 
     async updateTrelloWebhook(userId: string, webhookId: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
         const user = await this.userService.findUserById(userId);
-        const webhookToUpdate = await this.trelloService.findWebhookById(webhookId);
+        const webhookToUpdate = await this.findWebhookById(webhookId);
 
         let updatedNotifications;
         if (updateWebhookDto.notifications) {
@@ -191,7 +192,7 @@ export class WebhookService {
         const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
 
         if (!enumKey) {
-            console.log(`Action ${actionType} is not supported by this API`);
+            console.log(`Action ${actionType !== 'unknown' ? actionType : webhookAction?.action?.type} is not supported by this API`);
             return;
         }
 
@@ -275,7 +276,7 @@ export class WebhookService {
 
     async disconnectFromTrelloWebhook(userId: string, webhookId: string): Promise<DefaultResponse<null>> {
         const userToUpdate = await this.userService.findUserById(userId);
-        const webhookToUpdate = await this.trelloService.findWebhookById(webhookId);
+        const webhookToUpdate = await this.findWebhookById(webhookId);
 
         if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhookId)) {
             throw new NotFoundException(`Webhook ${webhookId} not found`);
@@ -370,7 +371,7 @@ export class WebhookService {
     }
 
     async removeTrelloWebhook(webhookId: string): Promise<DefaultResponse<null>> {
-        const webhookToDelete = await this.trelloService.findWebhookById(webhookId);
+        const webhookToDelete = await this.findWebhookById(webhookId);
 
         const webhookAuthorToken = decryptText(webhookToDelete.authorToken, this.encryptionKey);
 
@@ -409,6 +410,26 @@ export class WebhookService {
         //   console.error('Error finding members webhooks:', err.response ? err.response.data : err.message);
         //   throw new BadRequestException(err.response ? err.response.data : err.message);
         // }
+    }
+
+    async findWebhookById(webhookId: string): Promise<Webhook> {
+        const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
+
+        if (!webhook) {
+            throw new NotFoundException(`Webhook with id ${webhookId} not found`);
+        }
+
+        return webhook;
+    }
+
+    async findWebhookByBoardId(boardId: string): Promise<Webhook> {
+        const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
+
+        if (!webhook) {
+            throw new NotFoundException(`Webhook with boardId ${boardId} not found`);
+        }
+
+        return webhook;
     }
 }
 

@@ -5,8 +5,8 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import axios from 'axios';
 import { TrelloWebhookRepository } from '../repositories/webhook.repository';
-import { Webhook } from '../entities/webhook.entity';
 import { trelloApiLink } from 'src/common/constants/trello';
+import { SharedConfigService } from './shared.config.service';
 
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
@@ -22,11 +22,10 @@ export class TrelloService {
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
-    private readonly configService: ConfigService,
-    private readonly trelloWebhookRepository: TrelloWebhookRepository,
+    private readonly sharedConfigService: SharedConfigService,
   ) {
-    this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
-    this.trelloApiKey = this.configService.get(configServiceEnum.TRELLO_API_KEY) || '';
+    const encryptionKey = this.sharedConfigService.getEncryptionKey();
+    const trelloApiKey = this.sharedConfigService.getTrelloApiKey();
   }
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
@@ -110,25 +109,5 @@ export class TrelloService {
     } catch (err) {
       console.error('Error fetching card data:', err);
     }
-  }
-
-  async findWebhookById(webhookId: string): Promise<Webhook> {
-    const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
-
-    if (!webhook) {
-      throw new NotFoundException(`Webhook with id ${webhookId} not found`);
-    }
-
-    return webhook;
-  }
-
-  async findWebhookByBoardId(boardId: string): Promise<Webhook> {
-    const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
-
-    if (!webhook) {
-      throw new NotFoundException(`Webhook with boardId ${boardId} not found`);
-    }
-
-    return webhook;
   }
 }
