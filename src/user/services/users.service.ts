@@ -20,6 +20,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
+import { WebhookService } from 'src/trello/services/webhook.service';
 
 @Injectable()
 export class UsersService {
@@ -30,6 +31,8 @@ export class UsersService {
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => TrelloService))
     private readonly trelloService: TrelloService,
+    @Inject(forwardRef(() => WebhookService))
+    private readonly webhookService: WebhookService,
   ) {
     this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
   }
@@ -53,7 +56,7 @@ export class UsersService {
   }
 
   public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
-    await this.trelloService.disconnectFromAllTrelloWebhooks(userId);
+    await this.webhookService.disconnectFromAllTrelloWebhooks(userId);
 
     await this.userRepository.delete(userId);
 
