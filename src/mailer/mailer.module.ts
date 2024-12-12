@@ -14,7 +14,7 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
         transport: {
           host: configService.get<string>(configServiceEnum.MAILER_HOST),
           port: configService.get<number>(configServiceEnum.MAILER_PORT),
-          secure: true,
+          secure: false,
           auth: {
             user: configService.get<string>(configServiceEnum.MAILER_SENDER),
             pass: configService.get<string>(configServiceEnum.MAILER_PASSWORD),
