@@ -24,13 +24,15 @@ export class TrelloService {
     private readonly userService: UsersService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
-    const encryptionKey = this.sharedConfigService.getEncryptionKey();
-    const trelloApiKey = this.sharedConfigService.getTrelloApiKey();
+    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+    this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
   }
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
     const user = await this.userService.findUserById(userId);
+
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+
     const url = `${trelloApiLink}/members/${user.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
@@ -44,7 +46,6 @@ export class TrelloService {
 
   async findBoardById(token: string, boardId: string): Promise<any> {
     const url = `${trelloApiLink}/boards/${boardId}?key=${this.trelloApiKey}&token=${token}`;
-    console.log(url);
 
     const response = await axios.get(url);
     try {

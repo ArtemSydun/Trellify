@@ -21,6 +21,7 @@ import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
 import { WebhookService } from 'src/trello/services/webhook.service';
+import { SharedConfigService } from 'src/trello/services/shared.config.service';
 
 @Injectable()
 export class UsersService {
@@ -28,13 +29,14 @@ export class UsersService {
   constructor(private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
+    private readonly sharedConfigService: SharedConfigService,
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => TrelloService))
     private readonly trelloService: TrelloService,
     @Inject(forwardRef(() => WebhookService))
     private readonly webhookService: WebhookService,
   ) {
-    this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
+    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
   public async createUser(createUserDto: CreateUserDto): Promise<User> {

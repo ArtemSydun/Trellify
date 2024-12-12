@@ -41,9 +41,9 @@ export class WebhookService {
         private readonly trelloService: TrelloService,
         private readonly trelloWebhookRepository: TrelloWebhookRepository,
     ) {
-        const webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
-        const encryptionKey = this.sharedConfigService.getEncryptionKey();
-        const trelloApiKey = this.sharedConfigService.getTrelloApiKey();
+        this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
+        this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+        this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
     }
 
     async createTrelloWebhook(userId: string, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
@@ -209,16 +209,11 @@ export class WebhookService {
         // Handle board actions (if targetCard is not present)
         if (!targetCard && targetBoard && subscribedMembers.length !== 0) {
             console.log('Handling board action...');
-            console.log(boardData);
 
-            console.log('subscribed members: ', subscribedMembers);
             const boardMemberships = await this.trelloService.findBoardMemberships(authorizedToken, boardData.id);
             const membersToNotify = boardMemberships.filter(member =>
                 subscribedMembers.includes(member.idMember) && member.memberType === 'admin'
             );
-
-            console.log('Boards memberships: ', boardMemberships);
-            console.log('membersToNotify: ', membersToNotify);
 
             // Notify board members
             const userPromises = membersToNotify.map(async (member) => {
@@ -235,7 +230,6 @@ export class WebhookService {
         // Handle card actions (if targetCard is available)
         if (!targetMember && targetCard && subscribedMembers.length !== 0) {
             console.log(`Handling card ${actionType} action...`);
-            console.log(targetCard);
 
             const cardData = await this.trelloService.findCardById(authorizedToken, targetCard.id);
 
