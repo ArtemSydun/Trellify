@@ -25,6 +25,7 @@ export enum TrelloWebhookActions {
     
     //unknown action detailed type, separate handler
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
+    CHECKLIST_COPY = 'copyChecklist',
     // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
     CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
     CHECKLIST_ITEM_MEMBER_UPDATED = 'updateMemberOnCheckItem',
@@ -35,6 +36,9 @@ export enum TrelloWebhookActions {
     LIST_UPDATED = 'updateList',
 
     BOARD_MEMBER_REMOVED = 'removeMemberFromBoard',
+    BOARD_MEMBER_ADDED = 'addMemberToBoard',
+    BOARD_ADMIN_ADDED = 'makeAdminOfBoard',
+    BOARD_MEMBER_NORMAL_ROLE_ADDED = 'makeNormalMemberOfBoard'
     // BOARD_UPDATED = 'updateBoard',
     // BOARD_DELETED = 'removeFromOrganizationBoard',
 }
@@ -85,6 +89,11 @@ export enum TrelloWebhookDetailedActions {
     // LIST_RENAMED = 'action_renamed_list',
 
     BOARD_MEMBER_REMOVED = 'action_removed_from_board',
+    BOARD_MEMBER_INVITATION_JOINED = 'action_joined_board_by_invitation_link',
+    BOARD_MEMBER_LEFT = 'action_left_board',
+    BOARD_MEMBER_JOINED = 'action_joined_board',
+    BOARD_ADMIN_ADDED = 'action_made_admin_of_board',
+    BOARD_MEMBER_NORMAL_ROLE_ADDED = 'action_made_a_normal_user_on',
     // BOARD_CLOSED = 'action_closed_board',
     // BOARD_REOPENED = 'action_reopened_board',
     // BOARD_DELETED = 'action_remove_from_organization_board',

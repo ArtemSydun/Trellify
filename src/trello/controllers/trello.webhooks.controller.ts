@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, Put, HttpStatus, Patch } from '@nestjs/common';
-import { TrelloService } from '../services/trello.service';
+import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, HttpStatus, Patch } from '@nestjs/common';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
@@ -10,10 +9,11 @@ import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
+import { WebhookService } from '../services/webhook.service';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
-  constructor(private readonly trelloService: TrelloService,
+  constructor(private readonly webhookService: WebhookService,
   ) { }
 
   @Post()
@@ -44,7 +44,7 @@ export class TrelloWebhooksController {
     @Req() req,
     @Body() body: CreateWebhookDto
   ): Promise<DefaultResponse<Webhook>> {
-    return this.trelloService.createTrelloWebhook(req.user.userId, body);
+    return this.webhookService.createTrelloWebhook(req.user.userId, body);
   }
 
   @Get('list')
@@ -55,17 +55,14 @@ export class TrelloWebhooksController {
     type: [Webhook]
   })
   getUserConnectedWebhooksList(@Req() req) {
-    return this.trelloService.findMemberWebhooks(req.user.userId);
+    return this.webhookService.findMemberWebhooks(req.user.userId);
   }
 
   @Get(':boardId')
   @ApiExcludeEndpoint()
   handleWebhookCreation(
     @Param('boardId') boardId: string,
-    @Body() payload: any
   ) {
-    console.log(`Created webhook for: ${boardId}`, payload);
-
     return { status: 'success' };
   }
 
@@ -75,15 +72,13 @@ export class TrelloWebhooksController {
     @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    // console.log(`Received webhook action for boardId: ${boardId}`, JSON.stringify(payload, null, 2));
-
-    await this.trelloService.handleTrelloWebhook(payload);
+    await this.webhookService.handleTrelloWebhook(payload);
 
     return { status: 'success' };
   }
 
-  @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @Patch(':id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook updated successfully',
@@ -107,12 +102,12 @@ export class TrelloWebhooksController {
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
   updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Req() req): Promise<DefaultResponse<Webhook>> {
-    return this.trelloService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
+    return this.webhookService.updateTrelloWebhook(req.user.userId, id, updateWebhookDto);
   }
 
-  @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
+  @Delete('delete/:id')
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Webhook disconnected and deleted from all users',
@@ -131,8 +126,8 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  removeWebhookById(@Req() req, @Param('id') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.trelloService.removeTrelloWebhook(req.user.userId, webhookId);
+  removeWebhookById(@Param('id') webhookId: string): Promise<DefaultResponse<null>> {
+    return this.webhookService.removeTrelloWebhook(webhookId);
   }
 
   @Post('disconnect/:webhookId')
@@ -156,6 +151,6 @@ export class TrelloWebhooksController {
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
   disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.trelloService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
+    return this.webhookService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
   }
 }

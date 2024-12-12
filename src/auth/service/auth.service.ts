@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpStatus,
   Injectable,
@@ -12,10 +13,11 @@ import { UsersService } from 'src/user/services/users.service';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
 
-import { ForgotPasswordDto } from '../dto/forgotPassword.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { verifyPassword, generateRandomPassword } from 'src/common/helpers/hashing';
+import { verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +27,15 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
   ) { }
+
+  private verifyToken(token: string): any {
+    try {
+      const decoded = this.jwtService.verify(token);
+      return decoded;
+    } catch (err) {
+      throw new BadRequestException('Your token is not valid or expired');
+    }
+  }
 
   public async login(
     loginUserDto: LoginUserDto,
@@ -54,7 +65,7 @@ export class AuthService {
   public async confirmRegistration(
     token: string,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.jwtService.verify(token);
+    const decoded = this.verifyToken(token);
 
     const { email, password, ...userData } = decoded;
 
@@ -89,19 +100,19 @@ export class AuthService {
     };
   }
 
-  public async resetPassword(token: string): Promise<DefaultResponse<string>> {
-    try {
-      const { id } = this.jwtService.verify(token);
-      const newPassword = generateRandomPassword();
-      await this.userService.resetPassword(id, newPassword);
+  public async resetPassword(token: string, resetPasswordDto: ResetPasswordDto): Promise<DefaultResponse<null>> {
+    const { newPassword, repeatPassword } = resetPasswordDto;
 
-      return {
-        message: 'Password changed successfully',
-        statusCode: HttpStatus.OK,
-        data: `Your new password: ${newPassword}`,
-      };
-    } catch (err) {
-      throw err;
-    }
+    if (newPassword !== repeatPassword)
+      throw new BadRequestException(`Password and repeat password does not match`);
+
+    const { id } = this.verifyToken(token);
+
+    await this.userService.resetPassword(id, newPassword);
+
+    return {
+      message: 'Password changed successfully',
+      statusCode: HttpStatus.OK,
+    };
   }
 }

@@ -1,5 +1,5 @@
 import { actionsEnabledByDefault } from "../constants/trello";
-import { NotificationType, TrelloWebhookDetailedActions } from "../enums/trello.actions";
+import { NotificationType, TrelloWebhookDetailedActions } from "../enums/trello.actions.enum";
 import { toCamelCase } from "./camelCase";
 
 // this function takes trelloUserId of webhook creator and initialize notifications object with empty arrays

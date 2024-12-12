@@ -20,6 +20,8 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
+import { WebhookService } from 'src/trello/services/webhook.service';
+import { SharedConfigService } from 'src/trello/services/shared.config.service';
 
 @Injectable()
 export class UsersService {
@@ -27,11 +29,14 @@ export class UsersService {
   constructor(private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
+    private readonly sharedConfigService: SharedConfigService,
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => TrelloService))
     private readonly trelloService: TrelloService,
+    @Inject(forwardRef(() => WebhookService))
+    private readonly webhookService: WebhookService,
   ) {
-    this.encryptionKey = this.configService.get(configServiceEnum.ENCRYPTION_KEY) || '';
+    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
   public async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -50,6 +55,17 @@ export class UsersService {
     };
 
     return await this.userRepository.create(newUser);
+  }
+
+  public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
+    await this.webhookService.disconnectFromAllTrelloWebhooks(userId);
+
+    await this.userRepository.delete(userId);
+
+    return {
+      message: `User ${userId} was delete successfully`,
+      statusCode: HttpStatus.OK,
+    }
   }
 
   public async findAll(): Promise<User[]> {
@@ -77,11 +93,12 @@ export class UsersService {
 
     const { id, email, role, trello } = user;
 
-    return { id, email, role, trello: {
-      userId: trello.userId || ''
-    } };
+    return {
+      id, email, role, trello: {
+        userId: trello.userId || ''
+      }
+    };
   }
-
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
     const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
@@ -104,12 +121,12 @@ export class UsersService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  public async updateUserById(userId: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
+  public async updateUserById(id: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
 
-    const userToUpdate = await this.findUserById(userId);
+    const userToUpdate = await this.findUserById(id);
 
     const updatedUserProps: Partial<User> = {};
 
@@ -126,7 +143,7 @@ export class UsersService {
         }
 
         const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile = await this.trelloService.findMemberProfile(userId, trelloToken);
+        const trelloProfile = await this.trelloService.findMemberProfile(id, trelloToken);
 
         updatedUserProps.trello.userId = trelloProfile.id;
 
@@ -140,12 +157,12 @@ export class UsersService {
       }
     }
 
-    const updatedUser = await this.userRepository.updateById(userId, updatedUserProps);
+    const updatedUser = await this.userRepository.updateById(id, updatedUserProps);
 
     delete updatedUser.password;
 
     return {
-      message: `User ${userId} updated successfully`,
+      message: `User ${id} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -187,8 +204,8 @@ export class UsersService {
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });
 
     const confirmationLink = this.mailerService.getLink(
-      this.configService.get(configServiceEnum.BACKEND_LINK),
-      `auth/confirm?token=${token}`,
+      this.configService.get(configServiceEnum.FRONTEND_LINK),
+      `auth/confirm/${token}`,
       'Confirm your email',
     );
 
@@ -237,6 +254,36 @@ export class UsersService {
       message: `Telegram ${username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser
+    }
+  }
+
+  public async removeWebhookFromAllUsers(webhookId: string) {
+    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
+
+    const bulkUpdateOperations = usersConnectedToWebhook.map(user => {
+      return {
+        updateOne: {
+          filter: { id: user.id },
+          update: {
+            $pull: {
+              'trello.webhooks': webhookId,
+            },
+          },
+        },
+      };
+    });
+
+    try {
+      if (bulkUpdateOperations.length > 0) {
+        const result = await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
+        console.log('Bulk update result:', result);
+      }
+    } catch (err) {
+      console.error('Error during bulk update:', err.message || err);
+
+      if (err.name === 'BulkWriteError') {
+        console.error('Bulk write error:', err.writeErrors);
+      }
     }
   }
 }

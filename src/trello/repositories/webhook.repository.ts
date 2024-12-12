@@ -11,6 +11,10 @@ export class TrelloWebhookRepository {
     private TrelloWebhookModel: Model<Webhook>,
   ) { }
 
+  async bulkUpdateWebhooks(operations: any[]): Promise<any> {
+    return this.TrelloWebhookModel.bulkWrite(operations);
+  }
+
   async findOneByBoardId(idModel: string): Promise<Webhook> {
     return this.TrelloWebhookModel.findOne({ idModel }).lean().exec();
   }

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop } from '@nestjs/mongoose';
-import { Webhook } from 'src/trello/entities/webhook.entity';
 
 export class TrelloSettings {
     @ApiProperty({
@@ -26,7 +25,4 @@ export class TrelloSettings {
     })
     @Prop({ required: false, type: [String] })
     webhooks?: string[];
-
-    @Prop({ required: false })
-    notifications?: [];
 }

@@ -7,16 +7,18 @@ import { TrelloWebhooksController } from './controllers/trello.webhooks.controll
 import { MongooseModule } from '@nestjs/mongoose';
 import { Webhook, WebhookSchema } from './entities/webhook.entity';
 import { TrelloWebhookRepository } from './repositories/webhook.repository';
+import { ActionsService } from './services/actions.service';
+import { WebhookService } from './services/webhook.service';
+import { SharedConfigService } from './services/shared.config.service';
 
 @Module({
   imports: [
     forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
-
   ],
   controllers: [TrelloMembersController, TrelloWebhooksController],
-  providers: [TrelloService, TrelloWebhookRepository],
-  exports: [TrelloService, TrelloWebhookRepository]
+  providers: [TrelloService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService],
+  exports: [TrelloService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService]
 })
 export class TrelloModule { }

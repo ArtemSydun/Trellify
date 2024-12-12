@@ -12,6 +12,10 @@ export class UsersRepository {
     private UserModel: Model<User>,
   ) { }
 
+  async bulkUpdateUsers(operations: any[]): Promise<any> {
+    return this.UserModel.bulkWrite(operations);
+  }
+
   async findOneByEmail(email: string): Promise<User> {
     return this.UserModel.findOne({ email }).lean().exec();
   }
