@@ -5,7 +5,13 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class CronService {
     private readonly logger = new Logger(CronService.name);
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    constructor(
+
+    ) {
+
+    }
+
+    @Cron(CronExpression.EVERY_10_MINUTES)
     handleCron() {
         this.logger.debug('Every 10 secondsg log');
     }
