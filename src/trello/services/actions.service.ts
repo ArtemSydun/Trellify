@@ -3,7 +3,7 @@ import { Context, Telegraf } from 'telegraf';
 import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.enum';
 import { sendMessageToUser } from 'src/common/helpers/telegram';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { TrelloService } from './trello.service';
+import { WebhookService } from './webhook.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -16,8 +16,8 @@ export class ActionsService {
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
-        @Inject(forwardRef(() => TrelloService))
-        private readonly trelloService: TrelloService,
+        @Inject(forwardRef(() => WebhookService))
+        private readonly webhookService: WebhookService,
     ) {
     }
 
@@ -32,10 +32,10 @@ export class ActionsService {
         try {
             const targetUser = await this.userService.findUserByTrelloId(userTrelloId);
             const userInitials = targetUser.email;
-            
-            console.log('actionType: ', actionType);
-            console.log('targetUser: ', targetUser);
-            console.log('userInitials: ', userInitials);
+
+            // console.log('actionType: ', actionType);
+            // console.log('targetUser: ', targetUser);
+            // console.log('userInitials: ', userInitials);
             const targetActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
                     `${userInitials} you were deleted from card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}-${cardData?.name})`,
@@ -47,10 +47,10 @@ export class ActionsService {
 
             const message = targetActionMessages[actionType];
 
-            console.log('message: ', message);
+            // console.log('message: ', message);
             if (message) {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
-                    await this.trelloService.disconnectFromTrelloWebhook(targetUser.id, webhookId);
+                    await this.webhookService.disconnectFromTrelloWebhook(targetUser.id, webhookId);
                 }
                 await sendMessageToUser(bot, targetUser, message);
             } else {
@@ -62,8 +62,8 @@ export class ActionsService {
     }
 
     async handleCardActions(
-        userTrelloId: string, 
-        bot: Telegraf<Context>, 
+        userTrelloId: string,
+        bot: Telegraf<Context>,
         cardData: any,
         actionType: TrelloWebhookDetailedActions
     ) {
@@ -134,14 +134,26 @@ export class ActionsService {
                 return;
             }
 
+            const targetUser = {
+                fullname: targetMember.fullName,
+                username: targetMember.username,
+            }
+
             const adminActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
-                [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: `A user ${targetMember} was removed from the board [${boardData?.name}] via invitation.`,
-                [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: `A user ${targetMember} joined the board [${boardData?.name}] via invitation.`,
-                [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: `A user ${targetMember} left the board [${boardData?.name}].`,
-                [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: `A new member ${targetMember} joined the board [${boardData?.name}].`,
-                [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]: `A new admin ${targetMember} was added to the board [${boardData?.name}].`,
-                [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: `A new normal role was added to a user ${targetMember} on the board [${boardData?.name}].`,
+                [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
+                    `The user was removed from the board [${boardData?.name}](${boardData.url}) via invitation. \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]:
+                    `The user joined the board [${boardData?.name}](${boardData.url}) via invitation. \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]:
+                    `The user left the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]:
+                    `A new member joined the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]:
+                    `A new admin was added to the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
+                    `A new normal role was added to a user on the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
             };
+
 
             const message = adminActionMessages[actionType];
 
