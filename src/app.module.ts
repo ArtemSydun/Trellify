@@ -5,6 +5,8 @@ import { UsersModule } from './user/users.module';
 import { TrelloModule } from './trello/trello.module';
 import { AuthModule } from './auth/auth.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -16,7 +18,9 @@ import { TelegramModule } from './telegram/telegram.module';
     AuthModule,
     UsersModule,
     TrelloModule,
-    TelegramModule
+    TelegramModule,
+    ScheduleModule.forRoot(),
+    CronModule
   ],
   controllers: [],
   providers: [],
