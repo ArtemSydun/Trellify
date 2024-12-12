@@ -1,4 +1,4 @@
-import { TrelloWebhookDetailedActions } from "../enums/trello.actions.enum";
+import { TrelloWebhookDetailedActions } from "../../trello/enums/trello.actions.enum";
 
 export const trelloApiLink = 'https://api.trello.com/1';
 

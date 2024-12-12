@@ -13,7 +13,7 @@ import { initializeUserNotificationState, updateWebhookNotifications, initialize
 import { InjectBot } from 'nestjs-telegraf';
 import { Context, Telegraf } from 'telegraf';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
-import { TrelloWebhookDetailedActions } from 'src/common/enums/trello.actions.enum';
+import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { ActionsService } from './actions.service';
 import { TrelloService } from './trello.service';
@@ -424,6 +424,10 @@ export class WebhookService {
         }
 
         return webhook;
+    }
+
+    async findAllWebhooks(): Promise<Webhook[]> {
+        return await this.trelloWebhookRepository.findAll();
     }
 }
 
