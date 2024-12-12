@@ -1,18 +1,65 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { TrelloService } from 'src/trello/services/trello.service';
+import { WebhookService } from 'src/trello/services/webhook.service';
+import { differenceInDays } from 'date-fns';
+import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 
 @Injectable()
 export class CronService {
     private readonly logger = new Logger(CronService.name);
 
     constructor(
+        @Inject(forwardRef(() => TrelloService))
+        private readonly trelloService: TrelloService,
+        @Inject(forwardRef(() => WebhookService))
+        private readonly webhookService: WebhookService,
+    ) { }
 
-    ) {
+    @Cron(CronExpression.EVERY_WEEK)
+    async clearUnactiveBoards() {
+        try {
+            const webhooks = await this.webhookService.findAllWebhooks();
 
-    }
+            const currentDate = new Date();
 
-    @Cron(CronExpression.EVERY_10_MINUTES)
-    handleCron() {
-        this.logger.debug('Every 10 secondsg log');
+            const unactiveWebhooks = [];
+            for (const webhook of webhooks) {
+                const dateLastActivity = await this.trelloService.findBoardField(
+                    webhook.idModel,
+                    TrelloBoardField.DATE_LAST_ACTIVITY,
+                );
+
+                if (!dateLastActivity) {
+                    console.log(`No ${TrelloBoardField.DATE_LAST_ACTIVITY} for board ${webhook.boardName}`);
+                    continue;
+                }
+
+
+                const dateLastActivityParsed = new Date(dateLastActivity._value);
+                const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
+
+                if (daysSinceLastActivity <= -30) {
+                    unactiveWebhooks.push(webhook);
+                }
+            }
+
+            const removePromises = unactiveWebhooks.map(async (webhook) => {
+                try {
+                    console.log(`Removing inactive webhook for board: ${webhook.boardName}`);
+                    await this.webhookService.removeTrelloWebhook(webhook.id);
+                    return webhook.boardName;
+                } catch (error) {
+                    console.error(`Error removing webhook for board ${webhook.boardName}:`, error.message);
+                    this.logger.error(`Error clearing webhook ${webhook}`);
+                }
+            });
+
+            const removedWebhooks = await Promise.all(removePromises);
+            console.log('Successfully removed inactive webhooks:', removedWebhooks);
+
+        } catch (error) {
+            console.error('Error in clearUnactiveBoards:', error.message);
+        }
     }
 }
