@@ -1,7 +1,5 @@
 import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
-import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import axios from 'axios';
@@ -10,8 +8,6 @@ import { Webhook } from '../entities/webhook.entity';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import { trelloApiLink, actionsEnabledByDefault } from 'src/common/constants/trello';
 import { initializeUserNotificationState, updateWebhookNotifications, initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
-import { InjectBot } from 'nestjs-telegraf';
-import { Context, Telegraf } from 'telegraf';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
@@ -31,7 +27,6 @@ export class WebhookService {
     private readonly encryptionKey: string;
     private readonly trelloApiKey: string;
     constructor(
-        @InjectBot() private readonly bot: Telegraf<Context>,
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
         private readonly sharedConfigService: SharedConfigService,
@@ -76,7 +71,6 @@ export class WebhookService {
             }
 
             const updatedUserProps = {
-                telegram: user.telegram,
                 trello: {
                     ...user.trello,
                     webhooks: user.trello.webhooks,
@@ -108,7 +102,6 @@ export class WebhookService {
             };
 
             const updatedUser = {
-                telegram: user.telegram,
                 trello: {
                     ...user.trello,
                     webhooks: user.trello.webhooks ? [...user.trello.webhooks, response.data.id] : [response.data.id],
@@ -217,7 +210,7 @@ export class WebhookService {
 
             // Notify board members
             const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleAdminActions(member.idMember, this.bot, boardData, actionType, targetMember);
+                await this.actionsService.handleAdminActions(member.idMember, boardData, actionType, targetMember);
             });
 
             try {
@@ -244,7 +237,7 @@ export class WebhookService {
 
             // Notify card members
             const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleCardActions(member, this.bot, cardData, actionType);
+                await this.actionsService.handleCardActions(member, cardData, actionType);
             });
 
             try {
@@ -259,7 +252,6 @@ export class WebhookService {
             // Only pass `boardData` to `handleTargetAction` if it's already fetched
             await this.actionsService.handleTargetAction(
                 targetMember.id,
-                this.bot,
                 boardData,
                 actionType,
                 webhook.id,

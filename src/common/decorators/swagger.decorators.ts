@@ -109,11 +109,11 @@ export function ApiCustomBadRequestResponse(description: string, message: string
                     },
                     error: {
                         type: 'string',
-                        example: Errors.UNATHORIZED
+                        example: Errors.BAD_REQUEST
                     },
                     statusCode: {
                         type: 'number',
-                        example: HttpStatus.UNAUTHORIZED,
+                        example: HttpStatus.BAD_REQUEST,
                     },
                 },
             },

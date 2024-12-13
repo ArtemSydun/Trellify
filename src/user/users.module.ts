@@ -10,6 +10,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
 import { UsersRepository } from './repositories/users.repository';
+import { TelegramModule } from 'src/telegram/telegram.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UsersRepository } from './repositories/users.repository';
     MailerModule,
     forwardRef(() => AuthModule),
     forwardRef(() => TrelloModule),
+    forwardRef(() => TelegramModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository],
