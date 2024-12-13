@@ -1,9 +1,8 @@
 import { UsersService } from 'src/user/services/users.service';
-import { Context, Telegraf } from 'telegraf';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
-import { sendMessageToUser } from 'src/common/helpers/telegram';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -18,12 +17,12 @@ export class ActionsService {
         private readonly userService: UsersService,
         @Inject(forwardRef(() => WebhookService))
         private readonly webhookService: WebhookService,
+        private readonly telegramService: TelegramService,
     ) {
     }
 
     async handleTargetAction(
         userTrelloId: string,
-        bot: Telegraf<Context>,
         boardData: any,
         actionType: TrelloWebhookDetailedActions,
         webhookId: string,
@@ -52,7 +51,7 @@ export class ActionsService {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
                     await this.webhookService.disconnectFromTrelloWebhook(targetUser.id, webhookId);
                 }
-                await sendMessageToUser(bot, targetUser, message);
+                await this.telegramService.sendMessageToUser(targetUser.telegram, message);
             } else {
                 console.log(`Unsupported target action: ${actionType}`);
             }
@@ -63,7 +62,6 @@ export class ActionsService {
 
     async handleCardActions(
         userTrelloId: string,
-        bot: Telegraf<Context>,
         cardData: any,
         actionType: TrelloWebhookDetailedActions
     ) {
@@ -110,7 +108,7 @@ export class ActionsService {
             const message = cardActionMessages[actionType];
 
             if (message) {
-                await sendMessageToUser(bot, userToNotify, message);
+                await this.telegramService.sendMessageToUser(userToNotify.telegram, message);
             } else {
                 console.log(`Unsupported card action: ${actionType}`);
             }
@@ -121,7 +119,6 @@ export class ActionsService {
 
     async handleAdminActions(
         adminTrelloId: string,
-        bot: Telegraf<Context>,
         boardData: any,
         actionType: TrelloWebhookDetailedActions,
         targetMember?: any
@@ -158,7 +155,7 @@ export class ActionsService {
             const message = adminActionMessages[actionType];
 
             if (message) {
-                await sendMessageToUser(bot, adminToNotify, message);
+                await this.telegramService.sendMessageToUser(adminToNotify.telegram, message);
             } else {
                 console.log(`Unsupported board action: ${actionType}`);
             }

@@ -10,12 +10,14 @@ import { TrelloWebhookRepository } from './repositories/webhook.repository';
 import { ActionsService } from './services/actions.service';
 import { WebhookService } from './services/webhook.service';
 import { SharedConfigService } from './services/shared.config.service';
+import { TelegramModule } from 'src/telegram/telegram.module';
 
 @Module({
   imports: [
     forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
+    TelegramModule
   ],
   controllers: [TrelloMembersController, TrelloWebhooksController],
   providers: [TrelloService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService],
