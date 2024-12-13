@@ -1,10 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
-import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import axios from 'axios';
-import { TrelloWebhookRepository } from '../repositories/webhook.repository';
 import { trelloApiLink } from 'src/common/constants/trello';
 import { SharedConfigService } from './shared.config.service';
 import { WebhookService } from './webhook.service';

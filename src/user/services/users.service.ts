@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   HttpStatus,
@@ -22,6 +23,8 @@ import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
 import { WebhookService } from 'src/trello/services/webhook.service';
 import { SharedConfigService } from 'src/trello/services/shared.config.service';
+import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 @Injectable()
 export class UsersService {
@@ -35,6 +38,7 @@ export class UsersService {
     private readonly trelloService: TrelloService,
     @Inject(forwardRef(() => WebhookService))
     private readonly webhookService: WebhookService,
+    private readonly telegramService: TelegramService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
@@ -240,8 +244,21 @@ export class UsersService {
     return user;
   }
 
-  public async connectUserTelegram(userId: string, chatId: number, username: string): Promise<DefaultResponse<User>> {
+  public async manageUserTelegramConnection(userId: string, connectTelegramDto: ConnectTelegramDto): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.findUserById(userId);
+
+    const { chatId, username } = connectTelegramDto;
+    try {
+      if (chatId && username) {
+        await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
+      } else {
+        await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
+      }
+    } catch (err) {
+      console.log(err);
+      throw new BadRequestException(`This telegram user has not interacted with bot yet`)
+    }
+    
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       telegram: {
@@ -251,14 +268,18 @@ export class UsersService {
     })
 
     return {
-      message: `Telegram ${username} connected successfully`,
+      message: `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser
     }
   }
 
-  public async connectUserTrello(userId: string, trelloToken: string): Promise<DefaultResponse<User>> {
+  public async manageUserTrelloConnection(userId: string, trelloToken: string): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.findUserById(userId);
+
+    if (!trelloToken) {
+      return await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate.id)
+    }
 
     await this.trelloService.isTokenInfinite(trelloToken);
 
@@ -277,7 +298,7 @@ export class UsersService {
     const token = updatedUserProps.trello.token || userToUpdate.trello.token;
 
     const trelloProfile = await this.trelloService.findMemberProfile(userId, token);
-  
+
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 

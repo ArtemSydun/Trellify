@@ -8,7 +8,6 @@ import {
   HttpStatus,
   Req,
   Get,
-  Query,
   Delete,
 } from '@nestjs/common';
 
@@ -16,12 +15,13 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
-import { ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import { ApiBadRequestResponse, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from '../interfaces/role.enum';
+import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 
 @Controller('users')
 export class UsersController {
@@ -42,15 +42,15 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('telegram')
+  @Post('telegram')
   @ApiOkResponse({
-    description: 'Telegram connected successfully',
+    description: 'Telegram connected / disconnected successfully',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'Telegram {{username}} connected successfully',
+          example: 'Telegram {{username}} connected / disconnected successfully',
         },
         statusCode: {
           type: 'number',
@@ -65,12 +65,12 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
+  @ApiCustomBadRequestResponse('Invalid tg info', 'This telegram user has not interacted with bot yet')
   handleTelegramQuery(
     @Req() req,
-    @Query('chatId') chatId: string,
-    @Query('username') username: string,
+    @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
-    return this.usersService.connectUserTelegram(req.user.userId, parseInt(chatId), username);
+    return this.usersService.manageUserTelegramConnection(req.user.userId, connectTelegramDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -97,11 +97,12 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
+  @ApiCustomBadRequestResponse('Invalid trello token', 'Please provide us token with valid expiration date')
   handleTrelloQuery(
     @Req() req,
     @Body() connectTrelloDto: { token: string },
   ) {
-    return this.usersService.connectUserTrello(req.user.userId, connectTrelloDto.token);
+    return this.usersService.manageUserTrelloConnection(req.user.userId, connectTrelloDto.token);
   }
 
   @UseGuards(JwtAuthGuard)

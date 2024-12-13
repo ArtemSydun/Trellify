@@ -58,7 +58,7 @@ export class TelegramController {
             [
               {
                 text: 'Authorize through website',
-                url: `${this.configService.get<string>(configServiceEnum.BACKEND_LINK)}/users/telegram?chatId=${chatId}&username=${username}`,
+                url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
               },
             ],
           ],
