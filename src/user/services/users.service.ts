@@ -266,9 +266,9 @@ export class UsersService {
         ...userToUpdate.trello,
       }
     };
+
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== trelloToken) {
       updatedUserProps.trello.token = encryptText(trelloToken, this.encryptionKey);
-      console.log(updatedUserProps);
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
     }
@@ -279,7 +279,6 @@ export class UsersService {
     console.log(trelloProfile);
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
-    updatedUserProps.trello.webhooks = userToUpdate.trello.webhooks || [];
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps)
 

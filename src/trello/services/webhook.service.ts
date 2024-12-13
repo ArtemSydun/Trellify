@@ -76,7 +76,6 @@ export class WebhookService {
             }
 
             const updatedUserProps = {
-                telegram: user.telegram,
                 trello: {
                     ...user.trello,
                     webhooks: user.trello.webhooks,
@@ -108,7 +107,6 @@ export class WebhookService {
             };
 
             const updatedUser = {
-                telegram: user.telegram,
                 trello: {
                     ...user.trello,
                     webhooks: user.trello.webhooks ? [...user.trello.webhooks, response.data.id] : [response.data.id],

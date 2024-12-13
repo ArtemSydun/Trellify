@@ -52,18 +52,6 @@ export class TelegramController {
 
     } catch (err) {
 
-      //temporarily hardcoded until frontend will be available
-      // const userToUpdate = await this.userService.findUserByProperty(UserSearchPath.Email, 'artem.dev@redhotteam.space');
-      // const updatedTgProps = {
-      //   telegram: {
-      //     username,
-      //     chatId,
-      //   }
-      // }
-
-      // const updatedUser = await this.userService.updateUserById(userToUpdate.id, updatedTgProps);
-      // console.log(updatedUser);
-
       await ctx.reply('Please visit our website for more information:', {
         reply_markup: {
           inline_keyboard: [
