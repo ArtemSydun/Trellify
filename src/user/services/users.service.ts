@@ -259,7 +259,8 @@ export class UsersService {
 
   public async connectUserTrello(userId: string, trelloToken: string): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.findUserById(userId);
-    console.log(trelloToken);
+
+    await this.trelloService.isTokenInfinite(trelloToken);
 
     const updatedUserProps: Partial<User> = {
       trello: {
@@ -274,9 +275,9 @@ export class UsersService {
     }
 
     const token = updatedUserProps.trello.token || userToUpdate.trello.token;
-    console.log(token);
+
     const trelloProfile = await this.trelloService.findMemberProfile(userId, token);
-    console.log(trelloProfile);
+  
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 

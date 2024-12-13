@@ -84,8 +84,6 @@ export class TrelloService {
     }
   }
 
-
-
   async findBoardById(token: string, boardId: string): Promise<any> {
     const url = `${trelloApiLink}/boards/${boardId}?key=${this.trelloApiKey}&token=${token}`;
 
@@ -151,6 +149,27 @@ export class TrelloService {
       return response.data;
     } catch (err) {
       console.error('Error fetching card data:', err);
+    }
+  }
+
+  async isTokenInfinite(trelloToken: string): Promise<boolean> {
+    const token = await this.findAccessToken(trelloToken);
+
+    if (token.dateExpires !== null) {
+      throw new BadRequestException('Please provide us token with valid expiration date');
+    }
+
+    return true;
+  }
+
+  async findAccessToken(trelloToken: string): Promise<any> {
+    const url = `${trelloApiLink}/tokens/${trelloToken}?key=${this.trelloApiKey}&token=${trelloToken}`;
+
+    const response = await axios.get(url);
+    try {
+      return response.data;
+    } catch (err) {
+      console.error('Error fetching token data:', err);
     }
   }
 }
