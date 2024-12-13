@@ -257,6 +257,39 @@ export class UsersService {
     }
   }
 
+  public async connectUserTrello(userId: string, trelloToken: string): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.findUserById(userId);
+    console.log(trelloToken);
+
+    const updatedUserProps: Partial<User> = {
+      trello: {
+        ...userToUpdate.trello,
+      }
+    };
+    if (!userToUpdate.trello.token || userToUpdate.trello.token !== trelloToken) {
+      updatedUserProps.trello.token = encryptText(trelloToken, this.encryptionKey);
+      console.log(updatedUserProps);
+    } else {
+      updatedUserProps.trello.token = userToUpdate.trello.token;
+    }
+
+    const token = updatedUserProps.trello.token || userToUpdate.trello.token;
+    console.log(token);
+    const trelloProfile = await this.trelloService.findMemberProfile(userId, token);
+    console.log(trelloProfile);
+    updatedUserProps.trello.userId = trelloProfile.id;
+    updatedUserProps.trello.username = trelloProfile.username;
+    updatedUserProps.trello.webhooks = userToUpdate.trello.webhooks || [];
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps)
+
+    return {
+      message: `Trello ${userId} connected successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser
+    }
+  }
+
   public async removeWebhookFromAllUsers(webhookId: string) {
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
 

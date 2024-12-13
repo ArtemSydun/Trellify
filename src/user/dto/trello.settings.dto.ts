@@ -19,6 +19,14 @@ export class TrelloSettings {
     userId?: string;
 
     @ApiProperty({
+        description: 'Trello username associated with the user',
+        example: 'TrelloUsername',
+        required: false,
+    })
+    @Prop({ required: false })
+    username?: string;
+
+    @ApiProperty({
         description: 'List of webhooks for the user',
         example: ['webhook1, webhook2, webhook3'],
         required: false,

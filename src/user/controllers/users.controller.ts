@@ -74,6 +74,37 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('trello')
+  @ApiOkResponse({
+    description: 'Trello connected successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Trello {{username}} connected successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  handleTrelloQuery(
+    @Req() req,
+    @Body() connectTrelloDto: { token: string },
+  ) {
+    return this.usersService.connectUserTrello(req.user.userId, connectTrelloDto.token);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('/profile')
   @ApiOkResponse({
     description: 'User profile',
