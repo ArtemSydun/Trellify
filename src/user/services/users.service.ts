@@ -25,6 +25,7 @@ import { WebhookService } from 'src/trello/services/webhook.service';
 import { SharedConfigService } from 'src/trello/services/shared.config.service';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 
 @Injectable()
 export class UsersService {
@@ -274,14 +275,16 @@ export class UsersService {
     }
   }
 
-  public async manageUserTrelloConnection(userId: string, trelloToken: string): Promise<DefaultResponse<User | string>> {
+  public async manageUserTrelloConnection(userId: string, connectTrelloDto: ConnectTrelloDto): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.findUserById(userId);
+    const { token } = connectTrelloDto;
 
-    if (!trelloToken) {
+    if (!token) {
+      console.log(userToUpdate.trello.webhooks);
       return await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate.id)
     }
 
-    await this.trelloService.isTokenInfinite(trelloToken);
+    await this.trelloService.isTokenInfinite(token);
 
     const updatedUserProps: Partial<User> = {
       trello: {
@@ -289,15 +292,15 @@ export class UsersService {
       }
     };
 
-    if (!userToUpdate.trello.token || userToUpdate.trello.token !== trelloToken) {
-      updatedUserProps.trello.token = encryptText(trelloToken, this.encryptionKey);
+    if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
+      updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
     }
 
-    const token = updatedUserProps.trello.token || userToUpdate.trello.token;
+    const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
 
-    const trelloProfile = await this.trelloService.findMemberProfile(userId, token);
+    const trelloProfile = await this.trelloService.findMemberProfile(userId, trelloToken);
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;

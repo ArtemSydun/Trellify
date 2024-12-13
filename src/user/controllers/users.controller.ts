@@ -22,6 +22,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from '../interfaces/role.enum';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
+import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 
 @Controller('users')
 export class UsersController {
@@ -100,13 +101,13 @@ export class UsersController {
   @ApiCustomBadRequestResponse('Invalid trello token', 'Please provide us token with valid expiration date')
   handleTrelloQuery(
     @Req() req,
-    @Body() connectTrelloDto: { token: string },
+    @Body() connectTrelloDto: ConnectTrelloDto,
   ) {
-    return this.usersService.manageUserTrelloConnection(req.user.userId, connectTrelloDto.token);
+    return this.usersService.manageUserTrelloConnection(req.user.userId, connectTrelloDto);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/profile')
+  @Get('profile')
   @ApiOkResponse({
     description: 'User profile',
     type: [User]

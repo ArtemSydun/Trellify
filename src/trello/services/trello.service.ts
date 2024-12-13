@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
 import axios from 'axios';
@@ -162,11 +162,11 @@ export class TrelloService {
   async findAccessToken(trelloToken: string): Promise<any> {
     const url = `${trelloApiLink}/tokens/${trelloToken}?key=${this.trelloApiKey}&token=${trelloToken}`;
 
-    const response = await axios.get(url);
     try {
+      const response = await axios.get(url);
       return response.data;
     } catch (err) {
-      console.error('Error fetching token data:', err);
+      throw new UnauthorizedException('Invalid token');
     }
   }
 }

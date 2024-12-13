@@ -302,37 +302,39 @@ export class WebhookService {
 
     async disconnectFromAllTrelloWebhooks(userId: string): Promise<DefaultResponse<string>> {
         const userToDelete = await this.userService.findUserById(userId);
-
-        if (!userToDelete?.trello?.webhooks || userToDelete.trello.webhooks.length === 0) {
-            throw new NotFoundException(`No webhooks found for user ${userId}`);
-        }
-
-        const webhooksToClear = userToDelete.trello.webhooks;
-
-        //we create array of mongo operations to call them later in one request 
-        const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
-            const updateObject: any = {
-                $pull: { 'subscribers': userToDelete.trello.userId },
-            };
-
-            const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
-
-            //remove userId from all notifications in each webhook.notifications object
-            if (webhook && webhook.notifications) {
-                Object.keys(webhook.notifications).forEach(notificationType => {
-                    updateObject.$pull[`notifications.${notificationType}`] = userToDelete.trello.userId;
-                });
+        try {
+            if (!userToDelete?.trello?.webhooks || userToDelete.trello.webhooks.length === 0) {
+                return {
+                    message: `User ${userId} disconnected from all Trello webhooks successfully`,
+                    statusCode: HttpStatus.OK,
+                };
             }
 
-            return {
-                updateOne: {
-                    filter: { id: webhookId },
-                    update: updateObject,
-                },
-            };
-        }));
+            const webhooksToClear = userToDelete.trello.webhooks;
 
-        try {
+            //we create array of mongo operations to call them later in one request 
+            const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
+                const updateObject: any = {
+                    $pull: { 'subscribers': userToDelete.trello.userId },
+                };
+
+                const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
+
+                //remove userId from all notifications in each webhook.notifications object
+                if (webhook && webhook.notifications) {
+                    Object.keys(webhook.notifications).forEach(notificationType => {
+                        updateObject.$pull[`notifications.${notificationType}`] = userToDelete.trello.userId;
+                    });
+                }
+
+                return {
+                    updateOne: {
+                        filter: { id: webhookId },
+                        update: updateObject,
+                    },
+                };
+            }));
+
             if (bulkUpdateOperations.length > 0) {
                 await this.trelloWebhookRepository.bulkUpdateWebhooks(bulkUpdateOperations);
             }
