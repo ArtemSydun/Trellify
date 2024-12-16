@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, HttpStatus, Patch } from '@nestjs/common';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
@@ -40,6 +40,7 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomConflictResponse('Webhook', 'id')
+  @ApiCustomBadRequestResponse('Trello is not connected', 'Please check your trello connection')
   createTrelloWebhook(
     @Req() req,
     @Body() body: CreateWebhookDto
