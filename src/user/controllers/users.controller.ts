@@ -77,13 +77,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Post('trello')
   @ApiOkResponse({
-    description: 'Trello connected successfully',
+    description: 'Trello connected / disconnected successfully',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'Trello {{username}} connected successfully',
+          example: 'Trello connected / disconnected successfully',
         },
         statusCode: {
           type: 'number',

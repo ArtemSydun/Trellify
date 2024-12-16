@@ -259,7 +259,7 @@ export class UsersService {
       console.log(err);
       throw new BadRequestException(`This telegram user has not interacted with bot yet`)
     }
-    
+
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       telegram: {
@@ -280,8 +280,21 @@ export class UsersService {
     const { token } = connectTrelloDto;
 
     if (!token) {
-      console.log(userToUpdate.trello.webhooks);
-      return await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate.id)
+      await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate.id)
+      const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+        trello: {
+          userId: null,
+          username: null,
+          webhooks: [],
+          token: null,
+        }
+      });
+
+      return {
+        message: `Trello profile disconnected successfully`,
+        statusCode: HttpStatus.OK,
+        data: updatedUser
+      }
     }
 
     await this.trelloService.isTokenInfinite(token);

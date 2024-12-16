@@ -47,6 +47,10 @@ export class WebhookService {
 
         const user = await this.userService.findUserById(userId);
 
+        if (!user.trello.token) {
+            throw new BadRequestException('Please check your trello connection');
+        }
+
         const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
         const url = `${trelloApiLink}/webhooks/?callbackURL=${boardPersonalWebhookURL}&idModel=${createWebhookDto.boardId}&key=${this.trelloApiKey}&token=${decryptedUserToken}`;

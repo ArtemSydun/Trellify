@@ -5,8 +5,9 @@ import { ApiProperty } from "@nestjs/swagger";
 export class TelegramSettings {
     @ApiProperty({
         description: 'Telegram username of the user',
-        example: 'john_doe',
+        example: 'john_doe | null',
         required: false,
+        nullable: true,
     })
     @Optional()
     @Prop({ required: false })
@@ -16,6 +17,7 @@ export class TelegramSettings {
         description: 'Telegram chat ID of the user',
         example: 1234567890,
         required: false,
+        nullable: true,
     })
     @Optional()
     @Prop({ required: false })
