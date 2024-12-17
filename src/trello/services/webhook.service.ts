@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
@@ -26,6 +26,7 @@ export class WebhookService {
     private readonly webhookCallbackURL: string;
     private readonly encryptionKey: string;
     private readonly trelloApiKey: string;
+    private readonly logger = new Logger(WebhookService.name);
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
@@ -57,6 +58,7 @@ export class WebhookService {
 
         if (webhook) {
             if (user.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+                this.logger.warn(`Webhook for board ${webhook.boardName} already exists for this user.`);
                 throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
             }
 
@@ -82,7 +84,7 @@ export class WebhookService {
             }
 
             await this.userService.updateUserById(userId, updatedUserProps);
-
+            this.logger.log(`Webhook already exists, user ${userId} added to subscribers`)
             return {
                 message: 'Webhook already exists, user added to subscribers',
                 statusCode: HttpStatus.OK,
@@ -116,7 +118,7 @@ export class WebhookService {
                 this.userService.updateUserById(userId, updatedUser),
                 this.trelloWebhookRepository.create(createdWebhook),
             ]);
-
+            this.logger.log(`Webhook for board ${createdWebhook.boardName} created successfully`);
             return {
                 message: 'Webhook created successfully',
                 statusCode: HttpStatus.OK,
@@ -124,7 +126,7 @@ export class WebhookService {
             };
 
         } catch (err) {
-            console.error('Error creating webhook:', err.response ? err.response.data : err.message);
+            this.logger.error('Error creating webhook:', err.response ? err.response.data : err.message);
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
@@ -154,27 +156,27 @@ export class WebhookService {
                 data: updatedWebhook
             };
         } catch (err) {
-            console.error('Error updating webhook:', err.response ? err.response.data : err.message);
+            this.logger.error('Error updating webhook:', err.response ? err.response.data : err.message);
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
-        console.log(JSON.stringify(webhookAction, null, 2));
-
+        // console.log(JSON.stringify(webhookAction, null, 2));
         const targetCard = webhookAction?.action?.data?.card;
         const targetBoard = webhookAction?.action?.data?.board;
         const webhook = await this.trelloWebhookRepository.findOneById(webhookAction?.webhook?.id);
         const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
-
+        
         const actionType = webhookAction?.action?.display?.translationKey;
         const targetMember = webhookAction?.action?.member;
-
+        this.logger.log(`Handling webhook ${actionType} action...`);
+        
         // console.log('target card: ', targetCard);
         // console.log('target board: ', targetBoard);
 
         if (!actionType || !webhook) {
-            console.log('Missing action or webhook data.');
+            this.logger.warn('Missing action or webhook data.');
             return;
         }
 
@@ -189,12 +191,12 @@ export class WebhookService {
         const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
 
         if (!enumKey) {
-            console.log(`Action ${actionType !== 'unknown' ? actionType : webhookAction?.action?.type} is not supported by this API`);
+            this.logger.warn(`Action ${actionType !== 'unknown' ? actionType : webhookAction?.action?.type} is not supported by this API`);
             return;
         }
 
         if (subscribedMembers.length === 0) {
-            console.log(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
+            this.logger.warn(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
             return;
         }
 
@@ -204,10 +206,9 @@ export class WebhookService {
         }
 
         // Handle board actions (if targetCard is not present)
-        if (!targetCard && targetBoard && subscribedMembers.length !== 0) {
-            console.log('Handling board action...');
-
+        if (!targetCard && boardData && subscribedMembers.length !== 0) {
             const boardMemberships = await this.trelloService.findBoardMemberships(authorizedToken, boardData.id);
+
             const membersToNotify = boardMemberships.filter(member =>
                 subscribedMembers.includes(member.idMember) && member.memberType === 'admin'
             );
@@ -220,14 +221,12 @@ export class WebhookService {
             try {
                 await Promise.all(userPromises);
             } catch (err) {
-                console.error('Error sending messages to admins:', err);
+                this.logger.error('Error sending messages to admins:', err);
             }
         }
 
         // Handle card actions (if targetCard is available)
         if (!targetMember && targetCard && subscribedMembers.length !== 0) {
-            console.log(`Handling card ${actionType} action...`);
-
             const cardData = await this.trelloService.findCardById(authorizedToken, targetCard.id);
 
             // console.log('Card data:', cardData);
@@ -237,7 +236,7 @@ export class WebhookService {
             const membersToNotify = cardMembers.filter(memberId =>
                 subscribedMembers.includes(memberId));
 
-            console.log('Members to notify:', membersToNotify);
+            // console.log('Members to notify:', membersToNotify);
 
             // Notify card members
             const userPromises = membersToNotify.map(async (member) => {
@@ -247,12 +246,12 @@ export class WebhookService {
             try {
                 await Promise.all(userPromises);
             } catch (err) {
-                console.error('Error sending messages to card members:', err);
+                this.logger.error('Error sending messages to card members:', err);
             }
         }
 
         // Handle target user action (only when targetMember is present)
-        if (targetMember) {
+        if (targetMember && subscribedMembers.includes(targetMember.id)) {
             // Only pass `boardData` to `handleTargetAction` if it's already fetched
             await this.actionsService.handleTargetAction(
                 targetMember.id,
@@ -357,7 +356,7 @@ export class WebhookService {
             };
 
         } catch (err) {
-            console.error('Error during bulk update of webhooks:', err);
+            this.logger.error('Error during bulk update of webhooks:', err);
             throw new BadRequestException('Error disconnecting from all Trello webhooks');
         }
     }
@@ -379,7 +378,7 @@ export class WebhookService {
                 statusCode: HttpStatus.OK,
             };
         } catch (err) {
-            console.error('Error updating webhook:', err.response ? err.response.data : err.message);
+            this.logger.error('Error updating webhook:', err.response ? err.response.data : err.message);
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }

@@ -15,7 +15,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBadRequestResponse, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiOkResponse, getSchemaPath, PartialType } from '@nestjs/swagger';
 import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -110,7 +110,32 @@ export class UsersController {
   @Get('profile')
   @ApiOkResponse({
     description: 'User profile',
-    type: [User]
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174000' },
+        email: { type: 'string', example: 'john.doe@example.com' },
+        role: {
+          type: 'string',
+          enum: Object.values(UserRoles),
+          example: UserRoles.user,
+        },
+        trello: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', example: 'TrelloUser123 | null' },
+            username: { type: 'string', example: 'TrelloUsername | null' },
+            webhooks: { type: 'array', items: { type: 'string' }, example: ['webhook1', 'webhook2', 'webhook3'] },
+          },
+        },
+        telegram: {
+          type: 'object',
+          properties: {
+            username: { type: 'string', example: 'john_doe | null' },
+          },
+        },
+      },
+    },
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')

@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from '../dto/login.dto';
@@ -21,6 +22,8 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
@@ -33,6 +36,7 @@ export class AuthService {
       const decoded = this.jwtService.verify(token);
       return decoded;
     } catch (err) {
+      this.logger.error('Invalid or expired token', err.stack);
       throw new BadRequestException('Your token is not valid or expired');
     }
   }
@@ -47,14 +51,16 @@ export class AuthService {
       user.password,
     );
     if (!isCredentialsValid) {
+      this.logger.warn(`Invalid credentials for email: ${loginUserDto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const payload = { email: user.email, sub: user.id, role: user.role };
-
     const token: string = this.jwtService.sign(payload);
 
     delete user.password;
+
+    this.logger.log(`User logged in successfully: ${user.email}`);
 
     return {
       accessToken: token,
@@ -65,8 +71,8 @@ export class AuthService {
   public async confirmRegistration(
     token: string,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
 
+    const decoded = this.verifyToken(token);
     const { email, password, ...userData } = decoded;
 
     const newUser = {
@@ -76,15 +82,15 @@ export class AuthService {
     };
     await this.userService.createUser(newUser);
 
+    this.logger.log(`User registered successfully: ${email}`);
     return { message: 'User registered successfully', statusCode: HttpStatus.OK };
+
   }
 
   public async forgotPassword(
     forgotPasswordDto: ForgotPasswordDto,
   ): Promise<DefaultResponse<null>> {
-    const user = await this.userService.findUserByEmail(
-      forgotPasswordDto.email,
-    );
+    const user = await this.userService.findUserByEmail(forgotPasswordDto.email);
     const token: string = this.jwtService.sign(
       { id: user.id },
       {
@@ -94,22 +100,30 @@ export class AuthService {
 
     await this.mailService.sendResetPasswordLink(user.email, token);
 
+    this.logger.log(`Password reset email sent to: ${user.email}`);
     return {
       message: `Password reset email sent on ${user.email}`,
       statusCode: HttpStatus.OK,
     };
+
   }
 
   public async resetPassword(token: string, resetPasswordDto: ResetPasswordDto): Promise<DefaultResponse<null>> {
     const { newPassword, repeatPassword } = resetPasswordDto;
 
-    if (newPassword !== repeatPassword)
+    if (newPassword !== repeatPassword) {
+      this.logger.warn('Password mismatch during reset', {
+        token,
+        newPassword,
+        repeatPassword,
+      });
       throw new BadRequestException(`Password and repeat password does not match`);
+    }
 
     const { id } = this.verifyToken(token);
-
     await this.userService.resetPassword(id, newPassword);
 
+    this.logger.log(`Password successfully reset for user ID: ${id}`);
     return {
       message: 'Password changed successfully',
       statusCode: HttpStatus.OK,

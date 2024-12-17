@@ -1,6 +1,6 @@
 import { UsersService } from 'src/user/services/users.service';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { TelegramService } from 'src/telegram/telegram.service';
 
@@ -12,6 +12,7 @@ import { TelegramService } from 'src/telegram/telegram.service';
 
 @Injectable()
 export class ActionsService {
+    private readonly logger = new Logger(ActionsService.name);
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
@@ -53,10 +54,10 @@ export class ActionsService {
                 }
                 await this.telegramService.sendMessageToUser(targetUser.telegram, message);
             } else {
-                console.log(`Unsupported target action: ${actionType}`);
+                this.logger.warn(`Unsupported target action: ${actionType}`);
             }
         } catch (error) {
-            console.error('Error handling target action:', error.message);
+            this.logger.error('Error handling target action:', error.message);
         }
     }
 
@@ -110,10 +111,10 @@ export class ActionsService {
             if (message) {
                 await this.telegramService.sendMessageToUser(userToNotify.telegram, message);
             } else {
-                console.log(`Unsupported card action: ${actionType}`);
+                this.logger.warn(`Unsupported card action: ${actionType}`);
             }
         } catch (error) {
-            console.error('Error handling card action:', error);
+            this.logger.error('Error handling card action:', error);
         }
     }
 
@@ -125,11 +126,6 @@ export class ActionsService {
     ) {
         try {
             const adminToNotify = await this.userService.findUserByTrelloId(adminTrelloId);
-
-            if (!boardData) {
-                console.log('No board data available in the action.');
-                return;
-            }
 
             const targetUser = {
                 fullname: targetMember.fullName,
@@ -157,10 +153,10 @@ export class ActionsService {
             if (message) {
                 await this.telegramService.sendMessageToUser(adminToNotify.telegram, message);
             } else {
-                console.log(`Unsupported board action: ${actionType}`);
+                this.logger.warn(`Unsupported board action: ${actionType}`);
             }
         } catch (error) {
-            console.error('Error handling board action:', error);
+            this.logger.error('Error handling board action:', error);
         }
     }
 }
