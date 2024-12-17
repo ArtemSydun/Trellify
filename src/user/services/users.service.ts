@@ -87,15 +87,23 @@ export class UsersService {
 
   public async findUserById(id: string): Promise<User> {
     const user = await this.userRepository.findOneById(id);
+
     if (!user) {
       this.logger.warn(`User with ID ${id} not found`);
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    this.logger.log(`User with ID ${id} found successfully`);
     const userWithoutPass = { ...user };
     delete userWithoutPass.password;
     return userWithoutPass;
+  }
+
+  async getUser(user: string | User): Promise<User> {
+    if (typeof user === 'string') {
+      // If it's a string, fetch the user by ID
+      return await this.findUserById(user);
+    }
+    return user; // If it's already a User object, return it as-is
   }
 
   public async findUserProfile(userId: string): Promise<Partial<User>> {
@@ -106,7 +114,7 @@ export class UsersService {
     }
 
     const { id, email, role, trello, telegram } = user;
-    this.logger.log(`User profile for ${userId} fetched successfully`);
+
     return {
       id,
       email,
@@ -143,12 +151,12 @@ export class UsersService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  public async updateUserById(id: string, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
+  public async updateUser(user: string | User, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
 
-    const userToUpdate = await this.findUserById(id);
+    const userToUpdate = await this.getUser(user);
     const updatedUserProps: Partial<User> = {};
 
     for (const [key, value] of Object.entries(updateUserDto)) {
@@ -163,7 +171,7 @@ export class UsersService {
         }
 
         const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile = await this.trelloService.findMemberProfile(id, trelloToken);
+        const trelloProfile = await this.trelloService.findMemberProfile(userToUpdate, trelloToken);
 
         updatedUserProps.trello.userId = trelloProfile.id;
 
@@ -177,19 +185,19 @@ export class UsersService {
       }
     }
 
-    const updatedUser = await this.userRepository.updateById(id, updatedUserProps);
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps);
     delete updatedUser.password;
 
-    this.logger.log(`User with ID ${id} updated successfully`);
+    this.logger.log(`User with ID ${userToUpdate.id} updated successfully`);
     return {
-      message: `User ${id} updated successfully`,
+      message: `User ${userToUpdate.id} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
   }
 
   public async resetPassword(id: string, newPassword: string): Promise<void> {
-    const userToReset = await this.findUserById(id);
+    const userToReset = await this.getUser(id);
     const encryptedPassword = await hashPassword(newPassword);
 
     await this.userRepository.updateById(userToReset.id, { password: encryptedPassword });
@@ -242,7 +250,7 @@ export class UsersService {
   }
 
   public async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
-    const user = await this.userRepository.findUserByNestedProperty(path, value);
+    const user = await this.userRepository.findUserByProperty(path, value);
     if (!user) {
       this.logger.warn(`User with property ${path}: ${value} not found`);
       throw new NotFoundException(`User with property ${path}: ${value} not found`);
@@ -254,7 +262,7 @@ export class UsersService {
   }
 
   public async manageUserTelegramConnection(userId: string, connectTelegramDto: ConnectTelegramDto): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.findUserById(userId);
+    const userToUpdate = await this.getUser(userId);
     const { chatId, username } = connectTelegramDto;
 
     try {
@@ -281,11 +289,11 @@ export class UsersService {
   }
 
   public async manageUserTrelloConnection(userId: string, connectTrelloDto: ConnectTrelloDto): Promise<DefaultResponse<User | string>> {
-    const userToUpdate = await this.findUserById(userId);
+    const userToUpdate = await this.getUser(userId);
     const { token } = connectTrelloDto;
 
     if (!token) {
-      await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate.id);
+      await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate);
       const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
         trello: { userId: null, username: null, webhooks: [], token: null },
       });

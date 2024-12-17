@@ -14,6 +14,7 @@ import { trelloApiLink } from 'src/common/constants/trello';
 import { SharedConfigService } from './shared.config.service';
 import { WebhookService } from './webhook.service';
 import { TrelloBoardField } from '../enums/trello.model.fields.enum';
+import { User } from 'src/user/entities/user.entity';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -38,7 +39,7 @@ export class TrelloService {
   }
 
   async findBoardsMemberBelongsTo(userId: string): Promise<any> {
-    const user = await this.userService.findUserById(userId);
+    const user = await this.userService.getUser(userId);
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
     const url = `${trelloApiLink}/members/${user.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
@@ -103,24 +104,24 @@ export class TrelloService {
     }
   }
 
-  async findMemberProfile(userId: string, token?: string): Promise<any> {
-    const user = await this.userService.findUserById(userId);
+  async findMemberProfile(user: string | User, token?: string): Promise<any> {
+    const userToFind = await this.userService.getUser(user);
     const decryptedUserToken = token
       ? decryptText(token, this.encryptionKey)
-      : decryptText(user.trello.token, this.encryptionKey);
+      : decryptText(userToFind.trello.token, this.encryptionKey);
 
     try {
       const response = await axios.get(`${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
-      this.logger.log(`Successfully fetched Trello profile for user ${userId}`);
+      this.logger.log(`Successfully fetched Trello profile for user ${userToFind.id}`);
       return response.data;
     } catch (err) {
-      this.logger.error(`Error fetching Trello profile for user ${userId}: ${err.message}`);
+      this.logger.error(`Error fetching Trello profile for user ${userToFind.id}: ${err.message}`);
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }
 
   async findMemberRelatedCards(userId: string): Promise<any> {
-    const user = await this.userService.findUserById(userId);
+    const user = await this.userService.getUser(userId);
     const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
 
     const url = `${trelloApiLink}/members/${user.trello.userId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
