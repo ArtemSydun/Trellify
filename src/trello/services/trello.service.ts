@@ -38,18 +38,18 @@ export class TrelloService {
     this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
   }
 
-  async findBoardsMemberBelongsTo(userId: string): Promise<any> {
-    const user = await this.userService.getUser(userId);
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+  async findBoardsMemberBelongsTo(user: string | User): Promise<any> {
+    const userToFind = await this.userService.getUser(user);
+    const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
-    const url = `${trelloApiLink}/members/${user.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const url = `${trelloApiLink}/members/${userToFind.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
       const response = await axios.get(url);
-      this.logger.log(`Successfully fetched boards for user ${userId}`);
+      this.logger.log(`Successfully fetched boards for user ${userToFind.id}`);
       return response.data;
     } catch (err) {
-      this.logger.error(`Error fetching boards for user ${userId}: ${err.message}`);
+      this.logger.error(`Error fetching boards for user ${userToFind.id}: ${err.message}`);
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }
@@ -120,18 +120,18 @@ export class TrelloService {
     }
   }
 
-  async findMemberRelatedCards(userId: string): Promise<any> {
-    const user = await this.userService.getUser(userId);
-    const decryptedUserToken = decryptText(user.trello.token, this.encryptionKey);
+  async findMemberRelatedCards(user: string | User): Promise<any> {
+    const userToFind = await this.userService.getUser(user);
+    const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
-    const url = `${trelloApiLink}/members/${user.trello.userId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const url = `${trelloApiLink}/members/${userToFind.trello.userId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
 
     try {
       const response = await axios.get(url);
-      this.logger.log(`Successfully fetched cards for user ${userId}`);
+      this.logger.log(`Successfully fetched cards for user ${userToFind.id}`);
       return response.data;
     } catch (err) {
-      this.logger.error(`Error fetching cards for user ${userId}: ${err.message}`);
+      this.logger.error(`Error fetching cards for user ${userToFind.id}: ${err.message}`);
       throw new BadRequestException(err.response ? err.response.data : err.message);
     }
   }

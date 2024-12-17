@@ -106,14 +106,14 @@ export class UsersService {
     return user; // If it's already a User object, return it as-is
   }
 
-  public async findUserProfile(userId: string): Promise<Partial<User>> {
-    const user = await this.userRepository.findOneById(userId);
+  public async findUserProfile(user: string | User): Promise<Partial<User>> {
+    const userToFind = await this.getUser(user);
     if (!user) {
-      this.logger.warn(`User with ID ${userId} not found`);
-      throw new NotFoundException(`User with id ${userId} not found`);
+      this.logger.warn(`User with ID ${userToFind.id} not found`);
+      throw new NotFoundException(`User with id ${userToFind.id} not found`);
     }
 
-    const { id, email, role, trello, telegram } = user;
+    const { id, email, role, trello, telegram } = userToFind;
 
     return {
       id,
@@ -261,8 +261,8 @@ export class UsersService {
     return user;
   }
 
-  public async manageUserTelegramConnection(userId: string, connectTelegramDto: ConnectTelegramDto): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(userId);
+  public async manageUserTelegramConnection(user: string | User, connectTelegramDto: ConnectTelegramDto): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
     try {
@@ -288,8 +288,8 @@ export class UsersService {
     };
   }
 
-  public async manageUserTrelloConnection(userId: string, connectTrelloDto: ConnectTrelloDto): Promise<DefaultResponse<User | string>> {
-    const userToUpdate = await this.getUser(userId);
+  public async manageUserTrelloConnection(user: string | User, connectTrelloDto: ConnectTrelloDto): Promise<DefaultResponse<User | string>> {
+    const userToUpdate = await this.getUser(user);
     const { token } = connectTrelloDto;
 
     if (!token) {
@@ -298,7 +298,7 @@ export class UsersService {
         trello: { userId: null, username: null, webhooks: [], token: null },
       });
 
-      this.logger.log(`Trello profile disconnected for user ${userId}`);
+      this.logger.log(`Trello profile disconnected for user ${user}`);
       return {
         message: `Trello profile disconnected successfully`,
         statusCode: HttpStatus.OK,
@@ -317,16 +317,16 @@ export class UsersService {
     }
 
     const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-    const trelloProfile = await this.trelloService.findMemberProfile(userId, trelloToken);
+    const trelloProfile = await this.trelloService.findMemberProfile(userToUpdate, trelloToken);
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps);
 
-    this.logger.log(`Trello profile connected for user ${userId}`);
+    this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
     return {
-      message: `Trello ${userId} connected successfully`,
+      message: `Trello ${userToUpdate.id} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
