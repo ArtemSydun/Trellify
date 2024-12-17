@@ -3,6 +3,7 @@ import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.en
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { Webhook } from '../entities/webhook.entity';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -26,7 +27,7 @@ export class ActionsService {
         userTrelloId: string,
         boardData: any,
         actionType: TrelloWebhookDetailedActions,
-        webhookId: string,
+        webhook: string | Webhook,
         cardData?: any,
     ) {
         try {
@@ -50,7 +51,7 @@ export class ActionsService {
             // console.log('message: ', message);
             if (message) {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
-                    await this.webhookService.disconnectFromTrelloWebhook(targetUser.id, webhookId);
+                    await this.webhookService.disconnectFromTrelloWebhook(targetUser.id, webhook);
                 }
                 await this.telegramService.sendMessageToUser(targetUser.telegram, message);
             } else {
