@@ -28,7 +28,7 @@ export class UsersRepository {
     return this.UserModel.findOne({ 'trello.userId': trelloUserId });
   }
 
-  async findUserByNestedProperty(path: UserSearchPath, value: any): Promise<User> {
+  async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
     const query = {};
 
     if (Array.isArray(value)) {

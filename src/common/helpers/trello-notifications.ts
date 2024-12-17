@@ -36,7 +36,7 @@ export const initializeUserNotificationState = (enabledActions: TrelloWebhookDet
 // this functions takes trelloUserId to save in notification arrays, 
 // webhookNotifications which is current notification arrays of webhook, 
 // and userNotificationsUpdate which is object with notifications user want to track
-export const updateWebhookNotifications = (
+export const getUpdatedWebhookNotifications = (
     trelloUserId: string,
     webhookNotifications: NotificationType,
     userNotificationsUpdate: { [key: string]: boolean }

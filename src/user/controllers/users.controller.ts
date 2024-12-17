@@ -208,6 +208,6 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req): Promise<DefaultResponse<User>> {
-    return this.usersService.updateUserById(id, updateUserDto, req.user);
+    return this.usersService.updateUser(id, updateUserDto, req.user);
   }
 }
