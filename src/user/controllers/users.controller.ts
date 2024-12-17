@@ -15,7 +15,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBadRequestResponse, ApiOkResponse, getSchemaPath, PartialType } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiOkResponse, getSchemaPath, PartialType } from '@nestjs/swagger';
 import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -23,6 +23,7 @@ import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from '../interfaces/role.enum';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { Errors } from 'src/common/enums/errors.enum';
 
 @Controller('users')
 export class UsersController {
@@ -67,6 +68,26 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   @ApiCustomBadRequestResponse('Invalid tg info', 'This telegram user has not interacted with bot yet')
+  @ApiConflictResponse({
+    description: 'Telegram is already connected',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Telegram notifier bot is already connected',
+        },
+        error: {
+          type: 'string',
+          example: Errors.CONFLICT,
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.CONFLICT,
+        },
+      },
+    },
+  })
   handleTelegramQuery(
     @Req() req,
     @Body() connectTelegramDto: ConnectTelegramDto,
