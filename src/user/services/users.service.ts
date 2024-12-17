@@ -265,6 +265,10 @@ export class UsersService {
     const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
+    if (chatId === userToUpdate.telegram.chatId) {
+      throw new ConflictException(`Trello notifier bot is already connected`);
+    }
+
     try {
       if (chatId && username) {
         await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
