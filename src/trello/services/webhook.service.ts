@@ -15,6 +15,7 @@ import { ActionsService } from './actions.service';
 import { TrelloService } from './trello.service';
 import { SharedConfigService } from './shared.config.service';
 import { User } from 'src/user/entities/user.entity';
+import { WebhookSearchPath } from '../enums/query.enum';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -134,7 +135,7 @@ export class WebhookService {
         }
     }
 
-    async updateTrelloWebhook(user: string | User, webhook: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
+    async updateTrelloWebhookNotifications(user: string | User, webhook: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
 
@@ -273,7 +274,7 @@ export class WebhookService {
         const webhookToUpdate = await this.getWebhook(webhook);
 
         if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhookToUpdate.id)) {
-            throw new NotFoundException(`Webhook ${webhookToUpdate.id} not found`);
+            throw new BadRequestException(`User is not connected to webhook ${webhookToUpdate.id}`);
         }
 
         const updatedUserWebhooks = userToUpdate.trello.webhooks
@@ -323,7 +324,7 @@ export class WebhookService {
             //we create array of mongo operations to call them later in one request 
             const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
                 const updateObject: any = {
-                    $pull: { 'subscribers': userToDisconnect.trello.userId },
+                    $pull: { [WebhookSearchPath.Subscribers]: userToDisconnect.trello.userId },
                 };
 
                 const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
@@ -331,7 +332,7 @@ export class WebhookService {
                 //remove userId from all notifications in each webhook.notifications object
                 if (webhook && webhook.notifications) {
                     Object.keys(webhook.notifications).forEach(notificationType => {
-                        updateObject.$pull[`notifications.${notificationType}`] = userToDisconnect.trello.userId;
+                        updateObject.$pull[`${WebhookSearchPath.Notifications}.${notificationType}`] = userToDisconnect.trello.userId;
                     });
                 }
 

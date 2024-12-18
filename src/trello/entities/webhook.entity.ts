@@ -71,7 +71,7 @@ export class Webhook {
     @ApiProperty({
         description: 'List of Trello user IDs who are subscribed to this webhook.',
         type: [String],
-        example: ['userId1', 'userId2', 'userId3'],
+        example: ['userId1'],
     })
     @Prop({ type: [String], required: true })
     subscribers: string[];
@@ -79,7 +79,7 @@ export class Webhook {
     @ApiProperty({
         description: 'Notifications for various events with user IDs for each event.',
         type: Object,
-        example: initializeNotificationArrays('userId')
+        example: initializeNotificationArrays('userId1')
     })
     @Prop({ type: MongooseSchema.Types.Mixed, required: false })
     notifications: Record<string, string[]>;

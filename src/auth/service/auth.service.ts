@@ -55,7 +55,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = { email: user.email, id: user.id, role: user.role };
     const token: string = this.jwtService.sign(payload);
 
     delete user.password;
@@ -94,7 +94,7 @@ export class AuthService {
     const token: string = this.jwtService.sign(
       { id: user.id },
       {
-        expiresIn: this.configService.get(configServiceEnum.JWT_EXPIRES_IN),
+        expiresIn: this.configService.get(configServiceEnum.JWT_EXPIRES_PASSWORD),
       },
     );
 
@@ -105,7 +105,6 @@ export class AuthService {
       message: `Password reset email sent on ${user.email}`,
       statusCode: HttpStatus.OK,
     };
-
   }
 
   public async resetPassword(token: string, resetPasswordDto: ResetPasswordDto): Promise<DefaultResponse<null>> {
@@ -121,6 +120,7 @@ export class AuthService {
     }
 
     const { id } = this.verifyToken(token);
+
     await this.userService.resetPassword(id, newPassword);
 
     this.logger.log(`Password successfully reset for user ID: ${id}`);
