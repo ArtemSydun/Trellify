@@ -2,18 +2,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
 
 export class Notifications {
-  @ApiProperty({
-    description: 'Notification for when a card is created.',
-    example: true,
-    required: false,
-  })
-  @IsBoolean()
-  @IsOptional()
-  cardCreated?: boolean;
+  // Uncomment this section if 'CARD_CREATED' is enabled in your actionsEnabledByDefault
+  // @ApiProperty({
+  //   description: 'Notification for when a card is created.',
+  //   example: true,
+  //   required: false,
+  // })
+  // @IsBoolean()
+  // @IsOptional()
+  // cardCreated?: boolean;
 
   @ApiProperty({
     description: 'Notification for when a card is renamed.',
-    example: false,
+    example: true, 
     required: false,
   })
   @IsBoolean()
@@ -22,7 +23,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a card is archived.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -40,7 +41,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a member is added to a card.',
-    example: true,
+    example: true, 
     required: false,
   })
   @IsBoolean()
@@ -49,7 +50,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a member is removed from a card.',
-    example: false,
+    example: true,
     required: false,
   })
   @IsBoolean()
@@ -58,7 +59,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a comment is added to a card.',
-    example: true,
+    example: true, 
     required: false,
   })
   @IsBoolean()
@@ -67,7 +68,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when an attachment is added to a card.',
-    example: false,
+    example: true,
     required: false,
   })
   @IsBoolean()
@@ -76,7 +77,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a due date is added to a card.',
-    example: true,
+    example: true, 
     required: false,
   })
   @IsBoolean()
@@ -85,7 +86,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a due date is changed on a card.',
-    example: false,
+    example: true,
     required: false,
   })
   @IsBoolean()
@@ -103,7 +104,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a start date is changed on a card.',
-    example: false,
+    example: true,
     required: false,
   })
   @IsBoolean()
@@ -112,7 +113,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a card is moved to a different list.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -130,7 +131,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a label is removed from a card.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -148,7 +149,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a checklist is removed from a card.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -166,7 +167,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a checklist item member is removed.',
-    example: true,
+    example: false, 
     required: false,
   })
   @IsBoolean()
@@ -184,7 +185,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a checklist item state is changed to incomplete.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -202,7 +203,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a list is created.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -220,7 +221,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a list is moved right.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -238,7 +239,7 @@ export class Notifications {
 
   @ApiProperty({
     description: 'Notification for when a list is renamed.',
-    example: true,
+    example: false,
     required: false,
   })
   @IsBoolean()
@@ -298,5 +299,5 @@ export class Notifications {
   @IsBoolean()
   @IsOptional()
   boardMemberNormalRoleAdded?: boolean;
-
 }
+

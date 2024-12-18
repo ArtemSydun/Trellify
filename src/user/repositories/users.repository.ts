@@ -25,7 +25,7 @@ export class UsersRepository {
   }
 
   async findOneByTrelloId(trelloUserId: string): Promise<User> {
-    return this.UserModel.findOne({ 'trello.userId': trelloUserId });
+    return this.UserModel.findOne({ [UserSearchPath.TrelloUserId]: trelloUserId });
   }
 
   async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
@@ -70,6 +70,6 @@ export class UsersRepository {
   }
 
   async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.UserModel.find({ 'trello.webhooks': { $in: [webhookId] } }).exec();
+    return this.UserModel.find({ [UserSearchPath.TrelloWebhooks]: { $in: [webhookId] } }).exec();
   }
 }

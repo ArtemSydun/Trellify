@@ -15,7 +15,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiOkResponse, getSchemaPath, PartialType } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiOkResponse, ApiOperation, getSchemaPath, PartialType } from '@nestjs/swagger';
 import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -29,10 +29,13 @@ import { Errors } from 'src/common/enums/errors.enum';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  //should be admin only routes
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Get()
+  @ApiOperation({
+    summary: 'Get all users (Admin / Superadmin only)',
+    description: 'This endpoint retrieves a list of all users in the system. It can only be accessed by users with the admin or superadmin role.',
+  })
   @ApiOkResponse({
     description: 'All users list',
     type: [User]
@@ -45,6 +48,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('telegram')
+  @ApiOperation({
+    summary: 'Connect / Disconnect Telegram',
+    description: 'This endpoint handles connecting or disconnecting a Telegram account to the current user. It does not require special roles, but the user must be authenticated.',
+  })
   @ApiOkResponse({
     description: 'Telegram connected / disconnected successfully',
     schema: {
@@ -97,6 +104,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('trello')
+  @ApiOperation({
+    summary: 'Connect / Disconnect Trello',
+    description: 'This endpoint handles connecting or disconnecting a Trello account to the current user. It does not require special roles, but the user must be authenticated.',
+  })
   @ApiOkResponse({
     description: 'Trello connected / disconnected successfully',
     schema: {
@@ -129,6 +140,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
+  @ApiOperation({
+    summary: 'Get user profile',
+    description: 'This endpoint retrieves the profile of the currently authenticated user.',
+  })
   @ApiOkResponse({
     description: 'User profile',
     schema: {
@@ -167,6 +182,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get a user by ID (Admin / Superadmin only)',
+    description: 'This endpoint retrieves the details of a specific user by their ID. It can only be accessed by users with the admin or superadmin role.',
+  })
   @ApiOkResponse({
     description: 'User by id',
     type: User
@@ -181,6 +200,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a user by ID (Superadmin only)',
+    description: 'This endpoint allows to delete a user by their ID. It can only be accessed by users with the superadmin role.',
+  })
   @ApiOkResponse({
     description: 'User deleted successfully',
     schema: {
@@ -197,15 +220,20 @@ export class UsersController {
       },
     },
   })
-  @ApiCustomForbiddenResponse()
   @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   deleteUserById(@Param('id') id: string): Promise<DefaultResponse<string>> {
     return this.usersService.deleteUserById(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update a user by ID (Superadmin only)',
+    description: 'This endpoint allows to update a user by their ID. It can only be accessed by users with the superadmin role.',
+  })
   @ApiOkResponse({
     description: 'User updated successfully',
     schema: {
@@ -227,6 +255,7 @@ export class UsersController {
     },
   })
   @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req): Promise<DefaultResponse<User>> {
     return this.usersService.updateUser(id, updateUserDto, req.user);
