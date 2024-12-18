@@ -3,15 +3,15 @@ import { IsArray, IsOptional, IsObject } from 'class-validator';
 import { Notifications } from './notifications.dto';
 
 export class UpdateWebhookDto {
-    @ApiProperty({
-        description: 'List of Trello user IDs who are subscribed to this webhook.',
-        type: [String],
-        example: ['userId1', 'userId2', 'userId3'],
-        required: false,
-    })
-    @IsArray()
-    @IsOptional()
-    subscribers?: string[];
+    // @ApiProperty({
+    //     description: 'List of Trello user IDs who are subscribed to this webhook.',
+    //     type: [String],
+    //     example: ['userId1', 'userId2', 'userId3'],
+    //     required: false,
+    // })
+    // @IsArray()
+    // @IsOptional()
+    // subscribers?: string[];
 
     @ApiProperty({
         description: 'Notifications for various events with user IDs for each event.',

@@ -338,11 +338,12 @@ export class UsersService {
 
   public async removeWebhookFromAllUsers(webhookId: string) {
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
+
     const bulkUpdateOperations = usersConnectedToWebhook.map(user => ({
       updateOne: {
         filter: { id: user.id },
         update: {
-          $pull: { 'trello.webhooks': webhookId },
+          $pull: { [UserSearchPath.TrelloWebhooks]: webhookId },
         },
       },
     }));

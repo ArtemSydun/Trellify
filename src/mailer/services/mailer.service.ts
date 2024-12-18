@@ -60,7 +60,12 @@ export class MailerService {
         from: this.configService.get<string>('MAILER_SENDER'),
         subject: 'Password Reset Request',
         text: `Click the link to reset your password: ${resetLink}`,
-        html: `<p>Click the link to reset your password: <a href="${resetLink}">RESET PASSWORD</a></p>`,
+        html: `<p>Click the link to reset your password:</p>
+              <a href="${resetLink}">RESET PASSWORD</a>
+              <br>
+              <p>If you did not request this reset, please ignore this email.</p>
+              <br>
+              <p>This link are available only for 15 minutes.</p>`,
       });
 
       this.logger.verbose(`Forgot password mail sent to ${email}`);

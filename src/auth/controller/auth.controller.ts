@@ -4,7 +4,7 @@ import { AuthService } from '../service/auth.service';
 import { LoginUserDto, LoginUserResponseDto } from '../dto/login.dto';
 import { User } from 'src/user/entities/user.entity';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiUnauthorizedResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { Errors } from 'src/common/enums/errors.enum';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
@@ -19,6 +19,10 @@ export class AuthController {
   ) { }
 
   @Post('login')
+  @ApiOperation({
+    summary: 'Login with user credentials',
+    description: 'Logs in the user with their credentials and returns an access token and user data.',
+  })
   @ApiOkResponse({
     description: 'Successfully logged in',
     type: LoginUserResponseDto,
@@ -51,6 +55,10 @@ export class AuthController {
   }
 
   @Post('sign-up')
+  @ApiOperation({
+    summary: 'Sign up a new user',
+    description: 'Registers a new user and sends a confirmation email with a link to verify the account.',
+  })
   @ApiOkResponse({
     description: 'Confirmation link sent',
     schema: {
@@ -73,6 +81,10 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @ApiOperation({
+    summary: 'Request password reset',
+    description: 'Sends a password reset email to the user with a link to reset their password.',
+  })
   @ApiOkResponse({
     description: 'Password reset email sent successfully',
     schema: {
@@ -97,6 +109,10 @@ export class AuthController {
   }
 
   @Post('reset-password/:token')
+  @ApiOperation({
+    summary: 'Reset user password',
+    description: 'Resets the user password based on the provided reset token and new password.',
+  })
   @ApiOkResponse({
     description: 'Password changed successfully',
     schema: {
@@ -124,6 +140,10 @@ export class AuthController {
   }
 
   @Get('confirm/:token')
+  @ApiOperation({
+    summary: 'Confirm user registration',
+    description: 'Confirms the user’s email address by verifying the confirmation token.',
+  })
   @ApiOkResponse({
     description: 'User registered successfully',
     schema: {
