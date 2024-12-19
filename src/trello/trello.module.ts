@@ -11,6 +11,7 @@ import { ActionsService } from './services/actions.service';
 import { WebhookService } from './services/webhook.service';
 import { SharedConfigService } from './services/shared.config.service';
 import { TelegramModule } from 'src/telegram/telegram.module';
+import { TrelloApiService } from './services/trello.api.service';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { TelegramModule } from 'src/telegram/telegram.module';
     TelegramModule
   ],
   controllers: [TrelloMembersController, TrelloWebhooksController],
-  providers: [TrelloService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService],
-  exports: [TrelloService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService]
+  providers: [TrelloService, TrelloApiService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService],
+  exports: [TrelloService, TrelloApiService, TrelloWebhookRepository, ActionsService, WebhookService, SharedConfigService]
 })
 export class TrelloModule { }

@@ -15,6 +15,10 @@ import { SharedConfigService } from './shared.config.service';
 import { WebhookService } from './webhook.service';
 import { TrelloBoardField } from '../enums/trello.model.fields.enum';
 import { User } from 'src/user/entities/user.entity';
+import { Board } from '../dto/board.dto';
+import { TrelloCard } from '../dto/card.dto';
+import { TrelloMember } from '../dto/member.dto';
+import { TrelloApiService } from './trello.api.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -25,132 +29,126 @@ import { User } from 'src/user/entities/user.entity';
 @Injectable()
 export class TrelloService {
   private readonly encryptionKey: string;
-  private readonly trelloApiKey: string;
   private readonly logger = new Logger(TrelloService.name);
 
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly sharedConfigService: SharedConfigService,
-    private readonly webhookService: WebhookService,
+    private readonly trelloApiService: TrelloApiService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-    this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
   }
 
-  async findBoardsMemberBelongsTo(user: string | User): Promise<any> {
+  async findBoardsMemberBelongsTo(user: string | User): Promise<Board[]> {
     const userToFind = await this.userService.getUser(user);
     const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
-    const url = `${trelloApiLink}/members/${userToFind.trello.userId}/boards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const response = await this.trelloApiService.fetchBoardsMemberBelongsTo(decryptedUserToken, userToFind.trello.userId);
 
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched boards for user ${userToFind.id}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching boards for user ${userToFind.id}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    // Transform the response to only include the necessary fields
+    const transformedBoards = response.map(board => ({
+      id: board.id,
+      name: board.name,
+      desc: board.desc,
+      closed: board.closed,
+      dateClosed: board.dateClosed,
+      pinned: board.pinned,
+      starred: board.starred,
+      url: board.url,
+      shortLink: board.shortLink,
+      subscribed: board.subscribed,
+      dateLastActivity: board.dateLastActivity,
+      dateLastView: board.dateLastView,
+      shortUrl: board.shortUrl,
+      idMemberCreator: board.idMemberCreator,
+      memberships: board.memberships,
+    }));
+
+    return transformedBoards;
   }
 
-  async findBoardField(boardId: string, fieldName: TrelloBoardField): Promise<any> {
-    const webhook = await this.webhookService.findWebhookByBoardId(boardId);
-    const decryptedUserToken = decryptText(webhook.authorToken, this.encryptionKey);
+  async findBoardField(user: string | User, boardId: string, fieldName: TrelloBoardField): Promise<any> {
+    const requestedUser = await this.userService.getUser(user);
 
-    const url = `${trelloApiLink}/boards/${boardId}/${fieldName}?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
-    try {
-      const response = await axios.get(url);
-      let result;
+    const response = await this.trelloApiService.fetchBoardField(decryptedUserToken, boardId, fieldName);
 
-      if ('_value' in response.data) {
-        result = { value: response.data._value };
-      } else {
-        result = { value: response.data };
-      }
-
-      this.logger.log(`Successfully fetched field ${fieldName} for board ${boardId}`);
-      return result;
-    } catch (err) {
-      this.logger.error(`Error fetching field ${fieldName} for board ${boardId}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    return response;
   }
 
-  async findBoardById(token: string, boardId: string): Promise<any> {
-    const url = `${trelloApiLink}/boards/${boardId}?key=${this.trelloApiKey}&token=${token}`;
+  async findBoardById(user: string | User, boardId: string): Promise<Board> {
+    const requestedUser = await this.userService.getUser(user);
 
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched board data for board ${boardId}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching board data for board ${boardId}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
+
+    const boardData = await this.trelloApiService.fetchBoardById(decryptedUserToken, boardId);
+
+    const transformedBoard = {
+      id: boardData.id,
+      name: boardData.name,
+      desc: boardData.desc,
+      closed: boardData.closed,
+      dateClosed: boardData.dateClosed,
+      pinned: boardData.pinned,
+      starred: boardData.starred,
+      url: boardData.url,
+      shortLink: boardData.shortLink,
+      subscribed: boardData.subscribed,
+      dateLastActivity: boardData.dateLastActivity,
+      dateLastView: boardData.dateLastView,
+      shortUrl: boardData.shortUrl,
+      idMemberCreator: boardData.idMemberCreator,
+      memberships: boardData.memberships,
+    };
+
+    return transformedBoard;
   }
 
-  async findCardById(token: string, cardId: string): Promise<any> {
-    const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${token}`;
+  async findCardById(user: string | User, cardId: string): Promise<TrelloCard> {
+    const requestedUser = await this.userService.getUser(user);
 
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched card data for card ${cardId}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching card data for card ${cardId}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
+
+    const card = await this.trelloApiService.fetchCardById(decryptedUserToken, cardId);
+
+    return card;
   }
 
-  async findMemberProfile(user: string | User, token?: string): Promise<any> {
+  async findMemberProfile(user: string | User, token?: string): Promise<TrelloMember> {
     const userToFind = await this.userService.getUser(user);
     const decryptedUserToken = token
       ? decryptText(token, this.encryptionKey)
       : decryptText(userToFind.trello.token, this.encryptionKey);
 
-    try {
-      const response = await axios.get(`${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${decryptedUserToken}`);
-      this.logger.log(`Successfully fetched Trello profile for user ${userToFind.id}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching Trello profile for user ${userToFind.id}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    const response = await this.trelloApiService.fetchMemberProfile(decryptedUserToken);
+
+    return response;
   }
 
-  async findMemberRelatedCards(user: string | User): Promise<any> {
+  async findMemberRelatedCards(user: string | User): Promise<TrelloCard[]> {
     const userToFind = await this.userService.getUser(user);
+
     const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
-    const url = `${trelloApiLink}/members/${userToFind.trello.userId}/cards?key=${this.trelloApiKey}&token=${decryptedUserToken}`;
+    const response = await this.trelloApiService.fetchMemberRelatedCards(decryptedUserToken, userToFind.trello.userId);
 
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched cards for user ${userToFind.id}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching cards for user ${userToFind.id}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    return response;
   }
 
-  async findBoardMemberships(token: string, boardId: string): Promise<any> {
-    const url = `${trelloApiLink}/boards/${boardId}/memberships?key=${this.trelloApiKey}&token=${token}`;
+  async findBoardMemberships(user: string | User, boardId: string): Promise<any> {
+    const requestedUser = await this.userService.getUser(user);
 
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched board memberships for board ${boardId}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching board memberships for board ${boardId}: ${err.message}`);
-      throw new BadRequestException(err.response ? err.response.data : err.message);
-    }
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
+
+    const response = await this.trelloApiService.fetchBoardMemberships(decryptedUserToken, boardId);
+
+    return response.data;
   }
 
   async isTokenInfinite(trelloToken: string): Promise<boolean> {
-    const token = await this.findAccessToken(trelloToken);
+    const token = await this.trelloApiService.fetchAccessToken(trelloToken);
 
     if (token.dateExpires !== null) {
       this.logger.warn('Token has an expiration date');
@@ -159,18 +157,5 @@ export class TrelloService {
 
     this.logger.log('Trello token is infinite');
     return true;
-  }
-
-  async findAccessToken(trelloToken: string): Promise<any> {
-    const url = `${trelloApiLink}/tokens/${trelloToken}?key=${this.trelloApiKey}&token=${trelloToken}`;
-
-    try {
-      const response = await axios.get(url);
-      this.logger.log(`Successfully fetched access token details for token ${trelloToken}`);
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Error fetching access token details for token ${trelloToken}: ${err.message}`);
-      throw new UnauthorizedException('Invalid token');
-    }
   }
 }

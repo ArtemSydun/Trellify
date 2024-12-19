@@ -135,7 +135,7 @@ export class ActionsService {
 
             const adminActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
-                    `The user was removed from the board [${boardData?.name}](${boardData.url}) via invitation. \n User: ${JSON.stringify(targetUser, null, 2)}`,
+                    `The user was removed from the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
                 [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]:
                     `The user joined the board [${boardData?.name}](${boardData.url}) via invitation. \n User: ${JSON.stringify(targetUser, null, 2)}`,
                 [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]:
