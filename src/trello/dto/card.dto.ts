@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ITrelloCard } from '../interfaces/card.interface';
 
 export class BadgesDto {
     @ApiProperty({
@@ -62,7 +63,7 @@ export class BadgesDto {
     start: string;
 }
 
-export class TrelloCard {
+export class TrelloCard implements ITrelloCard {
     @ApiProperty({
         description: 'The unique identifier for the card',
         example: '6745bd3c7a183b24eba77188',
@@ -73,7 +74,8 @@ export class TrelloCard {
         description: 'The badges associated with the card',
         type: BadgesDto,
     })
-    badges: BadgesDto
+    badges: BadgesDto;
+
     @ApiProperty({
         description: 'Indicates if the card is closed',
         example: false,

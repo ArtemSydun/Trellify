@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ITrelloMember } from '../interfaces/member.interface';
+import { IBoardMember, ITrelloMember } from '../interfaces/member.interface';
 
 export class TrelloMember implements ITrelloMember {
     @ApiProperty({
@@ -97,4 +97,36 @@ export class TrelloMember implements ITrelloMember {
         example: ['673ef21fe8635da2c412c5fb'],
     })
     idOrganizations: string[];
+}
+
+export class BoardMember implements IBoardMember {
+    @ApiProperty({
+        description: 'The unique ID of the board member',
+        example: '6756f17f2a5dfbe186628950',
+    })
+    id: string;
+
+    @ApiProperty({
+        description: 'The unique ID of the member associated with the board',
+        example: '66fe43b09fa2ccff7397732b',
+    })
+    idMember: string;
+
+    @ApiProperty({
+        description: 'The type of the member (e.g., "admin", "normal")',
+        example: 'normal',
+    })
+    memberType: string;
+
+    @ApiProperty({
+        description: 'Whether the membership is unconfirmed or not',
+        example: false,
+    })
+    unconfirmed: boolean;
+
+    @ApiProperty({
+        description: 'Whether the membership is deactivated or not',
+        example: false,
+    })
+    deactivated: boolean;
 }

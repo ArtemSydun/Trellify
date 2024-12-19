@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { TrelloService } from '../services/trello.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
@@ -39,6 +39,21 @@ export class TrelloMembersController {
   })
   findBoardsMemberBelongsTo(@Req() req): Promise<Board[]> {
     return this.trelloService.findBoardsMemberBelongsTo(req.user.userId);
+  }
+
+  @Get('board/:id')
+  @ApiOperation({
+    summary: 'Get board by id',
+    description: 'Fetch board by ID.'
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiOkResponse({
+    description: 'Board by ID',
+    type: Board,
+  })
+  @ApiCustomNotFoundResponse('Board', 'id')
+  getBoardById(@Req() req, @Param(':id') boardId): Promise<Board> {
+    return this.trelloService.findBoardById(req.user.userId, boardId);
   }
 
   @Get('cards/my')
