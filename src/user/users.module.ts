@@ -11,6 +11,7 @@ import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
 import { UsersRepository } from './repositories/users.repository';
 import { TelegramModule } from 'src/telegram/telegram.module';
+import { SharedConfigService } from 'src/common/config/shared.config.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { TelegramModule } from 'src/telegram/telegram.module';
     forwardRef(() => TelegramModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService, UsersRepository],
+  providers: [UsersService, UsersRepository, SharedConfigService],
   exports: [UsersService]
 })
 export class UsersModule { }

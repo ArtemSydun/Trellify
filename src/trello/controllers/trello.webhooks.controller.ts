@@ -9,11 +9,11 @@ import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UpdateWebhookDto } from '../dto/update-webhook.dto';
-import { WebhookService } from '../services/webhook.service';
+import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
-  constructor(private readonly webhookService: WebhookService) { }
+  constructor(private readonly webhooksService: TrelloWebhooksLogicService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -48,7 +48,7 @@ export class TrelloWebhooksController {
     @Req() req,
     @Body() body: CreateWebhookDto
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhookService.createTrelloWebhook(req.user.userId, body);
+    return this.webhooksService.createTrelloWebhook(req.user.userId, body);
   }
 
   @Get('list')
@@ -63,7 +63,7 @@ export class TrelloWebhooksController {
     type: [Webhook],
   })
   getUserConnectedWebhooksList(@Req() req) {
-    return this.webhookService.findMemberWebhooks(req.user.userId);
+    return this.webhooksService.findMemberWebhooks(req.user.userId);
   }
 
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms, 
@@ -80,7 +80,7 @@ export class TrelloWebhooksController {
     @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    await this.webhookService.handleTrelloWebhook(payload);
+    await this.webhooksService.handleTrelloWebhook(payload);
     return { status: 'success' };
   }
 
@@ -113,7 +113,7 @@ export class TrelloWebhooksController {
   })
   @ApiCustomNotFoundResponse('Webhook', 'id')
   updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Req() req): Promise<DefaultResponse<Webhook>> {
-    return this.webhookService.updateTrelloWebhookNotifications(req.user.userId, id, updateWebhookDto);
+    return this.webhooksService.updateTrelloWebhookNotifications(req.user.userId, id, updateWebhookDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -143,7 +143,7 @@ export class TrelloWebhooksController {
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
   removeWebhookById(@Param('id') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.webhookService.removeTrelloWebhook(webhookId);
+    return this.webhooksService.removeTrelloWebhook(webhookId);
   }
 
   @Post('disconnect/:webhookId')
@@ -172,6 +172,6 @@ export class TrelloWebhooksController {
   @ApiCustomNotFoundResponse('Webhook', 'id')
   @ApiCustomBadRequestResponse('User is not connected', 'User is not connected to webhook {{webhookId}}')
   disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.webhookService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
+    return this.webhooksService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
   }
 }

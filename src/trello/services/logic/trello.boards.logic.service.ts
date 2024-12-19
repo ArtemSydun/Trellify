@@ -3,22 +3,15 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  NotFoundException,
-  UnauthorizedException,
   Logger,
 } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
-import axios from 'axios';
-import { trelloApiLink } from 'src/common/constants/trello';
-import { SharedConfigService } from './shared.config.service';
-import { WebhookService } from './webhook.service';
-import { TrelloBoardField } from '../enums/trello.model.fields.enum';
+import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { User } from 'src/user/entities/user.entity';
-import { Board } from '../dto/board.dto';
-import { TrelloCard } from '../dto/card.dto';
-import { TrelloMember } from '../dto/member.dto';
-import { TrelloApiService } from './trello.api.service';
+import { Board } from '../../dto/board.dto';
+import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -27,15 +20,15 @@ import { TrelloApiService } from './trello.api.service';
  */
 
 @Injectable()
-export class TrelloService {
+export class TrelloBoardsLogicService {
   private readonly encryptionKey: string;
-  private readonly logger = new Logger(TrelloService.name);
+  private readonly logger = new Logger(TrelloBoardsLogicService.name);
 
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
+    private readonly trelloBoardsApiService: TrelloBoardsApiService,
     private readonly sharedConfigService: SharedConfigService,
-    private readonly trelloApiService: TrelloApiService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
@@ -44,7 +37,7 @@ export class TrelloService {
     const userToFind = await this.userService.getUser(user);
     const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
-    const response = await this.trelloApiService.fetchBoardsMemberBelongsTo(decryptedUserToken, userToFind.trello.userId);
+    const response = await this.trelloBoardsApiService.fetchBoardsMemberBelongsTo(decryptedUserToken, userToFind.trello.userId);
 
     // Transform the response to only include the necessary fields
     const transformedBoards = response.map(board => ({
@@ -73,7 +66,7 @@ export class TrelloService {
 
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
-    const response = await this.trelloApiService.fetchBoardField(decryptedUserToken, boardId, fieldName);
+    const response = await this.trelloBoardsApiService.fetchBoardField(decryptedUserToken, boardId, fieldName);
 
     return response;
   }
@@ -83,7 +76,7 @@ export class TrelloService {
 
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
-    const boardData = await this.trelloApiService.fetchBoardById(decryptedUserToken, boardId);
+    const boardData = await this.trelloBoardsApiService.fetchBoardById(decryptedUserToken, boardId);
 
     const transformedBoard = {
       id: boardData.id,
@@ -106,56 +99,13 @@ export class TrelloService {
     return transformedBoard;
   }
 
-  async findCardById(user: string | User, cardId: string): Promise<TrelloCard> {
-    const requestedUser = await this.userService.getUser(user);
-
-    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
-
-    const card = await this.trelloApiService.fetchCardById(decryptedUserToken, cardId);
-
-    return card;
-  }
-
-  async findMemberProfile(user: string | User, token?: string): Promise<TrelloMember> {
-    const userToFind = await this.userService.getUser(user);
-    const decryptedUserToken = token
-      ? decryptText(token, this.encryptionKey)
-      : decryptText(userToFind.trello.token, this.encryptionKey);
-
-    const response = await this.trelloApiService.fetchMemberProfile(decryptedUserToken);
-
-    return response;
-  }
-
-  async findMemberRelatedCards(user: string | User): Promise<TrelloCard[]> {
-    const userToFind = await this.userService.getUser(user);
-
-    const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
-
-    const response = await this.trelloApiService.fetchMemberRelatedCards(decryptedUserToken, userToFind.trello.userId);
-
-    return response;
-  }
-
   async findBoardMemberships(user: string | User, boardId: string): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
 
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
-    const response = await this.trelloApiService.fetchBoardMemberships(decryptedUserToken, boardId);
+    const response = await this.trelloBoardsApiService.fetchBoardMemberships(decryptedUserToken, boardId);
 
     return response.data;
-  }
-
-  async isTokenInfinite(trelloToken: string): Promise<boolean> {
-    const token = await this.trelloApiService.fetchAccessToken(trelloToken);
-
-    if (token.dateExpires !== null) {
-      this.logger.warn('Token has an expiration date');
-      throw new BadRequestException('Please provide a token with a valid expiration date');
-    }
-
-    this.logger.log('Trello token is infinite');
-    return true;
   }
 }
