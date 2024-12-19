@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IBoard } from '../interfaces/board.interface';
+import { IBoardMember } from '../interfaces/member.interface';
+import { BoardMember } from './member.dto';
 
 export class Board implements IBoard {
     @ApiProperty({
@@ -85,4 +87,11 @@ export class Board implements IBoard {
         example: '673ef1f4c1d0247b538a4ac3',
     })
     idMemberCreator: string;
+
+    @ApiProperty({
+        description: 'Board memberships array',
+        type: [BoardMember]
+    })
+    memberships: IBoardMember[]
 }
+

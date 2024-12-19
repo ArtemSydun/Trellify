@@ -4,17 +4,24 @@ import { TrelloService } from 'src/trello/services/trello.service';
 import { WebhookService } from 'src/trello/services/webhook.service';
 import { differenceInDays } from 'date-fns';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
+import { decryptText } from 'src/common/helpers/hashing';
+import { SharedConfigService } from 'src/trello/services/shared.config.service';
+import { TrelloApiService } from 'src/trello/services/trello.api.service';
 
 @Injectable()
 export class CronService {
+    private readonly encryptionKey: string;
     private readonly logger = new Logger(CronService.name);
-
     constructor(
         @Inject(forwardRef(() => TrelloService))
         private readonly trelloService: TrelloService,
+        private readonly trelloApiService: TrelloApiService,
         @Inject(forwardRef(() => WebhookService))
         private readonly webhookService: WebhookService,
-    ) { }
+        private readonly sharedConfigService: SharedConfigService,
+    ) {
+        this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+    }
 
     @Cron(CronExpression.EVERY_WEEK)
     async clearUnactiveBoards() {
@@ -25,7 +32,9 @@ export class CronService {
 
             const unactiveWebhooks = [];
             for (const webhook of webhooks) {
-                const dateLastActivity = await this.trelloService.findBoardField(
+                const decryptedAuthorToken = decryptText(webhook.authorToken, this.encryptionKey);
+                const dateLastActivity = await this.trelloApiService.fetchBoardField(
+                    decryptedAuthorToken,
                     webhook.idModel,
                     TrelloBoardField.DATE_LAST_ACTIVITY,
                 );
@@ -35,10 +44,10 @@ export class CronService {
                     continue;
                 }
 
-
                 const dateLastActivityParsed = new Date(dateLastActivity._value);
                 const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
 
+                // unactive for more than 30 days
                 if (daysSinceLastActivity <= -30) {
                     unactiveWebhooks.push(webhook);
                 }

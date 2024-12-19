@@ -16,3 +16,11 @@ export interface ITrelloMember {
     idBoards: string[];
     idOrganizations: string[];
 }
+
+export interface IBoardMember {
+    id: string;
+    idMember: string;
+    memberType: string;
+    unconfirmed: boolean;
+    deactivated: boolean;
+}
