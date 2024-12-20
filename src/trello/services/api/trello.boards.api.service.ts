@@ -80,4 +80,16 @@ export class TrelloBoardsApiService {
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
+
+    async fetchBoardsInOrganization(token: string, organizationId: string): Promise<Board[]> {
+        const url = `${trelloApiLink}/organizations/${organizationId}/boards?key=${this.trelloApiKey}&token=${token}`;
+
+        try {
+            const response = await axios.get(url);
+
+            return response.data;
+        } catch (err) {
+            throw new BadRequestException(err.response ? err.response.data : err.message);
+        }
+    }
 }
