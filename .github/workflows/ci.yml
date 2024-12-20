@@ -18,7 +18,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t backend:staging .
+          docker build -t backend:staging -f .docker/Dockerfile .
 
       - name: Run Docker Container for Testing
         run: |
