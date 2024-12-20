@@ -19,14 +19,15 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { TrelloService } from 'src/trello/services/trello.service';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
-import { WebhookService } from 'src/trello/services/webhook.service';
-import { SharedConfigService } from 'src/trello/services/shared.config.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { SharedConfigService } from 'src/config/shared.config.service';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
+import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
 
 @Injectable()
 export class UsersService {
@@ -39,10 +40,9 @@ export class UsersService {
     private readonly configService: ConfigService,
     private readonly sharedConfigService: SharedConfigService,
     private readonly jwtService: JwtService,
-    @Inject(forwardRef(() => TrelloService))
-    private readonly trelloService: TrelloService,
-    @Inject(forwardRef(() => WebhookService))
-    private readonly webhookService: WebhookService,
+    private readonly trelloMembersLogicService: TrelloMembersLogicService,
+    private readonly trelloTokensLogicService: TrelloTokensLogicService,
+    private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly telegramService: TelegramService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -71,7 +71,7 @@ export class UsersService {
   public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
     this.logger.log(`Deleting user with ID: ${userId}`);
 
-    await this.webhookService.disconnectFromAllTrelloWebhooks(userId);
+    await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userId);
     await this.userRepository.delete(userId);
 
     this.logger.log(`User ${userId} deleted successfully`);
@@ -171,7 +171,7 @@ export class UsersService {
         }
 
         const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile = await this.trelloService.findMemberProfile(userToUpdate, trelloToken);
+        const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
 
         updatedUserProps.trello.userId = trelloProfile.id;
 
@@ -297,7 +297,7 @@ export class UsersService {
     const { token } = connectTrelloDto;
 
     if (!token) {
-      await this.webhookService.disconnectFromAllTrelloWebhooks(userToUpdate);
+      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToUpdate);
       const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
         trello: { userId: null, username: null, webhooks: [], token: null },
       });
@@ -310,7 +310,7 @@ export class UsersService {
       };
     }
 
-    await this.trelloService.isTokenInfinite(token);
+    await this.trelloTokensLogicService.isTokenInfinite(token);
 
     const updatedUserProps: Partial<User> = { trello: { ...userToUpdate.trello } };
 
@@ -321,7 +321,7 @@ export class UsersService {
     }
 
     const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-    const trelloProfile = await this.trelloService.findMemberProfile(userToUpdate, trelloToken);
+    const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;

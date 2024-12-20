@@ -1,9 +1,9 @@
 import { UsersService } from 'src/user/services/users.service';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { WebhookService } from './webhook.service';
 import { TelegramService } from 'src/telegram/telegram.service';
-import { Webhook } from '../entities/webhook.entity';
+import { Webhook } from '../../entities/webhook.entity';
+import { TrelloWebhooksLogicService } from './trello.webhooks.logic.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -12,13 +12,13 @@ import { Webhook } from '../entities/webhook.entity';
  */
 
 @Injectable()
-export class ActionsService {
-    private readonly logger = new Logger(ActionsService.name);
+export class TrelloActionsLogicService {
+    private readonly logger = new Logger(TrelloActionsLogicService.name);
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
-        @Inject(forwardRef(() => WebhookService))
-        private readonly webhookService: WebhookService,
+        @Inject(forwardRef(() => TrelloWebhooksLogicService))
+        private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
         private readonly telegramService: TelegramService,
     ) {
     }
@@ -51,7 +51,7 @@ export class ActionsService {
             // console.log('message: ', message);
             if (message) {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
-                    await this.webhookService.disconnectFromTrelloWebhook(targetUser.id, webhook);
+                    await this.trelloWebhooksLogicService.disconnectFromTrelloWebhook(targetUser, webhook);
                 }
                 await this.telegramService.sendMessageToUser(targetUser.telegram, message);
             } else {
