@@ -2,20 +2,22 @@ import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject,
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { TrelloWebhookRepository } from '../repositories/webhook.repository';
-import { Webhook } from '../entities/webhook.entity';
-import { CreateWebhookDto } from '../dto/create-webhook.dto';
+import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
+import { Webhook } from '../../entities/webhook.entity';
+import { CreateWebhookDto } from '../../dto/create-webhook.dto';
 import { actionsEnabledByDefault } from 'src/common/constants/trello';
 import { initializeUserNotificationState, getUpdatedWebhookNotifications, initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
-import { UpdateWebhookDto } from '../dto/update-webhook.dto';
+import { UpdateWebhookDto } from '../../dto/update-webhook.dto';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
-import { ActionsService } from './actions.service';
-import { TrelloService } from './trello.service';
-import { SharedConfigService } from './shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
-import { WebhookSearchPath } from '../enums/query.enum';
-import { TrelloApiService } from './trello.api.service';
+import { WebhookSearchPath } from '../../enums/query.enum';
+
+import { TrelloActionsLogicService } from './trello.actions.logic.service';
+import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
+import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
+import { TrelloCardsApiService } from '../api/trello.cards.api.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -24,25 +26,24 @@ import { TrelloApiService } from './trello.api.service';
  */
 
 @Injectable()
-export class WebhookService {
+export class TrelloWebhooksLogicService {
     private readonly webhookCallbackURL: string;
     private readonly encryptionKey: string;
-    private readonly trelloApiKey: string;
-    private readonly logger = new Logger(WebhookService.name);
+    private readonly logger = new Logger(TrelloWebhooksLogicService.name);
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly userService: UsersService,
         private readonly sharedConfigService: SharedConfigService,
-        @Inject(forwardRef(() => ActionsService))
-        private readonly actionsService: ActionsService,
-        @Inject(forwardRef(() => TrelloService))
-        private readonly trelloService: TrelloService,
-        private readonly trelloApiService: TrelloApiService,
+        @Inject(forwardRef(() => TrelloActionsLogicService))
+        private readonly actionsService: TrelloActionsLogicService,
+        @Inject(forwardRef(() => TrelloWebhooksApiService))
+        private readonly trelloWebhookApiService: TrelloWebhooksApiService,
+        private readonly trelloBoardsApiService: TrelloBoardsApiService,
+        private readonly trelloCardsApiService: TrelloCardsApiService,
         private readonly trelloWebhookRepository: TrelloWebhookRepository,
     ) {
         this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
         this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-        this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
     }
 
     async createTrelloWebhook(user: string | User, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
@@ -87,23 +88,23 @@ export class WebhookService {
 
             await this.userService.updateUser(userToUpdate, updatedUserProps);
 
-            this.logger.log(`Webhook already exists, user ${userToUpdate.id} added to subscribers`);
+            this.logger.log(`Webhook for board ${webhook.boardName} already exists, user ${userToUpdate.id} added to webhook subscribers`);
 
             return {
-                message: 'Webhook already exists, user added to subscribers',
+                message: `Webhook for board ${webhook.boardName} already exists, user ${userToUpdate.id} added to webhook subscribers`,
                 statusCode: HttpStatus.OK,
                 data: webhook,
             };
         }
 
         try {
-            const response = await this.trelloApiService.createWebhook(decryptedUserToken, boardPersonalWebhookURL, boardId);
-            console.log('Webhook created: ', response.data);
+            const response = await this.trelloWebhookApiService.createWebhook(decryptedUserToken, boardPersonalWebhookURL, boardId);
+            console.log('Webhook created: ', response);
 
-            const connectedBoard = await this.trelloApiService.fetchBoardById(decryptedUserToken, boardId);
+            const connectedBoard = await this.trelloBoardsApiService.fetchBoardById(decryptedUserToken, boardId);
 
             const createdWebhook = {
-                ...response.data,
+                ...response,
                 boardName: connectedBoard.name,
                 authorToken: userToUpdate.trello.token,
                 subscribers: [userToUpdate.trello.userId],
@@ -113,7 +114,7 @@ export class WebhookService {
             const updatedUserProps = {
                 trello: {
                     ...userToUpdate.trello,
-                    webhooks: userToUpdate.trello.webhooks ? [...userToUpdate.trello.webhooks, response.data.id] : [response.data.id],
+                    webhooks: userToUpdate.trello.webhooks ? [...userToUpdate.trello.webhooks, createdWebhook.id] : [createdWebhook.id],
                 }
             };
 
@@ -207,12 +208,12 @@ export class WebhookService {
 
         let boardData = null;
         if (targetBoard) {
-            boardData = await this.trelloService.findBoardById(authorizedToken, targetBoard.id);
+            boardData = await this.trelloBoardsApiService.fetchBoardById(authorizedToken, targetBoard.id);
         }
 
         // Handle board actions (if targetCard is not present)
         if (!targetCard && boardData && subscribedMembers.length !== 0) {
-            const boardMemberships = await this.trelloService.findBoardMemberships(authorizedToken, boardData.id);
+            const boardMemberships = await this.trelloBoardsApiService.fetchBoardMemberships(authorizedToken, boardData.id);
 
             const membersToNotify = boardMemberships.filter(member =>
                 subscribedMembers.includes(member.idMember) && member.memberType === 'admin'
@@ -232,7 +233,7 @@ export class WebhookService {
 
         // Handle card actions (if targetCard is available)
         if (!targetMember && targetCard && subscribedMembers.length !== 0) {
-            const cardData = await this.trelloService.findCardById(authorizedToken, targetCard.id);
+            const cardData = await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id);
 
             // console.log('Card data:', cardData);
 
@@ -263,7 +264,7 @@ export class WebhookService {
                 boardData,
                 actionType,
                 webhook,
-                targetCard ? await this.trelloService.findCardById(authorizedToken, targetCard.id) : null
+                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
             );
         }
     }
@@ -376,7 +377,7 @@ export class WebhookService {
         try {
             await this.userService.removeWebhookFromAllUsers(webhookId);
 
-            await this.trelloApiService.deleteWebhook(webhookAuthorToken, webhookId);
+            await this.trelloWebhookApiService.deleteWebhook(webhookAuthorToken, webhookId);
 
             await this.trelloWebhookRepository.delete(webhookId);
 

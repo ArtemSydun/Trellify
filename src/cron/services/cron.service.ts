@@ -1,24 +1,20 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { TrelloService } from 'src/trello/services/trello.service';
-import { WebhookService } from 'src/trello/services/webhook.service';
 import { differenceInDays } from 'date-fns';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 import { decryptText } from 'src/common/helpers/hashing';
-import { SharedConfigService } from 'src/trello/services/shared.config.service';
-import { TrelloApiService } from 'src/trello/services/trello.api.service';
+import { SharedConfigService } from 'src/config/shared.config.service';
+import { TrelloBoardsApiService } from 'src/trello/services/api/trello.boards.api.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
 
 @Injectable()
 export class CronService {
     private readonly encryptionKey: string;
     private readonly logger = new Logger(CronService.name);
     constructor(
-        @Inject(forwardRef(() => TrelloService))
-        private readonly trelloService: TrelloService,
-        private readonly trelloApiService: TrelloApiService,
-        @Inject(forwardRef(() => WebhookService))
-        private readonly webhookService: WebhookService,
-        private readonly sharedConfigService: SharedConfigService,
+        private readonly trelloBoardsApiService: TrelloBoardsApiService,
+        private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
+        private readonly sharedConfigService: SharedConfigService
     ) {
         this.encryptionKey = this.sharedConfigService.getEncryptionKey();
     }
@@ -26,14 +22,14 @@ export class CronService {
     @Cron(CronExpression.EVERY_WEEK)
     async clearUnactiveBoards() {
         try {
-            const webhooks = await this.webhookService.findAllWebhooks();
+            const webhooks = await this.trelloWebhooksLogicService.findAllWebhooks();
 
             const currentDate = new Date();
 
             const unactiveWebhooks = [];
             for (const webhook of webhooks) {
                 const decryptedAuthorToken = decryptText(webhook.authorToken, this.encryptionKey);
-                const dateLastActivity = await this.trelloApiService.fetchBoardField(
+                const dateLastActivity = await this.trelloBoardsApiService.fetchBoardField(
                     decryptedAuthorToken,
                     webhook.idModel,
                     TrelloBoardField.DATE_LAST_ACTIVITY,
@@ -56,7 +52,7 @@ export class CronService {
             const removePromises = unactiveWebhooks.map(async (webhook) => {
                 try {
                     console.log(`Removing inactive webhook for board: ${webhook.boardName}`);
-                    await this.webhookService.removeTrelloWebhook(webhook.id);
+                    await this.trelloWebhooksLogicService.removeTrelloWebhook(webhook.id);
                     return webhook.boardName;
                 } catch (error) {
                     console.error(`Error removing webhook for board ${webhook.boardName}:`, error.message);

@@ -20,7 +20,7 @@ import { CronModule } from './cron/cron.module';
     TrelloModule,
     TelegramModule,
     ScheduleModule.forRoot(),
-    CronModule
+    CronModule,
   ],
   controllers: [],
   providers: [],
