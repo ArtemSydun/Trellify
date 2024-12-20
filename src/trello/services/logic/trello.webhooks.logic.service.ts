@@ -18,6 +18,7 @@ import { TrelloActionsLogicService } from './trello.actions.logic.service';
 import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';
+import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -53,10 +54,7 @@ export class TrelloWebhooksLogicService {
 
         const userToUpdate = await this.userService.getUser(user);
 
-        if (!userToUpdate.trello.token) {
-            throw new BadRequestException('Please check your trello connection');
-        }
-
+        validateTrelloToken(userToUpdate.trello.token);
         const decryptedUserToken = decryptText(userToUpdate.trello.token, this.encryptionKey);
 
         if (webhook) {
@@ -97,12 +95,11 @@ export class TrelloWebhooksLogicService {
             };
         }
 
+        const connectedBoard = await this.trelloBoardsApiService.fetchBoardById(decryptedUserToken, boardId);
+        const response = await this.trelloWebhookApiService.createWebhook(decryptedUserToken, boardPersonalWebhookURL, boardId);
+        console.log('Webhook created: ', response);
+
         try {
-            const response = await this.trelloWebhookApiService.createWebhook(decryptedUserToken, boardPersonalWebhookURL, boardId);
-            console.log('Webhook created: ', response);
-
-            const connectedBoard = await this.trelloBoardsApiService.fetchBoardById(decryptedUserToken, boardId);
-
             const createdWebhook = {
                 ...response,
                 boardName: connectedBoard.name,
@@ -130,14 +127,17 @@ export class TrelloWebhooksLogicService {
             };
 
         } catch (err) {
-            this.logger.error('Error creating webhook:', err.response ? err.response.data : err.message);
-            throw new BadRequestException(err.response ? err.response.data : err.message);
+            console.log(err.response.message)
+            this.logger.error('Error creating webhook:', err.response ? err.response.data : err.response.message);
+            throw new BadRequestException(err.response ? err.response.data : err.response.message);
         }
     }
 
     async updateTrelloWebhookNotifications(user: string | User, webhook: string, updateWebhookDto: UpdateWebhookDto): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
+
+        validateTrelloToken(userToUpdate.trello.token);
 
         let updatedNotifications;
         if (updateWebhookDto.notifications) {
@@ -273,6 +273,8 @@ export class TrelloWebhooksLogicService {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
 
+        validateTrelloToken(userToUpdate.trello.token);
+
         if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhookToUpdate.id)) {
             throw new BadRequestException(`User is not connected to webhook ${webhookToUpdate.id}`);
         }
@@ -311,6 +313,8 @@ export class TrelloWebhooksLogicService {
 
     async disconnectFromAllTrelloWebhooks(user: string | User): Promise<DefaultResponse<string>> {
         const userToDisconnect = await this.userService.getUser(user);
+
+        validateTrelloToken(userToDisconnect.trello.token);
         try {
             if (!userToDisconnect?.trello?.webhooks || userToDisconnect.trello.webhooks.length === 0) {
                 return {
@@ -386,13 +390,14 @@ export class TrelloWebhooksLogicService {
                 statusCode: HttpStatus.OK,
             };
         } catch (err) {
-            this.logger.error('Error updating webhook:', err.response ? err.response.data : err.message);
+            this.logger.error('Error deleting webhook:', err.response ? err.response.data : err.message);
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
 
     async findMemberWebhooks(user: string | User): Promise<Webhook[]> {
         const userToFind = await this.userService.getUser(user);
+        validateTrelloToken(userToFind.trello.token);
         const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(userToFind.trello.userId);
 
         return webhooks

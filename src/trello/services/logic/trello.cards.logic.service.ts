@@ -11,6 +11,7 @@ import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
 import { TrelloCard } from '../../dto/card.dto';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';
+import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -35,6 +36,8 @@ export class TrelloCardsLogicService {
     async findCardById(user: string | User, cardId: string): Promise<TrelloCard> {
         const requestedUser = await this.userService.getUser(user);
 
+        validateTrelloToken(requestedUser.trello.token);
+
         const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
         const card = await this.trelloCardsApiService.fetchCardById(decryptedUserToken, cardId);
@@ -44,6 +47,8 @@ export class TrelloCardsLogicService {
 
     async findMemberRelatedCards(user: string | User): Promise<TrelloCard[]> {
         const userToFind = await this.userService.getUser(user);
+
+        validateTrelloToken(userToFind.trello.token);
 
         const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 

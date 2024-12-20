@@ -30,7 +30,6 @@ export class TrelloBoardsApiService {
 
         try {
             const response = await axios.get(url);
-
             return response.data;
         } catch (err) {
             throw new BadRequestException(err.response ? err.response.data : err.message);

@@ -15,11 +15,11 @@ export class TrelloCardsController {
     summary: 'Get list of cards for the current member',
     description: 'Fetches a list of cards associated with the currently authenticated Trello member.'
   })
-  @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'List of member cards',
     type: [TrelloCard],
   })
+  @ApiCustomUnathorizedResponse()
   findCardsMemberRelatedTo(@Req() req): Promise<TrelloCard[]> {
     return this.cardsService.findMemberRelatedCards(req.user.userId);
   }
@@ -29,11 +29,11 @@ export class TrelloCardsController {
     summary: 'Get card by id',
     description: 'Fetch card by ID.'
   })
-  @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Card by ID',
     type: TrelloCard,
   })
+  @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Card', 'id')
   getBoardById(@Req() req, @Param(':id') boardId): Promise<TrelloCard> {
     return this.cardsService.findCardById(req.user.userId, boardId);
