@@ -22,7 +22,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from '../interfaces/role.enum';
 import { UserSearchPath } from '../interfaces/query.enum';
 import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
-import { SharedConfigService } from 'src/common/config/shared.config.service';
+import { SharedConfigService } from 'src/config/shared.config.service';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';

@@ -23,7 +23,27 @@ export class TrelloWebhooksController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
-    description: 'New webhook created successfully or subscribed to the existing one',
+    description: 'Webhook for board {{boardName}} created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Webhook created successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Webhook),
+        },
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Webhook for board {{boardName}} already exists, user {{userId}} added to webhook subscribers',
     schema: {
       type: 'object',
       properties: {

@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello';
-import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { Board } from '../../dto/board.dto';
 

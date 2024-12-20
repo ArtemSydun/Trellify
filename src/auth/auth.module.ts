@@ -35,7 +35,8 @@ import { UsersModule } from 'src/user/users.module';
       },
     }),
     MailerModule,
-    TrelloModule,
+    forwardRef(() => TrelloModule),
+    
     forwardRef(() => UsersModule)
   ],
   controllers: [AuthController],

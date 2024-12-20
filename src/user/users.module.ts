@@ -11,7 +11,7 @@ import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
 import { UsersRepository } from './repositories/users.repository';
 import { TelegramModule } from 'src/telegram/telegram.module';
-import { SharedConfigService } from 'src/common/config/shared.config.service';
+import { SharedConfigService } from 'src/config/shared.config.service';
 
 @Module({
   imports: [

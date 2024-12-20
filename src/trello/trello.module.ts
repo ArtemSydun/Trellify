@@ -7,7 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Webhook, WebhookSchema } from './entities/webhook.entity';
 import { TrelloWebhookRepository } from './repositories/webhook.repository';
 
-import { SharedConfigService } from '../common/config/shared.config.service';
+import { SharedConfigService } from '../config/shared.config.service';
 import { TelegramModule } from 'src/telegram/telegram.module';
 import { TrelloWebhooksLogicService } from './services/logic/trello.webhooks.logic.service';
 import { TrelloWebhooksApiService } from './services/api/trello.webhooks.api.service';

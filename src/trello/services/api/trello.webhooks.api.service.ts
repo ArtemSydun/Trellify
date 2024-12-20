@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello';
-import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
@@ -26,7 +26,6 @@ export class TrelloWebhooksApiService {
     // # Webhooks
     async createWebhook(creatorToken: string, callbackUrl: string, idModel: string) {
         const url = `${trelloApiLink}/webhooks/?callbackURL=${callbackUrl}&idModel=${idModel}&key=${this.trelloApiKey}&token=${creatorToken}`;
-
         try {
             const response = await axios.post(url);
             return response.data;

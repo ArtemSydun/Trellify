@@ -7,10 +7,10 @@ import { SharedConfigService } from './shared.config.service';
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: [`.env.${process.env.NODE_ENV}`],
     }),
   ],
   providers: [SharedConfigService],
   exports: [SharedConfigService],
 })
-export class ConfigModule {}
+export class ConfigModule { }

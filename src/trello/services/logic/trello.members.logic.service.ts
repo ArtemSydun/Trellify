@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
-import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { User } from 'src/user/entities/user.entity';
 import { Board } from '../../dto/board.dto';
@@ -38,6 +38,8 @@ export class TrelloMembersLogicService {
 
   async findMemberProfile(user: string | User, token?: string): Promise<TrelloMember> {
     const userToFind = await this.userService.getUser(user);
+
+    console.log(decryptText(userToFind.trello.token, this.encryptionKey));
     const decryptedUserToken = token
       ? decryptText(token, this.encryptionKey)
       : decryptText(userToFind.trello.token, this.encryptionKey);

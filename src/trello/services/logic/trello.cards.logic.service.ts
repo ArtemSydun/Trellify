@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
-import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
 import { TrelloCard } from '../../dto/card.dto';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';

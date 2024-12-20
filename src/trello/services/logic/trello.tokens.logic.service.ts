@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../common/config/shared.config.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloTokensApiService } from '../api/trello.tokens.api.service';
 
 

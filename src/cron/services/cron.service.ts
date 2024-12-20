@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { differenceInDays } from 'date-fns';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 import { decryptText } from 'src/common/helpers/hashing';
-import { SharedConfigService } from 'src/common/config/shared.config.service';
+import { SharedConfigService } from 'src/config/shared.config.service';
 import { TrelloBoardsApiService } from 'src/trello/services/api/trello.boards.api.service';
 import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
 
