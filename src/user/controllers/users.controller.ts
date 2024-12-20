@@ -24,6 +24,7 @@ import { UserRoles } from '../interfaces/role.enum';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { Errors } from 'src/common/enums/errors.enum';
+import { UserWebhookDto } from '../dto/user.webhook.dto';
 
 @Controller('users')
 export class UsersController {
@@ -161,7 +162,19 @@ export class UsersController {
           properties: {
             userId: { type: 'string', example: 'TrelloUser123 | null' },
             username: { type: 'string', example: 'TrelloUsername | null' },
-            webhooks: { type: 'array', items: { type: 'string' }, example: ['webhook1', 'webhook2', 'webhook3'] },
+            webhooks: {
+              type: 'array',
+              items: {
+                $ref: getSchemaPath(UserWebhookDto),
+              },
+              example: [
+                {
+                  webhookId: 'Webhook123',
+                  idModel: 'Model123',
+                  modelName: 'Board',
+                },
+              ],
+            },
           },
         },
         telegram: {

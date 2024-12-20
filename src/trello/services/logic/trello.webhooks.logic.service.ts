@@ -58,7 +58,8 @@ export class TrelloWebhooksLogicService {
         const decryptedUserToken = decryptText(userToUpdate.trello.token, this.encryptionKey);
 
         if (webhook) {
-            if (userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhook.id)) {
+
+            if (userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhook.id)) {
                 this.logger.warn(`Webhook for board ${webhook.boardName} already exists for this user.`);
                 throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
             }
@@ -73,8 +74,14 @@ export class TrelloWebhooksLogicService {
 
             await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers, notifications: updatedNotifications });
 
-            if (!userToUpdate.trello.webhooks.includes(webhook.id)) {
-                userToUpdate.trello.webhooks.push(webhook.id);
+            const userWebhook = {
+                idModel: webhook.idModel,
+                modelName: webhook.boardName,
+                webhookId: webhook.id,
+            }
+
+            if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhook.id)) {
+                userToUpdate.trello.webhooks.push(userWebhook);
             }
 
             const updatedUserProps = {
@@ -108,10 +115,16 @@ export class TrelloWebhooksLogicService {
                 notifications: initializeNotificationArrays(userToUpdate.trello.userId)
             };
 
+            const userWebhook = {
+                idModel: createdWebhook.idModel,
+                modelName: createdWebhook.boardName,
+                webhookId: createdWebhook.id,
+            }
+
             const updatedUserProps = {
                 trello: {
                     ...userToUpdate.trello,
-                    webhooks: userToUpdate.trello.webhooks ? [...userToUpdate.trello.webhooks, createdWebhook.id] : [createdWebhook.id],
+                    webhooks: userToUpdate.trello.webhooks ? [...userToUpdate.trello.webhooks, userWebhook] : [userWebhook],
                 }
             };
 
@@ -275,12 +288,12 @@ export class TrelloWebhooksLogicService {
 
         validateTrelloToken(userToUpdate.trello.token);
 
-        if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook === webhookToUpdate.id)) {
+        if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhookToUpdate.id)) {
             throw new BadRequestException(`User is not connected to webhook ${webhookToUpdate.id}`);
         }
 
         const updatedUserWebhooks = userToUpdate.trello.webhooks
-            ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook !== webhookToUpdate.id)
+            ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook.idModel !== webhookToUpdate.id)
             : [];
 
         const updatedUser = {
@@ -326,23 +339,23 @@ export class TrelloWebhooksLogicService {
             const webhooksToClear = userToDisconnect.trello.webhooks;
 
             //we create array of mongo operations to call them later in one request 
-            const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhookId => {
+            const bulkUpdateOperations = await Promise.all(webhooksToClear.map(async webhook => {
                 const updateObject: any = {
                     $pull: { [WebhookSearchPath.Subscribers]: userToDisconnect.trello.userId },
                 };
 
-                const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
+                const webhookToDisconnect = await this.trelloWebhookRepository.findOneById(webhook.webhookId);
 
                 //remove userId from all notifications in each webhook.notifications object
-                if (webhook && webhook.notifications) {
-                    Object.keys(webhook.notifications).forEach(notificationType => {
+                if (webhook && webhookToDisconnect.notifications) {
+                    Object.keys(webhookToDisconnect.notifications).forEach(notificationType => {
                         updateObject.$pull[`${WebhookSearchPath.Notifications}.${notificationType}`] = userToDisconnect.trello.userId;
                     });
                 }
 
                 return {
                     updateOne: {
-                        filter: { id: webhookId },
+                        filter: { id: webhookToDisconnect.id },
                         update: updateObject,
                     },
                 };
