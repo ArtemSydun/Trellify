@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Backend CI with Docker
 
 on:
   push:
@@ -30,9 +30,11 @@ jobs:
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            set -e
             cd ${{ secrets.SERVER_PROJECT_PATH }}
             git pull
             cd ..
+            docker compose down backend
             docker compose build backend
             docker compose up -d backend
 
