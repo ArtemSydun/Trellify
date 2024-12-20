@@ -24,6 +24,20 @@ export class TrelloBoardsController {
     return this.boardsService.findBoardsMemberBelongsTo(req.user.userId);
   }
 
+  @Get('organizations/:id')
+  @ApiOperation({
+    summary: 'Get list of boards for the current member',
+    description: 'Fetches a list of boards in workspace.'
+  })
+  @ApiOkResponse({
+    description: 'List of workspace boards',
+    type: [Board],
+  })
+  @ApiCustomUnathorizedResponse()
+  findOrganizationBoards(@Req() req, @Param('id') organizationId): Promise<Board[]> {
+    return this.boardsService.findBoardsInOrganization(req.user.userId, organizationId);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get board by id',

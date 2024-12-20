@@ -65,6 +65,40 @@ export class TrelloBoardsLogicService {
     return transformedBoards;
   }
 
+  async findBoardsInOrganization(user: string | User, organizationId: string): Promise<Board[]> {
+    const requestedUser = await this.userService.getUser(user);
+
+    validateTrelloToken(requestedUser.trello.token);
+
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
+
+    const response = await this.trelloBoardsApiService
+      .fetchBoardsInOrganization(decryptedUserToken, organizationId);
+
+    // Transform the response to only include the necessary fields
+
+    console.log(response);
+    const transformedBoards = response.map(board => ({
+      id: board.id,
+      name: board.name,
+      desc: board.desc,
+      closed: board.closed,
+      dateClosed: board.dateClosed,
+      pinned: board.pinned,
+      starred: board.starred,
+      url: board.url,
+      shortLink: board.shortLink,
+      subscribed: board.subscribed,
+      dateLastActivity: board.dateLastActivity,
+      dateLastView: board.dateLastView,
+      shortUrl: board.shortUrl,
+      idMemberCreator: board.idMemberCreator,
+      memberships: board.memberships,
+    }));
+
+    return transformedBoards;
+  }
+
   async findBoardField(user: string | User, boardId: string, fieldName: TrelloBoardField): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
 
@@ -118,4 +152,5 @@ export class TrelloBoardsLogicService {
 
     return response.data;
   }
+
 }
