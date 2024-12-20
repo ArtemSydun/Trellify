@@ -12,6 +12,7 @@ import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { User } from 'src/user/entities/user.entity';
 import { Board } from '../../dto/board.dto';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
+import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -34,10 +35,13 @@ export class TrelloBoardsLogicService {
   }
 
   async findBoardsMemberBelongsTo(user: string | User): Promise<Board[]> {
-    const userToFind = await this.userService.getUser(user);
-    const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
+    const requestedUser = await this.userService.getUser(user);
 
-    const response = await this.trelloBoardsApiService.fetchBoardsMemberBelongsTo(decryptedUserToken, userToFind.trello.userId);
+    validateTrelloToken(requestedUser.trello.token);
+
+    const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
+
+    const response = await this.trelloBoardsApiService.fetchBoardsMemberBelongsTo(decryptedUserToken, requestedUser.trello.userId);
 
     // Transform the response to only include the necessary fields
     const transformedBoards = response.map(board => ({
@@ -64,6 +68,8 @@ export class TrelloBoardsLogicService {
   async findBoardField(user: string | User, boardId: string, fieldName: TrelloBoardField): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
 
+    validateTrelloToken(requestedUser.trello.token);
+
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
     const response = await this.trelloBoardsApiService.fetchBoardField(decryptedUserToken, boardId, fieldName);
@@ -73,6 +79,8 @@ export class TrelloBoardsLogicService {
 
   async findBoardById(user: string | User, boardId: string): Promise<Board> {
     const requestedUser = await this.userService.getUser(user);
+
+    validateTrelloToken(requestedUser.trello.token);
 
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 
@@ -101,6 +109,8 @@ export class TrelloBoardsLogicService {
 
   async findBoardMemberships(user: string | User, boardId: string): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
+
+    validateTrelloToken(requestedUser.trello.token);
 
     const decryptedUserToken = decryptText(requestedUser.trello.token, this.encryptionKey);
 

@@ -27,8 +27,19 @@ export class TrelloMembersApiService {
 
     // # Member
     async fetchMemberProfile(token: string): Promise<TrelloMember> {
+        const url = `${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${token}`;
         try {
-            const response = await axios.get(`${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${token}`);
+            const response = await axios.get(url);
+            return response.data;
+        } catch (err) {
+            throw new BadRequestException(err.response ? err.response.data : err.message);
+        }
+    }
+
+    async fetchMemberOrganizations(trelloUserId: string, token: string) {
+        const url = `${trelloApiLink}/members/${trelloUserId}/organizations?key=${this.trelloApiKey}&token=${token}`
+        try {
+            const response = await axios.get(url);
             return response.data;
         } catch (err) {
             throw new BadRequestException(err.response ? err.response.data : err.message);
