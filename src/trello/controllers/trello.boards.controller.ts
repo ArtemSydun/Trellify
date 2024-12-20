@@ -15,11 +15,11 @@ export class TrelloBoardsController {
     summary: 'Get list of boards for the current member',
     description: 'Fetches a list of boards that the currently authenticated Trello member belongs to.'
   })
-  @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'List of member boards',
     type: [Board],
   })
+  @ApiCustomUnathorizedResponse()
   findBoardsMemberBelongsTo(@Req() req): Promise<Board[]> {
     return this.boardsService.findBoardsMemberBelongsTo(req.user.userId);
   }
@@ -29,11 +29,11 @@ export class TrelloBoardsController {
     summary: 'Get board by id',
     description: 'Fetch board by ID.'
   })
-  @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
     description: 'Board by ID',
     type: Board,
   })
+  @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Board', 'id')
   getBoardById(@Req() req, @Param(':id') boardId): Promise<Board> {
     return this.boardsService.findBoardById(req.user.userId, boardId);
