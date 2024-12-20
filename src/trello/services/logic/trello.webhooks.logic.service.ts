@@ -291,11 +291,12 @@ export class TrelloWebhooksLogicService {
         if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhookToUpdate.id)) {
             throw new BadRequestException(`User is not connected to webhook ${webhookToUpdate.id}`);
         }
-
+        console.log(userToUpdate.trello.webhooks);
         const updatedUserWebhooks = userToUpdate.trello.webhooks
-            ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook.idModel !== webhookToUpdate.id)
+            ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook.webhookId !== webhookToUpdate.id)
             : [];
 
+        console.log(updatedUserWebhooks);
         const updatedUser = {
             trello: {
                 webhooks: updatedUserWebhooks
