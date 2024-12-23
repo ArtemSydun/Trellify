@@ -27,6 +27,7 @@ export class TrelloMembersApiService {
 
     // # Member
     async fetchMemberProfile(token: string): Promise<TrelloMember> {
+        console.log('fetch member profile token: ', token);
         const url = `${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${token}`;
         try {
             const response = await axios.get(url);
