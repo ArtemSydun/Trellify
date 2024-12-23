@@ -52,6 +52,7 @@ export class UsersService {
     this.logger.log(`Creating user with email: ${createUserDto.email}`);
 
     const userByEmail = await this.userRepository.findOneByEmail(createUserDto.email);
+    
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
       throw new ConflictException(`User ${createUserDto.email} already exists`);
@@ -321,6 +322,7 @@ export class UsersService {
     }
 
     const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
+
     const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
 
     updatedUserProps.trello.userId = trelloProfile.id;
