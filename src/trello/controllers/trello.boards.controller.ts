@@ -26,7 +26,7 @@ export class TrelloBoardsController {
 
   @Get('organizations/:organizationId')
   @ApiOperation({
-    summary: 'Get list of boards for the current member',
+    summary: 'Get list of boards in workspace',
     description: 'Fetches a list of boards in workspace.'
   })
   @ApiOkResponse({

@@ -37,7 +37,13 @@ export class TrelloMembersLogicService {
 
   async findMemberProfile(user: string | User, token?: string): Promise<TrelloMember> {
     const userToFind = await this.userService.getUser(user);
-    validateTrelloToken(userToFind.trello.token);
+
+    if (token) {
+      validateTrelloToken(decryptText(token, this.encryptionKey));
+    } else {
+      validateTrelloToken(decryptText(userToFind.trello.token, this.encryptionKey));
+    }
+
     const decryptedUserToken = token
       ? decryptText(token, this.encryptionKey)
       : decryptText(userToFind.trello.token, this.encryptionKey);
@@ -51,7 +57,7 @@ export class TrelloMembersLogicService {
     const userToFind = await this.userService.getUser(user);
 
     validateTrelloToken(userToFind.trello.token);
-    
+
     const decryptedUserToken = decryptText(userToFind.trello.token, this.encryptionKey);
 
     const response = await this.trelloMembersApiService.fetchMemberOrganizations(userToFind.trello.userId, decryptedUserToken);
