@@ -75,10 +75,12 @@ export class TrelloBoardsLogicService {
     const response = await this.trelloBoardsApiService
       .fetchBoardsInOrganization(decryptedUserToken, organizationId);
 
-    // Transform the response to only include the necessary fields
+      const filteredBoards = response.filter((board) =>
+        board.memberships.some((membership) => membership.idMember === requestedUser.trello.userId)
+    );
 
-    console.log(response);
-    const transformedBoards = response.map(board => ({
+    // Transform the response to only include the necessary fields
+    const transformedBoards = filteredBoards.map(board => ({
       id: board.id,
       name: board.name,
       desc: board.desc,

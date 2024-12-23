@@ -181,7 +181,7 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
-        // console.log(JSON.stringify(webhookAction, null, 2));
+        console.log(JSON.stringify(webhookAction, null, 2));
         const targetCard = webhookAction?.action?.data?.card;
         const targetBoard = webhookAction?.action?.data?.board;
         const webhook = await this.getWebhook(webhookAction?.webhook?.id);
@@ -224,6 +224,34 @@ export class TrelloWebhooksLogicService {
             boardData = await this.trelloBoardsApiService.fetchBoardById(authorizedToken, targetBoard.id);
         }
 
+        //separate handler because this two actions does not have 
+        // webhookAction?.action?.member even though it is targeted action
+        if (
+            actionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED
+            ||
+            actionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
+        ) {
+            const targetedUserId = webhookAction.action.data.checkItem.idMember || webhookAction.action.data.old.idMember;
+            console.log('targetedUserId', targetedUserId);
+            await this.actionsService.handleTargetAction(targetedUserId,
+                boardData,
+                actionType,
+                webhook,
+                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
+            )
+        }
+        // Handle target user action (only when targetMember is present)
+        if (targetMember && subscribedMembers.includes(targetMember.id)) {
+            // Only pass `boardData` to `handleTargetAction` if it's already fetched
+            await this.actionsService.handleTargetAction(
+                targetMember.id,
+                boardData,
+                actionType,
+                webhook,
+                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
+            );
+        }
+
         // Handle board actions (if targetCard is not present)
         if (!targetCard && boardData && subscribedMembers.length !== 0) {
             const boardMemberships = await this.trelloBoardsApiService.fetchBoardMemberships(authorizedToken, boardData.id);
@@ -255,7 +283,7 @@ export class TrelloWebhooksLogicService {
             const membersToNotify = cardMembers.filter(memberId =>
                 subscribedMembers.includes(memberId));
 
-            // console.log('Members to notify:', membersToNotify);
+            console.log('Members to notify:', membersToNotify);
 
             // Notify card members
             const userPromises = membersToNotify.map(async (member) => {
@@ -267,18 +295,6 @@ export class TrelloWebhooksLogicService {
             } catch (err) {
                 this.logger.error('Error sending messages to card members:', err);
             }
-        }
-
-        // Handle target user action (only when targetMember is present)
-        if (targetMember && subscribedMembers.includes(targetMember.id)) {
-            // Only pass `boardData` to `handleTargetAction` if it's already fetched
-            await this.actionsService.handleTargetAction(
-                targetMember.id,
-                boardData,
-                actionType,
-                webhook,
-                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
-            );
         }
     }
 
