@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Create network
+        run: docker network create app-network || true
+
       - name: Start MongoDB Container
         run: |
           docker run --name mongodb --network app-network -d \
