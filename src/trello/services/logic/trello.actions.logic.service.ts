@@ -44,6 +44,10 @@ export class TrelloActionsLogicService {
                     `${userInitials} you were added to card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}-${cardData?.name})`,
                 [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
                     `${userInitials} you were removed from board ${boardData?.name}`,
+                [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED]:
+                    `${userInitials} you were added to checklist in card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
+                    `${userInitials} you were removed from checklist in card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
             };
 
             const message = targetActionMessages[actionType];

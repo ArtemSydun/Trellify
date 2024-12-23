@@ -25,8 +25,9 @@ export enum TrelloWebhookActions {
     
     //unknown action detailed type, separate handler
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
+
     CHECKLIST_COPY = 'copyChecklist',
-    // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
+    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'updateCheckItemDue',
     CHECKLIST_ITEM_STATE_UPDATED = 'updateCheckItemStateOnCard',
     CHECKLIST_ITEM_MEMBER_UPDATED = 'updateMemberOnCheckItem',
     CHECKLIST_ITEM_CONVERTED_TO_CARD = 'convertToCardFromCheckItem',
@@ -75,8 +76,11 @@ export enum TrelloWebhookDetailedActions {
 
     CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
     CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
+    // CHECKLIST_ITEM_DUE_DATE_DELETED = 'action_delete_checkitem_due',
     // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
-    CHECKLIST_ITEM_MEMBER_ADDED = 'action_member_joined_checkitem',
+    // CHECKLIST_ITEM_MEMBER_JOINED = 'action_member_joined_checkitem',
+    // CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
+    CHECKLIST_ITEM_MEMBER_ADDED = 'action_added_member_to_checkitem',
     CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
     CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'action_completed_checkitem',
     CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'action_marked_checkitem_incomplete',
