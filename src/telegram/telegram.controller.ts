@@ -32,6 +32,8 @@ export class TelegramController {
     this.telegramUtils = new TelegramUtils();
   }
 
+
+
   @Start()
   async startCommand(ctx): Promise<any> {
     const userTelegramName: string =

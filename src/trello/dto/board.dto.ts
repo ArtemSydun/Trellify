@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IBoard } from '../interfaces/board.interface';
+import { ITrelloBoard } from '../interfaces/board.interface';
 import { IBoardMember } from '../interfaces/member.interface';
 import { BoardMember } from './member.dto';
 
-export class Board implements IBoard {
+export class TrelloBoard implements ITrelloBoard {
     @ApiProperty({
         description: 'The unique ID of the board',
         example: '674436f3f82d54fda5206965',

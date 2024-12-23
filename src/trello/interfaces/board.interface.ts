@@ -1,4 +1,4 @@
-export interface IBoard {
+export interface ITrelloBoard {
     id: string;
     name: string;
     desc: string;
