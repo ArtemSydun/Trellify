@@ -37,11 +37,7 @@ jobs:
 
       - name: Run Docker Container for Testing
         run: |
-          docker run -p 8080:3000 --name backend-test --network app-network --env-file .env.staging -d backend:staging
-          sleep 10
-
-      - name: Check Backend
-        run: curl -f http://localhost:8080 || (docker logs backend-test && exit 1)
+          docker run -p 8080:3000 --name backend-test --network app-network --env-file .env.staging -d backend:staging && curl -f http://localhost:8080 || (docker logs backend-test && exit 1)
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
