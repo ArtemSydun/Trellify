@@ -10,7 +10,7 @@ import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { User } from 'src/user/entities/user.entity';
-import { Board } from '../../dto/board.dto';
+import { TrelloBoard } from '../../dto/board.dto';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 
@@ -34,7 +34,7 @@ export class TrelloBoardsLogicService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  async findBoardsMemberBelongsTo(user: string | User): Promise<Board[]> {
+  async findBoardsMemberBelongsTo(user: string | User): Promise<TrelloBoard[]> {
     const requestedUser = await this.userService.getUser(user);
 
     validateTrelloToken(requestedUser.trello.token);
@@ -65,7 +65,7 @@ export class TrelloBoardsLogicService {
     return transformedBoards;
   }
 
-  async findBoardsInOrganization(user: string | User, organizationId: string): Promise<Board[]> {
+  async findBoardsInOrganization(user: string | User, organizationId: string): Promise<TrelloBoard[]> {
     const requestedUser = await this.userService.getUser(user);
 
     validateTrelloToken(requestedUser.trello.token);
@@ -113,7 +113,7 @@ export class TrelloBoardsLogicService {
     return response;
   }
 
-  async findBoardById(user: string | User, boardId: string): Promise<Board> {
+  async findBoardById(user: string | User, boardId: string): Promise<TrelloBoard> {
     const requestedUser = await this.userService.getUser(user);
 
     validateTrelloToken(requestedUser.trello.token);

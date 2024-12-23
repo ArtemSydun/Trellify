@@ -6,7 +6,7 @@ import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
-import { Board } from '../../dto/board.dto';
+import { TrelloBoard } from '../../dto/board.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -25,7 +25,7 @@ export class TrelloBoardsApiService {
     }
 
     // # Boards
-    async fetchBoardsMemberBelongsTo(token: string, trelloUserId: string): Promise<Board[]> {
+    async fetchBoardsMemberBelongsTo(token: string, trelloUserId: string): Promise<TrelloBoard[]> {
         const url = `${trelloApiLink}/members/${trelloUserId}/boards?key=${this.trelloApiKey}&token=${token}`;
 
         try {
@@ -58,7 +58,7 @@ export class TrelloBoardsApiService {
         }
     }
 
-    async fetchBoardById(token: string, boardId: string): Promise<Board> {
+    async fetchBoardById(token: string, boardId: string): Promise<TrelloBoard> {
         const url = `${trelloApiLink}/boards/${boardId}?key=${this.trelloApiKey}&token=${token}`;
 
         try {
@@ -81,7 +81,7 @@ export class TrelloBoardsApiService {
         }
     }
 
-    async fetchBoardsInOrganization(token: string, organizationId: string): Promise<Board[]> {
+    async fetchBoardsInOrganization(token: string, organizationId: string): Promise<TrelloBoard[]> {
         const url = `${trelloApiLink}/organizations/${organizationId}/boards?key=${this.trelloApiKey}&token=${token}`;
 
         try {

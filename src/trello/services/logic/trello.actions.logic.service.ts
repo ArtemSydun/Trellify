@@ -1,9 +1,11 @@
 import { UsersService } from 'src/user/services/users.service';
-import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
+import { TrelloWebhookActions, TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { Webhook } from '../../entities/webhook.entity';
 import { TrelloWebhooksLogicService } from './trello.webhooks.logic.service';
+import { TrelloBoard } from 'src/trello/dto/board.dto';
+import { TrelloCard } from 'src/trello/dto/card.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -25,10 +27,10 @@ export class TrelloActionsLogicService {
 
     async handleTargetAction(
         userTrelloId: string,
-        boardData: any,
+        boardData: TrelloBoard,
         actionType: TrelloWebhookDetailedActions,
         webhook: string | Webhook,
-        cardData?: any,
+        cardData?: TrelloCard,
     ) {
         try {
             const targetUser = await this.userService.findUserByTrelloId(userTrelloId);
@@ -39,20 +41,19 @@ export class TrelloActionsLogicService {
             // console.log('userInitials: ', userInitials);
             const targetActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
-                    `${userInitials} you were deleted from card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}-${cardData?.name})`,
+                    `${userInitials} you were deleted from card [${cardData?.name}](${cardData?.url})`,
                 [TrelloWebhookDetailedActions.CARD_MEMBER_ADDED]:
-                    `${userInitials} you were added to card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}-${cardData?.name})`,
+                    `${userInitials} you were added to card [${cardData?.name}](${cardData?.url})`,
                 [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
                     `${userInitials} you were removed from board ${boardData?.name}`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED]:
-                    `${userInitials} you were added to checklist in card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `${userInitials} you were added to checklist in card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
-                    `${userInitials} you were removed from checklist in card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `${userInitials} you were removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
             };
 
             const message = targetActionMessages[actionType];
 
-            // console.log('message: ', message);
             if (message) {
                 if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
                     await this.trelloWebhooksLogicService.disconnectFromTrelloWebhook(targetUser, webhook);
@@ -68,7 +69,7 @@ export class TrelloActionsLogicService {
 
     async handleCardActions(
         userTrelloId: string,
-        cardData: any,
+        cardData: TrelloCard,
         actionType: TrelloWebhookDetailedActions
     ) {
         try {
@@ -76,39 +77,41 @@ export class TrelloActionsLogicService {
 
             const cardActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_RENAMED]:
-                    `The card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was renamed.`,
+                    `The card [${cardData?.name}](${cardData?.url}) was renamed.`,
                 [TrelloWebhookDetailedActions.CARD_ARCHIVED]:
-                    `The card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was archived.`,
+                    `The card [${cardData?.name}](${cardData?.url}) was archived.`,
                 [TrelloWebhookDetailedActions.CARD_DELETED]:
-                    `The card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was deleted.`,
+                    `The card [${cardData?.name}](${cardData?.url}) was deleted.`,
                 [TrelloWebhookDetailedActions.CARD_COMMENT_ADDED]:
-                    `A comment was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A comment was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED]:
-                    `An attachment was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `An attachment was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED]:
-                    `A due date was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A due date was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED]:
-                    `The due date on the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was changed.`,
+                    `The due date on the card [${cardData?.name}](${cardData?.url}) was changed.`,
                 [TrelloWebhookDetailedActions.CARD_START_DATE_ADDED]:
-                    `A start date was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A start date was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED]:
-                    `The start date on the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was changed.`,
+                    `The start date on the card [${cardData?.name}](${cardData?.url}) was changed.`,
                 [TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST]:
-                    `The card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was moved to another list.`,
+                    `The card [${cardData?.name}](${cardData?.url}) was moved to another list.`,
                 [TrelloWebhookDetailedActions.CARD_LABEL_ADDED]:
-                    `A label was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A label was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_LABEL_REMOVED]:
-                    `A label was removed from the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A label was removed from the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED]:
-                    `A checklist was added to the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A checklist was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED]:
-                    `A checklist was removed from the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}).`,
+                    `A checklist was removed from the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED]:
-                    `A checklist item in the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was marked as completed.`,
+                    `A checklist item in the card [${cardData?.name}](${cardData?.url}) was marked as completed.`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED]:
-                    `A checklist item in the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was marked as incomplete.`,
+                    `A checklist item in the card [${cardData?.name}](${cardData?.url}) was marked as incomplete.`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_CONVERTED_TO_CARD]:
-                    `A checklist item in the card [${cardData?.name}](https://trello.com/c/${cardData?.shortLink}/${cardData?.idShort}) was converted into a new card.`,
+                    `A checklist item in the card [${cardData?.name}](${cardData?.url}) was converted into a new card.`,
+                [TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED]:
+                    `A checklist item was added in the card [${cardData?.name}](${cardData?.url}).`,
             };
 
             const message = cardActionMessages[actionType];
@@ -125,7 +128,7 @@ export class TrelloActionsLogicService {
 
     async handleAdminActions(
         adminTrelloId: string,
-        boardData: any,
+        boardData: TrelloBoard,
         actionType: TrelloWebhookDetailedActions,
         targetMember?: any
     ) {

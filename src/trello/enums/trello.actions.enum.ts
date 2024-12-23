@@ -39,9 +39,12 @@ export enum TrelloWebhookActions {
     BOARD_MEMBER_REMOVED = 'removeMemberFromBoard',
     BOARD_MEMBER_ADDED = 'addMemberToBoard',
     BOARD_ADMIN_ADDED = 'makeAdminOfBoard',
-    BOARD_MEMBER_NORMAL_ROLE_ADDED = 'makeNormalMemberOfBoard'
+    BOARD_MEMBER_NORMAL_ROLE_ADDED = 'makeNormalMemberOfBoard',
     // BOARD_UPDATED = 'updateBoard',
     // BOARD_DELETED = 'removeFromOrganizationBoard',
+
+    CUSTOM_FIELD_CREATED = 'createCustomField',
+    CUSTOM_FIELD_ITEM_UPDATED = 'updateCustomFieldItem',
 }
 
 export enum TrelloWebhookDetailedActions {
@@ -76,12 +79,17 @@ export enum TrelloWebhookDetailedActions {
 
     CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
     CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
-    // CHECKLIST_ITEM_DUE_DATE_DELETED = 'action_delete_checkitem_due',
-    // CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
+    CHECKLIST_ITEM_DELETED = 'action_deleted_checkitem',
     // CHECKLIST_ITEM_MEMBER_JOINED = 'action_member_joined_checkitem',
     // CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
+    
+    // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
+    CHECKLIST_ITEM_ADDED = 'createCheckItem',
+
     CHECKLIST_ITEM_MEMBER_ADDED = 'action_added_member_to_checkitem',
     CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
+    CHECKLIST_ITEM_DUE_DATE_DELETED = 'action_delete_checkitem_due',
+    CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
     CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'action_completed_checkitem',
     CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'action_marked_checkitem_incomplete',
     CHECKLIST_ITEM_CONVERTED_TO_CARD = 'action_convert_to_card_from_checkitem',
@@ -101,6 +109,10 @@ export enum TrelloWebhookDetailedActions {
     // BOARD_CLOSED = 'action_closed_board',
     // BOARD_REOPENED = 'action_reopened_board',
     // BOARD_DELETED = 'action_remove_from_organization_board',
+
+    CUSTOM_FIELD_CREATED = 'action_create_custom_field',
+    CUSTOM_FIELD_UPDATED = 'action_update_custom_field',
+    CUSTOM_FIELD_ITEM_UPDATED = 'action_update_custom_field_item',
 }
 
 export type NotificationType = {

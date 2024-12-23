@@ -140,7 +140,6 @@ export class TrelloWebhooksLogicService {
             };
 
         } catch (err) {
-            console.log(err.response.message)
             this.logger.error('Error creating webhook:', err.response ? err.response.data : err.response.message);
             throw new BadRequestException(err.response ? err.response.data : err.response.message);
         }
@@ -187,30 +186,38 @@ export class TrelloWebhooksLogicService {
         const webhook = await this.getWebhook(webhookAction?.webhook?.id);
         const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
 
-        const actionType = webhookAction?.action?.display?.translationKey;
+        const generalActionType = webhookAction?.action?.type;
+        let detailedActionType = webhookAction?.action?.display?.translationKey;
         const targetMember = webhookAction?.action?.member;
-        this.logger.log(`Handling webhook ${actionType} action...`);
 
+        // console.log(generalActionType);
         // console.log('target card: ', targetCard);
         // console.log('target board: ', targetBoard);
 
-        if (!actionType || !webhook) {
+        if (!webhook) {
             this.logger.warn('Missing action or webhook data.');
             return;
         }
 
+        // to handle unknown detailed type actions which has clear generalActionType etc createCheckItem
+        if (detailedActionType === 'unknown') {
+            detailedActionType = generalActionType;
+        }
+
+        this.logger.log(`Handling webhook ${detailedActionType} action...`);
+
         let enumKey = null;
 
         // Check if enum value includes action we got from webhook and transform enum key (CARD_CREATED -> cardCreated)
-        if (Object.values(TrelloWebhookDetailedActions).includes(actionType)) {
+        if (Object.values(TrelloWebhookDetailedActions).includes(detailedActionType)) {
             enumKey = toCamelCase(Object.keys(TrelloWebhookDetailedActions)
-                .find(key => TrelloWebhookDetailedActions[key] === actionType), '_');
+                .find(key => TrelloWebhookDetailedActions[key] === detailedActionType), '_');
         }
 
-        const subscribedMembers = enumKey ? webhook.notifications[enumKey] : [];
+        const subscribedMembers = webhook.notifications[enumKey] || [];
 
         if (!enumKey) {
-            this.logger.warn(`Action ${actionType !== 'unknown' ? actionType : webhookAction?.action?.type} is not supported by this API`);
+            this.logger.warn(`Action ${detailedActionType !== 'unknown' ? detailedActionType : generalActionType} is not supported by this API`);
             return;
         }
 
@@ -227,18 +234,18 @@ export class TrelloWebhooksLogicService {
         //separate handler because this two actions does not have 
         // webhookAction?.action?.member even though it is targeted action
         if (
-            actionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED
+            detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED
             ||
-            actionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
+            detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
         ) {
             const targetedUserId = webhookAction.action.data.checkItem.idMember || webhookAction.action.data.old.idMember;
-            console.log('targetedUserId', targetedUserId);
-            await this.actionsService.handleTargetAction(targetedUserId,
-                boardData,
-                actionType,
-                webhook,
-                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
-            )
+            if (subscribedMembers.includes(targetedUserId))
+                return await this.actionsService.handleTargetAction(targetedUserId,
+                    boardData,
+                    detailedActionType,
+                    webhook,
+                    targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
+                )
         }
         // Handle target user action (only when targetMember is present)
         if (targetMember && subscribedMembers.includes(targetMember.id)) {
@@ -246,7 +253,7 @@ export class TrelloWebhooksLogicService {
             await this.actionsService.handleTargetAction(
                 targetMember.id,
                 boardData,
-                actionType,
+                detailedActionType,
                 webhook,
                 targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
             );
@@ -262,7 +269,7 @@ export class TrelloWebhooksLogicService {
 
             // Notify board members
             const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleAdminActions(member.idMember, boardData, actionType, targetMember);
+                await this.actionsService.handleAdminActions(member.idMember, boardData, detailedActionType, targetMember);
             });
 
             try {
@@ -283,11 +290,9 @@ export class TrelloWebhooksLogicService {
             const membersToNotify = cardMembers.filter(memberId =>
                 subscribedMembers.includes(memberId));
 
-            console.log('Members to notify:', membersToNotify);
-
             // Notify card members
             const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleCardActions(member, cardData, actionType);
+                await this.actionsService.handleCardActions(member, cardData, detailedActionType);
             });
 
             try {
@@ -307,12 +312,11 @@ export class TrelloWebhooksLogicService {
         if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhookToUpdate.id)) {
             throw new BadRequestException(`User is not connected to webhook ${webhookToUpdate.id}`);
         }
-        console.log(userToUpdate.trello.webhooks);
+
         const updatedUserWebhooks = userToUpdate.trello.webhooks
             ? userToUpdate.trello.webhooks.filter(userWebhook => userWebhook.webhookId !== webhookToUpdate.id)
             : [];
 
-        console.log(updatedUserWebhooks);
         const updatedUser = {
             trello: {
                 webhooks: updatedUserWebhooks
