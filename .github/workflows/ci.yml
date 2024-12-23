@@ -28,20 +28,17 @@ jobs:
             mongo:latest
           sleep 10
 
-      - name: Create .env
-        run: cp .env.example .env
-
       - name: Build Docker Image
         run: |
           docker build -t backend:staging -f .docker/Dockerfile .
 
       - name: Run Docker Container for Testing
         run: |
-          docker run --name backend-test --network app-network -d --env-file .env -p 8080:3000 backend:staging
-          sleep 100
+          docker run -p 8080:3000 --name backend-test backend:staging --network app-network -d
+          sleep 10
 
       - name: Check Backend
-        run: curl -f http://localhost:3000 || (docker logs backend-test && exit 1)
+        run: curl -f http://localhost:8080 || (docker logs backend-test && exit 1)
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
