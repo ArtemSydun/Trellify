@@ -47,6 +47,15 @@ export class TrelloWebhooksLogicService {
         this.encryptionKey = this.sharedConfigService.getEncryptionKey();
     }
 
+
+    async getWebhook(webhook: string | Webhook): Promise<Webhook> {
+        if (typeof webhook === 'string') {
+            // If it's a string, fetch the webhook by ID
+            return await this.trelloWebhookRepository.findOneById(webhook);
+        }
+        return webhook; // If it's already a Webhook object, return it as-is
+    }
+
     async createTrelloWebhook(user: string | User, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
         const { boardId } = createWebhookDto;
         const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
@@ -430,9 +439,9 @@ export class TrelloWebhooksLogicService {
     }
 
     async findMemberWebhooks(user: string | User): Promise<Webhook[]> {
-        const userToFind = await this.userService.getUser(user);
-        validateTrelloToken(userToFind.trello.token);
-        const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(userToFind.trello.userId);
+        const requestedUser = await this.userService.getUser(user);
+        validateTrelloToken(requestedUser.trello.token);
+        const webhooks = await this.trelloWebhookRepository.findWebhooksConnectedToUser(requestedUser.trello.userId);
 
         return webhooks
 
@@ -472,14 +481,6 @@ export class TrelloWebhooksLogicService {
 
     async findAllWebhooks(): Promise<Webhook[]> {
         return await this.trelloWebhookRepository.findAll();
-    }
-
-    async getWebhook(webhook: string | Webhook): Promise<Webhook> {
-        if (typeof webhook === 'string') {
-            // If it's a string, fetch the user by ID
-            return await this.findWebhookById(webhook);
-        }
-        return webhook; // If it's already a User object, return it as-is
     }
 }
 

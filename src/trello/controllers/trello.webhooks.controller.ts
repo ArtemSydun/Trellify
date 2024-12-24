@@ -66,15 +66,23 @@ export class TrelloWebhooksController {
     return this.webhooksService.findMemberWebhooks(req.user.userId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  @ApiExcludeEndpoint()
+  getWebhookById(@Param('id') id: string): Promise<Webhook> { 
+    return this.webhooksService.findWebhookById(id);
+  }
+
+
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms, 
   //they send a GET request to your callback URL first to validate the endpoint before they start sending POST requests. 
   //This is a standard webhook behavior to verify the callback URL is correct and responds appropriately.
-  @Get(':boardId')
+  @Get('provider/:boardId')
   @ApiExcludeEndpoint()
   handleWebhookCallbackUrlCheck() { }
 
   // This is route where webhook sends data
-  @Post(':boardId')
+  @Post('provider/:boardId')
   @ApiExcludeEndpoint()
   async handleWebhook(
     @Param('boardId') boardId: string,
