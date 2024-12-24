@@ -1,0 +1,57 @@
+name: Backend CI with Docker
+
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create network
+        run: docker network create app-network || true
+
+      - name: Start MongoDB Container
+        run: |
+          docker run --name mongodb --network app-network -d \
+            -p 27017:27017 \
+            -e MONGO_INITDB_ROOT_USERNAME=admin \
+            -e MONGO_INITDB_ROOT_PASSWORD=password \
+            mongo:latest
+          sleep 10
+
+      - name: Create .env
+        run: cp .env.example .env.staging
+
+      - name: Build Docker Image
+        run: |
+          docker build -t backend:staging -f .docker/Dockerfile .
+
+      - name: Run Docker Container for Testing
+        run: |
+          docker run -p 8080:3000 --name backend-test --network app-network --env-file .env.staging -d backend:staging
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd ${{ secrets.SERVER_PROJECT_PATH }}
+            git pull
+            cd ..
+            docker compose down backend
+            docker compose build backend
+            docker compose up -d backend
+
