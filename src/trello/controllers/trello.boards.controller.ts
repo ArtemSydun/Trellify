@@ -21,7 +21,7 @@ export class TrelloBoardsController {
   })
   @ApiCustomUnathorizedResponse()
   findBoardsMemberBelongsTo(@Req() req): Promise<TrelloBoard[]> {
-    return this.boardsService.findBoardsMemberBelongsTo(req.user.userId);
+    return this.boardsService.findBoardsMemberBelongsTo(req.user.id);
   }
 
   @Get('organizations/:organizationId')
@@ -35,7 +35,7 @@ export class TrelloBoardsController {
   })
   @ApiCustomUnathorizedResponse()
   findOrganizationBoards(@Req() req, @Param('organizationId') organizationId): Promise<TrelloBoard[]> {
-    return this.boardsService.findBoardsInOrganization(req.user.userId, organizationId);
+    return this.boardsService.findBoardsInOrganization(req.user.id, organizationId);
   }
 
   @Get(':id')
@@ -50,6 +50,6 @@ export class TrelloBoardsController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('TrelloBoard', 'id')
   getBoardById(@Req() req, @Param(':id') boardId): Promise<TrelloBoard> {
-    return this.boardsService.findBoardById(req.user.userId, boardId);
+    return this.boardsService.findBoardById(req.user.id, boardId);
   }
 }
