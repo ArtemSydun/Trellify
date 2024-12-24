@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsObject } from 'class-validator';
+import { IsOptional, IsObject } from 'class-validator';
 import { Notifications } from './notifications.dto';
 
 export class UpdateWebhookDto {
@@ -15,7 +15,7 @@ export class UpdateWebhookDto {
 
     @ApiProperty({
         description: 'Notifications for various events with user IDs for each event.',
-        type: [Notifications],
+        type: Notifications,
         required: false,
     })
     @IsObject()
