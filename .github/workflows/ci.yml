@@ -16,14 +16,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Create .env
+      - name: Create test .env
+        run: cp .env.example .env.test
+
+      - name: Run test in docker container
+        run: STAGE=test docker compose up -d --build
+
+      - name: Create staging .env
         run: cp .env.example .env.staging
 
-      - name: Run Docker Composer
-        run: docker compose --env-file .env.staging up -d --build
-
-      - name: Run Backend Tests
-        run: docker exec backend npm test
+      - name: Run
+        run: STAGE=staging docker compose up -d --build
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
@@ -36,5 +39,5 @@ jobs:
             set -e
             cd ${{ secrets.SERVER_PROJECT_PATH }}
             git pull
-            docker compose up -d --build
+            docker compose --env-file .env.staging up -d --build
 

@@ -6,10 +6,15 @@ services:
     build:
       context: .
       dockerfile: .docker/Dockerfile
+      target: ${STAGE}
     restart: always
-    env_file: .env.staging
+    env_file: .env.${STAGE}
+    environment:
+      NODE_ENV: ${STAGE}
     ports:
-      - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
+    volumes:
+      - .:/srv
     depends_on:
       - mongodb
     networks:
@@ -19,7 +24,7 @@ services:
   mongodb:
     image: mongo:latest
     container_name: mongodb
-    hostname: ${MONGODB_HOST_PORT}
+    hostname: ${MONGODB_HOSTNAME}
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
@@ -28,7 +33,7 @@ services:
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
     ports:
-      - '${MONGODB_HOST_PORT}:${MONGODB_DOCKER_PORT}'
+      - '${MONGODB_PORT}:${MONGODB_PORT}'
     networks:
       - backend_network
 
