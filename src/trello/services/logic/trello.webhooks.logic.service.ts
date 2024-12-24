@@ -47,7 +47,6 @@ export class TrelloWebhooksLogicService {
         this.encryptionKey = this.sharedConfigService.getEncryptionKey();
     }
 
-
     async getWebhook(webhook: string | Webhook): Promise<Webhook> {
         if (typeof webhook === 'string') {
             // If it's a string, fetch the webhook by ID
