@@ -48,7 +48,7 @@ export class TrelloWebhooksController {
     @Req() req,
     @Body() body: CreateWebhookDto
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.createTrelloWebhook(req.user.userId, body);
+    return this.webhooksService.createTrelloWebhook(req.user.id, body);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -63,7 +63,7 @@ export class TrelloWebhooksController {
   })
   @ApiCustomUnathorizedResponse()
   getUserConnectedWebhooksList(@Req() req) {
-    return this.webhooksService.findMemberWebhooks(req.user.userId);
+    return this.webhooksService.findMemberWebhooks(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -129,7 +129,7 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
   updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Req() req): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.updateTrelloWebhookNotifications(req.user.userId, id, updateWebhookDto);
+    return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, updateWebhookDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -188,6 +188,6 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
   disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<null>> {
-    return this.webhooksService.disconnectFromTrelloWebhook(req.user.userId, webhookId);
+    return this.webhooksService.disconnectFromTrelloWebhook(req.user.id, webhookId);
   }
 }
