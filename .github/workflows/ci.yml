@@ -20,7 +20,7 @@ jobs:
         run: cp .env.example .env.staging
 
       - name: Run Docker Composer
-        run: docker compose up -d --build
+        run: docker compose --env-file .env.staging up -d --build
 
       - name: Run Backend Tests
         run: docker exec backend npm test
