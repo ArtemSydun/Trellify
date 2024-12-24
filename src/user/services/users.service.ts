@@ -48,11 +48,19 @@ export class UsersService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
+  async getUser(user: string | User): Promise<User> {
+    if (typeof user === 'string') {
+      // If it's a string, fetch the user by ID
+      return await this.findUserById(user);
+    }
+    return user; // If it's already a User object, return it as-is
+  }
+
   public async createUser(createUserDto: CreateUserDto): Promise<User> {
     this.logger.log(`Creating user with email: ${createUserDto.email}`);
 
     const userByEmail = await this.userRepository.findOneByEmail(createUserDto.email);
-    
+
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
       throw new ConflictException(`User ${createUserDto.email} already exists`);
@@ -99,14 +107,6 @@ export class UsersService {
     return userWithoutPass;
   }
 
-  async getUser(user: string | User): Promise<User> {
-    if (typeof user === 'string') {
-      // If it's a string, fetch the user by ID
-      return await this.findUserById(user);
-    }
-    return user; // If it's already a User object, return it as-is
-  }
-
   public async findUserProfile(user: string | User): Promise<Partial<User>> {
     const userToFind = await this.getUser(user);
     if (!user) {
@@ -127,6 +127,7 @@ export class UsersService {
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
     const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
+
     if (!userByTrelloId) {
       this.logger.warn(`User with Trello ID ${trelloUserId} not found`);
       throw new NotFoundException(`User with Trello ID ${trelloUserId} not found`);
