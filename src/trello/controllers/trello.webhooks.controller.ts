@@ -68,8 +68,16 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  @ApiExcludeEndpoint()
-  getWebhookById(@Param('id') id: string): Promise<Webhook> { 
+  @ApiOperation({
+    summary: 'Get webhook by id',
+    description: 'This endpoint retrieves a webhook by id.',
+  })
+  @ApiOkResponse({
+    description: 'Get webhook by id',
+    type: Webhook,
+  })
+  @ApiCustomUnathorizedResponse()
+  getWebhookById(@Param('id') id: string): Promise<Webhook> {
     return this.webhooksService.findWebhookById(id);
   }
 
