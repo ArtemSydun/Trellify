@@ -9,9 +9,8 @@ on:
       - staging
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -19,8 +18,18 @@ jobs:
       - name: Create test .env
         run: cp .env.example .env.test
 
-      - name: Run test in docker container
-        run: STAGE=test docker compose --env-file .env.test up -d --build
+      - name: Run tests in Docker container
+        run: STAGE=test docker compose --env-file .env.test up --abort-on-container-exit --build
+
+      - name: Stop test containers
+        run: STAGE=test docker compose --env-file .env.test down
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
