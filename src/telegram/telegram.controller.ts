@@ -13,8 +13,10 @@ import { UsersService } from 'src/user/services/users.service';
 import { UserSearchPath } from 'src/user/interfaces/query.enum';
 import { ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Update()
+@SkipThrottle()
 export class TelegramController {
   private readonly telegramActions: TelegramActions;
   private readonly telegramUtils: TelegramUtils;
