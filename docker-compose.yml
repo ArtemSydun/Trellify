@@ -1,23 +1,39 @@
-version: '3.9'
-
 services:
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      target: ${STAGE}
+    restart: always
+    env_file: .env.${STAGE}
+    environment:
+      NODE_ENV: ${STAGE}
+    ports:
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
+    volumes:
+      - .:/srv
+    depends_on:
+      - mongodb
+    networks:
+      - app_network
+      - backend_network
+
   mongodb:
     image: mongo:latest
     container_name: mongodb
-    hostname: mongodb
+    hostname: ${MONGODB_HOSTNAME}
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
     volumes:
       - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
-    env_file:
-      - .env
-    environment:
-      MONGODB_USERNAME: ${MONGODB_USERNAME}
-      MONGODB_PASSWORD: ${MONGODB_PASSWORD}
     ports:
-      - "27017:27017"
+      - '${MONGODB_PORT}:${MONGODB_PORT}'
     networks:
-      - mongodb_network
+      - backend_network
 
 volumes:
   mongodb-data:
@@ -28,6 +44,7 @@ volumes:
     name: mongo-log
 
 networks:
-  mongodb_network:
+  app_network:
     driver: bridge
-    name: mongo-network
+  backend_network:
+    driver: bridge
