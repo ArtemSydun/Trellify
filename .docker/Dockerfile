@@ -13,7 +13,7 @@ COPY package.json  .
 COPY --from=builder /app/node_modules  ./node_modules
 COPY . .
 
-CMD ["npm", "run", "test:e2e"]
+CMD ["npm", "run", "test"]
 
 FROM node:20-alpine AS development
 
