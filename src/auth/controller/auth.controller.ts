@@ -8,7 +8,7 @@ import { User } from "src/user/entities/user.entity";
 import { ForgotPasswordDto } from "../dto/forgot-password.dto";
 import { LoginUserResponseDto, LoginUserDto } from "../dto/login.dto";
 import { ResetPasswordDto } from "../dto/reset-password.dto";
-import { AuthService } from "../service/auth.service";
+import { AuthService } from "../services/auth.service";
 
 
 @Controller('auth')
