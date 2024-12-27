@@ -19,6 +19,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -68,6 +69,46 @@ export class AuthService {
     };
   }
 
+  public async initiateRegistration(createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
+    this.logger.log(`Initiating user registration for email: ${createUserDto.email}`);
+
+    const userByEmail = await this.userService.doesUserExist(createUserDto.email);
+    if (userByEmail) {
+      this.logger.warn(`User ${createUserDto.email} already exists`);
+      throw new ConflictException(`User ${createUserDto.email} already exists`);
+    }
+
+    const payload = {
+      email: createUserDto.email,
+      password: createUserDto.password,
+      telegram: { username: null, chatId: null },
+      trello: { userId: null, token: null, webhooks: [] },
+    };
+
+    const token = this.jwtService.sign(payload, { expiresIn: '1d' });
+
+    const confirmationLink = this.mailService.getLink(
+      this.configService.get(configServiceEnum.FRONTEND_LINK),
+      `auth/confirm/${token}`,
+      'Confirm your email',
+    );
+
+    await this.mailService.sendDistribution(
+      this.configService.get(configServiceEnum.MAILER_SENDER),
+      createUserDto.email,
+      {
+        subject: 'Confirm Your Email',
+        html: `<p>Please confirm your email by clicking the following link: ${confirmationLink}</p>`,
+      },
+    );
+
+    this.logger.log(`Confirmation link sent to ${createUserDto.email}`);
+    return {
+      message: `Confirmation link sent to your email ${createUserDto.email}`,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
   public async confirmRegistration(
     token: string,
   ): Promise<DefaultResponse<null>> {
@@ -111,11 +152,7 @@ export class AuthService {
     const { newPassword, repeatPassword } = resetPasswordDto;
 
     if (newPassword !== repeatPassword) {
-      this.logger.warn('Password mismatch during reset', {
-        token,
-        newPassword,
-        repeatPassword,
-      });
+      this.logger.warn('Password mismatch during reset');
       throw new BadRequestException(`Password and repeat password does not match`);
     }
 
@@ -124,6 +161,7 @@ export class AuthService {
     await this.userService.resetPassword(id, newPassword);
 
     this.logger.log(`Password successfully reset for user ID: ${id}`);
+
     return {
       message: 'Password changed successfully',
       statusCode: HttpStatus.OK,

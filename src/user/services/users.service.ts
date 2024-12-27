@@ -206,46 +206,6 @@ export class UsersService {
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
 
-  public async initiateUserRegistration(createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    this.logger.log(`Initiating user registration for email: ${createUserDto.email}`);
-
-    const userByEmail = await this.userRepository.findOneByEmail(createUserDto.email);
-    if (userByEmail) {
-      this.logger.warn(`User ${createUserDto.email} already exists`);
-      throw new ConflictException(`User ${createUserDto.email} already exists`);
-    }
-
-    const payload = {
-      email: createUserDto.email,
-      password: createUserDto.password,
-      telegram: { username: null, chatId: null },
-      trello: { userId: null, token: null, webhooks: [] },
-    };
-
-    const token = this.jwtService.sign(payload, { expiresIn: '1d' });
-
-    const confirmationLink = this.mailerService.getLink(
-      this.configService.get(configServiceEnum.FRONTEND_LINK),
-      `auth/confirm/${token}`,
-      'Confirm your email',
-    );
-
-    await this.mailerService.sendDistribution(
-      this.configService.get(configServiceEnum.MAILER_SENDER),
-      createUserDto.email,
-      {
-        subject: 'Confirm Your Email',
-        html: `<p>Please confirm your email by clicking the following link: ${confirmationLink}</p>`,
-      },
-    );
-
-    this.logger.log(`Confirmation link sent to ${createUserDto.email}`);
-    return {
-      message: `Confirmation link sent to your email ${createUserDto.email}`,
-      statusCode: HttpStatus.OK,
-    };
-  }
-
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
     this.logger.log(`Finding users connected to webhook ID: ${webhookId}`);
     return this.userRepository.findUsersConnectedToWebhook(webhookId);
