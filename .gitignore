@@ -43,7 +43,7 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
-.db-docker-dev
+/db-docker-dev
 
 # Runtime data
 pids
