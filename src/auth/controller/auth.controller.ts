@@ -2,13 +2,13 @@ import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common';
 
 import { AuthService } from '../service/auth.service';
 import { LoginUserDto, LoginUserResponseDto } from '../dto/login.dto';
-import { User } from 'src/user/entities/user.entity';
-import { DefaultResponse } from 'src/common/interfaces/responses';
+import { User } from '../../user/entities/user.entity';
+import { DefaultResponse } from '../../common/interfaces/responses';
 import { ApiOkResponse, ApiUnauthorizedResponse, ApiOperation } from '@nestjs/swagger';
-import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
-import { Errors } from 'src/common/enums/errors.enum';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { UsersService } from 'src/user/services/users.service';
+import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from '../../common/decorators/swagger.decorators';
+import { Errors } from '../../common/enums/errors.enum';
+import { CreateUserDto } from '../../user/dto/create-user.dto';
+import { UsersService } from '../../user/services/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 
