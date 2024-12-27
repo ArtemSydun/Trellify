@@ -1,5 +1,5 @@
 import { HttpStatus } from "@nestjs/common"
-import { userStub } from "../../user/__mocks__/user.stub"
+import { userStub } from "src/user/__mocks__/user.stub"
 
 export const loginStub = () => {
     return {
@@ -8,16 +8,16 @@ export const loginStub = () => {
     }
 }
 
-export const registerMessageStub = () => {
+export const registerMessageStub = (email: string) => {
     return {
-        message: `Confirmation link sent to your email test@gmail.com`,
+        message: `Confirmation link sent to your email ${email}`,
         statusCode: HttpStatus.OK,
     }
 }
 
-export const forgotPasswordMessageStub = () => {
+export const forgotPasswordMessageStub = (email: string) => {
     return {
-        message: `Password reset email sent on test@gmail.com`,
+        message: `Password reset email sent on ${email}`,
         statusCode: HttpStatus.OK,
     }
 }

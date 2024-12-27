@@ -8,14 +8,12 @@ import { ApiOkResponse, ApiUnauthorizedResponse, ApiOperation } from '@nestjs/sw
 import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from '../../common/decorators/swagger.decorators';
 import { Errors } from '../../common/enums/errors.enum';
 import { CreateUserDto } from '../../user/dto/create-user.dto';
-import { UsersService } from '../../user/services/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService,
-    private readonly usersService: UsersService
   ) { }
 
   @Post('login')
@@ -77,7 +75,7 @@ export class AuthController {
   })
   @ApiCustomConflictResponse('User', 'email')
   create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    return this.usersService.initiateUserRegistration(createUserDto);
+    return this.authService.initiateRegistration(createUserDto);
   }
 
   @Post('forgot-password')
