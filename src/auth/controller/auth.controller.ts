@@ -1,15 +1,15 @@
-import { Body, Controller, Get, HttpStatus, Param, Post } from '@nestjs/common';
+import { Controller, Post, HttpStatus, Body, Param, Get } from "@nestjs/common";
+import { ApiOperation, ApiOkResponse, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import { ApiCustomNotFoundResponse, ApiCustomConflictResponse, ApiCustomUnathorizedResponse, ApiCustomBadRequestResponse } from "src/common/decorators/swagger.decorators";
+import { Errors } from "src/common/enums/errors.enum";
+import { DefaultResponse } from "src/common/interfaces/responses";
+import { CreateUserDto } from "src/user/dto/create-user.dto";
+import { User } from "src/user/entities/user.entity";
+import { ForgotPasswordDto } from "../dto/forgot-password.dto";
+import { LoginUserResponseDto, LoginUserDto } from "../dto/login.dto";
+import { ResetPasswordDto } from "../dto/reset-password.dto";
+import { AuthService } from "../service/auth.service";
 
-import { AuthService } from '../service/auth.service';
-import { LoginUserDto, LoginUserResponseDto } from '../dto/login.dto';
-import { User } from '../../user/entities/user.entity';
-import { DefaultResponse } from '../../common/interfaces/responses';
-import { ApiOkResponse, ApiUnauthorizedResponse, ApiOperation } from '@nestjs/swagger';
-import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from '../../common/decorators/swagger.decorators';
-import { Errors } from '../../common/enums/errors.enum';
-import { CreateUserDto } from '../../user/dto/create-user.dto';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
