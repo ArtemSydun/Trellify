@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { AuthService } from './service/auth.service';
+import { AuthService } from './services/auth.service';
 import { AuthController } from './controller/auth.controller';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
