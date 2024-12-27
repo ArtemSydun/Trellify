@@ -78,14 +78,16 @@ export class UsersService {
   }
 
   public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
-    this.logger.log(`Deleting user with ID: ${userId}`);
+    const userToDelete = await this.getUser(userId);
 
-    await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userId);
-    await this.userRepository.delete(userId);
+    this.logger.log(`Deleting user with ID: ${userToDelete.id}`);
 
-    this.logger.log(`User ${userId} deleted successfully`);
+    await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToDelete.id);
+    await this.userRepository.delete(userToDelete.id);
+
+    this.logger.log(`User ${userToDelete.id} deleted successfully`);
     return {
-      message: `User ${userId} was deleted successfully`,
+      message: `User ${userToDelete.id} was deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -227,12 +229,14 @@ export class UsersService {
     const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
-    if (chatId === userToUpdate.telegram.chatId) {
+    if (chatId === userToUpdate.telegram.chatId && chatId !== null) {
       throw new ConflictException(`Trello notifier bot is already connected`);
     }
 
     try {
       if (chatId && username) {
+        console.log(chatId);
+        console.log(username);
         await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
       } else {
         await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
@@ -248,7 +252,9 @@ export class UsersService {
 
     this.logger.log(`Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`);
     return {
-      message: `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      message: `Telegram ${connectTelegramDto.username
+        ? updatedUser.telegram.username
+        : userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
