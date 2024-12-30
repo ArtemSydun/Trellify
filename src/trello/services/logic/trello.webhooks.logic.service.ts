@@ -431,6 +431,7 @@ export class TrelloWebhooksLogicService {
 
             await this.trelloWebhookRepository.delete(webhookId);
 
+            this.logger.log(`Webhook for model ${webhookToDelete.boardName} deleted successfully`)
             return {
                 message: `Webhook ${webhookId} deleted successfully from Trello and all connected users`,
                 statusCode: HttpStatus.OK,
