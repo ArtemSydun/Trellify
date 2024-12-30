@@ -12,11 +12,13 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import { BadRequestException, ConflictException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { userStub } from '../__mocks__/user.stub';
-import { hashPassword } from 'src/common/helpers/hashing';
+import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
+import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
 
 jest.mock('src/common/helpers/hashing', () => ({
     hashPassword: jest.fn(),
+    encryptText: jest.fn(),
 }));
 
 describe('UsersService', () => {
@@ -63,6 +65,13 @@ describe('UsersService', () => {
         jest.clearAllMocks();
     });
 
+    jest.mock('src/common/helpers/hashing', () => ({
+        verifyPassword: jest.fn(),
+        hashPassword: jest.fn(),
+        encryptText: jest.fn(),
+        decryptText: jest.fn(),
+    }));
+
     describe('createUser', () => {
         it('should create a new user successfully', async () => {
             const createUserDto = { email: userStub().email, password: 'password123' };
@@ -108,7 +117,7 @@ describe('UsersService', () => {
     });
 
     describe('deleteUserById', () => {
-        it('should delete a user by ID', async () => {
+        it('should delete a user by ID and disconnect from all webhooks', async () => {
             const userToDelete = { ...userStub() };
 
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
@@ -162,8 +171,14 @@ describe('UsersService', () => {
 
     describe('manageUserTelegramConnection', () => {
         it('should connect Telegram successfully', async () => {
-            const userToUpdate = { ...userStub(), telegram: { chatId: null, username: null } };
-            const connectTelegramDto = { chatId: userStub().telegram.chatId, username: userStub().telegram.username };
+            const userToUpdate = {
+                ...userStub(),
+                telegram: { chatId: null, username: null }
+            };
+            const connectTelegramDto = {
+                chatId: userStub().telegram.chatId,
+                username: userStub().telegram.username
+            };
 
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
             jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue();
@@ -219,6 +234,101 @@ describe('UsersService', () => {
                     telegram: connectTelegramDto,
                 },
             });
+        });
+    });
+
+    describe('manageUserTrelloConnection', () => {
+        it('should disconnect Trello and all webhooks successfully', async () => {
+            const userToUpdate = {
+                ...userStub()
+            }
+            const connectTrelloDto = { token: null };
+
+            jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+            jest.spyOn(trelloWebhooksLogicService, 'disconnectFromAllTrelloWebhooks')
+                .mockResolvedValue({ message: 'webhook message', statusCode: HttpStatus.OK });
+            jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
+                ...userToUpdate,
+                trello: { userId: null, username: null, webhooks: [], token: null },
+            });
+
+            const result = await usersService.manageUserTrelloConnection(userToUpdate.id, connectTrelloDto);
+
+            expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+            expect(trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks).toHaveBeenCalledWith(userToUpdate);
+            expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
+                trello: { userId: null, username: null, webhooks: [], token: null },
+            });
+            expect(result).toEqual({
+                message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
+                statusCode: HttpStatus.OK,
+                data: {
+                    ...userToUpdate,
+                    trello: { userId: null, username: null, webhooks: [], token: null },
+                },
+            });
+        });
+
+        it('should connect Trello and update user data successfully', async () => {
+            const userToUpdate = { ...userStub(), trello: { userId: null, username: null, webhooks: [], token: null } };
+            const connectTrelloDto = { token: 'newtoken' };
+
+            jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+            jest.spyOn(trelloTokensLogicService, 'isTokenInfinite').mockResolvedValue(true);
+            jest.spyOn(trelloMembersLogicService, 'findMemberProfile').mockResolvedValue(trelloProfileMock);
+            jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
+                ...userToUpdate,
+                trello: {
+                    userId: trelloProfileMock.id,
+                    username: trelloProfileMock.username,
+                    webhooks: [],
+                    token: `encrypted${connectTrelloDto.token}`,
+                },
+            });
+            (encryptText as jest.Mock).mockImplementation((text: string) => `encrypted${text}`);
+
+            const result = await usersService.manageUserTrelloConnection(userToUpdate.id, connectTrelloDto);
+
+            expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+            expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(connectTrelloDto.token);
+            expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(userToUpdate, `encrypted${connectTrelloDto.token}`);
+            expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
+                trello: {
+                    userId: trelloProfileMock.id,
+                    username: trelloProfileMock.username,
+                    webhooks: [],
+                    token: `encrypted${connectTrelloDto.token}`,
+                },
+            });
+            expect(result).toEqual({
+                message: `Trello ${trelloProfileMock.username} connected successfully`,
+                statusCode: HttpStatus.OK,
+                data: {
+                    ...userToUpdate,
+                    trello: {
+                        userId: trelloProfileMock.id,
+                        username: trelloProfileMock.username,
+                        webhooks: [],
+                        token: `encrypted${connectTrelloDto.token}`,
+                    },
+                },
+            });
+        });
+
+        it('should throw an error if token is invalid or not infinite', async () => {
+            const userToUpdate = { ...userStub() };
+            const connectTrelloDto = { token: 'invalidtoken' };
+
+            jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+            jest.spyOn(trelloTokensLogicService, 'isTokenInfinite')
+                .mockRejectedValue(new BadRequestException('Please provide a token with a valid expiration date'));
+
+            await expect(usersService.manageUserTrelloConnection(userToUpdate.id, connectTrelloDto)).rejects.toThrow(
+                new BadRequestException('Please provide a token with a valid expiration date')
+            );
+
+            expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+            expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(connectTrelloDto.token);
         });
     });
 

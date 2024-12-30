@@ -36,10 +36,7 @@ export class UsersService {
 
   constructor(
     private readonly userRepository: UsersRepository,
-    private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
     private readonly sharedConfigService: SharedConfigService,
-    private readonly jwtService: JwtService,
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
@@ -82,7 +79,10 @@ export class UsersService {
 
     this.logger.log(`Deleting user with ID: ${userToDelete.id}`);
 
-    await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToDelete.id);
+    if (userToDelete.trello.token) {
+      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToDelete);
+    }
+    
     await this.userRepository.delete(userToDelete.id);
 
     this.logger.log(`User ${userToDelete.id} deleted successfully`);
@@ -141,6 +141,7 @@ export class UsersService {
 
   public async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOneByEmail(email);
+
     if (!user) {
       this.logger.warn(`User with email ${email} not found`);
       throw new NotFoundException(`User with email ${email} not found`);
@@ -235,8 +236,6 @@ export class UsersService {
 
     try {
       if (chatId && username) {
-        console.log(chatId);
-        console.log(username);
         await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
       } else {
         await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
@@ -272,7 +271,7 @@ export class UsersService {
 
       this.logger.log(`Trello profile disconnected for user ${user}`);
       return {
-        message: `Trello profile disconnected successfully`,
+        message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
         statusCode: HttpStatus.OK,
         data: updatedUser,
       };
@@ -299,7 +298,7 @@ export class UsersService {
 
     this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
     return {
-      message: `Trello ${userToUpdate.id} connected successfully`,
+      message: `Trello ${updatedUser.trello.username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };

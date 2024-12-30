@@ -110,13 +110,13 @@ export class UsersController {
     description: 'This endpoint handles connecting or disconnecting a Trello account to the current user. It does not require special roles, but the user must be authenticated.',
   })
   @ApiOkResponse({
-    description: 'Trello connected / disconnected successfully',
+    description: 'Trello {{username}} connected / disconnected successfully',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'Trello connected / disconnected successfully',
+          example: 'Trello {{username}} connected / disconnected successfully',
         },
         statusCode: {
           type: 'number',

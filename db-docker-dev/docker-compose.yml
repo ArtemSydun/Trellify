@@ -6,7 +6,7 @@ services:
     container_name: mongodb-local
     hostname: mongodb-local
     volumes:
-      - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ../mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
     env_file:
@@ -21,13 +21,14 @@ services:
 
 volumes:
   mongodb-data:
-    driver: local
+    external: true
     name: mongo-data
   mongodb-log:
-    driver: local
+    external: true
     name: mongo-log
 
 networks:
   mongodb_network:
     driver: bridge
     name: mongo-network
+    external: true
