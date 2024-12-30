@@ -50,7 +50,7 @@ export class TrelloWebhooksLogicService {
     async getWebhook(webhook: string | Webhook): Promise<Webhook> {
         if (typeof webhook === 'string') {
             // If it's a string, fetch the webhook by ID
-            return await this.trelloWebhookRepository.findOneById(webhook);
+            return await this.findWebhookById(webhook);
         }
         return webhook; // If it's already a Webhook object, return it as-is
     }
@@ -157,13 +157,17 @@ export class TrelloWebhooksLogicService {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
 
+        console.log(webhookToUpdate);
+
         validateTrelloToken(userToUpdate.trello.token);
 
         let updatedNotifications;
         if (updateWebhookDto.notifications) {
-            updatedNotifications = getUpdatedWebhookNotifications(userToUpdate.trello.userId,
+            updatedNotifications = getUpdatedWebhookNotifications(
+                userToUpdate.trello.userId,
                 webhookToUpdate.notifications,
-                updateWebhookDto.notifications);
+                updateWebhookDto.notifications
+            );
         } else {
             updatedNotifications = webhookToUpdate.notifications;
         }
