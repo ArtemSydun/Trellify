@@ -157,8 +157,6 @@ export class TrelloWebhooksLogicService {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
 
-        console.log(webhookToUpdate);
-
         validateTrelloToken(userToUpdate.trello.token);
 
         let updatedNotifications;
