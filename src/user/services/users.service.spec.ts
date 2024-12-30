@@ -129,7 +129,7 @@ describe('UsersService', () => {
             const result = await usersService.deleteUserById(userToDelete.id);
 
             expect(usersService.getUser).toHaveBeenCalledWith(userToDelete.id);
-            expect(trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks).toHaveBeenCalledWith(userToDelete.id);
+            expect(trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks).toHaveBeenCalledWith(userToDelete);
             expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
             expect(result).toEqual({
                 message: `User ${userToDelete.id} was deleted successfully`,
