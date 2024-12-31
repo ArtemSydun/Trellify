@@ -82,7 +82,7 @@ export class UsersService {
     if (userToDelete.trello.token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToDelete);
     }
-    
+
     await this.userRepository.delete(userToDelete.id);
 
     this.logger.log(`User ${userToDelete.id} deleted successfully`);
@@ -230,19 +230,16 @@ export class UsersService {
     const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
-    if (chatId === userToUpdate.telegram.chatId && chatId !== null) {
-      throw new ConflictException(`Trello notifier bot is already connected`);
-    }
+    if (chatId && username) {
+      const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TelegramChatId, chatId);
 
-    try {
-      if (chatId && username) {
-        await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
-      } else {
-        await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
+      if (connectedUser && connectedUser.id !== userToUpdate.id) {
+        throw new ConflictException(`Trello notifier bot is already connected for another user`);
       }
-    } catch (err) {
-      this.logger.error(`Error sending Telegram message: ${err.message}`);
-      throw new BadRequestException(`This Telegram user has not interacted with bot yet`);
+
+      await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
+    } else {
+      await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
@@ -251,9 +248,7 @@ export class UsersService {
 
     this.logger.log(`Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`);
     return {
-      message: `Telegram ${connectTelegramDto.username
-        ? updatedUser.telegram.username
-        : userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      message: `Telegram ${username || userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -291,6 +286,12 @@ export class UsersService {
 
     const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
 
+    const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TrelloUserId, trelloProfile.id);
+
+    if (connectedUser) {
+      throw new ConflictException(`This trello profile is already binded to other user`);
+    }
+
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
@@ -307,11 +308,15 @@ export class UsersService {
   public async removeWebhookFromAllUsers(webhookId: string) {
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
 
+
+    //prepare bulk operation for each user to delete webhook with webhookId
     const bulkUpdateOperations = usersConnectedToWebhook.map(user => ({
       updateOne: {
         filter: { id: user.id },
         update: {
-          $pull: { [UserSearchPath.TrelloWebhooks]: webhookId },
+          $pull: {
+            [UserSearchPath.TrelloWebhooks]: { webhookId }
+          },
         },
       },
     }));
