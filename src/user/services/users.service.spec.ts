@@ -15,6 +15,7 @@ import { userStub } from '../__mocks__/user.stub';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
+import { UserSearchPath } from '../interfaces/query.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
     hashPassword: jest.fn(),
@@ -24,10 +25,6 @@ jest.mock('src/common/helpers/hashing', () => ({
 describe('UsersService', () => {
     let usersService: UsersService;
     let usersRepository: UsersRepository;
-    let mailerService: MailerService;
-    let configService: ConfigService;
-    let sharedConfigService: SharedConfigService;
-    let jwtService: JwtService;
     let trelloMembersLogicService: TrelloMembersLogicService;
     let trelloTokensLogicService: TrelloTokensLogicService;
     let trelloWebhooksLogicService: TrelloWebhooksLogicService;
@@ -38,10 +35,7 @@ describe('UsersService', () => {
             providers: [
                 UsersService,
                 { provide: UsersRepository, useValue: createMock<UsersRepository>() },
-                { provide: MailerService, useValue: createMock<MailerService>() },
-                { provide: ConfigService, useValue: createMock<ConfigService>() },
                 { provide: SharedConfigService, useValue: createMock<SharedConfigService>() },
-                { provide: JwtService, useValue: createMock<JwtService>() },
                 { provide: TrelloMembersLogicService, useValue: createMock<TrelloMembersLogicService>() },
                 { provide: TrelloTokensLogicService, useValue: createMock<TrelloTokensLogicService>() },
                 { provide: TrelloWebhooksLogicService, useValue: createMock<TrelloWebhooksLogicService>() },
@@ -51,10 +45,6 @@ describe('UsersService', () => {
 
         usersService = moduleRef.get<UsersService>(UsersService);
         usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
-        mailerService = moduleRef.get<MailerService>(MailerService);
-        configService = moduleRef.get<ConfigService>(ConfigService);
-        sharedConfigService = moduleRef.get<SharedConfigService>(SharedConfigService);
-        jwtService = moduleRef.get<JwtService>(JwtService);
         trelloMembersLogicService = moduleRef.get<TrelloMembersLogicService>(TrelloMembersLogicService);
         trelloTokensLogicService = moduleRef.get<TrelloTokensLogicService>(TrelloTokensLogicService);
         trelloWebhooksLogicService = moduleRef.get<TrelloWebhooksLogicService>(TrelloWebhooksLogicService);
@@ -66,10 +56,8 @@ describe('UsersService', () => {
     });
 
     jest.mock('src/common/helpers/hashing', () => ({
-        verifyPassword: jest.fn(),
         hashPassword: jest.fn(),
         encryptText: jest.fn(),
-        decryptText: jest.fn(),
     }));
 
     describe('createUser', () => {
@@ -149,7 +137,6 @@ describe('UsersService', () => {
         });
     });
 
-
     describe('resetPassword', () => {
         it('should reset the user password', async () => {
             const resetPasswordDto: ResetPasswordDto = {
@@ -180,17 +167,28 @@ describe('UsersService', () => {
                 username: userStub().telegram.username
             };
 
+            // Mocking user retrieval and repository operations
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+            jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(null); // No conflicting user found
             jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue();
             jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
                 ...userToUpdate,
                 telegram: connectTelegramDto,
             });
 
+            // Invoking the method
             const result = await usersService.manageUserTelegramConnection(userToUpdate.id, connectTelegramDto);
 
+            // Assertions
             expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
-            expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(connectTelegramDto, 'Trello notifier bot authorized successfully');
+            expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
+                UserSearchPath.TelegramChatId,
+                connectTelegramDto.chatId
+            );
+            expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+                connectTelegramDto,
+                'Trello notifier bot authorized successfully'
+            );
             expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, { telegram: connectTelegramDto });
             expect(result).toEqual({
                 message: `Telegram ${connectTelegramDto.username} connected successfully`,
@@ -214,6 +212,7 @@ describe('UsersService', () => {
             const userToUpdate = { ...userStub() };
             const connectTelegramDto = { chatId: null, username: null };
 
+            // Mocking necessary dependencies
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
             jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue();
             jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
@@ -221,13 +220,18 @@ describe('UsersService', () => {
                 telegram: connectTelegramDto,
             });
 
+            // Invoking the method
             const result = await usersService.manageUserTelegramConnection(userToUpdate.id, connectTelegramDto);
 
+            // Expectations
             expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
-            expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(userToUpdate.telegram, 'Trello notifier bot disconnected successfully');
+            expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+                userToUpdate.telegram,
+                'Trello notifier bot disconnected successfully'
+            );
             expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, { telegram: connectTelegramDto });
             expect(result).toEqual({
-                message: `Telegram ${userStub().telegram.username} disconnected successfully`,
+                message: `Telegram ${userToUpdate.telegram.username} disconnected successfully`,
                 statusCode: HttpStatus.OK,
                 data: {
                     ...userToUpdate,
@@ -235,6 +239,7 @@ describe('UsersService', () => {
                 },
             });
         });
+
     });
 
     describe('manageUserTrelloConnection', () => {
@@ -331,6 +336,4 @@ describe('UsersService', () => {
             expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(connectTrelloDto.token);
         });
     });
-
-
 });
