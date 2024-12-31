@@ -190,7 +190,16 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
-        console.log(JSON.stringify(webhookAction, null, 2));
+        const filteredLog = {
+            memberCreator: webhookAction.action.memberCreator?.username,
+            actionType: webhookAction.action.type,
+            translationKey: webhookAction.action.display?.translationKey,
+            modelName: webhookAction.model?.name,
+            modelUrl: webhookAction.model?.url,
+            actionDate: webhookAction.action.date,
+        };
+
+        console.log(JSON.stringify(filteredLog, null, 2));
         const targetCard = webhookAction?.action?.data?.card;
         const targetBoard = webhookAction?.action?.data?.board;
         const webhook = await this.getWebhook(webhookAction?.webhook?.id);
