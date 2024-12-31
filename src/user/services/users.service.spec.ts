@@ -281,6 +281,7 @@ describe('UsersService', () => {
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
             jest.spyOn(trelloTokensLogicService, 'isTokenInfinite').mockResolvedValue(true);
             jest.spyOn(trelloMembersLogicService, 'findMemberProfile').mockResolvedValue(trelloProfileMock);
+            jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(null);
             jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
                 ...userToUpdate,
                 trello: {
@@ -334,6 +335,30 @@ describe('UsersService', () => {
 
             expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
             expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(connectTrelloDto.token);
+        });
+
+        it('should throw an error if Trello profile is already connected to another user', async () => {
+            const userToUpdate = { ...userStub(), trello: { userId: null, username: null, webhooks: [], token: null } };
+            const connectTrelloDto = { token: 'newtoken' };
+            const connectedUser = { ...userStub(), id: 'differentUserId' };
+
+            jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+            jest.spyOn(trelloTokensLogicService, 'isTokenInfinite').mockResolvedValue(true);
+            jest.spyOn(trelloMembersLogicService, 'findMemberProfile').mockResolvedValue(trelloProfileMock);
+            jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(connectedUser);
+
+            await expect(usersService.manageUserTrelloConnection(userToUpdate.id, connectTrelloDto)).rejects.toThrow(
+                new ConflictException('This trello profile is already binded to other user')
+            );
+
+            expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+            expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(connectTrelloDto.token);
+            expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(userToUpdate, `encrypted${connectTrelloDto.token}`);
+            expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
+                UserSearchPath.TrelloUserId,
+                trelloProfileMock.id
+            );
+            expect(usersRepository.updateById).not.toHaveBeenCalled();
         });
     });
 });

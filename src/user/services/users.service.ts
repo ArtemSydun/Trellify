@@ -230,7 +230,7 @@ export class UsersService {
     const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
-    if (chatId || username) {
+    if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TelegramChatId, chatId);
 
       if (connectedUser && connectedUser.id !== userToUpdate.id) {
@@ -285,6 +285,12 @@ export class UsersService {
     const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
 
     const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
+
+    const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TrelloUserId, trelloProfile.id);
+
+    if (connectedUser) {
+      throw new ConflictException(`This trello profile is already binded to other user`);
+    }
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
