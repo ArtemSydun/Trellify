@@ -50,7 +50,7 @@ export class TrelloWebhooksLogicService {
     async getWebhook(webhook: string | Webhook): Promise<Webhook> {
         if (typeof webhook === 'string') {
             // If it's a string, fetch the webhook by ID
-            return await this.trelloWebhookRepository.findOneById(webhook);
+            return await this.findWebhookById(webhook);
         }
         return webhook; // If it's already a Webhook object, return it as-is
     }
@@ -161,9 +161,11 @@ export class TrelloWebhooksLogicService {
 
         let updatedNotifications;
         if (updateWebhookDto.notifications) {
-            updatedNotifications = getUpdatedWebhookNotifications(userToUpdate.trello.userId,
+            updatedNotifications = getUpdatedWebhookNotifications(
+                userToUpdate.trello.userId,
                 webhookToUpdate.notifications,
-                updateWebhookDto.notifications);
+                updateWebhookDto.notifications
+            );
         } else {
             updatedNotifications = webhookToUpdate.notifications;
         }
@@ -427,6 +429,7 @@ export class TrelloWebhooksLogicService {
 
             await this.trelloWebhookRepository.delete(webhookId);
 
+            this.logger.log(`Webhook for model ${webhookToDelete.boardName} deleted successfully`)
             return {
                 message: `Webhook ${webhookId} deleted successfully from Trello and all connected users`,
                 statusCode: HttpStatus.OK,
