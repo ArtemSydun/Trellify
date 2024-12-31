@@ -1,6 +1,6 @@
 // actions which are without proper "translationKey" (detailed action type)
 // updateComment ("unknown"),  deleteComment ("unknown")
-// some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing all labels from card
+// some actions on updateCard ("unknown"), for example changing card color / deadline notification update / removing label from card
 // createCheckItem ("unknown"), 
 
 // commented actions do not have notification properties
@@ -40,7 +40,7 @@ export enum TrelloWebhookActions {
     BOARD_MEMBER_ADDED = 'addMemberToBoard',
     BOARD_ADMIN_ADDED = 'makeAdminOfBoard',
     BOARD_MEMBER_NORMAL_ROLE_ADDED = 'makeNormalMemberOfBoard',
-    // BOARD_UPDATED = 'updateBoard',
+    BOARD_UPDATED = 'updateBoard',
     // BOARD_DELETED = 'removeFromOrganizationBoard',
 
     CUSTOM_FIELD_CREATED = 'createCustomField',
@@ -84,7 +84,7 @@ export enum TrelloWebhookDetailedActions {
     // CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
     
     // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
-    CHECKLIST_ITEM_ADDED = 'createCheckItem',
+    CHECKLIST_ITEM_ADDED = TrelloWebhookActions.CHECKLIST_ITEM_CREATED,
 
     CHECKLIST_ITEM_MEMBER_ADDED = 'action_added_member_to_checkitem',
     CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
@@ -100,6 +100,7 @@ export enum TrelloWebhookDetailedActions {
     // LIST_ARCHIVED = 'action_archived_list',
     // LIST_RENAMED = 'action_renamed_list',
 
+    BOARD_RENAMED = 'action_update_board_name',
     BOARD_MEMBER_REMOVED = 'action_removed_from_board',
     BOARD_MEMBER_INVITATION_JOINED = 'action_joined_board_by_invitation_link',
     BOARD_MEMBER_LEFT = 'action_left_board',
@@ -113,6 +114,7 @@ export enum TrelloWebhookDetailedActions {
     CUSTOM_FIELD_CREATED = 'action_create_custom_field',
     CUSTOM_FIELD_UPDATED = 'action_update_custom_field',
     CUSTOM_FIELD_ITEM_UPDATED = 'action_update_custom_field_item',
+    CUSTOM_FIELD_RENAMED = 'action_rename_custom_field',
 }
 
 export type NotificationType = {

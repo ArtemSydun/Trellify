@@ -190,6 +190,8 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
+        console.log(JSON.stringify(webhookAction, null, 2));
+
         const filteredLog = {
             memberCreator: webhookAction.action.memberCreator?.username,
             actionType: webhookAction.action.type,
@@ -212,6 +214,9 @@ export class TrelloWebhooksLogicService {
         // console.log(generalActionType);
         // console.log('target card: ', targetCard);
         // console.log('target board: ', targetBoard);
+        if (detailedActionType === "unknown") {
+            this.logger.warn(`unknown action type, general type: ${generalActionType}`);
+        }
 
         if (!webhook) {
             this.logger.warn('Missing action or webhook data.');
