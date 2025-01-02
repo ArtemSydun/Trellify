@@ -38,8 +38,6 @@ export const initializeCategoryNotifications = (
     actions: Record<string, string>,
     enabledActions: string[]
 ): Record<string, string[]> => {
-    console.log('trelloUserId: ', trelloUserId)
-    console.log('enabledActions: ', enabledActions)
     return Object.entries(actions).reduce((acc, [key, value]) => {
         const camelCaseKey = toCamelCase(key, '_');
         acc[camelCaseKey] = enabledActions.includes(value) ? [trelloUserId] : [];
@@ -61,7 +59,6 @@ export const initializeNotificationArrays = (trelloUserId: string): Notification
         return acc;
     }, {} as NotificationCategoriesDto);
 };
-
 
 // Update webhook notifications for a specific category
 // Convert category-specific notifications to boolean updates
@@ -85,14 +82,11 @@ export const updateCategoryNotifications = (
     categoryActions: string[]
 ): Record<string, string[]> => {
     const updatedNotifications = { ...currentNotifications };
-    // console.log('currentNotifications: ', currentNotifications);
     // Iterate over the category-specific actions
     categoryActions.forEach(actionKey => {
         const camelCaseKey = toCamelCase(actionKey, '_');
         const shouldAddUser = userUpdates[camelCaseKey];
-        // console.log('shouldAddUser: ', shouldAddUser);
-        // console.log('camel case key: ', camelCaseKey);
-        // console.log('updatedNotifications[actionKey]: ', updatedNotifications[actionKey]);
+
 
         if (shouldAddUser !== undefined) {
             // Initialize the array if not exists

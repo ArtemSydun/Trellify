@@ -36,9 +36,7 @@ export class TrelloActionsLogicService {
             const targetUser = await this.userService.findUserByTrelloId(userTrelloId);
             const userInitials = targetUser.email;
 
-            // console.log('actionType: ', actionType);
-            // console.log('targetUser: ', targetUser);
-            // console.log('userInitials: ', userInitials);
+
             const targetActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
                     `${userInitials} you were deleted from card [${cardData?.name}](${cardData?.url})`,

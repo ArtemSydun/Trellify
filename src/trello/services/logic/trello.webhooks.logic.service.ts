@@ -77,16 +77,20 @@ export class TrelloWebhooksLogicService {
             }
 
             const defaultUserNotifications = initializeNotificationArrays(userToUpdate.trello.userId);
-            console.log('defaultUserNot: ', defaultUserNotifications)
 
-            const updatedNotifications = getUpdatedWebhookNotifications(userToUpdate.trello.userId, webhook.notifications, mapNotificationsToBoolean(defaultUserNotifications))
+            const newUserNotificationBooleans = mapNotificationsToBoolean(defaultUserNotifications);
 
-            console.log('updatedNotif: ', updatedNotifications);
+            const updatedNotifications = getUpdatedWebhookNotifications(
+                userToUpdate.trello.userId,
+                webhook.notifications,
+                newUserNotificationBooleans
+            )
 
-            await this.trelloWebhookRepository.updateById(webhook.id, { subscribers: webhook.subscribers, notifications: updatedNotifications });
+            await this.trelloWebhookRepository.updateById(
+                webhook.id,
+                { subscribers: webhook.subscribers, notifications: updatedNotifications }
+            );
 
-            // console.log(defaultUserNotifications);   
-            // console.log(updatedNotifications);
             const userWebhook = {
                 idModel: webhook.idModel,
                 modelName: webhook.boardName,
@@ -116,7 +120,11 @@ export class TrelloWebhooksLogicService {
         }
 
         const connectedBoard = await this.trelloBoardsApiService.fetchBoardById(decryptedUserToken, boardId);
-        const response = await this.trelloWebhookApiService.createWebhook(decryptedUserToken, boardPersonalWebhookURL, boardId);
+        const response = await this.trelloWebhookApiService.createWebhook(
+            decryptedUserToken,
+            boardPersonalWebhookURL,
+            boardId
+        );
         console.log('Webhook created: ', response);
 
         try {
@@ -137,7 +145,9 @@ export class TrelloWebhooksLogicService {
             const updatedUserProps = {
                 trello: {
                     ...userToUpdate.trello,
-                    webhooks: userToUpdate.trello.webhooks ? [...userToUpdate.trello.webhooks, userWebhook] : [userWebhook],
+                    webhooks: userToUpdate.trello.webhooks
+                        ? [...userToUpdate.trello.webhooks, userWebhook]
+                        : [userWebhook],
                 }
             };
 
@@ -193,8 +203,6 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
-        console.log(JSON.stringify(webhookAction, null, 2));
-
         const filteredLog = {
             memberCreator: webhookAction.action.memberCreator?.username,
             actionType: webhookAction.action.type,
