@@ -17,8 +17,8 @@ services:
       - backend_network
 
   mongodb:
-    image: mongo:latest
-    container_name: mongodb
+    image: mongo:7.0.16
+    container_name: mongodb-${STAGE}
     hostname: ${MONGODB_HOSTNAME}
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
@@ -28,7 +28,7 @@ services:
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
     ports:
-      - '${MONGODB_PORT}:${MONGODB_PORT}'
+      - '127.0.0.1:${MONGODB_PORT}:${MONGODB_PORT}'
     networks:
       - backend_network
 
