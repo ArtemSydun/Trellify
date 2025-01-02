@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, forwardRef, HttpStatus, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UsersService } from 'src/user/services/users.service';
 import { decryptText } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
@@ -176,6 +176,10 @@ export class TrelloWebhooksLogicService {
     ): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
+
+        if (!webhookToUpdate.subscribers.includes(userToUpdate.trello.userId)) {
+            throw new ForbiddenException(`You are not connected to this webhook`);
+        }
 
         validateTrelloToken(userToUpdate.trello.token);
 

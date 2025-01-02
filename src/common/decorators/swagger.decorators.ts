@@ -121,8 +121,8 @@ export function ApiCustomBadRequestResponse(description: string, message: string
     );
 }
 
-export function ApiCustomForbiddenResponse() {
-    const messageTemplate = `Forbidden resource`;
+export function ApiCustomForbiddenResponse(message?: string) {
+    const messageTemplate = message || `Forbidden resource`;
 
     return applyDecorators(
         ApiResponse({

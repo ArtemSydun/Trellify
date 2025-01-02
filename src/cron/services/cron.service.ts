@@ -41,7 +41,11 @@ export class CronService {
                 }
 
                 const dateLastActivityParsed = new Date(dateLastActivity.value);
+
+                //last action on board
                 const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
+
+                //last webhook update in DB
                 const daysSinceLastUpdate = differenceInDays(currentDate, webhook.updatedAt);
 
                 // unactive for more than 30 days
