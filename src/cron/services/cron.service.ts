@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { differenceInDays } from 'date-fns';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
@@ -20,7 +20,7 @@ export class CronService {
     }
 
     @Cron(CronExpression.EVERY_WEEK)
-    async clearUnactiveBoards() {
+    async clearUnactiveWebhooks() {
         try {
             const webhooks = await this.trelloWebhooksLogicService.findAllWebhooks();
 
@@ -40,11 +40,16 @@ export class CronService {
                     continue;
                 }
 
-                const dateLastActivityParsed = new Date(dateLastActivity._value);
+                const dateLastActivityParsed = new Date(dateLastActivity.value);
+
+                //last action on board
                 const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
 
+                //last webhook update in DB
+                const daysSinceLastUpdate = differenceInDays(currentDate, webhook.updatedAt);
+
                 // unactive for more than 30 days
-                if (daysSinceLastActivity <= -30) {
+                if (daysSinceLastActivity <= -30 || daysSinceLastUpdate <= -30) {
                     unactiveWebhooks.push(webhook);
                 }
             }

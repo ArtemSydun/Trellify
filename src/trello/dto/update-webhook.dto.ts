@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsObject } from 'class-validator';
-import { Notifications } from './notifications.dto';
+import { NotificationCategoriesDto, Notifications } from './notifications.dto';
 
 export class UpdateWebhookDto {
     // @ApiProperty({
@@ -15,12 +15,12 @@ export class UpdateWebhookDto {
 
     @ApiProperty({
         description: 'Notifications for various events with user IDs for each event.',
-        type: Notifications,
+        type: NotificationCategoriesDto,
         required: false,
     })
     @IsObject()
     @IsOptional()
-    notifications?: Record<string, boolean>;
+    notifications?: NotificationCategoriesDto;
 
     // @ApiProperty({
     //     description: 'The name of the Trello board associated with the webhook.',
