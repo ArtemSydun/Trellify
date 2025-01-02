@@ -10,11 +10,10 @@ services:
     environment:
       NODE_ENV: ${STAGE}
     ports:
-      - '${BACKEND_PORT}:3000'
+      - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
     depends_on:
       - mongodb
     networks:
-      - app_network
       - backend_network
 
   mongodb:
@@ -42,7 +41,5 @@ volumes:
     name: mongo-log
 
 networks:
-  app_network:
-    driver: bridge
   backend_network:
     driver: bridge
