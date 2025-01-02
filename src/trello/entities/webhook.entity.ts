@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Schema as MongooseSchema } from 'mongoose';
 import { NotificationCategoriesDto } from '../dto/notifications.dto';
+import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
 
 @Schema({ timestamps: true, collection: 'trello_webhooks' })
 export class Webhook {
@@ -62,6 +63,13 @@ export class Webhook {
     boardName: string;
 
     @ApiProperty({
+        description: 'Connected board URL',
+        example: 'https://trello.com/boardURL',
+    })
+    @Prop({ required: true })
+    boardUrl: string;
+
+    @ApiProperty({
         description: 'Webhook creator token',
         example: 'webhook creator crypted token'
     })
@@ -76,13 +84,19 @@ export class Webhook {
     @Prop({ type: [String], required: true })
     subscribers: string[];
 
-    // @ApiProperty({
-    //     description: 'Notifications for various events with user IDs for each event.',
-    //     type: Object,
-    //     example: initializeNotificationArrays('userId1')
-    // })
+    @ApiProperty({
+        description: 'Notifications for various events with user IDs for each event.',
+        type: Object,
+        example: initializeNotificationArrays('userId1')
+    })
     @Prop({ type: MongooseSchema.Types.Mixed, required: false })
     notifications: NotificationCategoriesDto;
+
+    @Prop()
+    createdAt?: Date;
+
+    @Prop()
+    updatedAt?: Date;
 }
 
 export const WebhookSchema = SchemaFactory.createForClass(Webhook);

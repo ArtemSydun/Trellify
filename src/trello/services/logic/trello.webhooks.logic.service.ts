@@ -131,6 +131,7 @@ export class TrelloWebhooksLogicService {
             const createdWebhook = {
                 ...response,
                 boardName: connectedBoard.name,
+                boardUrl: connectedBoard.url,
                 authorToken: userToUpdate.trello.token,
                 subscribers: [userToUpdate.trello.userId],
                 notifications: initializeNotificationArrays(userToUpdate.trello.userId)
