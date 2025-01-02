@@ -1,6 +1,6 @@
 services:
   backend:
-    container_name: backend
+    container_name: backend-${STAGE}
     build:
       context: .
       dockerfile: .docker/Dockerfile
@@ -10,7 +10,7 @@ services:
     environment:
       NODE_ENV: ${STAGE}
     ports:
-      - '${BACKEND_PORT}:${BACKEND_PORT}'
+      - '${BACKEND_PORT}:3000'
     depends_on:
       - mongodb
     networks:
