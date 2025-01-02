@@ -18,7 +18,7 @@ services:
 
   mongodb:
     image: mongo:7.0.16
-    container_name: mongodb-${STAGE}
+    container_name: mongodb
     hostname: ${MONGODB_HOSTNAME}
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
