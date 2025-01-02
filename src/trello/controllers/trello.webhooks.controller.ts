@@ -8,9 +8,9 @@ import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UpdateWebhookDto } from '../dto/update-webhook.dto';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
 import { SkipThrottle } from '@nestjs/throttler';
+import { NotificationBooleansDto } from '../dto/notifications.dto';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
@@ -130,9 +130,10 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse(`You are not connected to this webhook`)
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  updateWebhookById(@Param('id') id: string, @Body() updateWebhookDto: UpdateWebhookDto, @Req() req): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, updateWebhookDto);
+  updateWebhookById(@Param('id') id: string, @Body() notificationBooleansDto: NotificationBooleansDto, @Req() req): Promise<DefaultResponse<Webhook>> {
+    return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, notificationBooleansDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

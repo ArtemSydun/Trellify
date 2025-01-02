@@ -36,9 +36,7 @@ export class TrelloActionsLogicService {
             const targetUser = await this.userService.findUserByTrelloId(userTrelloId);
             const userInitials = targetUser.email;
 
-            // console.log('actionType: ', actionType);
-            // console.log('targetUser: ', targetUser);
-            // console.log('userInitials: ', userInitials);
+
             const targetActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {
                 [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
                     `${userInitials} you were deleted from card [${cardData?.name}](${cardData?.url})`,
@@ -50,7 +48,9 @@ export class TrelloActionsLogicService {
                     `${userInitials} you were added to checklist in card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
                     `${userInitials} you were removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
-            };
+                [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]:
+                    `${userInitials} you were added to the board [${boardData?.name}](${boardData.url}) as admin`,
+            }
 
             const message = targetActionMessages[actionType];
 
@@ -112,6 +112,7 @@ export class TrelloActionsLogicService {
                     `A checklist item in the card [${cardData?.name}](${cardData?.url}) was converted into a new card.`,
                 [TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED]:
                     `A checklist item was added in the card [${cardData?.name}](${cardData?.url}).`,
+
             };
 
             const message = cardActionMessages[actionType];
@@ -136,8 +137,8 @@ export class TrelloActionsLogicService {
             const adminToNotify = await this.userService.findUserByTrelloId(adminTrelloId);
 
             const targetUser = {
-                fullname: targetMember.fullName,
-                username: targetMember.username,
+                fullname: targetMember?.fullName,
+                username: targetMember?.username,
             }
 
             const adminActionMessages: Partial<Record<TrelloWebhookDetailedActions, string | null>> = {

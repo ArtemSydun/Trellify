@@ -301,3 +301,65 @@ export class Notifications {
   boardMemberNormalRoleAdded?: boolean;
 }
 
+export class NotificationCategoriesDto {
+  @ApiProperty({
+    description: 'Notifications related to board events with user IDs.',
+    type: Object,
+    example: {
+      boardAdminAdded: ['userId1', 'userId2'],
+      boardMemberInvitationJoined: ['userId3'],
+    },
+  })
+  board: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to card events with user IDs.',
+    type: Object,
+    example: {
+      cardArchived: ['userId6', 'userId7'],
+      cardAttachmentAdded: ['userId8'],
+    },
+  })
+  card: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to admin events with user IDs.',
+    type: Object,
+    example: {
+      adminPermissionGranted: ['userId9'],
+    },
+  })
+  admin: Record<string, string[]>;
+}
+
+export class NotificationBooleansDto {
+  @ApiProperty({
+    description: 'Notifications related to board events with user IDs.',
+    type: Object,
+    example: {
+      boardAdminAdded: false,
+      boardMemberInvitationJoined: true,
+    },
+  })
+  board: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to card events with user IDs.',
+    type: Object,
+    example: {
+      cardArchived: false,
+      cardAttachmentAdded: true,
+    },
+  })
+  card: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to admin events with user IDs.',
+    type: Object,
+    example: {
+      adminPermissionGranted: true,
+    },
+  })
+  admin: Record<string, boolean>;
+}
+
