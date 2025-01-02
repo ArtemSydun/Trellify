@@ -22,7 +22,7 @@ export enum TrelloWebhookActions {
     CARD_LABEL_REMOVED = 'removeLabelFromCard',
 
     CARD_CHECKLIST_ADDED = 'addChecklistToCard',
-    
+
     //unknown action detailed type, separate handler
     CHECKLIST_ITEM_CREATED = 'createCheckItem',
 
@@ -82,7 +82,7 @@ export enum TrelloWebhookDetailedActions {
     CHECKLIST_ITEM_DELETED = 'action_deleted_checkitem',
     // CHECKLIST_ITEM_MEMBER_JOINED = 'action_member_joined_checkitem',
     // CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
-    
+
     // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
     CHECKLIST_ITEM_ADDED = TrelloWebhookActions.CHECKLIST_ITEM_CREATED,
 
@@ -116,6 +116,57 @@ export enum TrelloWebhookDetailedActions {
     CUSTOM_FIELD_ITEM_UPDATED = 'action_update_custom_field_item',
     CUSTOM_FIELD_RENAMED = 'action_rename_custom_field',
 }
+
+
+export enum TrelloWebhookBoardActions {
+    BOARD_RENAMED = TrelloWebhookDetailedActions.BOARD_RENAMED,
+    BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
+    BOARD_MEMBER_INVITATION_JOINED = TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
+    BOARD_MEMBER_LEFT = TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT,
+    BOARD_MEMBER_JOINED = TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED,
+    BOARD_ADMIN_ADDED = TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
+    BOARD_MEMBER_NORMAL_ROLE_ADDED = TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
+    // BOARD_CLOSED = TrelloWebhookDetailedActions.BOARD_CLOSED,
+    // BOARD_REOPENED = TrelloWebhookDetailedActions.BOARD_REOPENED,
+    // BOARD_DELETED = TrelloWebhookDetailedActions.BOARD_DELETED,
+}
+
+export enum TrelloWebhookCardActions {
+    CARD_RENAMED = TrelloWebhookDetailedActions.CARD_RENAMED,
+    CARD_ARCHIVED = TrelloWebhookDetailedActions.CARD_ARCHIVED,
+    CARD_DELETED = TrelloWebhookDetailedActions.CARD_DELETED,
+    CARD_MEMBER_ADDED = TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
+    CARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED,
+    CARD_COMMENT_ADDED = TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
+    CARD_ATTACHMENT_ADDED = TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED,
+    CARD_DUE_DATE_ADDED = TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED,
+    CARD_DUE_DATE_CHANGED = TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
+    CARD_START_DATE_ADDED = TrelloWebhookDetailedActions.CARD_START_DATE_ADDED,
+    CARD_START_DATE_CHANGED = TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
+    CARD_MOVED_TO_LIST = TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST,
+    CARD_LABEL_ADDED = TrelloWebhookDetailedActions.CARD_LABEL_ADDED,
+    CARD_LABEL_REMOVED = TrelloWebhookDetailedActions.CARD_LABEL_REMOVED,
+    CARD_CHECKLIST_ADDED = TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED,
+    CARD_CHECKLIST_REMOVED = TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED,
+    CHECKLIST_ITEM_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DELETED,
+    CHECKLIST_ITEM_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
+    CHECKLIST_ITEM_MEMBER_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED,
+    CHECKLIST_ITEM_MEMBER_REMOVED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED,
+    CHECKLIST_ITEM_DUE_DATE_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_DELETED,
+    CHECKLIST_ITEM_DUE_DATE_UPDATED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_UPDATED,
+    CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED,
+    CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED,
+    CHECKLIST_ITEM_CONVERTED_TO_CARD = TrelloWebhookDetailedActions.CHECKLIST_ITEM_CONVERTED_TO_CARD,
+}
+
+export enum TrelloWebhookAdminActions {
+    CUSTOM_FIELD_CREATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_CREATED,
+    CUSTOM_FIELD_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_UPDATED,
+    CUSTOM_FIELD_ITEM_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
+    CUSTOM_FIELD_RENAMED = TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
+}
+
+
 
 export type NotificationType = {
     [key in TrelloWebhookDetailedActions]?: string[];

@@ -1,67 +1,148 @@
 import { actionsEnabledByDefault } from "../constants/trello";
-import { NotificationType, TrelloWebhookDetailedActions } from "../../trello/enums/trello.actions.enum";
+import {
+    TrelloWebhookAdminActions,
+    TrelloWebhookBoardActions,
+    TrelloWebhookCardActions,
+    TrelloWebhookDetailedActions,
+} from "../../trello/enums/trello.actions.enum";
 import { toCamelCase } from "./camelCase";
+import { NotificationBooleansDto, NotificationCategoriesDto } from "src/trello/dto/notifications.dto";
 
-// this function takes trelloUserId of webhook creator and initialize notifications object with empty arrays
-export const initializeNotificationArrays = (trelloUserId: string): NotificationType => {
-    return Object.entries(TrelloWebhookDetailedActions).reduce((acc, [key, value]) => {
-        const camelCaseKey = toCamelCase(key, '_'); // Convert to camelCase
-
-        // Check if the action value is in the actionsEnabledByDefault array
-        if (actionsEnabledByDefault.includes(value)) {
-            // If the action is enabled by default, assign the user ID
-            acc[camelCaseKey] = [trelloUserId];
-        } else {
-            // Otherwise, assign an empty array
-            acc[camelCaseKey] = [];
-        }
-
-        return acc;
-    }, {} as NotificationType);
+export const categoryKeysMap: Record<string, string[]> = {
+    board: Object.keys(TrelloWebhookBoardActions),
+    card: Object.keys(TrelloWebhookCardActions),
+    admin: Object.keys(TrelloWebhookAdminActions),
 };
 
-// this function creates list of basic notifications for user when he connects to webhook
-export const initializeUserNotificationState = (enabledActions: TrelloWebhookDetailedActions[]): { [key: string]: boolean } => {
-    return Object.keys(TrelloWebhookDetailedActions).reduce((acc, key) => {
-        const camelCaseKey = toCamelCase(key, '_');
-        // Check if the action is in the enabled actions list
-        if (enabledActions.includes(TrelloWebhookDetailedActions[key as keyof typeof TrelloWebhookDetailedActions])) {
-            acc[camelCaseKey] = true; // Set the value to true for actions enabled by default
-        }
+const getKeysFromDefaultActions = <T extends string>(
+    actions: T[],
+    enumObj: Record<string, T>,
+): string[] => {
+    const reverseEnumMap = Object.entries(enumObj).reduce((acc, [key, value]) => {
+        acc[value] = key;
         return acc;
-    }, {} as { [key: string]: boolean });
+    }, {} as Record<string, string>);
+
+    return actions.map(action => reverseEnumMap[action]);
 };
 
 
-// this functions takes trelloUserId to save in notification arrays, 
-// webhookNotifications which is current notification arrays of webhook, 
-// and userNotificationsUpdate which is object with notifications user want to track
-export const getUpdatedWebhookNotifications = (
+export const defaultActionsKeys = getKeysFromDefaultActions(
+    actionsEnabledByDefault,
+    TrelloWebhookDetailedActions
+);
+
+// Initialize notification arrays for a specific category
+export const initializeCategoryNotifications = (
     trelloUserId: string,
-    webhookNotifications: NotificationType,
-    userNotificationsUpdate: { [key: string]: boolean }
-): NotificationType => {
-    // Iterate over each notification type in the userNotificationsUpdate object
-    Object.keys(userNotificationsUpdate).forEach(notificationType => {
-        const shouldAddUser = userNotificationsUpdate[notificationType];
+    actions: Record<string, string>,
+    enabledActions: string[]
+): Record<string, string[]> => {
+    console.log('trelloUserId: ', trelloUserId)
+    console.log('enabledActions: ', enabledActions)
+    return Object.entries(actions).reduce((acc, [key, value]) => {
+        const camelCaseKey = toCamelCase(key, '_');
+        acc[camelCaseKey] = enabledActions.includes(value) ? [trelloUserId] : [];
+        return acc;
+    }, {} as Record<string, string[]>);
+};
 
-        // Check if the notification type exists in the webhookNotifications
-        if (!webhookNotifications[notificationType]) {
-            webhookNotifications[notificationType] = []; // Initialize if it doesn't exist
-        }
+// Initialize notifications for all categories
+export const initializeNotificationArrays = (trelloUserId: string): NotificationCategoriesDto => {
+    return Object.keys(categoryKeysMap).reduce((acc, category) => {
+        acc[category] = initializeCategoryNotifications(
+            trelloUserId,
+            categoryKeysMap[category].reduce((actions, actionKey) => {
+                actions[actionKey] = actionKey;
+                return actions;
+            }, {} as Record<string, string>),
+            defaultActionsKeys
+        );
+        return acc;
+    }, {} as NotificationCategoriesDto);
+};
 
-        // If user should be added to the notification
-        if (shouldAddUser) {
-            if (!webhookNotifications[notificationType].includes(trelloUserId)) {
-                webhookNotifications[notificationType].push(trelloUserId);
+
+// Update webhook notifications for a specific category
+// Convert category-specific notifications to boolean updates
+export const mapNotificationsToBoolean = (
+    notifications: NotificationCategoriesDto
+): NotificationBooleansDto => {
+    return Object.keys(notifications).reduce((acc, category) => {
+        acc[category] = Object.keys(notifications[category]).reduce((subAcc, actionKey) => {
+            subAcc[actionKey] = notifications[category][actionKey].length > 0; // Convert array presence to boolean
+            return subAcc;
+        }, {} as Record<string, boolean>);
+        return acc;
+    }, {} as NotificationBooleansDto);
+};
+
+// Update webhook notifications for a specific category
+export const updateCategoryNotifications = (
+    trelloUserId: string,
+    currentNotifications: Record<string, string[]>,
+    userUpdates: Record<string, boolean>,
+    categoryActions: string[]
+): Record<string, string[]> => {
+    const updatedNotifications = { ...currentNotifications };
+    // console.log('currentNotifications: ', currentNotifications);
+    // Iterate over the category-specific actions
+    categoryActions.forEach(actionKey => {
+        const camelCaseKey = toCamelCase(actionKey, '_');
+        const shouldAddUser = userUpdates[camelCaseKey];
+        // console.log('shouldAddUser: ', shouldAddUser);
+        // console.log('camel case key: ', camelCaseKey);
+        // console.log('updatedNotifications[actionKey]: ', updatedNotifications[actionKey]);
+
+        if (shouldAddUser !== undefined) {
+            // Initialize the array if not exists
+            if (!updatedNotifications[camelCaseKey]) {
+                updatedNotifications[camelCaseKey] = [];
             }
-        } else {
-            // If user should be removed from the notification
-            webhookNotifications[notificationType] = webhookNotifications[notificationType].filter(
-                userId => userId !== trelloUserId
-            );
+
+            if (shouldAddUser) {
+                // Add the user if not already present
+                if (!updatedNotifications[camelCaseKey].includes(trelloUserId)) {
+                    updatedNotifications[camelCaseKey].push(trelloUserId);
+                }
+            } else {
+                // Remove the user if present
+                updatedNotifications[camelCaseKey] = updatedNotifications[camelCaseKey].filter(
+                    userId => userId !== trelloUserId
+                );
+            }
         }
     });
 
-    return webhookNotifications;
+    return updatedNotifications;
+};
+
+// Update webhook notifications across all categories
+export const getUpdatedWebhookNotifications = (
+    trelloUserId: string,
+    webhookNotifications: NotificationCategoriesDto,
+    userNotificationsUpdate: NotificationBooleansDto
+): NotificationCategoriesDto => {
+
+    return Object.keys(userNotificationsUpdate).reduce((acc, key) => {
+        const categoryActions = categoryKeysMap[key] || [];
+        acc[key] = updateCategoryNotifications(
+            trelloUserId,
+            webhookNotifications[key] || {},
+            userNotificationsUpdate[key] || {},
+            categoryActions
+        );
+        return acc;
+    }, {} as NotificationCategoriesDto);
+};
+
+//create boolean array with all values false (same as user will unsubscribe from all actions)
+export const setAllKeysToFalse = (notifications: NotificationCategoriesDto): NotificationBooleansDto => {
+    return Object.keys(notifications).reduce((acc, category) => {
+        acc[category] = Object.keys(notifications[category]).reduce((subAcc, actionKey) => {
+            subAcc[actionKey] = false; // Set each action to false
+            return subAcc;
+        }, {} as Record<string, boolean>);
+        return acc;
+    }, {} as NotificationBooleansDto);
 };
