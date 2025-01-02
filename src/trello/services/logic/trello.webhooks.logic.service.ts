@@ -5,7 +5,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 import { Webhook } from '../../entities/webhook.entity';
 import { CreateWebhookDto } from '../../dto/create-webhook.dto';
-import { getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, setAllKeysToFalse } from 'src/common/helpers/trello-notifications';
+import { getCategoryForAction, getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, setAllKeysToFalse } from 'src/common/helpers/trello-notifications';
 import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { SharedConfigService } from '../../../config/shared.config.service';
@@ -246,11 +246,23 @@ export class TrelloWebhooksLogicService {
 
         // Check if enum value includes action we got from webhook and transform enum key (CARD_CREATED -> cardCreated)
         if (Object.values(TrelloWebhookDetailedActions).includes(detailedActionType)) {
-            enumKey = toCamelCase(Object.keys(TrelloWebhookDetailedActions)
-                .find(key => TrelloWebhookDetailedActions[key] === detailedActionType), '_');
+            enumKey = toCamelCase(
+                Object.keys(TrelloWebhookDetailedActions).find(
+                    key => TrelloWebhookDetailedActions[key] === detailedActionType
+                ),
+                '_'
+            );
         }
 
-        const subscribedMembers = webhook.notifications[enumKey] || [];
+        // Get the category dynamically
+        const category = getCategoryForAction(enumKey);
+
+        if (!category) {
+            this.logger.warn(`Action ${detailedActionType !== 'unknown' ? detailedActionType : generalActionType} is not supported by this API`);
+            return;
+        }
+
+        const subscribedMembers = webhook.notifications[category]?.[enumKey] || [];
 
         if (!enumKey) {
             this.logger.warn(`Action ${detailedActionType !== 'unknown' ? detailedActionType : generalActionType} is not supported by this API`);

@@ -1,4 +1,4 @@
-import { TrelloWebhookDetailedActions } from "../../trello/enums/trello.actions.enum";
+import { TrelloWebhookAdminActions, TrelloWebhookBoardActions, TrelloWebhookCardActions, TrelloWebhookDetailedActions } from "../../trello/enums/trello.actions.enum";
 
 export const trelloApiLink = 'https://api.trello.com/1';
 
@@ -16,3 +16,9 @@ export const actionsEnabledByDefault = [
     TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
     TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST
 ];
+
+export const categoryKeysMap: Record<string, string[]> = {
+    board: Object.keys(TrelloWebhookBoardActions),
+    card: Object.keys(TrelloWebhookCardActions),
+    admin: Object.keys(TrelloWebhookAdminActions),
+};

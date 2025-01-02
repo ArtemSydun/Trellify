@@ -1,18 +1,9 @@
-import { actionsEnabledByDefault } from "../constants/trello";
+import { actionsEnabledByDefault, categoryKeysMap } from "../constants/trello";
 import {
-    TrelloWebhookAdminActions,
-    TrelloWebhookBoardActions,
-    TrelloWebhookCardActions,
     TrelloWebhookDetailedActions,
 } from "../../trello/enums/trello.actions.enum";
 import { toCamelCase } from "./camelCase";
 import { NotificationBooleansDto, NotificationCategoriesDto } from "src/trello/dto/notifications.dto";
-
-export const categoryKeysMap: Record<string, string[]> = {
-    board: Object.keys(TrelloWebhookBoardActions),
-    card: Object.keys(TrelloWebhookCardActions),
-    admin: Object.keys(TrelloWebhookAdminActions),
-};
 
 const getKeysFromDefaultActions = <T extends string>(
     actions: T[],
@@ -26,6 +17,16 @@ const getKeysFromDefaultActions = <T extends string>(
     return actions.map(action => reverseEnumMap[action]);
 };
 
+export const getCategoryForAction = (actionKey: string): string | null => {
+    // Iterate over categoryKeysMap to find which category contains the transformed actionKey
+    const category = Object.keys(categoryKeysMap).find(category => {
+        const transformedKeys = categoryKeysMap[category].map(key => toCamelCase(key, '_'));
+        console.log(`Transformed keys for category ${category}:`, transformedKeys);
+        return transformedKeys.includes(actionKey);
+    });
+
+    return category || null;
+};
 
 export const defaultActionsKeys = getKeysFromDefaultActions(
     actionsEnabledByDefault,
@@ -120,6 +121,7 @@ export const getUpdatedWebhookNotifications = (
 
     return Object.keys(userNotificationsUpdate).reduce((acc, key) => {
         const categoryActions = categoryKeysMap[key] || [];
+
         acc[key] = updateCategoryNotifications(
             trelloUserId,
             webhookNotifications[key] || {},

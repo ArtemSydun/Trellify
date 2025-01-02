@@ -117,7 +117,6 @@ export enum TrelloWebhookDetailedActions {
     CUSTOM_FIELD_RENAMED = 'action_rename_custom_field',
 }
 
-
 export enum TrelloWebhookBoardActions {
     BOARD_RENAMED = TrelloWebhookDetailedActions.BOARD_RENAMED,
     BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
@@ -176,9 +175,3 @@ export enum TrelloWebhookAdminActions {
 
     CUSTOM_FIELD_RENAMED = TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
 }
-
-
-
-export type NotificationType = {
-    [key in TrelloWebhookDetailedActions]?: string[];
-};
