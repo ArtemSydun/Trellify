@@ -23,6 +23,8 @@ jest.mock('src/common/helpers/hashing', () => ({
 }));
 
 describe('UsersService', () => {
+    let originalDate = Date;
+
     let usersService: UsersService;
     let usersRepository: UsersRepository;
     let trelloMembersLogicService: TrelloMembersLogicService;
@@ -30,7 +32,17 @@ describe('UsersService', () => {
     let trelloWebhooksLogicService: TrelloWebhooksLogicService;
     let telegramService: TelegramService;
 
+    const fixedDate = userStub().telegram.updatedAt;
+
     beforeEach(async () => {
+        originalDate = global.Date;
+        global.Date = class extends originalDate {
+            constructor() {
+                super();
+                return fixedDate;
+            }
+        } as unknown as DateConstructor;
+
         const moduleRef = await Test.createTestingModule({
             providers: [
                 UsersService,
@@ -53,6 +65,7 @@ describe('UsersService', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        global.Date = originalDate;
     });
 
     jest.mock('src/common/helpers/hashing', () => ({
@@ -157,14 +170,16 @@ describe('UsersService', () => {
     });
 
     describe('manageUserTelegramConnection', () => {
+        const fixedDate = new Date('2025-01-03T13:38:58.285Z');
         it('should connect Telegram successfully', async () => {
             const userToUpdate = {
                 ...userStub(),
-                telegram: { chatId: null, username: null }
+                telegram: { chatId: null, username: null, updatedAt: fixedDate }
             };
             const connectTelegramDto = {
                 chatId: userStub().telegram.chatId,
-                username: userStub().telegram.username
+                username: userStub().telegram.username,
+                updatedAt: fixedDate,
             };
 
             // Mocking user retrieval and repository operations
@@ -179,7 +194,6 @@ describe('UsersService', () => {
             // Invoking the method
             const result = await usersService.manageUserTelegramConnection(userToUpdate.id, connectTelegramDto);
 
-            // Assertions
             expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
             expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
                 UserSearchPath.TelegramChatId,
@@ -209,8 +223,9 @@ describe('UsersService', () => {
         });
 
         it('should disconnect Telegram successfully', async () => {
+            const fixedDate = new Date('2025-01-03T13:38:58.285Z');
             const userToUpdate = { ...userStub() };
-            const connectTelegramDto = { chatId: null, username: null };
+            const connectTelegramDto = { chatId: null, username: null, updatedAt: fixedDate };
 
             // Mocking necessary dependencies
             jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
@@ -221,9 +236,11 @@ describe('UsersService', () => {
             });
 
             // Invoking the method
-            const result = await usersService.manageUserTelegramConnection(userToUpdate.id, connectTelegramDto);
+            const result = await usersService.manageUserTelegramConnection(userToUpdate.id, {
+                chatId: null,
+                username: null,
+            });
 
-            // Expectations
             expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
             expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
                 userToUpdate.telegram,
@@ -239,6 +256,7 @@ describe('UsersService', () => {
                 },
             });
         });
+
 
     });
 
