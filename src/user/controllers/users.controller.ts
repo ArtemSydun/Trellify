@@ -15,7 +15,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiOkResponse, ApiOperation, getSchemaPath, PartialType } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOkResponse, ApiOperation, getSchemaPath, PartialType } from '@nestjs/swagger';
 import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -26,6 +26,7 @@ import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { Errors } from 'src/common/enums/errors.enum';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
 
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }

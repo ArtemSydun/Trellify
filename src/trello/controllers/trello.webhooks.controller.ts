@@ -3,7 +3,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
@@ -18,6 +18,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create or subscribe to a Trello webhook',
     description: 'This endpoint allows the user to create a new Trello webhook or subscribe to an existing one.',
@@ -54,6 +55,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Get('list')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get list of connected webhooks',
     description: 'This endpoint retrieves a list of Trello webhooks that the authenticated user is connected to.',
@@ -69,6 +71,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get webhook by id',
     description: 'This endpoint retrieves a webhook by id.',
@@ -105,6 +108,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('notifications/:id')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update a webhook notification subscriptions',
     description: 'This endpoint allows the authenticated user to update notification subscriptions by webhook ID.',
@@ -139,6 +143,7 @@ export class TrelloWebhooksController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete('delete/:id')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a Trello webhook (Superadmin only)',
     description: 'This endpoint allows to delete a Trello webhook by its ID and disconnect it from all users. It can only be accessed by users with superadmin role.',
@@ -168,6 +173,7 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Post('disconnect/:webhookId')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Disconnect from a Trello webhook',
     description: 'This endpoint allows the authenticated user to disconnect from a Trello webhook by its ID.',

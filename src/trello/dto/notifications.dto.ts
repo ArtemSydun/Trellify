@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
+import { initializeCategoryNotifications, initializeNotificationArrays, mapNotificationsToBoolean } from 'src/common/helpers/trello-notifications';
 
 export class Notifications {
   // Uncomment this section if 'CARD_CREATED' is enabled in your actionsEnabledByDefault
@@ -336,29 +337,21 @@ export class NotificationBooleansDto {
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
     type: Object,
-    example: {
-      boardAdminAdded: false,
-      boardMemberInvitationJoined: true,
-    },
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).board
   })
   board: Record<string, boolean>;
 
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
-    example: {
-      cardArchived: false,
-      cardAttachmentAdded: true,
-    },
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).card
   })
   card: Record<string, boolean>;
 
   @ApiProperty({
     description: 'Notifications related to admin events with user IDs.',
     type: Object,
-    example: {
-      adminPermissionGranted: true,
-    },
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).admin
   })
   admin: Record<string, boolean>;
 }

@@ -3,7 +3,12 @@ import { IsOptional, Length, MinLength, Validate } from 'class-validator';
 import { IsNullOrEmptyString } from 'src/common/decorators/custom.validators';
 
 export class ConnectTrelloDto {
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The Trello token, must be null or a 76-character string.',
+        example: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234',
+        nullable: true,
+        required: true,
+    })
     @IsOptional()
     @Validate(IsNullOrEmptyString, { message: 'token should be null or 76 length string' })
     @Length(76,76)
