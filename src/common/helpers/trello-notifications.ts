@@ -21,7 +21,6 @@ export const getCategoryForAction = (actionKey: string): string | null => {
     // Iterate over categoryKeysMap to find which category contains the transformed actionKey
     const category = Object.keys(categoryKeysMap).find(category => {
         const transformedKeys = categoryKeysMap[category].map(key => toCamelCase(key, '_'));
-        console.log(`Transformed keys for category ${category}:`, transformedKeys);
         return transformedKeys.includes(actionKey);
     });
 

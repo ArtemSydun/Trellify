@@ -6,6 +6,7 @@ import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TrelloBoardsApiService } from 'src/trello/services/api/trello.boards.api.service';
 import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { UsersService } from 'src/user/services/users.service';
 
 @Injectable()
 export class CronService {
@@ -14,6 +15,7 @@ export class CronService {
     constructor(
         private readonly trelloBoardsApiService: TrelloBoardsApiService,
         private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
+        private readonly usersService: UsersService,
         private readonly sharedConfigService: SharedConfigService
     ) {
         this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -43,21 +45,43 @@ export class CronService {
                 const dateLastActivityParsed = new Date(dateLastActivity.value);
 
                 //last action on board
-                const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
+                const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed) ;
 
                 //last webhook update in DB
-                const daysSinceLastUpdate = differenceInDays(currentDate, webhook.updatedAt);
+                const daysSinceLastWebhookUpdate = differenceInDays(currentDate, webhook.updatedAt);
 
                 // unactive for more than 30 days
-                if (daysSinceLastActivity <= -30 || daysSinceLastUpdate <= -30) {
+                if (daysSinceLastActivity >= 30) {
                     unactiveWebhooks.push(webhook);
+                    continue;
+                }
+
+                //if webhook has 1 subscriber and disconnected telegram
+                if (webhook.subscribers.length === 1) {
+                    const connectedUser = await this.usersService.findUserByTrelloId(webhook.subscribers[0]);
+
+                    const daysSinceTelegramConnected = differenceInDays(
+                        currentDate,
+                        connectedUser.telegram.updatedAt,
+                    );
+
+                    if (daysSinceTelegramConnected >= 30 && !connectedUser.telegram.chatId) {
+                        unactiveWebhooks.push(webhook);
+                        continue;
+                    }
+                }
+
+                //if webhook has no subscriber and updates 
+                if (webhook.subscribers.length === 0 && daysSinceLastWebhookUpdate >= 30) {
+                    unactiveWebhooks.push(webhook);
+                    continue;
                 }
             }
 
             const removePromises = unactiveWebhooks.map(async (webhook) => {
                 try {
                     console.log(`Removing inactive webhook for board: ${webhook.boardName}`);
-                    await this.trelloWebhooksLogicService.removeTrelloWebhook(webhook.id);
+                    // await this.trelloWebhooksLogicService.removeTrelloWebhook(webhook.id);
                     return webhook.boardName;
                 } catch (error) {
                     console.error(`Error removing webhook for board ${webhook.boardName}:`, error.message);
