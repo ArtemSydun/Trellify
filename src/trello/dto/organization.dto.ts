@@ -4,45 +4,82 @@ import { IBoardMember } from '../interfaces/member.interface';
 import { IOrganization } from '../interfaces/organization.interface';
 
 export class Organization implements IOrganization {
-    @ApiProperty({ example: '674ec80dd95f8b1bbce1918c' })
+    @ApiProperty({
+        description: 'Unique identifier for the organization.',
+        example: '674ec80dd95f8b1bbce1918c',
+    })
     id: string;
 
-    @ApiProperty({ example: 'notifybot2' })
+    @ApiProperty({
+        description: 'Internal name of the organization.',
+        example: 'notifybot2',
+    })
     name: string;
 
-    @ApiProperty({ example: 'notify-bot' })
+    @ApiProperty({
+        description: 'Display name of the organization.',
+        example: 'notify-bot',
+    })
     displayName: string;
 
-    @ApiProperty({ example: 'work.space' })
+    @ApiProperty({
+        description: 'Domain name associated with the organization.',
+        example: 'work.space',
+    })
     domainName: string;
 
-    @ApiProperty({ type: [String], example: ['67570886e58adaf576a80adf', '674effbbec92770cb360eacd'] })
+    @ApiProperty({
+        description: 'List of board IDs associated with the organization.',
+        type: [String],
+        example: ['67570886e58adaf576a80adf', '674effbbec92770cb360eacd'],
+    })
     idBoards: string[];
 
-    @ApiProperty({ example: null })
+    @ApiProperty({
+        description: 'Enterprise ID associated with the organization, if any.',
+        example: null,
+    })
     idEnterprise: string | null;
 
-    @ApiProperty({ example: null })
+    @ApiProperty({
+        description: 'Entitlement ID associated with the organization, if any.',
+        example: null,
+    })
     idEntitlement: string | null;
 
-    @ApiProperty({ example: '674ec752cba1224342f87c20' })
+    @ApiProperty({
+        description: 'ID of the member who created the organization.',
+        example: '674ec752cba1224342f87c20',
+    })
     idMemberCreator: string;
 
-    @ApiProperty({ example: 2 })
+    @ApiProperty({
+        description: 'Total number of members in the organization.',
+        example: 2,
+    })
     membersCount: number;
 
-    @ApiProperty({ example: 'https://trello.com/w/workspace1' })
+    @ApiProperty({
+        description: 'URL to access the organization on Trello.',
+        example: 'https://trello.com/w/workspace1',
+    })
     url: string;
 
-    @ApiProperty({ example: null })
+    @ApiProperty({
+        description: 'Website associated with the organization, if any.',
+        example: null,
+    })
     website: string | null;
 
-    @ApiProperty({ example: '2024-12-17T09:44:48.123Z' })
+    @ApiProperty({
+        description: 'Timestamp of the last activity in the organization.',
+        example: '2024-12-17T09:44:48.123Z',
+    })
     dateLastActivity: string;
 
     @ApiProperty({
-        description: 'Organization memberships array',
-        type: [BoardMember]
+        description: 'Array of membership details for the organization.',
+        type: [BoardMember],
     })
-    memberships: IBoardMember[]
+    memberships: IBoardMember[];
 }
