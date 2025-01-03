@@ -1,6 +1,8 @@
 import { UserRoles } from "../interfaces/role.enum"
 
 export const userStub = () => {
+    const fixedDate = new Date('2025-01-03T13:38:58.285Z');
+
     return {
         id: "d3e634ce-5a5f-4b6d-9aef-f35a68543743",
         email: "test@gmail.com",
@@ -25,7 +27,8 @@ export const userStub = () => {
         },
         telegram: {
             chatId: 123,
-            username: "tgusername"
+            username: "tgusername",
+            updatedAt: fixedDate,
         },
     }
 }
