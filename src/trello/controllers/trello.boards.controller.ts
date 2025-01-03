@@ -1,11 +1,12 @@
 import { Controller, Get, Req, Param, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TrelloBoardsLogicService } from '../services/logic/trello.boards.logic.service';
 import { TrelloBoard } from '../dto/board.dto';
 import { ApiCustomUnathorizedResponse, ApiCustomNotFoundResponse } from 'src/common/decorators/swagger.decorators';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @Controller('trello/boards')
 export class TrelloBoardsController {
   constructor(private readonly boardsService: TrelloBoardsLogicService) { }
