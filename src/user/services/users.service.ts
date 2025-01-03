@@ -239,7 +239,7 @@ export class UsersService {
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
-      telegram: { chatId, username },
+      telegram: { chatId, username, updatedAt: new Date() },
     });
 
     this.logger.log(`Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`);
