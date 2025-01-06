@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsObject } from 'class-validator';
-import { NotificationCategoriesDto, Notifications } from './notifications.dto';
+import { NotificationCategoriesDto } from './notifications.dto';
 
 export class UpdateWebhookDto {
     // @ApiProperty({

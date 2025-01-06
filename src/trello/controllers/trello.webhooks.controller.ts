@@ -3,13 +3,12 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
-import { SkipThrottle } from '@nestjs/throttler';
 import { NotificationBooleansDto } from '../dto/notifications.dto';
 
 @Controller('trello/webhooks')
@@ -89,13 +88,11 @@ export class TrelloWebhooksController {
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms, 
   //they send a GET request to your callback URL first to validate the endpoint before they start sending POST requests. 
   //This is a standard webhook behavior to verify the callback URL is correct and responds appropriately.
-  @SkipThrottle()
   @Get('provider/:boardId')
   @ApiExcludeEndpoint()
   handleWebhookCallbackUrlCheck() { }
 
   // This is route where webhook sends data
-  @SkipThrottle()
   @Post('provider/:boardId')
   @ApiExcludeEndpoint()
   async handleWebhook(

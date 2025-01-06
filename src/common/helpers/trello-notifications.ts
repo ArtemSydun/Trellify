@@ -17,15 +17,16 @@ const getKeysFromDefaultActions = <T extends string>(
     return actions.map(action => reverseEnumMap[action]);
 };
 
-export const getCategoryForAction = (actionKey: string): string | null => {
-    // Iterate over categoryKeysMap to find which category contains the transformed actionKey
-    const category = Object.keys(categoryKeysMap).find(category => {
+export const getCategoryForAction = (actionKey: string): string[] => {
+    // Iterate over categoryKeysMap to find which categories contain the actionKey
+    const matchingCategories = Object.keys(categoryKeysMap).filter(category => {
         const transformedKeys = categoryKeysMap[category].map(key => toCamelCase(key, '_'));
         return transformedKeys.includes(actionKey);
     });
 
-    return category || null;
+    return matchingCategories;
 };
+
 
 export const defaultActionsKeys = getKeysFromDefaultActions(
     actionsEnabledByDefault,
