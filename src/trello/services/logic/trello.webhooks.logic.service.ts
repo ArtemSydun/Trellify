@@ -5,8 +5,8 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 import { Webhook } from '../../entities/webhook.entity';
 import { CreateWebhookDto } from '../../dto/create-webhook.dto';
-import { getCategoryForAction, getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, setAllKeysToFalse } from 'src/common/helpers/trello-notifications';
-import { TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
+import { getCategoriesForAction, getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, setAllKeysToFalse, sortCategories } from 'src/common/helpers/trello-notifications';
+import { TrelloWebhookDetailedActions, TrelloWebhookNotificationCategories } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
@@ -17,7 +17,7 @@ import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
-import { NotificationBooleansDto, NotificationCategoriesDto } from 'src/trello/dto/notifications.dto';
+import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -208,6 +208,7 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
+        // console.log(JSON.stringify(webhookAction, null, 2));
         const filteredLog = {
             memberCreator: webhookAction.action.memberCreator?.username,
             actionType: webhookAction.action.type,
@@ -221,26 +222,21 @@ export class TrelloWebhooksLogicService {
         const targetCard = webhookAction?.action?.data?.card;
         const targetBoard = webhookAction?.action?.data?.board;
         const webhook = await this.getWebhook(webhookAction?.webhook?.id);
-        const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
-
-        const generalActionType = webhookAction?.action?.type;
-        let detailedActionType = webhookAction?.action?.display?.translationKey;
-        const targetMember = webhookAction?.action?.member;
-
-        // console.log(generalActionType);
-        // console.log('target card: ', targetCard);
-        // console.log('target board: ', targetBoard);
-        if (detailedActionType === "unknown") {
-            this.logger.warn(`unknown action type, general type: ${generalActionType}`);
-        }
 
         if (!webhook) {
             this.logger.warn('Missing action or webhook data.');
             return;
         }
 
+        const authorizedToken = decryptText(webhook.authorToken, this.encryptionKey);
+
+        const generalActionType = webhookAction?.action?.type;
+        let detailedActionType = webhookAction?.action?.display?.translationKey;
+        const targetMember = webhookAction?.action?.member;
+
         // to handle unknown detailed type actions which has clear generalActionType etc createCheckItem
-        if (detailedActionType === 'unknown') {
+        if (detailedActionType === "unknown") {
+            this.logger.warn(`unknown action type, general type: ${generalActionType}`);
             detailedActionType = generalActionType;
         }
 
@@ -259,98 +255,118 @@ export class TrelloWebhooksLogicService {
         }
 
         // Get the category dynamically
-        const category = getCategoryForAction(enumKey);
+        const matchingCategories = getCategoriesForAction(enumKey);
 
-        if (!category) {
-            this.logger.warn(`Action ${detailedActionType !== 'unknown' ? detailedActionType : generalActionType} is not supported by this API`);
+        if (matchingCategories.length === 0) {
+            this.logger.warn(`Action ${detailedActionType} is not supported by this API.`);
             return;
         }
 
-        const subscribedMembers = webhook.notifications[category]?.[enumKey] || [];
-
-        if (!enumKey) {
-            this.logger.warn(`Action ${detailedActionType !== 'unknown' ? detailedActionType : generalActionType} is not supported by this API`);
-            return;
-        }
-
-        if (subscribedMembers.length === 0) {
-            this.logger.warn(`Nobody tracks ${enumKey} action on ${webhook.boardName} board`);
-            return;
-        }
+        //we ensure that personal category actions will be processed first
+        const sortedCategories = sortCategories(matchingCategories);
 
         let boardData = null;
+        let cardData = null;
+
         if (targetBoard) {
             boardData = await this.trelloBoardsApiService.fetchBoardById(authorizedToken, targetBoard.id);
         }
 
-        //separate handler because this two actions does not have 
-        // webhookAction?.action?.member even though it is targeted action
-        if (
-            detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED
-            ||
-            detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
-        ) {
-            const targetedUserId = webhookAction.action.data.checkItem.idMember || webhookAction.action.data.old.idMember;
-            if (subscribedMembers.includes(targetedUserId))
-                return await this.actionsService.handleTargetAction(targetedUserId,
-                    boardData,
-                    detailedActionType,
-                    webhook,
-                    targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
-                )
-        }
-        // Handle target user action (only when targetMember is present)
-        if (targetMember && subscribedMembers.includes(targetMember.id)) {
-            // Only pass `boardData` to `handleTargetAction` if it's already fetched
-            await this.actionsService.handleTargetAction(
-                targetMember.id,
-                boardData,
-                detailedActionType,
-                webhook,
-                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
-            );
+        if (targetCard) {
+            cardData = await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id);
         }
 
-        // Handle board actions (if targetCard is not present)
-        if (!targetCard && boardData && subscribedMembers.length !== 0) {
-            const boardMemberships = await this.trelloBoardsApiService.fetchBoardMemberships(authorizedToken, boardData.id);
 
-            const membersToNotify = boardMemberships.filter(member =>
-                subscribedMembers.includes(member.idMember) && member.memberType === 'admin'
-            );
+        let notifiedTargetUser: string | null;
 
-            // Notify board members
-            const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleAdminActions(member.idMember, boardData, detailedActionType, targetMember);
-            });
+        for (const category of sortedCategories) {
+            let actionSubscribers = webhook.notifications[category]?.[enumKey] || [];
 
-            try {
-                await Promise.all(userPromises);
-            } catch (err) {
-                this.logger.error('Error sending messages to admins:', err);
+            if (actionSubscribers.length === 0) {
+                this.logger.warn(`Nobody tracks ${enumKey} action in category ${category}.`);
+                continue;
             }
-        }
 
-        // Handle card actions (if targetCard is available)
-        if (!targetMember && targetCard && subscribedMembers.length !== 0) {
-            const cardData = await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id);
+            switch (category) {
+                case TrelloWebhookNotificationCategories.CARD:
+                    if (cardData) {
+                        const cardMembers = cardData.idMembers || [];
+                        const membersToNotify = cardMembers.filter(memberId => actionSubscribers.includes(memberId) &&
+                            memberId !== notifiedTargetUser);
 
-            // console.log('Card data:', cardData);
+                        const userPromises = membersToNotify.map(member =>
+                            this.actionsService.handleCardActions(member, cardData, detailedActionType, webhookAction),
+                        );
 
-            const cardMembers: string[] = cardData.idMembers || [];
+                        await Promise.all(userPromises);
+                    }
+                    break;
 
-            const membersToNotify = cardMembers.filter(memberId =>
-                subscribedMembers.includes(memberId));
+                case TrelloWebhookNotificationCategories.PERSONAL:
+                    //separate handler because this two actions does not have 
+                    // webhookAction?.action?.member even though it is targeted action
+                    if (
+                        detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED
+                        ||
+                        detailedActionType === TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
+                    ) {
+                        const targetedUserId = webhookAction.action.data.checkItem.idMember || webhookAction.action.data.old.idMember;
+                        if (actionSubscribers.includes(targetedUserId))
+                            await this.actionsService.handlePersonalAction(targetedUserId,
+                                boardData,
+                                detailedActionType,
+                                webhook,
+                                targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null
+                            )
+                        notifiedTargetUser = targetedUserId;
+                    }
 
-            // Notify card members
-            const userPromises = membersToNotify.map(async (member) => {
-                await this.actionsService.handleCardActions(member, cardData, detailedActionType);
-            });
+                    if (targetMember && actionSubscribers.includes(targetMember.id)) {
+                        await this.actionsService.handlePersonalAction(
+                            targetMember.id,
+                            boardData,
+                            detailedActionType,
+                            webhook,
+                            targetCard ? await this.trelloCardsApiService.fetchCardById(authorizedToken, targetCard.id) : null,
+                        );
+                        notifiedTargetUser = targetMember.id;
+                    }
+                    break;
 
-            try {
-                await Promise.all(userPromises);
-            } catch (err) {
-                this.logger.error('Error sending messages to card members:', err);
+                case TrelloWebhookNotificationCategories.ADMIN:
+                    if (boardData) {
+                        const boardMemberships = await this.trelloBoardsApiService.fetchBoardMemberships(authorizedToken, boardData.id);
+                        const membersToNotify = boardMemberships.filter(member =>
+                            actionSubscribers.includes(member.idMember) &&
+                            member.memberType === 'admin' &&
+                            member.idMember !== notifiedTargetUser,
+                        );
+
+                        const userPromises = membersToNotify.map(async member => {
+                            await this.actionsService.handleAdminActions(member.idMember, boardData, detailedActionType, targetMember);
+                        });
+
+                        await Promise.all(userPromises);
+                    }
+                    break;
+
+                case TrelloWebhookNotificationCategories.BOARD:
+                    if (boardData) {
+                        const boardMemberships = await this.trelloBoardsApiService.fetchBoardMemberships(authorizedToken, boardData.id);
+                        const membersToNotify = boardMemberships.filter(member =>
+                            actionSubscribers.includes(member.idMember) && member.idMember !== notifiedTargetUser,
+                        );
+
+                        const userPromises = membersToNotify.map(async member => {
+                            await this.actionsService.handleBoardActions(member.idMember, boardData, detailedActionType);
+                        });
+
+                        await Promise.all(userPromises);
+                    }
+                    break;
+
+                default:
+                    this.logger.warn(`Unsupported category: ${category}`);
             }
         }
     }
