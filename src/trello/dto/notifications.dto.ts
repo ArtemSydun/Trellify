@@ -3,11 +3,11 @@ import { initializeNotificationArrays, mapNotificationsToBoolean } from 'src/com
 
 export class NotificationCategoriesDto {
   @ApiProperty({
-    description: 'Notifications related to target actions (related to certain user)',
+    description: 'Notifications related to personal actions (related to certain user)',
     type: Object,
-    example: initializeNotificationArrays('userId1').target
+    example: initializeNotificationArrays('userId1').personal
   })
-  target: Record<string, string[]>;
+  personal: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
@@ -33,11 +33,11 @@ export class NotificationCategoriesDto {
 
 export class NotificationBooleansDto {
   @ApiProperty({
-    description: 'Notifications related to target actions (related to certain user)',
+    description: 'Notifications related to personal actions (related to certain user)',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).target
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).personal
   })
-  target: Record<string, boolean>;
+  personal: Record<string, boolean>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',

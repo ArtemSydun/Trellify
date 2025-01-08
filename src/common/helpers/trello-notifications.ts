@@ -1,6 +1,7 @@
 import { actionsEnabledByDefault, categoryKeysMap } from "../constants/trello";
 import {
     TrelloWebhookDetailedActions,
+    TrelloWebhookNotificationCategories,
 } from "../../trello/enums/trello.actions.enum";
 import { toCamelCase } from "./camelCase";
 import { NotificationBooleansDto, NotificationCategoriesDto } from "src/trello/dto/notifications.dto";
@@ -17,7 +18,7 @@ const getKeysFromDefaultActions = <T extends string>(
     return actions.map(action => reverseEnumMap[action]);
 };
 
-export const getCategoryForAction = (actionKey: string): string[] => {
+export const getCategoriesForAction = (actionKey: string): string[] => {
     // Iterate over categoryKeysMap to find which categories contain the actionKey
     const matchingCategories = Object.keys(categoryKeysMap).filter(category => {
         const transformedKeys = categoryKeysMap[category].map(key => toCamelCase(key, '_'));
@@ -27,6 +28,14 @@ export const getCategoryForAction = (actionKey: string): string[] => {
     return matchingCategories;
 };
 
+//to ensure that personal category will be processed first
+export const sortCategories = (categoriesToSort: string[]): string[] => {
+    return [...categoriesToSort].sort((a, b) => {
+        if (a === TrelloWebhookNotificationCategories.PERSONAL) return -1;
+        if (b === TrelloWebhookNotificationCategories.PERSONAL) return 1;
+        return 0;
+    });
+};
 
 export const defaultActionsKeys = getKeysFromDefaultActions(
     actionsEnabledByDefault,

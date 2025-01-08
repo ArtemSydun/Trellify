@@ -1,5 +1,5 @@
 import { UsersService } from 'src/user/services/users.service';
-import { TrelloWebhookActions, TrelloWebhookAdminActions, TrelloWebhookBoardActions, TrelloWebhookCardActions, TrelloWebhookDetailedActions } from 'src/trello/enums/trello.actions.enum';
+import { TrelloWebhookAdminActions, TrelloWebhookBoardActions, TrelloWebhookCardActions, TrelloWebhookDetailedActions, TrelloWebhookPersonalActions } from 'src/trello/enums/trello.actions.enum';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { Webhook } from '../../entities/webhook.entity';
@@ -25,10 +25,10 @@ export class TrelloActionsLogicService {
     ) {
     }
 
-    async handleTargetAction(
+    async handlePersonalAction(
         userTrelloId: string,
         boardData: TrelloBoard,
-        actionType: TrelloWebhookDetailedActions,
+        actionType: TrelloWebhookPersonalActions,
         webhook: string | Webhook,
         cardData?: TrelloCard,
     ) {
@@ -54,7 +54,7 @@ export class TrelloActionsLogicService {
             const message = targetActionMessages[actionType];
 
             if (message) {
-                if (actionType === TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED) {
+                if (actionType === TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED) {
                     await this.trelloWebhooksLogicService.disconnectFromTrelloWebhook(targetUser, webhook);
                 }
                 await this.telegramService.sendMessageToUser(targetUser.telegram, message);
@@ -69,15 +69,16 @@ export class TrelloActionsLogicService {
     async handleCardActions(
         userTrelloId: string,
         cardData: TrelloCard,
-        actionType: TrelloWebhookDetailedActions
+        actionType: TrelloWebhookCardActions,
+        webhookAction: any,
     ) {
+        console.log("actionType ", actionType);
         try {
             const userToNotify = await this.userService.findUserByTrelloId(userTrelloId);
 
             const cardActionMessages: Record<TrelloWebhookCardActions, string | null> = {
-                [TrelloWebhookDetailedActions.CARD_RENAMED]: `The card [${cardData?.name}](${cardData?.url}) was renamed.`,
+                [TrelloWebhookDetailedActions.CARD_RENAMED]: `The card ${webhookAction?.action?.data?.old?.name} was renamed into [${cardData?.name}](${cardData?.url})`,
                 [TrelloWebhookDetailedActions.CARD_ARCHIVED]: `The card [${cardData?.name}](${cardData?.url}) was archived.`,
-                [TrelloWebhookDetailedActions.CARD_DELETED]: `The card [${cardData?.name}](${cardData?.url}) was deleted.`,
                 [TrelloWebhookDetailedActions.CARD_COMMENT_ADDED]: `A comment was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED]: `An attachment was added to the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED]: `A due date was added to the card [${cardData?.name}](${cardData?.url}).`,
@@ -100,9 +101,11 @@ export class TrelloActionsLogicService {
                 [TrelloWebhookCardActions.CHECKLIST_ITEM_DELETED]: `A checklist item was deleted from the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_ADDED]: `A member was added to a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: `A member was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+                [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: `A member joined checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+                [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: `A member left checklist item in the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_DELETED]: `A due date was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
                 [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_UPDATED]: `The due date of a checklist item in the card [${cardData?.name}](${cardData?.url}) was updated.`,
-                [TrelloWebhookCardActions.CUSTOM_FIELD_ITEM_UPDATED]: `A custom field in the card [${cardData?.name}](${cardData?.url}) was updated.`
+                [TrelloWebhookCardActions.CUSTOM_FIELD_ITEM_UPDATED]: `A custom field in the card [${cardData?.name}](${cardData?.url}) was updated.`,
             };
 
             const message = cardActionMessages[actionType];
@@ -120,16 +123,17 @@ export class TrelloActionsLogicService {
     async handleBoardActions(
         userTrelloId: string,
         boardData: TrelloBoard,
-        actionType: TrelloWebhookDetailedActions,
+        actionType: TrelloWebhookBoardActions,
     ) {
+        console.log(boardData);
         try {
             const userToNotify = await this.userService.findUserByTrelloId(userTrelloId);
 
             const boardActionMessages: Record<TrelloWebhookBoardActions, string | null> = {
-                [TrelloWebhookBoardActions.BOARD_RENAMED]: '',
-                [TrelloWebhookBoardActions.BOARD_CLOSED]: '',
-                [TrelloWebhookBoardActions.BOARD_REOPENED]: '',
-                [TrelloWebhookBoardActions.BOARD_DELETED]: ''
+                [TrelloWebhookBoardActions.BOARD_RENAMED]: `Board was renamed into [${boardData?.name}](${boardData?.url}).`,
+                [TrelloWebhookBoardActions.BOARD_CLOSED]: `Board ${boardData?.name} was closed.`,
+                [TrelloWebhookBoardActions.BOARD_REOPENED]: `Board ${boardData?.name} was reopened.`,
+                [TrelloWebhookBoardActions.BOARD_DELETED]: 'Board was deleted'
             };
 
 
@@ -148,7 +152,7 @@ export class TrelloActionsLogicService {
     async handleAdminActions(
         adminTrelloId: string,
         boardData: TrelloBoard,
-        actionType: TrelloWebhookDetailedActions,
+        actionType: TrelloWebhookAdminActions,
         targetMember?: any
     ) {
         try {
