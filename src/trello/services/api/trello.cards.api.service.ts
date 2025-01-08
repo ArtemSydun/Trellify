@@ -29,6 +29,8 @@ export class TrelloCardsApiService {
     async fetchCardById(token: string, cardId: string): Promise<TrelloCard> {
         const url = `${trelloApiLink}/cards/${cardId}?key=${this.trelloApiKey}&token=${token}`;
 
+        console.log(url);
+
         try {
             const response = await axios.get(url);
             return response.data;

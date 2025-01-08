@@ -41,7 +41,7 @@ export enum TrelloWebhookActions {
     BOARD_ADMIN_ADDED = 'makeAdminOfBoard',
     BOARD_MEMBER_NORMAL_ROLE_ADDED = 'makeNormalMemberOfBoard',
     BOARD_UPDATED = 'updateBoard',
-    // BOARD_DELETED = 'removeFromOrganizationBoard',
+    BOARD_DELETED = 'removeFromOrganizationBoard',
 
     CUSTOM_FIELD_CREATED = 'createCustomField',
     CUSTOM_FIELD_ITEM_UPDATED = 'updateCustomFieldItem',
@@ -80,14 +80,17 @@ export enum TrelloWebhookDetailedActions {
     CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
     CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
     CHECKLIST_ITEM_DELETED = 'action_deleted_checkitem',
-    // CHECKLIST_ITEM_MEMBER_JOINED = 'action_member_joined_checkitem',
-    // CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
+
 
     // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
     CHECKLIST_ITEM_ADDED = TrelloWebhookActions.CHECKLIST_ITEM_CREATED,
 
+    //this 4 actions does not have target member even though it is related to certain user
     CHECKLIST_ITEM_MEMBER_ADDED = 'action_added_member_to_checkitem',
     CHECKLIST_ITEM_MEMBER_REMOVED = 'action_removed_member_from_checkitem',
+    CHECKLIST_ITEM_MEMBER_JOINED = 'action_member_joined_checkitem',
+    CHECKLIST_ITEM_MEMBER_LEFT = 'action_member_left_checkitem',
+
     CHECKLIST_ITEM_DUE_DATE_DELETED = 'action_delete_checkitem_due',
     CHECKLIST_ITEM_DUE_DATE_UPDATED = 'action_update_checkitem_due',
     CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'action_completed_checkitem',
@@ -107,9 +110,9 @@ export enum TrelloWebhookDetailedActions {
     BOARD_MEMBER_JOINED = 'action_joined_board',
     BOARD_ADMIN_ADDED = 'action_made_admin_of_board',
     BOARD_MEMBER_NORMAL_ROLE_ADDED = 'action_made_a_normal_user_on',
-    // BOARD_CLOSED = 'action_closed_board',
-    // BOARD_REOPENED = 'action_reopened_board',
-    // BOARD_DELETED = 'action_remove_from_organization_board',
+    BOARD_CLOSED = 'action_closed_board',
+    BOARD_REOPENED = 'action_reopened_board',
+    BOARD_DELETED = 'action_remove_from_organization_board',
 
     CUSTOM_FIELD_CREATED = 'action_create_custom_field',
     CUSTOM_FIELD_UPDATED = 'action_update_custom_field',
@@ -119,13 +122,17 @@ export enum TrelloWebhookDetailedActions {
 
 export enum TrelloWebhookBoardActions {
     BOARD_RENAMED = TrelloWebhookDetailedActions.BOARD_RENAMED,
-    BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
+    BOARD_CLOSED = TrelloWebhookDetailedActions.BOARD_CLOSED,
+    BOARD_REOPENED = TrelloWebhookDetailedActions.BOARD_REOPENED,
+    BOARD_DELETED = TrelloWebhookDetailedActions.BOARD_DELETED,
 }
 
 export enum TrelloWebhookCardActions {
     CARD_RENAMED = TrelloWebhookDetailedActions.CARD_RENAMED,
     CARD_ARCHIVED = TrelloWebhookDetailedActions.CARD_ARCHIVED,
-    CARD_DELETED = TrelloWebhookDetailedActions.CARD_DELETED,
+
+    //we receive only id of deleted card on this action
+    // CARD_DELETED = TrelloWebhookDetailedActions.CARD_DELETED,
 
     CARD_MEMBER_ADDED = TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
     CARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED,
@@ -152,6 +159,8 @@ export enum TrelloWebhookCardActions {
     CHECKLIST_ITEM_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
     CHECKLIST_ITEM_MEMBER_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED,
     CHECKLIST_ITEM_MEMBER_REMOVED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED,
+    CHECKLIST_ITEM_MEMBER_JOINED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_JOINED,
+    CHECKLIST_ITEM_MEMBER_LEFT = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_LEFT,
     CHECKLIST_ITEM_DUE_DATE_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_DELETED,
     CHECKLIST_ITEM_DUE_DATE_UPDATED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_UPDATED,
     CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED,
@@ -162,16 +171,35 @@ export enum TrelloWebhookCardActions {
 }
 
 export enum TrelloWebhookAdminActions {
-    BOARD_MEMBER_INVITATION_JOINED = TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
+    BOARD_ADMIN_ADDED = TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
+
     BOARD_MEMBER_LEFT = TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT,
     BOARD_MEMBER_JOINED = TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED,
-    BOARD_ADMIN_ADDED = TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
+    BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
     BOARD_MEMBER_NORMAL_ROLE_ADDED = TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
-    // BOARD_CLOSED = TrelloWebhookDetailedActions.BOARD_CLOSED,
-    // BOARD_REOPENED = TrelloWebhookDetailedActions.BOARD_REOPENED,
-    // BOARD_DELETED = TrelloWebhookDetailedActions.BOARD_DELETED,
+    BOARD_MEMBER_INVITATION_JOINED = TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
+
     CUSTOM_FIELD_CREATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_CREATED,
     CUSTOM_FIELD_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_UPDATED,
-
     CUSTOM_FIELD_RENAMED = TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
+}
+
+export enum TrelloWebhookPersonalActions {
+    CARD_MEMBER_ADDED = TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
+    CARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED,
+
+    CHECKLIST_ITEM_MEMBER_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED,
+    CHECKLIST_ITEM_MEMBER_REMOVED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED,
+
+    BOARD_ADMIN_ADDED = TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
+
+    BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
+    BOARD_MEMBER_NORMAL_ROLE_ADDED = TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
+}
+
+export enum TrelloWebhookNotificationCategories {
+    CARD = 'card',
+    BOARD = 'board',
+    PERSONAL = 'personal',
+    ADMIN = 'admin'
 }
