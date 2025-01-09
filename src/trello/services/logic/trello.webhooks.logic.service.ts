@@ -19,6 +19,7 @@ import { TrelloCardsApiService } from '../api/trello.cards.api.service';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { UserRoles } from 'src/user/interfaces/role.enum';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -526,6 +527,38 @@ export class TrelloWebhooksLogicService {
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
+
+    async removeAllWebhooks(user: string | User): Promise<DefaultResponse<null>> {
+        const superadmin = await this.userService.getUser(user);
+
+        if (superadmin.role !== UserRoles.superadmin) {
+            throw new ForbiddenException(`Forbidden resource`);
+        }
+
+        const webhooks = await this.findAllWebhooks();
+
+        if (!webhooks.length) {
+            this.logger.log('No webhooks found to delete.');
+            return {
+                message: 'No webhooks to delete.',
+                statusCode: HttpStatus.OK,
+            };
+        }
+
+        try {
+            await Promise.all(webhooks.map(webhook => this.removeTrelloWebhook(webhook)));
+
+            this.logger.log('All webhooks deleted successfully.');
+            return {
+                message: 'All webhooks deleted successfully from Trello and all connected users.',
+                statusCode: HttpStatus.OK,
+            };
+        } catch (err) {
+            this.logger.error('Error deleting all webhooks:', err.response ? err.response.data : err.message);
+            throw new BadRequestException(err.response ? err.response.data : err.message);
+        }
+    }
+
 
     async findMemberWebhooks(user: string | User): Promise<Webhook[]> {
         const requestedUser = await this.userService.getUser(user);
