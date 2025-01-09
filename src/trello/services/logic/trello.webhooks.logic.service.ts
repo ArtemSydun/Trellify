@@ -220,7 +220,7 @@ export class TrelloWebhooksLogicService {
     }
 
     async handleTrelloWebhook(webhookAction: any): Promise<any> {
-        console.log(JSON.stringify(webhookAction, null, 2));
+        // console.log(JSON.stringify(webhookAction, null, 2));
         const filteredLog = {
             memberCreator: webhookAction.action.memberCreator?.username,
             actionType: webhookAction.action.type,
