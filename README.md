@@ -1,4 +1,4 @@
-## Trellify api
+# Trellify api
 
 ## Setup
 
