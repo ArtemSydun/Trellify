@@ -19,8 +19,8 @@ import { APP_GUARD } from '@nestjs/core';
     DatabaseModule,
     //number of requests for route and each user per minute
     ThrottlerModule.forRoot([{
-      ttl: 60 * 1000,
-      limit: 100,
+      ttl: 10 * 1000,
+      limit: 20,
     }]),
     AuthModule,
     UsersModule,
