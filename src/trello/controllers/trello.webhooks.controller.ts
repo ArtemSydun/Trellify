@@ -137,6 +137,14 @@ export class TrelloWebhooksController {
     return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, notificationBooleansDto);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @Delete('delete/all')
+  removeAllWebhooks(@Req() req): Promise<DefaultResponse<null>> {
+    return this.webhooksService.removeAllWebhooks(req.user.id);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete('delete/:id')
