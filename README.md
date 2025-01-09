@@ -1,6 +1,18 @@
-## Trello notification backend
+# Trellify api
 
-## Start App with Docker Compose (Change <your_stage>)
+## Setup
+
+### Create .env for needed stage
+
+For development - **.env.development**
+
+For tests if you use docker compose - **.env.test**
+
+For staging - **.env.staging**
+
+For production - **.env.production**
+
+### Start App with Docker Compose (Change <your_stage>)
 ```
 STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 ```

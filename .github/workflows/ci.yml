@@ -1,4 +1,4 @@
-name: Backend CI with Docker
+name: Api Trellify CI with Docker
 
 on:
   push:
