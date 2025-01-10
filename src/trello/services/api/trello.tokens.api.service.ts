@@ -31,7 +31,6 @@ export class TrelloTokensApiService {
             const response = await axios.get(url);
             return response.data;
         } catch (err) {
-            console.log(err);
             throw new BadRequestException('Invalid trello token');
         }
     }
