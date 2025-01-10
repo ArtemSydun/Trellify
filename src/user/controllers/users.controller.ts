@@ -25,6 +25,7 @@ import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { Errors } from 'src/common/enums/errors.enum';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -140,6 +141,8 @@ export class UsersController {
     return this.usersService.manageUserTrelloConnection(req.user.id, connectTrelloDto);
   }
 
+
+  @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiOperation({
