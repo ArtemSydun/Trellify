@@ -1,4 +1,4 @@
-import { actionsEnabledByDefault, categoryKeysMap } from "../constants/trello";
+import { advancedProfileActions, basicProfileActions, categoryKeysMap, fullProfileActions } from "../constants/trello";
 import {
     TrelloWebhookDetailedActions,
     TrelloWebhookNotificationCategories,
@@ -6,7 +6,7 @@ import {
 import { toCamelCase } from "./camelCase";
 import { NotificationBooleansDto, NotificationCategoriesDto } from "src/trello/dto/notifications.dto";
 
-const getKeysFromDefaultActions = <T extends string>(
+const getKeysFromProfileActions = <T extends string>(
     actions: T[],
     enumObj: Record<string, T>,
 ): string[] => {
@@ -37,8 +37,8 @@ export const sortCategories = (categoriesToSort: string[]): string[] => {
     });
 };
 
-export const defaultActionsKeys = getKeysFromDefaultActions(
-    actionsEnabledByDefault,
+export const defaultActionsKeys = getKeysFromProfileActions(
+    basicProfileActions,
     TrelloWebhookDetailedActions
 );
 
@@ -56,7 +56,7 @@ export const initializeCategoryNotifications = (
 };
 
 // Initialize notifications for all categories
-export const initializeNotificationArrays = (trelloUserId: string): NotificationCategoriesDto => {
+export const initializeNotificationArrays = (trelloUserId: string, profileKeys?: string[]): NotificationCategoriesDto => {
     return Object.keys(categoryKeysMap).reduce((acc, category) => {
         acc[category] = initializeCategoryNotifications(
             trelloUserId,
@@ -64,7 +64,7 @@ export const initializeNotificationArrays = (trelloUserId: string): Notification
                 actions[actionKey] = actionKey;
                 return actions;
             }, {} as Record<string, string>),
-            defaultActionsKeys
+            profileKeys || defaultActionsKeys
         );
         return acc;
     }, {} as NotificationCategoriesDto);
@@ -151,3 +151,21 @@ export const setAllKeysToFalse = (notifications: NotificationCategoriesDto): Not
         return acc;
     }, {} as NotificationBooleansDto);
 };
+
+export const generateProfilesNotificationBooleans = () => {
+    // Step 1: Get profile action keys
+    const basicProfile = getKeysFromProfileActions(basicProfileActions, TrelloWebhookDetailedActions)
+    const advancedProfile = getKeysFromProfileActions(advancedProfileActions, TrelloWebhookDetailedActions)
+    const fullProfile = getKeysFromProfileActions(fullProfileActions, TrelloWebhookDetailedActions)
+
+    // Step 2: Initialize notification categories for these profiles
+    const profiles = {
+        basic: mapNotificationsToBoolean(initializeNotificationArrays('userId', basicProfile)),
+        advanced: mapNotificationsToBoolean(initializeNotificationArrays('userId', advancedProfile)),
+        full: mapNotificationsToBoolean(initializeNotificationArrays('userId', fullProfile)),
+    }
+
+    return profiles;
+};
+
+export const notificationProfiles = generateProfilesNotificationBooleans();
