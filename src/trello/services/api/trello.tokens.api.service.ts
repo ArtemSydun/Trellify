@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Injectable,
     UnauthorizedException,
 } from '@nestjs/common';
@@ -30,7 +31,7 @@ export class TrelloTokensApiService {
             const response = await axios.get(url);
             return response.data;
         } catch (err) {
-            throw new UnauthorizedException('Invalid trello token');
+            throw new BadRequestException('Invalid trello token');
         }
     }
 }
