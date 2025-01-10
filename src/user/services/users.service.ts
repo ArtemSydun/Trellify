@@ -41,7 +41,7 @@ export class UsersService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  async getUser(user: string | User): Promise<User> {
+  public async getUser(user: string | User): Promise<User> {
     if (typeof user === 'string') {
       // If it's a string, fetch the user by ID
       return await this.findUserById(user);
@@ -112,15 +112,11 @@ export class UsersService {
       throw new NotFoundException(`User with id ${userToFind.id} not found`);
     }
 
-    const { id, email, role, trello, telegram } = userToFind;
+    delete userToFind.password;
+    delete userToFind.telegram.chatId;
+    delete userToFind.trello.token;
 
-    return {
-      id,
-      email,
-      role,
-      trello: { userId: trello.userId, username: trello.username, webhooks: trello.webhooks },
-      telegram: { username: telegram.username }
-    };
+    return userToFind;
   }
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
@@ -303,7 +299,6 @@ export class UsersService {
 
   public async removeWebhookFromAllUsers(webhookId: string) {
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
-
 
     //prepare bulk operation for each user to delete webhook with webhookId
     const bulkUpdateOperations = usersConnectedToWebhook.map(user => ({

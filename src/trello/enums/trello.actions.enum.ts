@@ -51,7 +51,7 @@ export enum TrelloWebhookDetailedActions {
     // CARD_CREATED = 'action_create_card',
     CARD_RENAMED = 'action_renamed_card',
     CARD_ARCHIVED = 'action_archived_card',
-    CARD_DELETED = 'action_delete_card',
+    // CARD_DELETED = 'action_delete_card',
     // CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
     CARD_MEMBER_ADDED = 'action_added_member_to_card',
     CARD_MEMBER_REMOVED = 'action_removed_member_from_card',
@@ -112,7 +112,7 @@ export enum TrelloWebhookDetailedActions {
     BOARD_MEMBER_NORMAL_ROLE_ADDED = 'action_made_a_normal_user_on',
     BOARD_CLOSED = 'action_closed_board',
     BOARD_REOPENED = 'action_reopened_board',
-    BOARD_DELETED = 'action_remove_from_organization_board',
+    // BOARD_DELETED = 'action_remove_from_organization_board',
 
     CUSTOM_FIELD_CREATED = 'action_create_custom_field',
     CUSTOM_FIELD_UPDATED = 'action_update_custom_field',
@@ -124,7 +124,7 @@ export enum TrelloWebhookBoardActions {
     BOARD_RENAMED = TrelloWebhookDetailedActions.BOARD_RENAMED,
     BOARD_CLOSED = TrelloWebhookDetailedActions.BOARD_CLOSED,
     BOARD_REOPENED = TrelloWebhookDetailedActions.BOARD_REOPENED,
-    BOARD_DELETED = TrelloWebhookDetailedActions.BOARD_DELETED,
+    // BOARD_DELETED = TrelloWebhookDetailedActions.BOARD_DELETED,
 }
 
 export enum TrelloWebhookCardActions {
@@ -195,6 +195,7 @@ export enum TrelloWebhookPersonalActions {
 
     BOARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
     BOARD_MEMBER_NORMAL_ROLE_ADDED = TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
+
 }
 
 export enum TrelloWebhookNotificationCategories {
@@ -202,4 +203,11 @@ export enum TrelloWebhookNotificationCategories {
     BOARD = 'board',
     PERSONAL = 'personal',
     ADMIN = 'admin'
+}
+
+export enum TrelloWebhookNotificationProfiles {
+    BASIC = 'basic',
+    ADVANCED = 'advanced',
+    FULL = 'full',
+    CUSTOM = 'custom'
 }

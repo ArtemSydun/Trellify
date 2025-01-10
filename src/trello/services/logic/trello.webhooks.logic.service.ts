@@ -5,8 +5,8 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 import { Webhook } from '../../entities/webhook.entity';
 import { CreateWebhookDto } from '../../dto/create-webhook.dto';
-import { getCategoriesForAction, getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, setAllKeysToFalse, sortCategories } from 'src/common/helpers/trello-notifications';
-import { TrelloWebhookDetailedActions, TrelloWebhookNotificationCategories } from 'src/trello/enums/trello.actions.enum';
+import { getCategoriesForAction, getUpdatedWebhookNotifications, initializeNotificationArrays, mapNotificationsToBoolean, notificationProfiles, setAllKeysToFalse, sortCategories } from 'src/common/helpers/trello-notifications';
+import { TrelloWebhookDetailedActions, TrelloWebhookNotificationCategories, TrelloWebhookNotificationProfiles } from 'src/trello/enums/trello.actions.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
@@ -20,6 +20,7 @@ import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { UserRoles } from 'src/user/interfaces/role.enum';
+import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -58,6 +59,10 @@ export class TrelloWebhooksLogicService {
         return webhook; // If it's already a Webhook object, return it as-is
     }
 
+    async getProfileNotifications(): Promise<NotificationProfiles> {
+        return notificationProfiles;
+    }
+
     async createTrelloWebhook(user: string | User, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
         const { boardId } = createWebhookDto;
         const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
@@ -92,6 +97,7 @@ export class TrelloWebhooksLogicService {
                 idModel: webhook.idModel,
                 modelName: webhook.boardName,
                 webhookId: webhook.id,
+                notificationProfile: TrelloWebhookNotificationProfiles.BASIC
             }
 
             if (!userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhook.id)) {
@@ -148,6 +154,7 @@ export class TrelloWebhooksLogicService {
                 idModel: createdWebhook.idModel,
                 modelName: createdWebhook.boardName,
                 webhookId: createdWebhook.id,
+                // notificationProfile: TrelloWebhookNotificationProfiles.BASIC
             }
 
             const updatedUserProps = {
@@ -189,6 +196,7 @@ export class TrelloWebhooksLogicService {
     ): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
+        // const userWebhook = userToUpdate.trello.webhooks.find(webhook => webhook.webhookId === webhookToUpdate.id);
 
         if (!webhookToUpdate.subscribers.includes(userToUpdate.trello.userId)) {
             throw new ForbiddenException(`You are not connected to this webhook`);
@@ -558,7 +566,6 @@ export class TrelloWebhooksLogicService {
             throw new BadRequestException(err.response ? err.response.data : err.message);
         }
     }
-
 
     async findMemberWebhooks(user: string | User): Promise<Webhook[]> {
         const requestedUser = await this.userService.getUser(user);

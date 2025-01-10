@@ -10,6 +10,7 @@ import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
 import { NotificationBooleansDto } from '../dto/notifications.dto';
+import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
@@ -95,14 +96,20 @@ export class TrelloWebhooksController {
   // This is route where webhook sends data
   @Post('provider/:boardId')
   @ApiExcludeEndpoint()
-  async handleWebhook(
+  handleWebhook(
     @Param('boardId') boardId: string,
     @Body() payload: any
   ) {
-    await this.webhooksService.handleTrelloWebhook(payload);
+    this.webhooksService.handleTrelloWebhook(payload);
     return { status: 'success' };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('notifications/profiles')
+  getNotificationProfiles(): Promise<NotificationProfiles> {
+    return this.webhooksService.getProfileNotifications();
+  }
+  
   @UseGuards(JwtAuthGuard)
   @Patch('notifications/:id')
   @ApiBearerAuth()
