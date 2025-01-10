@@ -72,7 +72,6 @@ export class TrelloActionsLogicService {
         actionType: TrelloWebhookCardActions,
         webhookAction: any,
     ) {
-        console.log("actionType ", actionType);
         try {
             const userToNotify = await this.userService.findUserByTrelloId(userTrelloId);
 
@@ -125,7 +124,6 @@ export class TrelloActionsLogicService {
         boardData: TrelloBoard,
         actionType: TrelloWebhookBoardActions,
     ) {
-        console.log(boardData);
         try {
             const userToNotify = await this.userService.findUserByTrelloId(userTrelloId);
 
@@ -133,7 +131,7 @@ export class TrelloActionsLogicService {
                 [TrelloWebhookBoardActions.BOARD_RENAMED]: `Board was renamed into [${boardData?.name}](${boardData?.url}).`,
                 [TrelloWebhookBoardActions.BOARD_CLOSED]: `Board ${boardData?.name} was closed.`,
                 [TrelloWebhookBoardActions.BOARD_REOPENED]: `Board ${boardData?.name} was reopened.`,
-                [TrelloWebhookBoardActions.BOARD_DELETED]: 'Board was deleted'
+                // [TrelloWebhookBoardActions.BOARD_DELETED]: 'Board was deleted'
             };
 
 
