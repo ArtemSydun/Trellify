@@ -1,6 +1,5 @@
 import { Prop } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
-import { TrelloWebhookNotificationProfiles } from "src/trello/enums/trello.actions.enum";
 
 export class UserWebhookDto {
     @ApiProperty({
@@ -23,11 +22,4 @@ export class UserWebhookDto {
     })
     @Prop({ required: true })
     modelName: string;
-
-    // @ApiProperty({
-    //     description: 'The name of the Trello model associated with the webhook',
-    //     example: 'Board or Card',
-    // })
-    // @Prop({ required: true })
-    // notificationProfile: TrelloWebhookNotificationProfiles;
 }

@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { initializeNotificationArrays, mapNotificationsToBoolean } from 'src/common/helpers/trello-notifications';
+import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
+import { Type } from 'class-transformer';
+import { IsEnum, IsNotEmptyObject, ValidateNested } from 'class-validator';
 
 export class NotificationCategoriesDto {
   @ApiProperty({
@@ -37,6 +40,7 @@ export class NotificationBooleansDto {
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).personal
   })
+  @IsNotEmptyObject()
   personal: Record<string, boolean>;
 
   @ApiProperty({
@@ -44,6 +48,7 @@ export class NotificationBooleansDto {
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).board
   })
+  @IsNotEmptyObject()
   board: Record<string, boolean>;
 
   @ApiProperty({
@@ -51,6 +56,7 @@ export class NotificationBooleansDto {
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).card
   })
+  @IsNotEmptyObject()
   card: Record<string, boolean>;
 
   @ApiProperty({
@@ -58,6 +64,27 @@ export class NotificationBooleansDto {
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId')).admin
   })
+  @IsNotEmptyObject()
   admin: Record<string, boolean>;
 }
 
+export class UpdateNotificationsDto {
+  @ApiProperty({
+    description: 'Notifications choosen by user',
+    type: NotificationBooleansDto,
+  })
+  @ValidateNested()
+  @Type(() => NotificationBooleansDto)
+  notifications: NotificationBooleansDto;
+
+  @ApiProperty({
+    description: 'Notification profile choosen by user',
+    type: Object,
+    example: TrelloWebhookNotificationProfiles.BASIC,
+    enum: TrelloWebhookNotificationProfiles,
+  })
+  @IsEnum(TrelloWebhookNotificationProfiles, {
+    message: 'notificationProfile must be a valid profile value',
+  })
+  notificationProfile: TrelloWebhookNotificationProfiles;
+}
