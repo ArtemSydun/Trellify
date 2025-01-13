@@ -74,13 +74,18 @@ export class TrelloWebhooksLogicService {
         const decryptedUserToken = decryptText(userToUpdate.trello.token, this.encryptionKey);
 
         if (webhook) {
+            const webhookSubscribers = webhook.subscribers.map(subscribers => subscribers.trelloUserId);
+
             if (userToUpdate.trello.webhooks.find(userWebhook => userWebhook.webhookId === webhook.id)) {
                 this.logger.warn(`Webhook for board ${webhook.boardName} already exists for this user.`);
                 throw new ConflictException(`Webhook for board ${webhook.boardName} already exists for this user.`);
             }
 
-            if (!webhook.subscribers.includes(userToUpdate.trello.userId)) {
-                webhook.subscribers.push(userToUpdate.trello.userId);
+            if (!webhookSubscribers.includes(userToUpdate.trello.userId)) {
+                webhook.subscribers.push({
+                    trelloUserId: userToUpdate.trello.userId,
+                    notificationProfile: TrelloWebhookNotificationProfiles.BASIC
+                });
             }
 
             const defaultUserNotifications = initializeNotificationArrays(userToUpdate.trello.userId);
@@ -146,7 +151,10 @@ export class TrelloWebhooksLogicService {
                 boardName: connectedBoard.name,
                 boardUrl: connectedBoard.url,
                 authorToken: userToUpdate.trello.token,
-                subscribers: [userToUpdate.trello.userId],
+                subscribers: [{
+                    trelloUserId: userToUpdate.trello.userId,
+                    notificationProfile: TrelloWebhookNotificationProfiles.BASIC
+                }],
                 notifications: initializeNotificationArrays(userToUpdate.trello.userId)
             };
 
@@ -197,8 +205,9 @@ export class TrelloWebhooksLogicService {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
         // const userWebhook = userToUpdate.trello.webhooks.find(webhook => webhook.webhookId === webhookToUpdate.id);
+        const subscriberIds = webhookToUpdate.subscribers.map(subscriber => subscriber.trelloUserId);
 
-        if (!webhookToUpdate.subscribers.includes(userToUpdate.trello.userId)) {
+        if (!subscriberIds.includes(userToUpdate.trello.userId)) {
             throw new ForbiddenException(`You are not connected to this webhook`);
         }
 
@@ -414,7 +423,7 @@ export class TrelloWebhooksLogicService {
 
         const updatedWebhookSubscribers = {
             subscribers: webhookToUpdate.subscribers ?
-                webhookToUpdate.subscribers.filter(subscriberId => subscriberId !== userToUpdate.trello.userId)
+                webhookToUpdate.subscribers.filter(subscriber => subscriber.trelloUserId !== userToUpdate.trello.userId)
                 : []
         };
 

@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Schema as MongooseSchema } from 'mongoose';
 import { NotificationCategoriesDto } from '../dto/notifications.dto';
 import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
+import { WebhookSubscriber } from '../dto/subscriber.dto';
 
 @Schema({ timestamps: true, collection: 'trello_webhooks' })
 export class Webhook {
@@ -78,11 +79,11 @@ export class Webhook {
 
     @ApiProperty({
         description: 'List of Trello user IDs who are subscribed to this webhook.',
-        type: [String],
+        type: [WebhookSubscriber],
         example: ['userId1'],
     })
-    @Prop({ type: [String], required: true })
-    subscribers: string[];
+    @Prop({ type: [WebhookSubscriber], required: true })
+    subscribers: WebhookSubscriber[];
 
     @ApiProperty({
         description: 'Notifications for various events with user IDs for each event.',

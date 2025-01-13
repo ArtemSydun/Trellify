@@ -45,7 +45,7 @@ export class CronService {
                 const dateLastActivityParsed = new Date(dateLastActivity.value);
 
                 //last action on board
-                const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed) ;
+                const daysSinceLastActivity = differenceInDays(currentDate, dateLastActivityParsed);
 
                 //last webhook update in DB
                 const daysSinceLastWebhookUpdate = differenceInDays(currentDate, webhook.updatedAt);
@@ -58,7 +58,7 @@ export class CronService {
 
                 //if webhook has 1 subscriber and disconnected telegram
                 if (webhook.subscribers.length === 1) {
-                    const connectedUser = await this.usersService.findUserByTrelloId(webhook.subscribers[0]);
+                    const connectedUser = await this.usersService.findUserByTrelloId(webhook.subscribers[0].trelloUserId);
 
                     const daysSinceTelegramConnected = differenceInDays(
                         currentDate,
@@ -81,7 +81,7 @@ export class CronService {
             const removePromises = unactiveWebhooks.map(async (webhook) => {
                 try {
                     console.log(`Removing inactive webhook for board: ${webhook.boardName}`);
-                    // await this.trelloWebhooksLogicService.removeTrelloWebhook(webhook.id);
+                    await this.trelloWebhooksLogicService.removeTrelloWebhook(webhook.id);
                     return webhook.boardName;
                 } catch (error) {
                     console.error(`Error removing webhook for board ${webhook.boardName}:`, error.message);
