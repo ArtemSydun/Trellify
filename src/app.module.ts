@@ -18,10 +18,12 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     DatabaseModule,
     //number of requests for route and each user per minute
-    ThrottlerModule.forRoot([{
-      ttl: 10 * 1000,
-      limit: 20,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 10 * 1000,
+        limit: 20,
+      },
+    ]),
     AuthModule,
     UsersModule,
     TrelloModule,
@@ -30,9 +32,11 @@ import { APP_GUARD } from '@nestjs/core';
     CronModule,
   ],
   controllers: [],
-  providers: [{
-    provide: APP_GUARD,
-    useClass: ThrottlerGuard
-  }],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule {}

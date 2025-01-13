@@ -1,9 +1,32 @@
-import { Controller, Get, Post, Body, Param, Delete, Req, UseGuards, HttpStatus, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Req,
+  UseGuards,
+  HttpStatus,
+  Patch,
+} from '@nestjs/common';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiCustomBadRequestResponse, ApiCustomConflictResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import {
+  ApiCustomBadRequestResponse,
+  ApiCustomConflictResponse,
+  ApiCustomForbiddenResponse,
+  ApiCustomNotFoundResponse,
+  ApiCustomUnathorizedResponse,
+} from 'src/common/decorators/swagger.decorators';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { ApiExcludeEndpoint, ApiOkResponse, getSchemaPath, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiExcludeEndpoint,
+  ApiOkResponse,
+  getSchemaPath,
+  ApiOperation,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
@@ -12,17 +35,19 @@ import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.lo
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
 import { UpdateNotificationsDto } from '../dto/notifications.dto';
 import { notificationProfiles } from 'src/common/helpers/trello-notifications';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
-  constructor(private readonly webhooksService: TrelloWebhooksLogicService) { }
+  constructor(private readonly webhooksService: TrelloWebhooksLogicService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create or subscribe to a Trello webhook',
-    description: 'This endpoint allows the user to create a new Trello webhook or subscribe to an existing one.',
+    description:
+      'This endpoint allows the user to create a new Trello webhook or subscribe to an existing one.',
   })
   @ApiOkResponse({
     description: 'Webhook created / user connected to existing webhook',
@@ -31,7 +56,8 @@ export class TrelloWebhooksController {
       properties: {
         message: {
           type: 'string',
-          example: 'Webhook for board {{boardName}} created successfully / Webhook for the board {{boardName}} already exists. The user {{userId}} has been added to the webhook subscribers',
+          example:
+            'Webhook for board {{boardName}} created successfully / Webhook for the board {{boardName}} already exists. The user {{userId}} has been added to the webhook subscribers',
         },
         statusCode: {
           type: 'number',
@@ -45,11 +71,14 @@ export class TrelloWebhooksController {
     },
   })
   @ApiCustomUnathorizedResponse()
-  @ApiCustomBadRequestResponse('Trello is not connected', 'Please check your Trello connection')
+  @ApiCustomBadRequestResponse(
+    'Trello is not connected',
+    'Please check your Trello connection',
+  )
   @ApiCustomConflictResponse('Webhook', 'id')
   createTrelloWebhook(
     @Req() req,
-    @Body() body: CreateWebhookDto
+    @Body() body: CreateWebhookDto,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.createTrelloWebhook(req.user.id, body);
   }
@@ -59,7 +88,8 @@ export class TrelloWebhooksController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get list of connected webhooks',
-    description: 'This endpoint retrieves a list of Trello webhooks that the authenticated user is connected to.',
+    description:
+      'This endpoint retrieves a list of Trello webhooks that the authenticated user is connected to.',
   })
   @ApiOkResponse({
     description: 'User connected webhooks list',
@@ -86,21 +116,20 @@ export class TrelloWebhooksController {
     return this.webhooksService.findWebhookById(id);
   }
 
-
-  //Typically, when you're configuring a webhook with services like Trello or other similar platforms, 
-  //they send a GET request to your callback URL first to validate the endpoint before they start sending POST requests. 
+  //Typically, when you're configuring a webhook with services like Trello or other similar platforms,
+  //they send a GET request to your callback URL first to validate the endpoint before they start sending POST requests.
   //This is a standard webhook behavior to verify the callback URL is correct and responds appropriately.
+
+  @SkipThrottle()
   @Get('provider/:boardId')
   @ApiExcludeEndpoint()
-  handleWebhookCallbackUrlCheck() { }
+  handleWebhookCallbackUrlCheck() {}
 
   // This is route where webhook sends data
+  @SkipThrottle()
   @Post('provider/:boardId')
   @ApiExcludeEndpoint()
-  handleWebhook(
-    @Param('boardId') boardId: string,
-    @Body() payload: any
-  ) {
+  handleWebhook(@Param('boardId') boardId: string, @Body() payload: any) {
     this.webhooksService.handleTrelloWebhook(payload);
     return { status: 'success' };
   }
@@ -110,11 +139,12 @@ export class TrelloWebhooksController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get notification profiles',
-    description: 'This endpoint allows to fetch predescribed notification profiles.',
+    description:
+      'This endpoint allows to fetch predescribed notification profiles.',
   })
   @ApiOkResponse({
     description: 'Notification profiles',
-    example: notificationProfiles
+    example: notificationProfiles,
   })
   @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {
@@ -126,7 +156,8 @@ export class TrelloWebhooksController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update a webhook notification subscriptions',
-    description: 'This endpoint allows the authenticated user to update notification subscriptions by webhook ID.',
+    description:
+      'This endpoint allows the authenticated user to update notification subscriptions by webhook ID.',
   })
   @ApiOkResponse({
     description: 'Webhook updated successfully',
@@ -154,9 +185,13 @@ export class TrelloWebhooksController {
   updateWebhookById(
     @Param('id') id: string,
     @Body() notificationBooleansDto: UpdateNotificationsDto,
-    @Req() req
+    @Req() req,
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, notificationBooleansDto);
+    return this.webhooksService.updateTrelloWebhookNotifications(
+      req.user.id,
+      id,
+      notificationBooleansDto,
+    );
   }
 
   @ApiExcludeEndpoint()
@@ -173,7 +208,8 @@ export class TrelloWebhooksController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a Trello webhook (Superadmin only)',
-    description: 'This endpoint allows to delete a Trello webhook by its ID and disconnect it from all users. It can only be accessed by users with superadmin role.',
+    description:
+      'This endpoint allows to delete a Trello webhook by its ID and disconnect it from all users. It can only be accessed by users with superadmin role.',
   })
   @ApiOkResponse({
     description: 'Webhook disconnected and deleted from all users',
@@ -182,7 +218,8 @@ export class TrelloWebhooksController {
       properties: {
         message: {
           type: 'string',
-          example: 'Webhook {{id}} deleted successfully from Trello and all connected users',
+          example:
+            'Webhook {{id}} deleted successfully from Trello and all connected users',
         },
         statusCode: {
           type: 'number',
@@ -194,7 +231,9 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  removeWebhookById(@Param('id') webhookId: string): Promise<DefaultResponse<null>> {
+  removeWebhookById(
+    @Param('id') webhookId: string,
+  ): Promise<DefaultResponse<null>> {
     return this.webhooksService.removeTrelloWebhook(webhookId);
   }
 
@@ -203,7 +242,8 @@ export class TrelloWebhooksController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Disconnect from a Trello webhook',
-    description: 'This endpoint allows the authenticated user to disconnect from a Trello webhook by its ID.',
+    description:
+      'This endpoint allows the authenticated user to disconnect from a Trello webhook by its ID.',
   })
   @ApiOkResponse({
     description: 'Webhook disconnected successfully',
@@ -225,10 +265,19 @@ export class TrelloWebhooksController {
       },
     },
   })
-  @ApiCustomBadRequestResponse('User is not connected', 'User is not connected to webhook {{webhookId}}')
+  @ApiCustomBadRequestResponse(
+    'User is not connected',
+    'User is not connected to webhook {{webhookId}}',
+  )
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.disconnectFromTrelloWebhook(req.user.id, webhookId);
+  disconnectFromWebhook(
+    @Req() req,
+    @Param('webhookId') webhookId: string,
+  ): Promise<DefaultResponse<Webhook>> {
+    return this.webhooksService.disconnectFromTrelloWebhook(
+      req.user.id,
+      webhookId,
+    );
   }
 }
