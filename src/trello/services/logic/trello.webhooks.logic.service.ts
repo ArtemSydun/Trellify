@@ -11,13 +11,12 @@ import { toCamelCase } from 'src/common/helpers/camelCase';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
 import { WebhookSearchPath } from '../../enums/query.enum';
-
 import { TrelloActionsLogicService } from './trello.actions.logic.service';
 import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
-import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
+import { UpdateNotificationsDto } from 'src/trello/dto/notifications.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
@@ -63,7 +62,10 @@ export class TrelloWebhooksLogicService {
         return notificationProfiles;
     }
 
-    async createTrelloWebhook(user: string | User, createWebhookDto: CreateWebhookDto): Promise<DefaultResponse<Webhook>> {
+    async createTrelloWebhook(
+        user: string | User,
+        createWebhookDto: CreateWebhookDto
+    ): Promise<DefaultResponse<Webhook>> {
         const { boardId } = createWebhookDto;
         const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
         const webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
@@ -162,7 +164,6 @@ export class TrelloWebhooksLogicService {
                 idModel: createdWebhook.idModel,
                 modelName: createdWebhook.boardName,
                 webhookId: createdWebhook.id,
-                // notificationProfile: TrelloWebhookNotificationProfiles.BASIC
             }
 
             const updatedUserProps = {
@@ -200,12 +201,12 @@ export class TrelloWebhooksLogicService {
     async updateTrelloWebhookNotifications(
         user: string | User,
         webhook: string | Webhook,
-        updateWebhookNotificationsDto: NotificationBooleansDto
+        updateWebhookNotificationsDto: UpdateNotificationsDto
     ): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
-        // const userWebhook = userToUpdate.trello.webhooks.find(webhook => webhook.webhookId === webhookToUpdate.id);
         const subscriberIds = webhookToUpdate.subscribers.map(subscriber => subscriber.trelloUserId);
+        const { notifications, notificationProfile } = updateWebhookNotificationsDto;
 
         if (!subscriberIds.includes(userToUpdate.trello.userId)) {
             throw new ForbiddenException(`You are not connected to this webhook`);
@@ -213,15 +214,22 @@ export class TrelloWebhooksLogicService {
 
         validateTrelloToken(userToUpdate.trello.token);
 
-        const updatedNotifications = getUpdatedWebhookNotifications(
-            userToUpdate.trello.userId,
-            webhookToUpdate.notifications,
-            updateWebhookNotificationsDto
-        )
-
         try {
+            const updatedNotifications = getUpdatedWebhookNotifications(
+                userToUpdate.trello.userId,
+                webhookToUpdate.notifications,
+                notifications
+            )
+
+            const subscriberToUpdate = webhookToUpdate.subscribers.find(
+                subscriber => subscriber.trelloUserId === userToUpdate.trello.userId
+            );
+
+            subscriberToUpdate.notificationProfile = notificationProfile;
+
             const updatedWebhook = await this.trelloWebhookRepository.updateById(webhookToUpdate.id, {
                 notifications: updatedNotifications,
+                subscribers: webhookToUpdate.subscribers,
             });
 
             this.logger.log(`Webhook ${webhookToUpdate.id} updated successfully`);
@@ -401,7 +409,7 @@ export class TrelloWebhooksLogicService {
         }
     }
 
-    async disconnectFromTrelloWebhook(user: string | User, webhook: string | Webhook): Promise<DefaultResponse<null>> {
+    async disconnectFromTrelloWebhook(user: string | User, webhook: string | Webhook): Promise<DefaultResponse<Webhook>> {
         const userToUpdate = await this.userService.getUser(user);
         const webhookToUpdate = await this.getWebhook(webhook);
 
@@ -435,21 +443,24 @@ export class TrelloWebhooksLogicService {
             userNotificationsDisconnectArray
         )
 
+        const updatedWebhook = await this.trelloWebhookRepository.updateById(
+            webhookToUpdate.id,
+            { ...updatedWebhookSubscribers, notifications: updatedNotifications }
+        );
+
         await Promise.all([
             this.userService.updateUser(userToUpdate, updatedUser),
-            this.trelloWebhookRepository.updateById(
-                webhookToUpdate.id,
-                { ...updatedWebhookSubscribers, notifications: updatedNotifications }
-            ),
+
             this.telegramService.sendMessageToUser(
                 userToUpdate.telegram,
-                `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl})`
+                `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) disconnected successfully`
             )
         ])
 
         return {
             message: `Webhook ${webhookToUpdate.id} disconnected successfully`,
             statusCode: HttpStatus.OK,
+            data: updatedWebhook
         }
     }
 

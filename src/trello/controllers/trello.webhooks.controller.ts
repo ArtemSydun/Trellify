@@ -9,8 +9,9 @@ import { Roles } from 'src/common/decorators/auth.role.decorator';
 import { UserRoles } from 'src/user/interfaces/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
-import { NotificationBooleansDto } from '../dto/notifications.dto';
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
+import { UpdateNotificationsDto } from '../dto/notifications.dto';
+import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {
@@ -106,10 +107,20 @@ export class TrelloWebhooksController {
 
   @UseGuards(JwtAuthGuard)
   @Get('notifications/profiles')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get notification profiles',
+    description: 'This endpoint allows to fetch predescribed notification profiles.',
+  })
+  @ApiOkResponse({
+    description: 'Notification profiles',
+    example: notificationProfiles
+  })
+  @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {
     return this.webhooksService.getProfileNotifications();
   }
-  
+
   @UseGuards(JwtAuthGuard)
   @Patch('notifications/:id')
   @ApiBearerAuth()
@@ -140,11 +151,15 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse(`You are not connected to this webhook`)
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  updateWebhookById(@Param('id') id: string, @Body() notificationBooleansDto: NotificationBooleansDto, @Req() req): Promise<DefaultResponse<Webhook>> {
+  updateWebhookById(
+    @Param('id') id: string,
+    @Body() notificationBooleansDto: UpdateNotificationsDto,
+    @Req() req
+  ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.updateTrelloWebhookNotifications(req.user.id, id, notificationBooleansDto);
   }
 
-  @ApiBearerAuth()
+  @ApiExcludeEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete('delete/all')
@@ -203,13 +218,17 @@ export class TrelloWebhooksController {
           type: 'number',
           example: HttpStatus.OK,
         },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Webhook),
+        },
       },
     },
   })
   @ApiCustomBadRequestResponse('User is not connected', 'User is not connected to webhook {{webhookId}}')
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<null>> {
+  disconnectFromWebhook(@Req() req, @Param('webhookId') webhookId: string): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.disconnectFromTrelloWebhook(req.user.id, webhookId);
   }
 }

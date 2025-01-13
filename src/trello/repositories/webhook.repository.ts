@@ -29,7 +29,11 @@ export class TrelloWebhookRepository {
 
   async findWebhooksConnectedToUser(trelloUserId: string): Promise<Webhook[]> {
     return this.TrelloWebhookModel.find({
-      subscribers: { $in: [trelloUserId] },
+      subscribers: {
+        $elemMatch: {
+          trelloUserId: trelloUserId,
+        },
+      },
     }).exec();
   }
 
