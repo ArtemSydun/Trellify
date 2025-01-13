@@ -1,6 +1,6 @@
 db.createUser({
-    user: process.env.MONGO_INITDB_ROOT_USERNAME,
-    pwd: process.env.MONGO_INITDB_ROOT_PASSWORD,
+    user: process.env.MONGODB_USERNAME,
+    pwd: process.env.MONGODB_PASSWORD,
     roles: [
         { role: "root", db: "admin" }
     ]

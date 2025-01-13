@@ -1,5 +1,4 @@
 import { TrelloWebhookAdminActions, TrelloWebhookBoardActions, TrelloWebhookCardActions, TrelloWebhookDetailedActions, TrelloWebhookPersonalActions } from "../../trello/enums/trello.actions.enum";
-import { generateProfilesNotificationBooleans } from "../helpers/trello-notifications";
 
 export const trelloApiLink = 'https://api.trello.com/1';
 
