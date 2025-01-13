@@ -42,7 +42,7 @@ import { TrelloCardsApiService } from '../api/trello.cards.api.service';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { UpdateNotificationsDto } from 'src/trello/dto/notifications.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
-import { UserRoles } from 'src/user/interfaces/role.enum';
+import { UserRoles } from 'src/user/enums/role.enum';
 import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here

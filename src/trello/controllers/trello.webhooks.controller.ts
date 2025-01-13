@@ -29,7 +29,7 @@ import {
 } from '@nestjs/swagger';
 import { Webhook } from '../entities/webhook.entity';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from 'src/user/interfaces/role.enum';
+import { UserRoles } from 'src/user/enums/role.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';

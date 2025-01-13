@@ -15,12 +15,25 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UsersService } from '../services/users.service';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOkResponse, ApiOperation, getSchemaPath, PartialType } from '@nestjs/swagger';
-import { ApiCustomBadRequestResponse, ApiCustomForbiddenResponse, ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiOkResponse,
+  ApiOperation,
+  getSchemaPath,
+  PartialType,
+} from '@nestjs/swagger';
+import {
+  ApiCustomBadRequestResponse,
+  ApiCustomForbiddenResponse,
+  ApiCustomNotFoundResponse,
+  ApiCustomUnathorizedResponse,
+} from 'src/common/decorators/swagger.decorators';
 import { User } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from '../interfaces/role.enum';
+import { UserRoles } from '../enums/role.enum';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { Errors } from 'src/common/enums/errors.enum';
@@ -30,18 +43,19 @@ import { SkipThrottle } from '@nestjs/throttler';
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Get()
   @ApiOperation({
     summary: 'Get all users (Admin / Superadmin only)',
-    description: 'This endpoint retrieves a list of all users in the system. It can only be accessed by users with the admin or superadmin role.',
+    description:
+      'This endpoint retrieves a list of all users in the system. It can only be accessed by users with the admin or superadmin role.',
   })
   @ApiOkResponse({
     description: 'All users list',
-    type: [User]
+    type: [User],
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
@@ -53,7 +67,8 @@ export class UsersController {
   @Post('telegram')
   @ApiOperation({
     summary: 'Connect / Disconnect Telegram',
-    description: 'This endpoint handles connecting or disconnecting a Telegram account to the current user. It does not require special roles, but the user must be authenticated.',
+    description:
+      'This endpoint handles connecting or disconnecting a Telegram account to the current user. It does not require special roles, but the user must be authenticated.',
   })
   @ApiOkResponse({
     description: 'Telegram connected / disconnected successfully',
@@ -62,11 +77,12 @@ export class UsersController {
       properties: {
         message: {
           type: 'string',
-          example: 'Telegram {{username}} connected / disconnected successfully',
+          example:
+            'Telegram {{username}} connected / disconnected successfully',
         },
         statusCode: {
           type: 'number',
-          example: HttpStatus.OK
+          example: HttpStatus.OK,
         },
         data: {
           type: 'object',
@@ -77,7 +93,10 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  @ApiCustomBadRequestResponse('Invalid tg info', 'This telegram user has not interacted with bot yet')
+  @ApiCustomBadRequestResponse(
+    'Invalid tg info',
+    'This telegram user has not interacted with bot yet',
+  )
   @ApiConflictResponse({
     description: 'Telegram is already connected',
     schema: {
@@ -102,14 +121,18 @@ export class UsersController {
     @Req() req,
     @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
-    return this.usersService.manageUserTelegramConnection(req.user.id, connectTelegramDto);
+    return this.usersService.manageUserTelegramConnection(
+      req.user.id,
+      connectTelegramDto,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('trello')
   @ApiOperation({
     summary: 'Connect / Disconnect Trello',
-    description: 'This endpoint handles connecting or disconnecting a Trello account to the current user. It does not require special roles, but the user must be authenticated.',
+    description:
+      'This endpoint handles connecting or disconnecting a Trello account to the current user. It does not require special roles, but the user must be authenticated.',
   })
   @ApiOkResponse({
     description: 'Trello {{username}} connected / disconnected successfully',
@@ -122,7 +145,7 @@ export class UsersController {
         },
         statusCode: {
           type: 'number',
-          example: HttpStatus.OK
+          example: HttpStatus.OK,
         },
         data: {
           type: 'object',
@@ -133,21 +156,24 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  @ApiCustomBadRequestResponse('Invalid trello token', 'Please provide us token with valid expiration date')
-  handleTrelloQuery(
-    @Req() req,
-    @Body() connectTrelloDto: ConnectTrelloDto,
-  ) {
-    return this.usersService.manageUserTrelloConnection(req.user.id, connectTrelloDto);
+  @ApiCustomBadRequestResponse(
+    'Invalid trello token',
+    'Please provide us token with valid expiration date',
+  )
+  handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
+    return this.usersService.manageUserTrelloConnection(
+      req.user.id,
+      connectTrelloDto,
+    );
   }
-
 
   @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiOperation({
     summary: 'Get user profile',
-    description: 'This endpoint retrieves the profile of the currently authenticated user.',
+    description:
+      'This endpoint retrieves the profile of the currently authenticated user.',
   })
   @ApiOkResponse({
     description: 'User profile',
@@ -201,11 +227,12 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get a user by ID (Admin / Superadmin only)',
-    description: 'This endpoint retrieves the details of a specific user by their ID. It can only be accessed by users with the admin or superadmin role.',
+    description:
+      'This endpoint retrieves the details of a specific user by their ID. It can only be accessed by users with the admin or superadmin role.',
   })
   @ApiOkResponse({
     description: 'User by id',
-    type: User
+    type: User,
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
@@ -219,7 +246,8 @@ export class UsersController {
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete a user by ID (Superadmin only)',
-    description: 'This endpoint allows to delete a user by their ID. It can only be accessed by users with the superadmin role.',
+    description:
+      'This endpoint allows to delete a user by their ID. It can only be accessed by users with the superadmin role.',
   })
   @ApiOkResponse({
     description: 'User deleted successfully',
@@ -232,7 +260,7 @@ export class UsersController {
         },
         statusCode: {
           type: 'number',
-          example: HttpStatus.OK
+          example: HttpStatus.OK,
         },
       },
     },
@@ -249,7 +277,8 @@ export class UsersController {
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a user by ID (Superadmin only)',
-    description: 'This endpoint allows to update a user by their ID. It can only be accessed by users with the superadmin role.',
+    description:
+      'This endpoint allows to update a user by their ID. It can only be accessed by users with the superadmin role.',
   })
   @ApiOkResponse({
     description: 'User updated successfully',
@@ -262,7 +291,7 @@ export class UsersController {
         },
         statusCode: {
           type: 'number',
-          example: HttpStatus.OK
+          example: HttpStatus.OK,
         },
         data: {
           type: 'object',
@@ -274,7 +303,11 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  updateUserById(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req): Promise<DefaultResponse<User>> {
+  updateUserById(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
     return this.usersService.updateUser(id, updateUserDto, req.user);
   }
 }
