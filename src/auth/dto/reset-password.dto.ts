@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, Matches } from 'class-validator';
-import { PASSWORD_ERROR_MESSAGE, PASSWORD_REGEX } from 'src/common/constants/regex';
+import {
+  PASSWORD_ERROR_MESSAGE,
+  PASSWORD_REGEX,
+} from 'src/common/constants/regex';
 
 export class ResetPasswordDto {
   @ApiProperty()

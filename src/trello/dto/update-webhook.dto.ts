@@ -3,40 +3,41 @@ import { IsOptional, IsObject } from 'class-validator';
 import { NotificationCategoriesDto } from './notifications.dto';
 
 export class UpdateWebhookDto {
-    // @ApiProperty({
-    //     description: 'List of Trello user IDs who are subscribed to this webhook.',
-    //     type: [String],
-    //     example: ['userId1', 'userId2', 'userId3'],
-    //     required: false,
-    // })
-    // @IsArray()
-    // @IsOptional()
-    // subscribers?: string[];
+  // @ApiProperty({
+  //     description: 'List of Trello user IDs who are subscribed to this webhook.',
+  //     type: [String],
+  //     example: ['userId1', 'userId2', 'userId3'],
+  //     required: false,
+  // })
+  // @IsArray()
+  // @IsOptional()
+  // subscribers?: string[];
 
-    @ApiProperty({
-        description: 'Notifications for various events with user IDs for each event.',
-        type: NotificationCategoriesDto,
-        required: false,
-    })
-    @IsObject()
-    @IsOptional()
-    notifications?: NotificationCategoriesDto;
+  @ApiProperty({
+    description:
+      'Notifications for various events with user IDs for each event.',
+    type: NotificationCategoriesDto,
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  notifications?: NotificationCategoriesDto;
 
-    // @ApiProperty({
-    //     description: 'The name of the Trello board associated with the webhook.',
-    //     example: 'Marketing Campaign Board',
-    //     required: false,
-    // })
-    // @IsString()
-    // @IsOptional()
-    // boardName?: string;
+  // @ApiProperty({
+  //     description: 'The name of the Trello board associated with the webhook.',
+  //     example: 'Marketing Campaign Board',
+  //     required: false,
+  // })
+  // @IsString()
+  // @IsOptional()
+  // boardName?: string;
 
-    // @ApiProperty({
-    //     description: 'Webhook creator token (if you wish to update it).',
-    //     example: 'webhook creator crypted token',
-    //     required: false, 
-    // })
-    // @IsString()
-    // @IsOptional()
-    // authorToken?: string;
+  // @ApiProperty({
+  //     description: 'Webhook creator token (if you wish to update it).',
+  //     example: 'webhook creator crypted token',
+  //     required: false,
+  // })
+  // @IsString()
+  // @IsOptional()
+  // authorToken?: string;
 }

@@ -13,4 +13,4 @@ import { SharedConfigService } from './shared.config.service';
   providers: [SharedConfigService],
   exports: [SharedConfigService],
 })
-export class ConfigModule { }
+export class ConfigModule {}
