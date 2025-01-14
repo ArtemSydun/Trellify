@@ -21,9 +21,6 @@ import { AuthService } from './auth.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
-  hashPassword: jest.fn(),
-  encryptText: jest.fn(),
-  decryptText: jest.fn(),
 }));
 
 describe('AuthService', () => {

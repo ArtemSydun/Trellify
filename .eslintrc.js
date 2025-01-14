@@ -34,4 +34,12 @@ module.exports = {
     ],
 
   },
+  overrides: [
+    {
+      files: ['*.spec.ts', '*.test.ts'], // Apply these settings to test files only
+      rules: {
+        'import/order': 'off', // Disable import sorting for test files
+      },
+    },
+  ],
 };

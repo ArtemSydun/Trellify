@@ -20,7 +20,10 @@
     "paths": {
       "src/*": [
         "./src/*"
-      ]
+      ],
+      "@trello/api": ["src/trello/services/api"],
+      "@trello/logic": ["src/trello/services/logic"],
+      "@trello/controllers": ["src/trello/controllers"]
     }
   }
 }
