@@ -3,6 +3,5 @@ import { TrelloTokensApiService } from '../services/api/trello.tokens.api.servic
 
 @Controller('trello/tokens')
 export class TrelloTokensController {
-  constructor(private readonly tokensService: TrelloTokensApiService) { }
-
+  constructor(private readonly tokensService: TrelloTokensApiService) {}
 }

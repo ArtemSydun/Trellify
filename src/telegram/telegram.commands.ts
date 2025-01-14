@@ -9,6 +9,6 @@ export const COMMANDS = [
   },
   {
     command: '/help',
-    description: 'Допомога'
+    description: 'Допомога',
   },
 ];

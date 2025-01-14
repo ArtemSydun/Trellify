@@ -1,9 +1,10 @@
+import { randomUUID } from 'crypto';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { randomUUID } from 'crypto';
+import { Languages } from 'src/common/enums/languages.enum';
 import { TelegramSettings } from '../dto/telegram.settings.dto';
 import { TrelloSettings } from '../dto/trello.settings.dto';
-import { UserRoles } from '../interfaces/role.enum';
+import { UserRoles } from '../enums/role.enum';
 
 @Schema({ timestamps: true })
 export class User {
@@ -49,6 +50,15 @@ export class User {
   })
   @Prop({ type: TelegramSettings, required: false })
   telegram: TelegramSettings;
+
+  @ApiProperty({
+    description: 'Language of telegram notifications',
+    example: Languages.EN,
+    enum: Languages,
+    default: Languages.EN,
+  })
+  @Prop({ type: String, enum: Languages, default: Languages.EN })
+  language: Languages;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

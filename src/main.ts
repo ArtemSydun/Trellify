@@ -1,8 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 import { configServiceEnum } from './common/enums/config.service.enum';
 
 async function bootstrap() {
@@ -13,7 +13,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.enableCors({
-    origin: '*',  // Allow all origins, only for testing purposes, change later
+    origin: '*', // Allow all origins, only for testing purposes, change later
   });
 
   const config = new DocumentBuilder()
@@ -29,10 +29,14 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
 
-  
-  const BACKEND_PORT = configService.get(configServiceEnum.BACKEND_PORT) || 3005;
+  const BACKEND_PORT =
+    configService.get(configServiceEnum.BACKEND_PORT) || 3005;
   await app.listen(BACKEND_PORT);
-  logger.log(`Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`);
-  logger.log(`Application docs is running on ${configService.get(configServiceEnum.BACKEND_LINK)}/docs`)
+  logger.log(
+    `Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`,
+  );
+  logger.log(
+    `Application docs is running on ${configService.get(configServiceEnum.BACKEND_LINK)}/docs`,
+  );
 }
 bootstrap();

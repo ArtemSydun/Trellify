@@ -1,6 +1,3 @@
-import { User } from "src/user/entities/user.entity";
-import { Context, Telegraf } from "telegraf";
-
 export const validateText = (text: string): boolean => {
   let result = false;
 
@@ -43,4 +40,3 @@ export const validateUserLastName = (userLastName: string): boolean => {
 
   return result;
 };
-
