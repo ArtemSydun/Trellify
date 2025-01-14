@@ -1,25 +1,22 @@
 services:
-  backend:
-    container_name: backend
+  trellify-node:
+    container_name: api-trellify-${STAGE}
     build:
       context: .
       dockerfile: .docker/Dockerfile
       target: ${STAGE}
     restart: always
     env_file: .env.${STAGE}
-    environment:
-      NODE_ENV: ${STAGE}
     ports:
-      - '${BACKEND_PORT}:${BACKEND_PORT}'
+      - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
     depends_on:
-      - mongodb
+      - trellify-mongodb
     networks:
-      - app_network
       - backend_network
 
-  mongodb:
+  trellify-mongodb:
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb-trellify-${STAGE}
     hostname: ${MONGODB_HOSTNAME}
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
@@ -41,7 +38,5 @@ volumes:
     name: mongo-log
 
 networks:
-  app_network:
-    driver: bridge
   backend_network:
     driver: bridge
