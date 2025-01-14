@@ -318,10 +318,6 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    this.counter += 1;
-    this.logger.log(
-      `action number: ${this.counter}, webhhokId: ${webhookAction.model?.id}, model: ${webhookAction.model?.name}`,
-    );
     // console.log(JSON.stringify(webhookAction, null, 2));
     const filteredLog = {
       webhookId: webhookAction.model?.id,
