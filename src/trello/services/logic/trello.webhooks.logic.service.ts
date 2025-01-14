@@ -56,6 +56,8 @@ export class TrelloWebhooksLogicService {
   private readonly webhookCallbackURL: string;
   private readonly encryptionKey: string;
   private readonly logger = new Logger(TrelloWebhooksLogicService.name);
+  private webhookActionCount: Map<string, number> = new Map();
+
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
@@ -317,6 +319,7 @@ export class TrelloWebhooksLogicService {
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
     // console.log(JSON.stringify(webhookAction, null, 2));
     const filteredLog = {
+      webhookId: webhookAction.model?.id,
       memberCreator: webhookAction.action.memberCreator?.username,
       actionType: webhookAction.action.type,
       translationKey: webhookAction.action.display?.translationKey,
@@ -326,14 +329,24 @@ export class TrelloWebhooksLogicService {
     };
 
     console.log(JSON.stringify(filteredLog, null, 2));
-    const targetCard = webhookAction?.action?.data?.card;
-    const targetBoard = webhookAction?.action?.data?.board;
+
+    const currentCount =
+      this.webhookActionCount.get(webhookAction?.webhook?.id) || 0;
+    this.webhookActionCount.set(webhookAction?.webhook?.id, currentCount + 1);
+
+    this.logger.log(
+      `Webhook id: ${webhookAction.model?.id}, actions count: ${this.webhookActionCount.get(webhookAction?.webhook?.id)}`,
+    );
+
     const webhook = await this.getWebhook(webhookAction?.webhook?.id);
 
     if (!webhook) {
       this.logger.warn('Missing action or webhook data.');
       return;
     }
+
+    const targetCard = webhookAction?.action?.data?.card;
+    const targetBoard = webhookAction?.action?.data?.board;
 
     const authorizedToken = decryptText(
       webhook.authorToken,

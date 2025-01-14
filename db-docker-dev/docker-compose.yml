@@ -15,20 +15,10 @@ services:
       MONGODB_USERNAME: ${MONGODB_USERNAME}
       MONGODB_PASSWORD: ${MONGODB_PASSWORD}
     ports:
-      - "27017:27017"
-    networks:
-      - mongodb_network
+      - '27017:27017'
 
 volumes:
   mongodb-data:
-    external: true
     name: mongo-data
   mongodb-log:
-    external: true
     name: mongo-log
-
-networks:
-  mongodb_network:
-    driver: bridge
-    name: mongo-network
-    external: true
