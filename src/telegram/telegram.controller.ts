@@ -11,7 +11,7 @@ import {
 } from 'nestjs-telegraf';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { User } from 'src/user/entities/user.entity';
-import { UserSearchPath } from 'src/user/enums/query.enum';
+import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
 import { Context, Telegraf } from 'telegraf';
 
@@ -56,7 +56,7 @@ export class TelegramController {
 
     try {
       const user: User = await this.userService.findUserByProperty(
-        UserSearchPath.TelegramChatId,
+        UserSearchPathEnum.TelegramChatId,
         chatId,
       );
     } catch (err) {
@@ -100,7 +100,7 @@ export class TelegramController {
     }
 
     const user: null | User = await this.userService.findUserByProperty(
-      UserSearchPath.TelegramChatId,
+      UserSearchPathEnum.TelegramChatId,
       chatID,
     );
 

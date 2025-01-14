@@ -1,23 +1,25 @@
-import { createMock } from '@golevelup/ts-jest';
+import { Test } from '@nestjs/testing';
+import { UsersService } from './users.service';
+import { UsersRepository } from '../repositories/users.repository';
+import { SharedConfigService } from 'src/config/shared.config.service';
+import {
+  TrelloMembersLogicService,
+  TrelloTokensLogicService,
+  TrelloWebhooksLogicService,
+} from '@trello/logic';
+import { TelegramService } from 'src/telegram/telegram.service';
 import {
   BadRequestException,
   ConflictException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
-import { encryptText, hashPassword } from 'src/common/helpers/hashing';
-import { SharedConfigService } from 'src/config/shared.config.service';
-import { TelegramService } from 'src/telegram/telegram.service';
-import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
-import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
-import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { createMock } from '@golevelup/ts-jest';
 import { userStub } from '../__mocks__/user.stub';
-import { UserSearchPath } from '../enums/query.enum';
-import { UsersRepository } from '../repositories/users.repository';
-import { UsersService } from './users.service';
+import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
+import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
+import { UserSearchPathEnum } from '../enums/query.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -255,7 +257,7 @@ describe('UsersService', () => {
 
       expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPath.TelegramChatId,
+        UserSearchPathEnum.TelegramChatId,
         connectTelegramDto.chatId,
       );
       expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
@@ -513,7 +515,7 @@ describe('UsersService', () => {
         `encrypted${connectTrelloDto.token}`,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPath.TrelloUserId,
+        UserSearchPathEnum.TrelloUserId,
         trelloProfileMock.id,
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();

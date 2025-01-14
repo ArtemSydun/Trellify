@@ -6,19 +6,22 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
+import {
+  TrelloMembersLogicService,
+  TrelloTokensLogicService,
+  TrelloWebhooksLogicService,
+} from '@trello/logic';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
-import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
-import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPath } from '../enums/query.enum';
+import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { UsersRepository } from '../repositories/users.repository';
 
@@ -235,7 +238,7 @@ export class UsersService {
   }
 
   public async findUserByProperty(
-    path: UserSearchPath,
+    path: UserSearchPathEnum,
     value: any,
   ): Promise<User> {
     const user = await this.userRepository.findUserByProperty(path, value);
@@ -260,7 +263,7 @@ export class UsersService {
 
     if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPath.TelegramChatId,
+        UserSearchPathEnum.TelegramChatId,
         chatId,
       );
 
@@ -343,7 +346,7 @@ export class UsersService {
       );
 
     const connectedUser = await this.userRepository.findUserByProperty(
-      UserSearchPath.TrelloUserId,
+      UserSearchPathEnum.TrelloUserId,
       trelloProfile.id,
     );
 
@@ -379,7 +382,7 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPath.TrelloWebhooks]: { webhookId },
+            [UserSearchPathEnum.TrelloWebhooks]: { webhookId },
           },
         },
       },

@@ -96,6 +96,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
+      "^@trello/logic$": "<rootDir>/trello/services/logic",
       "^src/(.*)$": "<rootDir>/$1"
     }
   }
