@@ -7,5 +7,3 @@ export interface IWebhook {
   consecutiveFailures: number;
   firstConsecutiveFailDate: string;
 }
-
-

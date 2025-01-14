@@ -6,20 +6,20 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
+
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { LoginUserDto } from '../dto/login.dto';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
+
+import { verifyPassword } from 'src/common/helpers/hashing';
+import { DefaultResponse } from 'src/common/interfaces/responses';
+import { MailerService } from 'src/mailer/services/mailer.service';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
-
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
-import { ConfigService } from '@nestjs/config';
-
-import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { DefaultResponse } from 'src/common/interfaces/responses';
-import { verifyPassword } from 'src/common/helpers/hashing';
-import { MailerService } from 'src/mailer/services/mailer.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { LoginUserDto } from '../dto/login.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +30,7 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
-  ) { }
+  ) {}
 
   private verifyToken(token: string): any {
     try {
@@ -69,10 +69,16 @@ export class AuthService {
     };
   }
 
-  public async initiateRegistration(createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    this.logger.log(`Initiating user registration for email: ${createUserDto.email}`);
+  public async initiateRegistration(
+    createUserDto: CreateUserDto,
+  ): Promise<DefaultResponse<null>> {
+    this.logger.log(
+      `Initiating user registration for email: ${createUserDto.email}`,
+    );
 
-    const userByEmail = await this.userService.doesUserExist(createUserDto.email);
+    const userByEmail = await this.userService.doesUserExist(
+      createUserDto.email,
+    );
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
       throw new ConflictException(`User ${createUserDto.email} already exists`);
@@ -112,7 +118,6 @@ export class AuthService {
   public async confirmRegistration(
     token: string,
   ): Promise<DefaultResponse<null>> {
-
     const decoded = this.verifyToken(token);
     const { email, password, ...userData } = decoded;
 
@@ -124,18 +129,24 @@ export class AuthService {
     await this.userService.createUser(newUser);
 
     this.logger.log(`User registered successfully: ${email}`);
-    return { message: 'User registered successfully', statusCode: HttpStatus.OK };
-
+    return {
+      message: 'User registered successfully',
+      statusCode: HttpStatus.OK,
+    };
   }
 
   public async forgotPassword(
     forgotPasswordDto: ForgotPasswordDto,
   ): Promise<DefaultResponse<null>> {
-    const user = await this.userService.findUserByEmail(forgotPasswordDto.email);
+    const user = await this.userService.findUserByEmail(
+      forgotPasswordDto.email,
+    );
     const token: string = this.jwtService.sign(
       { id: user.id },
       {
-        expiresIn: this.configService.get(configServiceEnum.JWT_EXPIRES_PASSWORD),
+        expiresIn: this.configService.get(
+          configServiceEnum.JWT_EXPIRES_PASSWORD,
+        ),
       },
     );
 
@@ -148,12 +159,17 @@ export class AuthService {
     };
   }
 
-  public async resetPassword(token: string, resetPasswordDto: ResetPasswordDto): Promise<DefaultResponse<null>> {
+  public async resetPassword(
+    token: string,
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<DefaultResponse<null>> {
     const { newPassword, repeatPassword } = resetPasswordDto;
 
     if (newPassword !== repeatPassword) {
       this.logger.warn('Password mismatch during reset');
-      throw new BadRequestException(`Password and repeat password does not match`);
+      throw new BadRequestException(
+        `Password and repeat password does not match`,
+      );
     }
 
     const { id } = this.verifyToken(token);

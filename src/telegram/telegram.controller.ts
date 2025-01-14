@@ -1,19 +1,26 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
+import {
+  InjectBot,
+  Start,
+  Update,
+  Action,
+  Ctx,
+  Command,
+} from 'nestjs-telegraf';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { User } from 'src/user/entities/user.entity';
+import { UserSearchPath } from 'src/user/enums/query.enum';
+import { UsersService } from 'src/user/services/users.service';
 import { Context, Telegraf } from 'telegraf';
-import { InjectBot, Start, Update, Action, Ctx, Command } from 'nestjs-telegraf';
-
-import { TelegramService } from './telegram.service';
 
 import { TelegramActions } from './telegram.actions';
-import { TelegramUtils } from './telegram.utils';
-
 import { COMMANDS } from './telegram.commands';
-import { User } from 'src/user/entities/user.entity';
 import { BOT_MESSAGES } from './telegram.messages';
-import { UsersService } from 'src/user/services/users.service';
-import { UserSearchPath } from 'src/user/interfaces/query.enum';
-import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
-import { SkipThrottle } from '@nestjs/throttler';
+import { TelegramService } from './telegram.service';
+
+import { TelegramUtils } from './telegram.utils';
 
 @Update()
 @SkipThrottle()
@@ -21,20 +28,16 @@ export class TelegramController {
   private readonly telegramActions: TelegramActions;
   private readonly telegramUtils: TelegramUtils;
 
-
   constructor(
     @InjectBot() private readonly bot: Telegraf<Context>,
     private readonly telegramService: TelegramService,
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
-
   ) {
     this.bot.telegram.setMyCommands(COMMANDS);
     this.telegramActions = new TelegramActions(this.telegramService);
     this.telegramUtils = new TelegramUtils();
   }
-
-
 
   @Start()
   async startCommand(ctx): Promise<any> {
@@ -52,10 +55,11 @@ export class TelegramController {
     }
 
     try {
-      const user: User = await this.userService.findUserByProperty(UserSearchPath.TelegramChatId, chatId);
-
+      const user: User = await this.userService.findUserByProperty(
+        UserSearchPath.TelegramChatId,
+        chatId,
+      );
     } catch (err) {
-
       await ctx.reply('Please visit our website for more information:', {
         reply_markup: {
           inline_keyboard: [
@@ -95,7 +99,10 @@ export class TelegramController {
       await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
     }
 
-    const user: null | User = await this.userService.findUserByProperty(UserSearchPath.TelegramChatId, chatID);
+    const user: null | User = await this.userService.findUserByProperty(
+      UserSearchPath.TelegramChatId,
+      chatID,
+    );
 
     if (!user) {
       await ctx.reply(`YOU'RE NOT REGISTERED YET`);

@@ -1,8 +1,8 @@
+import { TELEGRAM_BTN_ACTIONS } from 'src/common/constants/telegram';
+import { ISendMessageOptions } from 'src/common/interfaces/sendMessageOptions';
 import { Markup } from 'telegraf';
 
 import { BOT_MESSAGES } from './telegram.messages';
-import { TELEGRAM_BTN_ACTIONS } from 'src/common/constants/telegram';
-import { ISendMessageOptions } from 'src/common/interfaces/sendMessageOptions';
 
 export class TelegramUtils {
   async createDelayedSendMessage(timerValue: number): Promise<any> {
@@ -53,11 +53,10 @@ export class TelegramUtils {
   }
 
   async handleMyProfileCommand(params: { ctx; user }) {
-    const {
-      ctx,
-      user,
-    } = params;
+    const { ctx, user } = params;
 
-    return await ctx.reply(`Here is your profile: ${JSON.stringify(user, null, 2)}`);
+    return await ctx.reply(
+      `Here is your profile: ${JSON.stringify(user, null, 2)}`,
+    );
   }
 }

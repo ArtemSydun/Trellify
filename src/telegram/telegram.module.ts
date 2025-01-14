@@ -1,13 +1,12 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { TelegrafModule } from 'nestjs-telegraf';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TelegramController } from './telegram.controller';
-import { TelegramService } from './telegram.service';
-
 import { HttpModule } from '@nestjs/axios';
-import { UsersModule } from 'src/user/users.module';
+import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TelegrafModule } from 'nestjs-telegraf';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { TrelloModule } from 'src/trello/trello.module';
+import { UsersModule } from 'src/user/users.module';
+import { TelegramController } from './telegram.controller';
+import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [
@@ -24,6 +23,6 @@ import { TrelloModule } from 'src/trello/trello.module';
   ],
   controllers: [],
   providers: [TelegramService, TelegramController],
-  exports: [TelegramService]
+  exports: [TelegramService],
 })
 export class TelegramModule {}

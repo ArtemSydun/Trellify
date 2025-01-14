@@ -8,12 +8,14 @@ export class SharedConfigService {
   private readonly trelloApiKey: string;
   private readonly webhookCallbackURL: string;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
-    this.encryptionKey = this.configService.get<string>(configServiceEnum.ENCRYPTION_KEY) || '';
-    this.trelloApiKey = this.configService.get<string>(configServiceEnum.TRELLO_API_KEY) || '';
-    this.webhookCallbackURL = this.configService.get<string>(configServiceEnum.BACKEND_LINK) + `/trello/webhooks/provider`;
+  constructor(private readonly configService: ConfigService) {
+    this.encryptionKey =
+      this.configService.get<string>(configServiceEnum.ENCRYPTION_KEY) || '';
+    this.trelloApiKey =
+      this.configService.get<string>(configServiceEnum.TRELLO_API_KEY) || '';
+    this.webhookCallbackURL =
+      this.configService.get<string>(configServiceEnum.BACKEND_LINK) +
+      `/trello/webhooks/provider`;
   }
 
   getEncryptionKey(): string {

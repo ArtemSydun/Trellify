@@ -1,29 +1,26 @@
+import { randomUUID } from 'crypto';
 import {
-  BadRequestException,
   ConflictException,
-  forwardRef,
   HttpStatus,
-  Inject,
   Injectable,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UsersRepository } from '../repositories/users.repository';
-import { randomUUID } from 'crypto';
-import { User } from '../entities/user.entity';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { UserRoles } from '../interfaces/role.enum';
-import { UserSearchPath } from '../interfaces/query.enum';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
 import { SharedConfigService } from 'src/config/shared.config.service';
-import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
-import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
 import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
+import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { User } from '../entities/user.entity';
+import { UserSearchPath } from '../enums/query.enum';
+import { UserRoles } from '../enums/role.enum';
+import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class UsersService {
@@ -52,7 +49,9 @@ export class UsersService {
   public async createUser(createUserDto: CreateUserDto): Promise<User> {
     this.logger.log(`Creating user with email: ${createUserDto.email}`);
 
-    const userByEmail = await this.userRepository.findOneByEmail(createUserDto.email);
+    const userByEmail = await this.userRepository.findOneByEmail(
+      createUserDto.email,
+    );
 
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
@@ -66,17 +65,23 @@ export class UsersService {
     };
 
     const createdUser = await this.userRepository.create(newUser);
-    this.logger.log(`User with email ${createUserDto.email} created successfully`);
+    this.logger.log(
+      `User with email ${createUserDto.email} created successfully`,
+    );
     return createdUser;
   }
 
-  public async deleteUserById(userId: string): Promise<DefaultResponse<string>> {
+  public async deleteUserById(
+    userId: string,
+  ): Promise<DefaultResponse<string>> {
     const userToDelete = await this.getUser(userId);
 
     this.logger.log(`Deleting user with ID: ${userToDelete.id}`);
 
     if (userToDelete.trello.token) {
-      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToDelete);
+      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+        userToDelete,
+      );
     }
 
     await this.userRepository.delete(userToDelete.id);
@@ -120,11 +125,14 @@ export class UsersService {
   }
 
   public async findUserByTrelloId(trelloUserId: string): Promise<User> {
-    const userByTrelloId = await this.userRepository.findOneByTrelloId(trelloUserId);
+    const userByTrelloId =
+      await this.userRepository.findOneByTrelloId(trelloUserId);
 
     if (!userByTrelloId) {
       this.logger.warn(`User with Trello ID ${trelloUserId} not found`);
-      throw new NotFoundException(`User with Trello ID ${trelloUserId} not found`);
+      throw new NotFoundException(
+        `User with Trello ID ${trelloUserId} not found`,
+      );
     }
 
     this.logger.log(`User with Trello ID ${trelloUserId} found`);
@@ -148,7 +156,11 @@ export class UsersService {
     return await this.userRepository.existsByEmail(email);
   }
 
-  public async updateUser(user: string | User, updateUserDto: UpdateUserDto, reqUser?: Partial<User>): Promise<DefaultResponse<User>> {
+  public async updateUser(
+    user: string | User,
+    updateUserDto: UpdateUserDto,
+    reqUser?: Partial<User>,
+  ): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
@@ -160,15 +172,26 @@ export class UsersService {
       if (key === 'trello' && value) {
         updatedUserProps.trello = { ...userToUpdate.trello, ...value };
         if (value.token) {
-          if (!userToUpdate.trello.token || userToUpdate.trello.token !== value.token) {
-            updatedUserProps.trello.token = encryptText(value.token, this.encryptionKey);
+          if (
+            !userToUpdate.trello.token ||
+            userToUpdate.trello.token !== value.token
+          ) {
+            updatedUserProps.trello.token = encryptText(
+              value.token,
+              this.encryptionKey,
+            );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
           }
         }
 
-        const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
+        const trelloToken =
+          updatedUserProps.trello.token || userToUpdate.trello.token;
+        const trelloProfile =
+          await this.trelloMembersLogicService.findMemberProfile(
+            userToUpdate,
+            trelloToken,
+          );
 
         updatedUserProps.trello.userId = trelloProfile.id;
 
@@ -182,7 +205,10 @@ export class UsersService {
       }
     }
 
-    const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps);
+    const updatedUser = await this.userRepository.updateById(
+      userToUpdate.id,
+      updatedUserProps,
+    );
     delete updatedUser.password;
 
     this.logger.log(`User with ID ${userToUpdate.id} updated successfully`);
@@ -197,7 +223,9 @@ export class UsersService {
     const userToReset = await this.getUser(id);
     const encryptedPassword = await hashPassword(newPassword);
 
-    await this.userRepository.updateById(userToReset.id, { password: encryptedPassword });
+    await this.userRepository.updateById(userToReset.id, {
+      password: encryptedPassword,
+    });
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
 
@@ -206,11 +234,16 @@ export class UsersService {
     return this.userRepository.findUsersConnectedToWebhook(webhookId);
   }
 
-  public async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
+  public async findUserByProperty(
+    path: UserSearchPath,
+    value: any,
+  ): Promise<User> {
     const user = await this.userRepository.findUserByProperty(path, value);
     if (!user) {
       this.logger.warn(`User with property ${path}: ${value} not found`);
-      throw new NotFoundException(`User with property ${path}: ${value} not found`);
+      throw new NotFoundException(
+        `User with property ${path}: ${value} not found`,
+      );
     }
 
     this.logger.log(`User with property ${path}: ${value} found`);
@@ -218,27 +251,43 @@ export class UsersService {
     return user;
   }
 
-  public async manageUserTelegramConnection(user: string | User, connectTelegramDto: ConnectTelegramDto): Promise<DefaultResponse<User>> {
+  public async manageUserTelegramConnection(
+    user: string | User,
+    connectTelegramDto: ConnectTelegramDto,
+  ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user);
     const { chatId, username } = connectTelegramDto;
 
     if (chatId && username) {
-      const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TelegramChatId, chatId);
+      const connectedUser = await this.userRepository.findUserByProperty(
+        UserSearchPath.TelegramChatId,
+        chatId,
+      );
 
       if (connectedUser && connectedUser.id !== userToUpdate.id) {
-        throw new ConflictException(`Trello notifier bot is already connected for another user`);
+        throw new ConflictException(
+          `Trello notifier bot is already connected for another user`,
+        );
       }
 
-      await this.telegramService.sendMessageToUser(connectTelegramDto, `Trello notifier bot authorized successfully`);
+      await this.telegramService.sendMessageToUser(
+        connectTelegramDto,
+        `Trello notifier bot authorized successfully`,
+      );
     } else {
-      await this.telegramService.sendMessageToUser(userToUpdate.telegram, `Trello notifier bot disconnected successfully`);
+      await this.telegramService.sendMessageToUser(
+        userToUpdate.telegram,
+        `Trello notifier bot disconnected successfully`,
+      );
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       telegram: { chatId, username, updatedAt: new Date() },
     });
 
-    this.logger.log(`Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`);
+    this.logger.log(
+      `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+    );
     return {
       message: `Telegram ${username || userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
@@ -246,15 +295,23 @@ export class UsersService {
     };
   }
 
-  public async manageUserTrelloConnection(user: string | User, connectTrelloDto: ConnectTrelloDto): Promise<DefaultResponse<User | string>> {
+  public async manageUserTrelloConnection(
+    user: string | User,
+    connectTrelloDto: ConnectTrelloDto,
+  ): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.getUser(user);
     const { token } = connectTrelloDto;
 
     if (!token) {
-      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(userToUpdate);
-      const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
-        trello: { userId: null, username: null, webhooks: [], token: null },
-      });
+      await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+        userToUpdate,
+      );
+      const updatedUser = await this.userRepository.updateById(
+        userToUpdate.id,
+        {
+          trello: { userId: null, username: null, webhooks: [], token: null },
+        },
+      );
 
       this.logger.log(`Trello profile disconnected for user ${user}`);
       return {
@@ -266,7 +323,9 @@ export class UsersService {
 
     await this.trelloTokensLogicService.isTokenInfinite(token);
 
-    const updatedUserProps: Partial<User> = { trello: { ...userToUpdate.trello } };
+    const updatedUserProps: Partial<User> = {
+      trello: { ...userToUpdate.trello },
+    };
 
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
       updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
@@ -274,20 +333,33 @@ export class UsersService {
       updatedUserProps.trello.token = userToUpdate.trello.token;
     }
 
-    const trelloToken = updatedUserProps.trello.token || userToUpdate.trello.token;
+    const trelloToken =
+      updatedUserProps.trello.token || userToUpdate.trello.token;
 
-    const trelloProfile = await this.trelloMembersLogicService.findMemberProfile(userToUpdate, trelloToken);
+    const trelloProfile =
+      await this.trelloMembersLogicService.findMemberProfile(
+        userToUpdate,
+        trelloToken,
+      );
 
-    const connectedUser = await this.userRepository.findUserByProperty(UserSearchPath.TrelloUserId, trelloProfile.id);
+    const connectedUser = await this.userRepository.findUserByProperty(
+      UserSearchPath.TrelloUserId,
+      trelloProfile.id,
+    );
 
     if (connectedUser) {
-      throw new ConflictException(`This trello profile is already binded to other user`);
+      throw new ConflictException(
+        `This trello profile is already binded to other user`,
+      );
     }
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
-    const updatedUser = await this.userRepository.updateById(userToUpdate.id, updatedUserProps);
+    const updatedUser = await this.userRepository.updateById(
+      userToUpdate.id,
+      updatedUserProps,
+    );
 
     this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
     return {
@@ -298,15 +370,16 @@ export class UsersService {
   }
 
   public async removeWebhookFromAllUsers(webhookId: string) {
-    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(webhookId);
+    const usersConnectedToWebhook =
+      await this.findUsersConnectedToWebhook(webhookId);
 
     //prepare bulk operation for each user to delete webhook with webhookId
-    const bulkUpdateOperations = usersConnectedToWebhook.map(user => ({
+    const bulkUpdateOperations = usersConnectedToWebhook.map((user) => ({
       updateOne: {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPath.TrelloWebhooks]: { webhookId }
+            [UserSearchPath.TrelloWebhooks]: { webhookId },
           },
         },
       },
@@ -314,7 +387,8 @@ export class UsersService {
 
     try {
       if (bulkUpdateOperations.length > 0) {
-        const result = await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
+        const result =
+          await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
         this.logger.log(result);
       }
     } catch (err) {
