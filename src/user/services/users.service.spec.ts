@@ -1,26 +1,23 @@
-import { Test } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { UsersRepository } from '../repositories/users.repository';
-import { MailerService } from 'src/mailer/services/mailer.service';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { SharedConfigService } from 'src/config/shared.config.service';
-import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
-import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { createMock } from '@golevelup/ts-jest';
 import {
   BadRequestException,
   ConflictException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
-import { createMock } from '@golevelup/ts-jest';
-import { userStub } from '../__mocks__/user.stub';
-import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { Test } from '@nestjs/testing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
+import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { SharedConfigService } from 'src/config/shared.config.service';
+import { TelegramService } from 'src/telegram/telegram.service';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
+import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
+import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { userStub } from '../__mocks__/user.stub';
 import { UserSearchPath } from '../enums/query.enum';
+import { UsersRepository } from '../repositories/users.repository';
+import { UsersService } from './users.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),

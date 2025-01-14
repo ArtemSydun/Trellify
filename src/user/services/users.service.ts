@@ -1,29 +1,26 @@
+import { randomUUID } from 'crypto';
 import {
-  BadRequestException,
   ConflictException,
-  forwardRef,
   HttpStatus,
-  Inject,
   Injectable,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UsersRepository } from '../repositories/users.repository';
-import { randomUUID } from 'crypto';
-import { User } from '../entities/user.entity';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { UserRoles } from '../enums/role.enum';
-import { UserSearchPath } from '../enums/query.enum';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
 import { SharedConfigService } from 'src/config/shared.config.service';
-import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { TelegramService } from 'src/telegram/telegram.service';
-import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { TrelloMembersLogicService } from 'src/trello/services/logic/trello.members.logic.service';
 import { TrelloTokensLogicService } from 'src/trello/services/logic/trello.tokens.logic.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
+import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
+import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { User } from '../entities/user.entity';
+import { UserSearchPath } from '../enums/query.enum';
+import { UserRoles } from '../enums/role.enum';
+import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class UsersService {

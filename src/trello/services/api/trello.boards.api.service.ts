@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello';
 import { SharedConfigService } from '../../../config/shared.config.service';
-import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 import { TrelloBoard } from '../../dto/board.dto';
+import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin

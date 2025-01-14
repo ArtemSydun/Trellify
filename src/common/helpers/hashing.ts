@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as CryptoJS from 'crypto-js';
-
 
 export async function verifyPassword(
   plainPassword: string,

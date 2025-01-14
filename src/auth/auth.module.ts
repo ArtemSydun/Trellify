@@ -1,15 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
-import { AuthController } from './controller/auth.controller';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from 'src/user/entities/user.entity';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailerModule } from 'src/mailer/mailer.module';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailerModule } from 'src/mailer/mailer.module';
 import { TrelloModule } from 'src/trello/trello.module';
+import { User, UserSchema } from 'src/user/entities/user.entity';
 import { UsersModule } from 'src/user/users.module';
+import { AuthController } from './controller/auth.controller';
+import { AuthService } from './services/auth.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -25,22 +25,25 @@ import { UsersModule } from 'src/user/users.module';
       useFactory: async (
         configService: ConfigService,
       ): Promise<JwtModuleOptions> => {
-        const secret = configService.get<string>(configServiceEnum.JWT_SECRET) || '';
+        const secret =
+          configService.get<string>(configServiceEnum.JWT_SECRET) || '';
         return {
           secret,
           signOptions: {
-            expiresIn: configService.get<string>(configServiceEnum.JWT_EXPIRES_IN) || '12h',
+            expiresIn:
+              configService.get<string>(configServiceEnum.JWT_EXPIRES_IN) ||
+              '12h',
           },
         };
       },
     }),
     MailerModule,
     forwardRef(() => TrelloModule),
-    
-    forwardRef(() => UsersModule)
+
+    forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [JwtModule]
+  exports: [JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}

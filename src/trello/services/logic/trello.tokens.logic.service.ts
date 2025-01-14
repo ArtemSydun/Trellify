@@ -1,14 +1,5 @@
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
-import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { TrelloTokensApiService } from '../api/trello.tokens.api.service';
-
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -22,14 +13,17 @@ export class TrelloTokensLogicService {
 
   constructor(
     private readonly trelloTokensApiService: TrelloTokensApiService,
-  ) { }
+  ) {}
 
   async isTokenInfinite(trelloToken: string): Promise<boolean> {
-    const token = await this.trelloTokensApiService.fetchAccessToken(trelloToken);
+    const token =
+      await this.trelloTokensApiService.fetchAccessToken(trelloToken);
 
     if (token.dateExpires !== null) {
       this.logger.warn('Token has an expiration date');
-      throw new BadRequestException('Please provide a token with a valid expiration date');
+      throw new BadRequestException(
+        'Please provide a token with a valid expiration date',
+      );
     }
 
     this.logger.log('Trello token is infinite');

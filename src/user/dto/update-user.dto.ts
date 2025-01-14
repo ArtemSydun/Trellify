@@ -1,10 +1,10 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
 import { Optional } from '@nestjs/common';
+import { PartialType } from '@nestjs/mapped-types';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRoles } from '../enums/role.enum';
+import { CreateUserDto } from './create-user.dto';
 import { TelegramSettings } from './telegram.settings.dto';
 import { TrelloSettings } from './trello.settings.dto';
-import { UserRoles } from '../enums/role.enum';
 
 // @Optional() decorator for nested objects here do not work properly, nest js do not support it
 // https://github.com/nestjs/swagger/issues/2382

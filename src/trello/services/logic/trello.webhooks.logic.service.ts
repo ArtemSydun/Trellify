@@ -10,6 +10,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { toCamelCase } from 'src/common/helpers/camelCase';
+import { decryptText } from 'src/common/helpers/hashing';
 import {
   getCategoriesForAction,
   getUpdatedWebhookNotifications,
@@ -20,30 +22,28 @@ import {
   sortCategories,
 } from 'src/common/helpers/trello-notifications';
 
-import { UsersService } from 'src/user/services/users.service';
-import { decryptText } from 'src/common/helpers/hashing';
+import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
-import { Webhook } from '../../entities/webhook.entity';
-import { CreateWebhookDto } from '../../dto/create-webhook.dto';
+import { TelegramService } from 'src/telegram/telegram.service';
+import { UpdateNotificationsDto } from 'src/trello/dto/notifications.dto';
 import {
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationCategories,
   TrelloWebhookNotificationProfiles,
 } from 'src/trello/enums/trello.actions.enum';
-import { toCamelCase } from 'src/common/helpers/camelCase';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { User } from 'src/user/entities/user.entity';
+import { UserRoles } from 'src/user/enums/role.enum';
+import { UsersService } from 'src/user/services/users.service';
+import { SharedConfigService } from '../../../config/shared.config.service';
+import { CreateWebhookDto } from '../../dto/create-webhook.dto';
+import { Webhook } from '../../entities/webhook.entity';
 import { WebhookSearchPath } from '../../enums/query.enum';
-import { TrelloActionsLogicService } from './trello.actions.logic.service';
-import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
+import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
 import { TrelloCardsApiService } from '../api/trello.cards.api.service';
-import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
-import { UpdateNotificationsDto } from 'src/trello/dto/notifications.dto';
-import { TelegramService } from 'src/telegram/telegram.service';
-import { UserRoles } from 'src/user/enums/role.enum';
-import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
+import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
+import { TrelloActionsLogicService } from './trello.actions.logic.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -401,7 +401,8 @@ export class TrelloWebhooksLogicService {
     let notifiedTargetUser: string | null;
 
     for (const category of sortedCategories) {
-      let actionSubscribers = webhook.notifications[category]?.[enumKey] || [];
+      const actionSubscribers =
+        webhook.notifications[category]?.[enumKey] || [];
 
       if (actionSubscribers.length === 0) {
         this.logger.warn(

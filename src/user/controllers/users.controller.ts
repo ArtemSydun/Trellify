@@ -11,34 +11,32 @@ import {
   Delete,
 } from '@nestjs/common';
 
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UsersService } from '../services/users.service';
-import { DefaultResponse } from 'src/common/interfaces/responses';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import {
-  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiOkResponse,
   ApiOperation,
   getSchemaPath,
-  PartialType,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/common/decorators/auth.role.decorator';
 import {
   ApiCustomBadRequestResponse,
   ApiCustomForbiddenResponse,
   ApiCustomNotFoundResponse,
   ApiCustomUnathorizedResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { User } from '../entities/user.entity';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from '../enums/role.enum';
+import { Errors } from 'src/common/enums/errors.enum';
+import { DefaultResponse } from 'src/common/interfaces/responses';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
-import { Errors } from 'src/common/enums/errors.enum';
+import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
-import { SkipThrottle } from '@nestjs/throttler';
+import { User } from '../entities/user.entity';
+import { UserRoles } from '../enums/role.enum';
+import { UsersService } from '../services/users.service';
 
 @ApiBearerAuth()
 @Controller('users')

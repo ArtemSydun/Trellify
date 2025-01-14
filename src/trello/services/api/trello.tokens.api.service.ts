@@ -1,8 +1,5 @@
-import {
-    BadRequestException,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { trelloApiLink } from 'src/common/constants/trello';
 import { SharedConfigService } from '../../../config/shared.config.service';
@@ -15,23 +12,21 @@ import { SharedConfigService } from '../../../config/shared.config.service';
 
 @Injectable()
 export class TrelloTokensApiService {
-    private readonly trelloApiKey: string;
+  private readonly trelloApiKey: string;
 
-    constructor(
-        private readonly sharedConfigService: SharedConfigService,
-    ) {
-        this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
+  constructor(private readonly sharedConfigService: SharedConfigService) {
+    this.trelloApiKey = this.sharedConfigService.getTrelloApiKey();
+  }
+
+  // # Tokens
+  async fetchAccessToken(token: string): Promise<any> {
+    const url = `${trelloApiLink}/tokens/${token}?key=${this.trelloApiKey}&token=${token}`;
+
+    try {
+      const response = await axios.get(url);
+      return response.data;
+    } catch (err) {
+      throw new BadRequestException('Invalid trello token');
     }
-
-    // # Tokens
-    async fetchAccessToken(token: string): Promise<any> {
-        const url = `${trelloApiLink}/tokens/${token}?key=${this.trelloApiKey}&token=${token}`;
-
-        try {
-            const response = await axios.get(url);
-            return response.data;
-        } catch (err) {
-            throw new BadRequestException('Invalid trello token');
-        }
-    }
+  }
 }

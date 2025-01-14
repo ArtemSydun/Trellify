@@ -1,11 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from 'src/user/entities/user.entity';
-import { UserRoles } from 'src/user/enums/role.enum';
-import { ConfigService } from '@nestjs/config';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { hashPassword } from 'src/common/helpers/hashing';
+import { User } from 'src/user/entities/user.entity';
+import { UserRoles } from 'src/user/enums/role.enum';
 
 @Injectable()
 export class SeederService implements OnModuleInit {

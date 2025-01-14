@@ -10,16 +10,6 @@ import {
   HttpStatus,
   Patch,
 } from '@nestjs/common';
-import { DefaultResponse } from 'src/common/interfaces/responses';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import {
-  ApiCustomBadRequestResponse,
-  ApiCustomConflictResponse,
-  ApiCustomForbiddenResponse,
-  ApiCustomNotFoundResponse,
-  ApiCustomUnathorizedResponse,
-} from 'src/common/decorators/swagger.decorators';
-import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import {
   ApiExcludeEndpoint,
   ApiOkResponse,
@@ -27,15 +17,25 @@ import {
   ApiOperation,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Webhook } from '../entities/webhook.entity';
-import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from 'src/user/enums/role.enum';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
-import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
-import { UpdateNotificationsDto } from '../dto/notifications.dto';
-import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { SkipThrottle } from '@nestjs/throttler';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/common/decorators/auth.role.decorator';
+import {
+  ApiCustomBadRequestResponse,
+  ApiCustomConflictResponse,
+  ApiCustomForbiddenResponse,
+  ApiCustomNotFoundResponse,
+  ApiCustomUnathorizedResponse,
+} from 'src/common/decorators/swagger.decorators';
+import { notificationProfiles } from 'src/common/helpers/trello-notifications';
+import { DefaultResponse } from 'src/common/interfaces/responses';
+import { UserRoles } from 'src/user/enums/role.enum';
+import { CreateWebhookDto } from '../dto/create-webhook.dto';
+import { UpdateNotificationsDto } from '../dto/notifications.dto';
+import { Webhook } from '../entities/webhook.entity';
+import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
+import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
 
 @Controller('trello/webhooks')
 export class TrelloWebhooksController {

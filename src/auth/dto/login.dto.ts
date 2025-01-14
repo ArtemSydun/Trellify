@@ -23,7 +23,7 @@ export class LoginUserResponseDto {
 
   @ApiProperty({
     description: 'User object that contains user data',
-    type: User, 
+    type: User,
   })
   user: User;
 }

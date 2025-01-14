@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { User } from '../entities/user.entity';
 import { UserSearchPath } from '../enums/query.enum';
 
 @Injectable()

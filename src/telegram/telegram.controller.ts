@@ -1,4 +1,6 @@
-import { Context, Telegraf } from 'telegraf';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   InjectBot,
   Start,
@@ -7,20 +9,18 @@ import {
   Ctx,
   Command,
 } from 'nestjs-telegraf';
-
-import { TelegramService } from './telegram.service';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { User } from 'src/user/entities/user.entity';
+import { UserSearchPath } from 'src/user/enums/query.enum';
+import { UsersService } from 'src/user/services/users.service';
+import { Context, Telegraf } from 'telegraf';
 
 import { TelegramActions } from './telegram.actions';
-import { TelegramUtils } from './telegram.utils';
-
 import { COMMANDS } from './telegram.commands';
-import { User } from 'src/user/entities/user.entity';
 import { BOT_MESSAGES } from './telegram.messages';
-import { UsersService } from 'src/user/services/users.service';
-import { UserSearchPath } from 'src/user/enums/query.enum';
-import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
-import { SkipThrottle } from '@nestjs/throttler';
+import { TelegramService } from './telegram.service';
+
+import { TelegramUtils } from './telegram.utils';
 
 @Update()
 @SkipThrottle()

@@ -1,14 +1,14 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import {
   ApiCustomNotFoundResponse,
   ApiCustomUnathorizedResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 
 import { TrelloMember } from '../dto/member.dto';
-import { TrelloMembersLogicService } from '../services/logic/trello.members.logic.service';
 import { Organization } from '../dto/organization.dto';
+import { TrelloMembersLogicService } from '../services/logic/trello.members.logic.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()

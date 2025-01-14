@@ -1,4 +1,3 @@
-import { MailerService as MailService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   HttpStatus,
@@ -6,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { MailerService as MailService } from '@nestjs-modules/mailer';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 
@@ -16,7 +16,7 @@ export class MailerService {
   constructor(
     private readonly mailerService: MailService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   public getLink(apiUrl: string, route: string, message: string) {
     return `<a href=${apiUrl}/${route}>${message}</a>`;
@@ -25,7 +25,7 @@ export class MailerService {
   public async sendDistribution(
     sender: string,
     receiver: string,
-    distribution: { subject: string, html: string },
+    distribution: { subject: string; html: string },
   ): Promise<DefaultResponse<null>> {
     try {
       const { subject, html } = distribution;

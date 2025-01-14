@@ -1,10 +1,10 @@
+import { randomUUID } from 'crypto';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { randomUUID } from 'crypto';
+import { Languages } from 'src/common/enums/languages.enum';
 import { TelegramSettings } from '../dto/telegram.settings.dto';
 import { TrelloSettings } from '../dto/trello.settings.dto';
 import { UserRoles } from '../enums/role.enum';
-import { Languages } from 'src/common/enums/languages.enum';
 
 @Schema({ timestamps: true })
 export class User {

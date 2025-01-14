@@ -1,3 +1,4 @@
+import { Languages } from 'src/common/enums/languages.enum';
 import { UserRoles } from '../enums/role.enum';
 
 export const userStub = () => {
@@ -31,5 +32,6 @@ export const userStub = () => {
       username: 'tgusername',
       updatedAt: fixedDate,
     },
+    language: Languages.EN,
   };
 };

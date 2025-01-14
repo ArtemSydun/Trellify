@@ -1,17 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
-
-
-import { UsersService } from './services/users.service';
-
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './entities/user.entity';
-import { MailerModule } from 'src/mailer/mailer.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { SharedConfigService } from 'src/config/shared.config.service';
+import { MailerModule } from 'src/mailer/mailer.module';
+import { TelegramModule } from 'src/telegram/telegram.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
+import { User, UserSchema } from './entities/user.entity';
 import { UsersRepository } from './repositories/users.repository';
-import { TelegramModule } from 'src/telegram/telegram.module';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { UsersService } from './services/users.service';
 
 @Module({
   imports: [
@@ -23,6 +20,6 @@ import { SharedConfigService } from 'src/config/shared.config.service';
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, SharedConfigService],
-  exports: [UsersService]
+  exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

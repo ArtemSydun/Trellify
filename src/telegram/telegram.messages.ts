@@ -10,6 +10,6 @@ export const BOT_MESSAGES = {
     OK: 'Так',
     CANCEL: 'Ні',
     SKIP: 'Пропустити',
-    BACK: 'До головного меню'
+    BACK: 'До головного меню',
   },
 };
