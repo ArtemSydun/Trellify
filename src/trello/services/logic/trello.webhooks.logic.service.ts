@@ -57,7 +57,8 @@ export class TrelloWebhooksLogicService {
   private readonly webhookCallbackURL: string;
   private readonly encryptionKey: string;
   private readonly logger = new Logger(TrelloWebhooksLogicService.name);
-  private counter: number;
+  private webhookActionCount: Map<string, number> = new Map();
+
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
@@ -73,7 +74,6 @@ export class TrelloWebhooksLogicService {
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-    this.counter = 0;
   }
 
   async getWebhook(webhook: string | Webhook): Promise<Webhook> {
@@ -323,24 +323,35 @@ export class TrelloWebhooksLogicService {
       `action number: ${this.counter}, webhhokId: ${webhookAction.model?.id}, model: ${webhookAction.model?.name}`,
     );
     // console.log(JSON.stringify(webhookAction, null, 2));
-    // const filteredLog = {
-    //   memberCreator: webhookAction.action.memberCreator?.username,
-    //   actionType: webhookAction.action.type,
-    //   translationKey: webhookAction.action.display?.translationKey,
-    //   modelName: webhookAction.model?.name,
-    //   modelUrl: webhookAction.model?.url,
-    //   actionDate: webhookAction.action.date,
-    // };
+    const filteredLog = {
+      webhookId: webhookAction.model?.id,
+      memberCreator: webhookAction.action.memberCreator?.username,
+      actionType: webhookAction.action.type,
+      translationKey: webhookAction.action.display?.translationKey,
+      modelName: webhookAction.model?.name,
+      modelUrl: webhookAction.model?.url,
+      actionDate: webhookAction.action.date,
+    };
 
-    // console.log(JSON.stringify(filteredLog, null, 2));
-    // const targetCard = webhookAction?.action?.data?.card;
-    // const targetBoard = webhookAction?.action?.data?.board;
-    // const webhook = await this.getWebhook(webhookAction?.webhook?.id);
+    console.log(JSON.stringify(filteredLog, null, 2));
 
-    // if (!webhook) {
-    //   this.logger.warn('Missing action or webhook data.');
-    //   return;
-    // }
+    const currentCount =
+      this.webhookActionCount.get(webhookAction?.webhook?.id) || 0;
+    this.webhookActionCount.set(webhookAction?.webhook?.id, currentCount + 1);
+
+    this.logger.log(
+      `Webhook id: ${webhookAction.model?.id}, actions count: ${this.webhookActionCount.get(webhookAction?.webhook?.id)}`,
+    );
+
+    const webhook = await this.getWebhook(webhookAction?.webhook?.id);
+
+    if (!webhook) {
+      this.logger.warn('Missing action or webhook data.');
+      return;
+    }
+
+    const targetCard = webhookAction?.action?.data?.card;
+    const targetBoard = webhookAction?.action?.data?.board;
 
     // const authorizedToken = decryptText(
     //   webhook.authorToken,
