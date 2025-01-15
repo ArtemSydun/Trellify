@@ -32,10 +32,10 @@ services:
 volumes:
   mongodb-data:
     driver: local
-    name: mongo-data
+    name: trellify-mongo-data-${STAGE}
   mongodb-log:
     driver: local
-    name: mongo-log
+    name: trellify-mongo-log-${STAGE}
 
 networks:
   backend_network:
