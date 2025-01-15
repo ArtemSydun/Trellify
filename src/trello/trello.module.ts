@@ -1,22 +1,59 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { TrelloService } from './services/trello.service';
-import { UserModule } from 'src/user/user.module';
-import { AuthModule } from 'src/auth/auth.module';
-import { TrelloMembersController } from './controllers/trello.members.controller';
-import { TrelloWebhooksController } from './controllers/trello.webhooks.controller';
+
 import { MongooseModule } from '@nestjs/mongoose';
+import * as ApiServices from '@trello/api';
+import * as Controllers from '@trello/controllers';
+import * as LogicServices from '@trello/logic';
+import { AuthModule } from 'src/auth/auth.module';
+import { TelegramModule } from 'src/telegram/telegram.module';
+import { UsersModule } from 'src/user/users.module';
+import { SharedConfigService } from '../config/shared.config.service';
 import { Webhook, WebhookSchema } from './entities/webhook.entity';
 import { TrelloWebhookRepository } from './repositories/webhook.repository';
 
 @Module({
   imports: [
-    forwardRef(() => UserModule),
+    forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
-
+    TelegramModule,
   ],
-  controllers: [TrelloMembersController, TrelloWebhooksController],
-  providers: [TrelloService, TrelloWebhookRepository],
-  exports: [TrelloService, TrelloWebhookRepository]
+  controllers: [
+    Controllers.TrelloWebhooksController,
+    Controllers.TrelloBoardsController,
+    Controllers.TrelloCardsController,
+    Controllers.TrelloMembersController,
+    Controllers.TrelloTokensController,
+  ],
+  providers: [
+    LogicServices.TrelloWebhooksLogicService,
+    LogicServices.TrelloTokensLogicService,
+    LogicServices.TrelloBoardsLogicService,
+    LogicServices.TrelloCardsLogicService,
+    LogicServices.TrelloMembersLogicService,
+    LogicServices.TrelloActionsLogicService,
+    ApiServices.TrelloWebhooksApiService,
+    ApiServices.TrelloTokensApiService,
+    ApiServices.TrelloBoardsApiService,
+    ApiServices.TrelloCardsApiService,
+    ApiServices.TrelloMembersApiService,
+    SharedConfigService,
+    TrelloWebhookRepository,
+  ],
+  exports: [
+    LogicServices.TrelloWebhooksLogicService,
+    LogicServices.TrelloTokensLogicService,
+    LogicServices.TrelloBoardsLogicService,
+    LogicServices.TrelloCardsLogicService,
+    LogicServices.TrelloActionsLogicService,
+    LogicServices.TrelloMembersLogicService,
+    ApiServices.TrelloWebhooksApiService,
+    ApiServices.TrelloTokensApiService,
+    ApiServices.TrelloBoardsApiService,
+    ApiServices.TrelloCardsApiService,
+    ApiServices.TrelloMembersApiService,
+    SharedConfigService,
+    TrelloWebhookRepository,
+  ],
 })
-export class TrelloModule { }
+export class TrelloModule {}

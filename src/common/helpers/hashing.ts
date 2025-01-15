@@ -1,8 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
 import * as CryptoJS from 'crypto-js';
-
 
 export async function verifyPassword(
   plainPassword: string,
@@ -18,11 +17,6 @@ export async function verifyPassword(
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
-
-export function generateRandomPassword(): string {
-  return randomBytes(10).toString('hex');
-}
-
 
 export function encryptText(plainText: string, secretKey: string): string {
   return CryptoJS.AES.encrypt(plainText, secretKey).toString();

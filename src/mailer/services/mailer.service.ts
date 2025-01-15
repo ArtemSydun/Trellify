@@ -1,4 +1,3 @@
-import { MailerService as MailService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   HttpStatus,
@@ -6,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { MailerService as MailService } from '@nestjs-modules/mailer';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 
@@ -16,7 +16,7 @@ export class MailerService {
   constructor(
     private readonly mailerService: MailService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   public getLink(apiUrl: string, route: string, message: string) {
     return `<a href=${apiUrl}/${route}>${message}</a>`;
@@ -25,7 +25,7 @@ export class MailerService {
   public async sendDistribution(
     sender: string,
     receiver: string,
-    distribution: { subject: string, html: string },
+    distribution: { subject: string; html: string },
   ): Promise<DefaultResponse<null>> {
     try {
       const { subject, html } = distribution;
@@ -53,14 +53,19 @@ export class MailerService {
     token: string,
   ): Promise<DefaultResponse<null>> {
     try {
-      const resetLink = `${this.configService.get(configServiceEnum.BACKEND_LINK)}/auth/reset-password/${token}`;
+      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/reset-password/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
         from: this.configService.get<string>('MAILER_SENDER'),
         subject: 'Password Reset Request',
         text: `Click the link to reset your password: ${resetLink}`,
-        html: `<p>Click the link to reset your password: <a href="${resetLink}">RESET PASSWORD</a></p>`,
+        html: `<p>Click the link to reset your password:</p>
+              <a href="${resetLink}">RESET PASSWORD</a>
+              <br>
+              <p>If you did not request this reset, please ignore this email.</p>
+              <br>
+              <p>This link are available only for 15 minutes.</p>`,
       });
 
       this.logger.verbose(`Forgot password mail sent to ${email}`);

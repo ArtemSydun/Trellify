@@ -9,13 +9,21 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": ".",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ],
+      "@trello/api": ["src/trello/services/api"],
+      "@trello/logic": ["src/trello/services/logic"],
+      "@trello/controllers": ["src/trello/controllers"]
+    }
   }
 }

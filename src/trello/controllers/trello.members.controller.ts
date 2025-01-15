@@ -1,48 +1,52 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { TrelloService } from '../services/trello.service';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ApiCustomNotFoundResponse, ApiCustomUnathorizedResponse } from 'src/common/decorators/swagger.decorators';
-import { ApiOkResponse } from '@nestjs/swagger';
-import { Board } from '../dto/board.dto';
+import {
+  ApiCustomNotFoundResponse,
+  ApiCustomUnathorizedResponse,
+} from 'src/common/decorators/swagger.decorators';
+
 import { TrelloMember } from '../dto/member.dto';
-import { TrelloCard } from '../dto/card.dto';
-import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { UserRoles } from 'src/user/interfaces/role.enum';
+import { Organization } from '../dto/organization.dto';
+import { TrelloMembersLogicService } from '../services/logic/trello.members.logic.service';
 
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @Controller('trello/members')
 export class TrelloMembersController {
-  constructor(private readonly trelloService: TrelloService) { }
+  constructor(
+    private readonly trelloMembersService: TrelloMembersLogicService,
+  ) {}
 
   @Get('profile')
-  @ApiCustomNotFoundResponse('User', 'id')
+  @ApiOperation({
+    summary: 'Get Trello member profile',
+    description:
+      'Fetches the profile details of the currently authenticated Trello member.',
+  })
   @ApiOkResponse({
     description: 'Trello member profile',
     type: TrelloMember,
   })
   @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
   getTrelloMemberProfile(@Req() req): Promise<TrelloMember> {
-    return this.trelloService.findMemberProfile(req.user.userId);
+    return this.trelloMembersService.findMemberProfile(req.user.id);
   }
 
-  @Get('boards/my')
-  @ApiCustomUnathorizedResponse()
-  @ApiOkResponse({
-    description: 'List of member boards',
-    type: [Board],
+  @Get('organizations')
+  @ApiOperation({
+    summary: 'Get Trello member organizations',
+    description:
+      'Fetches the organizations currently authenticated Trello member belongs to.',
   })
-  findBoardsMemberBelongsTo(@Req() req): Promise<Board[]> {
-    return this.trelloService.findBoardsMemberBelongsTo(req.user.userId);
-  }
-
-  @Get('cards/my')
-  @UseGuards(JwtAuthGuard)
-  @ApiCustomUnathorizedResponse()
   @ApiOkResponse({
-    description: 'List of member cards',
-    type: [TrelloCard],
+    description: 'Trello member organizations',
+    type: [Organization],
   })
-  findCardsMemberRelatedTo(@Req() req): Promise<TrelloCard[]> {
-    return this.trelloService.findMemberRelatedCards(req.user.userId);
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  getTrelloMemberOrganizations(@Req() req): Promise<Organization[]> {
+    return this.trelloMembersService.findMemberOrganizations(req.user.id);
   }
 }
