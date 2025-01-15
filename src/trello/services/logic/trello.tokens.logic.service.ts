@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { TrelloTokensApiService } from '../api/trello.tokens.api.service';
+import { TrelloTokensApiService } from '@trello/api';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin

@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { TrelloWebhooksLogicService } from '@trello/logic';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -11,7 +12,6 @@ import {
 } from 'src/trello/enums/trello.actions.enum';
 import { UsersService } from 'src/user/services/users.service';
 import { Webhook } from '../../entities/webhook.entity';
-import { TrelloWebhooksLogicService } from './trello.webhooks.logic.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin

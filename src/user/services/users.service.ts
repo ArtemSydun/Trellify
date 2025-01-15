@@ -19,6 +19,7 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
@@ -217,6 +218,23 @@ export class UsersService {
     this.logger.log(`User with ID ${userToUpdate.id} updated successfully`);
     return {
       message: `User ${userToUpdate.id} updated successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser,
+    };
+  }
+
+  public async updateUserLanguagePreference(
+    user: string | User,
+    updateUserLanguageDto: UpdateUserLanguageDto,
+  ) {
+    const userToUpdate = await this.getUser(user);
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      language: updateUserLanguageDto.language,
+    });
+
+    return {
+      message: `User ${userToUpdate.id} language preference updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };

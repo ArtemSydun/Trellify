@@ -182,7 +182,7 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse(`You are not connected to this webhook`)
   @ApiCustomNotFoundResponse('Webhook', 'id')
-  updateWebhookById(
+  updateWebhookNotificationsById(
     @Param('id') id: string,
     @Body() notificationBooleansDto: UpdateNotificationsDto,
     @Req() req,
