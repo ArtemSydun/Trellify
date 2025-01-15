@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { TrelloBoardsApiService } from '@trello/api';
+import { TrelloWebhooksLogicService } from '@trello/logic';
 import { differenceInDays } from 'date-fns';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
-import { TrelloBoardsApiService } from 'src/trello/services/api/trello.boards.api.service';
-import { TrelloWebhooksLogicService } from 'src/trello/services/logic/trello.webhooks.logic.service';
 import { UsersService } from 'src/user/services/users.service';
 
 @Injectable()
