@@ -11,6 +11,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import {
+  TrelloBoardsApiService,
+  TrelloCardsApiService,
+  TrelloWebhooksApiService,
+} from '@trello/api';
+import { TrelloActionsLogicService } from '@trello/logic';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
@@ -26,6 +32,7 @@ import {
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { BoardMember } from 'src/trello/dto/member.dto';
 import { UpdateNotificationsDto } from 'src/trello/dto/notifications.dto';
 import {
   TrelloWebhookDetailedActions,
@@ -41,10 +48,6 @@ import { CreateWebhookDto } from '../../dto/create-webhook.dto';
 import { Webhook } from '../../entities/webhook.entity';
 import { WebhookSearchPath } from '../../enums/query.enum';
 import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
-import { TrelloBoardsApiService } from '../api/trello.boards.api.service';
-import { TrelloCardsApiService } from '../api/trello.cards.api.service';
-import { TrelloWebhooksApiService } from '../api/trello.webhooks.api.service';
-import { TrelloActionsLogicService } from './trello.actions.logic.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
@@ -411,6 +414,7 @@ export class TrelloWebhooksLogicService {
     }
 
     let notifiedTargetUser: string | null;
+    let boardMemberships: BoardMember[] | null;
 
     for (const category of sortedCategories) {
       const actionSubscribers =
@@ -493,11 +497,13 @@ export class TrelloWebhooksLogicService {
 
         case TrelloWebhookNotificationCategories.ADMIN:
           if (boardData) {
-            const boardMemberships =
-              await this.trelloBoardsApiService.fetchBoardMemberships(
+            boardMemberships =
+              boardMemberships ??
+              (await this.trelloBoardsApiService.fetchBoardMemberships(
                 authorizedToken,
                 boardData.id,
-              );
+              ));
+
             const membersToNotify = boardMemberships.filter(
               (member) =>
                 actionSubscribers.includes(member.idMember) &&
@@ -520,11 +526,13 @@ export class TrelloWebhooksLogicService {
 
         case TrelloWebhookNotificationCategories.BOARD:
           if (boardData) {
-            const boardMemberships =
-              await this.trelloBoardsApiService.fetchBoardMemberships(
+            boardMemberships =
+              boardMemberships ??
+              (await this.trelloBoardsApiService.fetchBoardMemberships(
                 authorizedToken,
                 boardData.id,
-              );
+              ));
+
             const membersToNotify = boardMemberships.filter(
               (member) =>
                 actionSubscribers.includes(member.idMember) &&

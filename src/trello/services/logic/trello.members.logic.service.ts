@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { TrelloMembersApiService } from '@trello/api';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { Organization } from 'src/trello/dto/organization.dto';
@@ -6,7 +7,6 @@ import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
 import { SharedConfigService } from '../../../config/shared.config.service';
 import { TrelloMember } from '../../dto/member.dto';
-import { TrelloMembersApiService } from '../api/trello.members.api.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin

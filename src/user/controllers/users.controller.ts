@@ -32,6 +32,7 @@ import { Errors } from 'src/common/enums/errors.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
 import { User } from '../entities/user.entity';
@@ -218,6 +219,44 @@ export class UsersController {
   @ApiCustomNotFoundResponse('User', 'id')
   getUserProfile(@Req() req): Promise<Partial<User>> {
     return this.usersService.findUserProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('language')
+  @ApiOperation({
+    summary: 'Update a user language preference',
+    description: 'This endpoint allows to update user language preference.',
+  })
+  @ApiOkResponse({
+    description: 'User language preference updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User {{id}} language preference updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  updateUserLanguagePreference(
+    @Req() req,
+    @Body() updateUserLangueageDto: UpdateUserLanguageDto,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.updateUserLanguagePreference(
+      req.user,
+      updateUserLangueageDto,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
