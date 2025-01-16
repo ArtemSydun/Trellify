@@ -19,6 +19,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -123,6 +124,7 @@ export class UsersController {
     return this.usersService.manageUserTelegramConnection(
       req.user.id,
       connectTelegramDto,
+      req.i18nContext,
     );
   }
 
@@ -159,10 +161,15 @@ export class UsersController {
     'Invalid trello token',
     'Please provide us token with valid expiration date',
   )
-  handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
+  handleTrelloQuery(
+    @Req() req,
+    @Body() connectTrelloDto: ConnectTrelloDto,
+    @I18n() i18n: I18nContext,
+  ) {
     return this.usersService.manageUserTrelloConnection(
       req.user.id,
       connectTrelloDto,
+      i18n,
     );
   }
 
@@ -252,10 +259,12 @@ export class UsersController {
   updateUserLanguagePreference(
     @Req() req,
     @Body() updateUserLangueageDto: UpdateUserLanguageDto,
+    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<User>> {
     return this.usersService.updateUserLanguagePreference(
       req.user,
       updateUserLangueageDto,
+      i18n,
     );
   }
 
@@ -274,8 +283,8 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  findOne(@Param('id') id: string): Promise<User> {
-    return this.usersService.findUserById(id);
+  findOne(@Param('id') id: string, @Req() req): Promise<User> {
+    return this.usersService.findUserById(id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -305,8 +314,11 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  deleteUserById(@Param('id') id: string): Promise<DefaultResponse<string>> {
-    return this.usersService.deleteUserById(id);
+  deleteUserById(
+    @Param('id') id: string,
+    @Req() req,
+  ): Promise<DefaultResponse<string>> {
+    return this.usersService.deleteUserById(id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -345,6 +357,11 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() req,
   ): Promise<DefaultResponse<User>> {
-    return this.usersService.updateUser(id, updateUserDto, req.user);
+    return this.usersService.updateUser(
+      id,
+      updateUserDto,
+      req.user,
+      req.i18nContext,
+    );
   }
 }

@@ -9,8 +9,10 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
@@ -32,20 +34,27 @@ export class AuthService {
     private readonly mailService: MailerService,
   ) {}
 
-  private verifyToken(token: string): any {
+  private verifyToken(token: string, i18n?: I18nContext): any {
     try {
       const decoded = this.jwtService.verify(token);
       return decoded;
     } catch (err) {
       this.logger.error('Invalid or expired token', err.stack);
-      throw new BadRequestException('Your token is not valid or expired');
+      throw new BadRequestException(
+        i18n?.t(I18nKeys.ERRORS_JWT_INVALID_TOKEN) ||
+          'Your token is not valid or expired',
+      );
     }
   }
 
   public async login(
     loginUserDto: LoginUserDto,
+    i18n?: I18nContext,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
-    const user = await this.userService.findUserByEmail(loginUserDto.email);
+    const user = await this.userService.findUserByEmail(
+      loginUserDto.email,
+      i18n,
+    );
 
     const isCredentialsValid = await verifyPassword(
       loginUserDto.password,
@@ -53,7 +62,10 @@ export class AuthService {
     );
     if (!isCredentialsValid) {
       this.logger.warn(`Invalid credentials for email: ${loginUserDto.email}`);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_INVALID_CREDENTIALS) ||
+          'Invalid credentials.',
+      );
     }
 
     const payload = { email: user.email, id: user.id, role: user.role };
@@ -71,6 +83,7 @@ export class AuthService {
 
   public async initiateRegistration(
     createUserDto: CreateUserDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     this.logger.log(
       `Initiating user registration for email: ${createUserDto.email}`,
@@ -81,7 +94,11 @@ export class AuthService {
     );
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
-      throw new ConflictException(`User ${createUserDto.email} already exists`);
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_USER_ALREADY_EXIST, {
+          args: { email: createUserDto.email },
+        }) || `User ${createUserDto.email} already exists`,
+      );
     }
 
     const payload = {
@@ -96,27 +113,37 @@ export class AuthService {
     const confirmationLink = this.mailService.getLink(
       this.configService.get(configServiceEnum.FRONTEND_LINK),
       `auth/confirm/${token}`,
-      'Confirm your email',
+      i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_MESSAGE) ||
+        `Confirm your email`,
     );
 
     await this.mailService.sendDistribution(
       this.configService.get(configServiceEnum.MAILER_SENDER),
       createUserDto.email,
       {
-        subject: 'Confirm Your Email',
-        html: `<p>Please confirm your email by clicking the following link: ${confirmationLink}</p>`,
+        subject:
+          i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_SUBJECT) ||
+          `Confirm your email`,
+        html: `<p>${
+          i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_MESSAGE) ||
+          `Please confirm your email by clicking the following link`
+        }: ${confirmationLink}</p>`,
       },
     );
 
     this.logger.log(`Confirmation link sent to ${createUserDto.email}`);
     return {
-      message: `Confirmation link sent to your email ${createUserDto.email}`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_SENT_MESSAGE, {
+          args: { email: createUserDto.email },
+        }) || `Confirmation link sent to your email ${createUserDto.email}`,
       statusCode: HttpStatus.OK,
     };
   }
 
   public async confirmRegistration(
     token: string,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     const decoded = this.verifyToken(token);
     const { email, password, ...userData } = decoded;
@@ -126,7 +153,7 @@ export class AuthService {
       password,
       ...userData,
     };
-    await this.userService.createUser(newUser);
+    await this.userService.createUser(newUser, i18n);
 
     this.logger.log(`User registered successfully: ${email}`);
     return {
@@ -137,9 +164,11 @@ export class AuthService {
 
   public async forgotPassword(
     forgotPasswordDto: ForgotPasswordDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     const user = await this.userService.findUserByEmail(
       forgotPasswordDto.email,
+      i18n,
     );
     const token: string = this.jwtService.sign(
       { id: user.id },
@@ -162,19 +191,21 @@ export class AuthService {
   public async resetPassword(
     token: string,
     resetPasswordDto: ResetPasswordDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     const { newPassword, repeatPassword } = resetPasswordDto;
 
     if (newPassword !== repeatPassword) {
       this.logger.warn('Password mismatch during reset');
       throw new BadRequestException(
-        `Password and repeat password does not match`,
+        i18n?.t(I18nKeys.ERRORS_AUTH_RESET_PASSWORD_MISMATCH) ||
+          `Password and repeat password does not match`,
       );
     }
 
     const { id } = this.verifyToken(token);
 
-    await this.userService.resetPassword(id, newPassword);
+    await this.userService.resetPassword(id, newPassword, i18n);
 
     this.logger.log(`Password successfully reset for user ID: ${id}`);
 

@@ -1,4 +1,12 @@
-import { Controller, Post, HttpStatus, Body, Param, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  HttpStatus,
+  Body,
+  Param,
+  Get,
+  Req,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiOkResponse,
@@ -56,8 +64,9 @@ export class AuthController {
   })
   login(
     @Body() loginCredentials: LoginUserDto,
+    @Req() req,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
-    return this.authService.login(loginCredentials);
+    return this.authService.login(loginCredentials, req.i18nContext);
   }
 
   @Post('sign-up')
@@ -83,8 +92,14 @@ export class AuthController {
     },
   })
   @ApiCustomConflictResponse('User', 'email')
-  create(@Body() createUserDto: CreateUserDto): Promise<DefaultResponse<null>> {
-    return this.authService.initiateRegistration(createUserDto);
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.initiateRegistration(
+      createUserDto,
+      req.i18nContext,
+    );
   }
 
   @Post('forgot-password')
@@ -112,8 +127,9 @@ export class AuthController {
   @ApiCustomNotFoundResponse('User', 'email')
   public forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
+    @Req() req,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.forgotPassword(forgotPasswordDto);
+    return this.authService.forgotPassword(forgotPasswordDto, req.i18nContext);
   }
 
   @Post('reset-password/:token')
@@ -147,8 +163,13 @@ export class AuthController {
   public resetPassword(
     @Param('token') token: string,
     @Body() resetPasswordDto: ResetPasswordDto,
+    @Req() req,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.resetPassword(token, resetPasswordDto);
+    return this.authService.resetPassword(
+      token,
+      resetPasswordDto,
+      req.i18nContext,
+    );
   }
 
   @Get('confirm/:token')
@@ -176,7 +197,8 @@ export class AuthController {
   @ApiCustomConflictResponse('User', 'email')
   async confirmRegistration(
     @Param('token') token: string,
+    @Req() req,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.confirmRegistration(token);
+    return this.authService.confirmRegistration(token, req.i18nContext);
   }
 }
