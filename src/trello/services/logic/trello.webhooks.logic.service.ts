@@ -16,6 +16,8 @@ import {
   TrelloWebhooksApiService,
 } from '@trello/api';
 import { TrelloActionsLogicService } from '@trello/logic';
+import { I18nContext } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
@@ -78,10 +80,13 @@ export class TrelloWebhooksLogicService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  async getWebhook(webhook: string | Webhook): Promise<Webhook> {
+  async getWebhook(
+    webhook: string | Webhook,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
     if (typeof webhook === 'string') {
       // If it's a string, fetch the webhook by ID
-      return await this.findWebhookById(webhook);
+      return await this.findWebhookById(webhook, i18n);
     }
     return webhook; // If it's already a Webhook object, return it as-is
   }
@@ -93,15 +98,16 @@ export class TrelloWebhooksLogicService {
   async createTrelloWebhook(
     user: string | User,
     createWebhookDto: CreateWebhookDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     const { boardId } = createWebhookDto;
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     const webhook =
       await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
-    const userToUpdate = await this.userService.getUser(user);
+    const userToUpdate = await this.userService.getUser(user, i18n);
 
-    validateTrelloToken(userToUpdate.trello.token);
+    validateTrelloToken(userToUpdate.trello.token, i18n);
     const decryptedUserToken = decryptText(
       userToUpdate.trello.token,
       this.encryptionKey,
@@ -121,7 +127,8 @@ export class TrelloWebhooksLogicService {
           `Webhook for board ${webhook.boardName} already exists for this user.`,
         );
         throw new ConflictException(
-          `Webhook for board ${webhook.boardName} already exists for this user.`,
+          i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_IS_ALREADY_EXIST) ||
+            `Webhook for board ${webhook.boardName} already exists for this user.`,
         );
       }
 
@@ -265,6 +272,7 @@ export class TrelloWebhooksLogicService {
     user: string | User,
     webhook: string | Webhook,
     updateWebhookNotificationsDto: UpdateNotificationsDto,
+    i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     const userToUpdate = await this.userService.getUser(user);
     const webhookToUpdate = await this.getWebhook(webhook);
@@ -275,10 +283,13 @@ export class TrelloWebhooksLogicService {
       updateWebhookNotificationsDto;
 
     if (!subscriberIds.includes(userToUpdate.trello.userId)) {
-      throw new ForbiddenException(`You are not connected to this webhook`);
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_YOU_ARE_NOT_CONNECTED_TO_WEBHOOK) ||
+          `You are not connected to this webhook`,
+      );
     }
 
-    validateTrelloToken(userToUpdate.trello.token);
+    validateTrelloToken(userToUpdate.trello.token, i18n);
 
     try {
       const updatedNotifications = getUpdatedWebhookNotifications(
@@ -561,11 +572,12 @@ export class TrelloWebhooksLogicService {
   async disconnectFromTrelloWebhook(
     user: string | User,
     webhook: string | Webhook,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     const userToUpdate = await this.userService.getUser(user);
     const webhookToUpdate = await this.getWebhook(webhook);
 
-    validateTrelloToken(userToUpdate.trello.token);
+    validateTrelloToken(userToUpdate.trello.token, i18n);
 
     if (
       !userToUpdate.trello.webhooks.find(
@@ -573,6 +585,7 @@ export class TrelloWebhooksLogicService {
       )
     ) {
       throw new BadRequestException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_USER_IS_NOT_CONNECTED_TO_WEBHOOK),
         `User is not connected to webhook ${webhookToUpdate.id}`,
       );
     }
@@ -631,10 +644,11 @@ export class TrelloWebhooksLogicService {
 
   async disconnectFromAllTrelloWebhooks(
     user: string | User,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
-    const userToDisconnect = await this.userService.getUser(user);
-
-    validateTrelloToken(userToDisconnect.trello.token);
+    const userToDisconnect = await this.userService.getUser(user, i18n);
+    console.log(userToDisconnect);
+    validateTrelloToken(userToDisconnect.trello.token, i18n);
     try {
       if (
         !userToDisconnect?.trello?.webhooks ||
@@ -707,15 +721,17 @@ export class TrelloWebhooksLogicService {
     } catch (err) {
       this.logger.error('Error during bulk update of webhooks:', err);
       throw new BadRequestException(
-        'Error disconnecting from all Trello webhooks',
+        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOKS_DISCONNECT) ||
+          'Error disconnecting from all Trello webhooks',
       );
     }
   }
 
   async removeTrelloWebhook(
     webhook: string | Webhook,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const webhookToDelete = await this.getWebhook(webhook);
+    const webhookToDelete = await this.getWebhook(webhook, i18n);
 
     const { id: webhookId, authorToken } = webhookToDelete;
 
@@ -749,11 +765,17 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async removeAllWebhooks(user: string | User): Promise<DefaultResponse<null>> {
-    const superadmin = await this.userService.getUser(user);
+  async removeAllWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const superadmin = await this.userService.getUser(user, i18n);
 
     if (superadmin.role !== UserRoles.superadmin) {
-      throw new ForbiddenException(`Forbidden resource`);
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          `Forbidden resource`,
+      );
     }
 
     const webhooks = await this.findAllWebhooks();
@@ -788,9 +810,12 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async findMemberWebhooks(user: string | User): Promise<Webhook[]> {
+  async findMemberWebhooks(
+    user: string | User,
+    i18n: I18nContext,
+  ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user);
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksConnectedToUser(
         requestedUser.trello.userId,
@@ -812,22 +837,36 @@ export class TrelloWebhooksLogicService {
     // }
   }
 
-  async findWebhookById(webhookId: string): Promise<Webhook> {
+  async findWebhookById(
+    webhookId: string,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
     const webhook = await this.trelloWebhookRepository.findOneById(webhookId);
 
     if (!webhook) {
-      throw new NotFoundException(`Webhook with id ${webhookId} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_ID, {
+          args: { webhookId },
+        }) || `Webhook with id ${webhookId} not found`,
+      );
     }
 
     return webhook;
   }
 
-  async findWebhookByBoardId(boardId: string): Promise<Webhook> {
+  async findWebhookByBoardId(
+    boardId: string,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
     const webhook =
       await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
     if (!webhook) {
-      throw new NotFoundException(`Webhook with boardId ${boardId} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID, {
+          args: { boardId },
+        }) || `Webhook with boardId ${boardId} not found`,
+      );
     }
 
     return webhook;

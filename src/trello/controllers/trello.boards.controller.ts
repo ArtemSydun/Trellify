@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Param, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiOkResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import {
   ApiCustomUnathorizedResponse,
@@ -25,8 +26,11 @@ export class TrelloBoardsController {
     type: [TrelloBoard],
   })
   @ApiCustomUnathorizedResponse()
-  findBoardsMemberBelongsTo(@Req() req): Promise<TrelloBoard[]> {
-    return this.boardsService.findBoardsMemberBelongsTo(req.user.id);
+  findBoardsMemberBelongsTo(
+    @Req() req,
+    @I18n() i18n: I18nContext,
+  ): Promise<TrelloBoard[]> {
+    return this.boardsService.findBoardsMemberBelongsTo(req.user.id, i18n);
   }
 
   @Get('organizations/:organizationId')

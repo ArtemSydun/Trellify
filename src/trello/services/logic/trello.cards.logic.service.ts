@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloCardsApiService } from '@trello/api';
+import { I18nContext } from 'nestjs-i18n';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { User } from 'src/user/entities/user.entity';
@@ -27,10 +28,14 @@ export class TrelloCardsLogicService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  async findCardById(user: string | User, cardId: string): Promise<TrelloCard> {
+  async findCardById(
+    user: string | User,
+    cardId: string,
+    i18n?: I18nContext,
+  ): Promise<TrelloCard> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,
@@ -45,10 +50,13 @@ export class TrelloCardsLogicService {
     return card;
   }
 
-  async findMemberRelatedCards(user: string | User): Promise<TrelloCard[]> {
+  async findMemberRelatedCards(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<TrelloCard[]> {
     const userToFind = await this.userService.getUser(user);
 
-    validateTrelloToken(userToFind.trello.token);
+    validateTrelloToken(userToFind.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       userToFind.trello.token,
