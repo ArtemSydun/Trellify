@@ -175,7 +175,7 @@ describe('UsersService', () => {
       expect(usersService.getUser).toHaveBeenCalledWith(userToDelete.id);
       expect(
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
-      ).toHaveBeenCalledWith(userToDelete);
+      ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(result).toEqual({
         message: `User ${userToDelete.id} was deleted successfully`,
@@ -207,7 +207,7 @@ describe('UsersService', () => {
     it('should reset the user password', async () => {
       const resetPasswordDto: ResetPasswordDto = {
         newPassword: 'newpassword',
-        repeatPassword: 'repeatPassword',
+        repeatPassword: 'newpassword',
       };
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub());
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
@@ -217,9 +217,13 @@ describe('UsersService', () => {
       await usersService.resetPassword(
         userStub().id,
         resetPasswordDto.newPassword,
+        undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userStub().id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userStub().id,
+        undefined,
+      );
       expect(hashPassword).toHaveBeenCalledWith(resetPasswordDto.newPassword);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userStub().id, {
         password: 'hashedPassword',
@@ -253,16 +257,20 @@ describe('UsersService', () => {
       const result = await usersService.manageUserTelegramConnection(
         userToUpdate.id,
         connectTelegramDto,
+        undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
         UserSearchPathEnum.TelegramChatId,
         connectTelegramDto.chatId,
       );
       expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
         connectTelegramDto,
-        'Trello notifier bot authorized successfully',
+        'Trellify authorized successfully',
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
@@ -289,9 +297,13 @@ describe('UsersService', () => {
         usersService.manageUserTelegramConnection(
           userToUpdate.id,
           connectTelegramDto,
+          undefined,
         ),
       ).rejects.toThrow(ConflictException);
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(telegramService.sendMessageToUser).not.toHaveBeenCalled();
       expect(usersRepository.updateById).not.toHaveBeenCalled();
     });
@@ -322,7 +334,10 @@ describe('UsersService', () => {
         },
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
         userToUpdate.telegram,
         'Trello notifier bot disconnected successfully',
@@ -363,12 +378,16 @@ describe('UsersService', () => {
       const result = await usersService.manageUserTrelloConnection(
         userToUpdate.id,
         connectTrelloDto,
+        undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
-      ).toHaveBeenCalledWith(userToUpdate);
+      ).toHaveBeenCalledWith(userToUpdate, undefined);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         trello: { userId: null, username: null, webhooks: [], token: null },
       });
@@ -413,15 +432,21 @@ describe('UsersService', () => {
       const result = await usersService.manageUserTrelloConnection(
         userToUpdate.id,
         connectTrelloDto,
+        undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(
         connectTrelloDto.token,
+        undefined,
       );
       expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
         userToUpdate,
         `encrypted${connectTrelloDto.token}`,
+        undefined,
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         trello: {
@@ -470,9 +495,13 @@ describe('UsersService', () => {
         ),
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(
         connectTrelloDto.token,
+        undefined,
       );
     });
 
@@ -495,10 +524,15 @@ describe('UsersService', () => {
         .spyOn(usersRepository, 'findUserByProperty')
         .mockResolvedValue(connectedUser);
 
+      (encryptText as jest.Mock).mockImplementation(
+        (text: string) => `encrypted${text}`,
+      );
+
       await expect(
         usersService.manageUserTrelloConnection(
           userToUpdate.id,
           connectTrelloDto,
+          undefined,
         ),
       ).rejects.toThrow(
         new ConflictException(
@@ -506,17 +540,22 @@ describe('UsersService', () => {
         ),
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToUpdate.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate.id,
+        undefined,
+      );
       expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(
         connectTrelloDto.token,
+        undefined,
       );
       expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
         userToUpdate,
         `encrypted${connectTrelloDto.token}`,
+        undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
         UserSearchPathEnum.TrelloUserId,
-        trelloProfileMock.id,
+        connectedUser.trello.userId,
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();
     });

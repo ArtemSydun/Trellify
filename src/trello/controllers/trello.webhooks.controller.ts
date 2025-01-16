@@ -18,6 +18,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -79,8 +80,9 @@ export class TrelloWebhooksController {
   createTrelloWebhook(
     @Req() req,
     @Body() body: CreateWebhookDto,
+    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.createTrelloWebhook(req.user.id, body);
+    return this.webhooksService.createTrelloWebhook(req.user.id, body, i18n);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -96,8 +98,8 @@ export class TrelloWebhooksController {
     type: [Webhook],
   })
   @ApiCustomUnathorizedResponse()
-  getUserConnectedWebhooksList(@Req() req) {
-    return this.webhooksService.findMemberWebhooks(req.user.id);
+  getUserConnectedWebhooksList(@Req() req, @I18n() i18n: I18nContext) {
+    return this.webhooksService.findMemberWebhooks(req.user.id, i18n);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -186,11 +188,13 @@ export class TrelloWebhooksController {
     @Param('id') id: string,
     @Body() notificationBooleansDto: UpdateNotificationsDto,
     @Req() req,
+    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.updateTrelloWebhookNotifications(
       req.user.id,
       id,
       notificationBooleansDto,
+      i18n,
     );
   }
 

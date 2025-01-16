@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import * as path from 'path';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AuthModule } from './auth/auth.module';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
@@ -24,6 +26,14 @@ import { UsersModule } from './user/users.module';
         limit: 20,
       },
     ]),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/locales/'),
+        watch: true,
+      },
+      resolvers: [new QueryResolver(['lang'])],
+    }),
     AuthModule,
     UsersModule,
     TrelloModule,
@@ -39,4 +49,8 @@ import { UsersModule } from './user/users.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(I18nMiddleware).forRoutes('*');
+  }
+}

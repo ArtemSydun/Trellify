@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloMembersApiService } from '@trello/api';
+import { I18nContext } from 'nestjs-i18n';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { Organization } from 'src/trello/dto/organization.dto';
@@ -31,14 +32,16 @@ export class TrelloMembersLogicService {
   async findMemberProfile(
     user: string | User,
     token?: string,
+    i18n?: I18nContext,
   ): Promise<TrelloMember> {
-    const userToFind = await this.userService.getUser(user);
+    const userToFind = await this.userService.getUser(user, i18n);
 
     if (token) {
-      validateTrelloToken(decryptText(token, this.encryptionKey));
+      validateTrelloToken(decryptText(token, this.encryptionKey), i18n);
     } else {
       validateTrelloToken(
         decryptText(userToFind.trello.token, this.encryptionKey),
+        i18n,
       );
     }
 
@@ -71,10 +74,13 @@ export class TrelloMembersLogicService {
     return memberProfile;
   }
 
-  async findMemberOrganizations(user: string | User): Promise<Organization[]> {
+  async findMemberOrganizations(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Organization[]> {
     const userToFind = await this.userService.getUser(user);
 
-    validateTrelloToken(userToFind.trello.token);
+    validateTrelloToken(userToFind.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       userToFind.trello.token,

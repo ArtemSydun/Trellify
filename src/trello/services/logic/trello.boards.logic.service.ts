@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloBoardsApiService } from '@trello/api';
+import { I18nContext } from 'nestjs-i18n';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { User } from 'src/user/entities/user.entity';
@@ -28,10 +29,13 @@ export class TrelloBoardsLogicService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  async findBoardsMemberBelongsTo(user: string | User): Promise<TrelloBoard[]> {
+  async findBoardsMemberBelongsTo(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<TrelloBoard[]> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,
@@ -69,10 +73,11 @@ export class TrelloBoardsLogicService {
   async findBoardsInOrganization(
     user: string | User,
     organizationId: string,
+    i18n?: I18nContext,
   ): Promise<TrelloBoard[]> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,
@@ -117,10 +122,11 @@ export class TrelloBoardsLogicService {
     user: string | User,
     boardId: string,
     fieldName: TrelloBoardField,
+    i18n: I18nContext,
   ): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,
@@ -139,10 +145,11 @@ export class TrelloBoardsLogicService {
   async findBoardById(
     user: string | User,
     boardId: string,
+    i18n?: I18nContext,
   ): Promise<TrelloBoard> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,
@@ -178,10 +185,11 @@ export class TrelloBoardsLogicService {
   async findBoardMemberships(
     user: string | User,
     boardId: string,
+    i18n: I18nContext,
   ): Promise<any> {
     const requestedUser = await this.userService.getUser(user);
 
-    validateTrelloToken(requestedUser.trello.token);
+    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const decryptedUserToken = decryptText(
       requestedUser.trello.token,

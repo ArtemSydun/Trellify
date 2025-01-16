@@ -1,0 +1,44 @@
+{
+    "messages": {
+        "registrationEmailSubject": "Confirm your email",
+        "registrationEmailMessage": "Please confirm your email by clicking the following link",
+        "registrationEmailSentMessage": "Confirmation link sent to your email {email}",
+        "telegramConnectionMessage": "Trellify notifier bot authorized successfully",
+        "telegramDisconnectionMessage": "Trellify notifier bot disconnected successfully"
+    },
+    "errors": {
+        "jwt": {
+            "invalidToken": "Your token is not valid or expired"
+        },
+        "user": {
+            "notFoundByEmail": "User with email {email} not found",
+            "alreadyExist": "User {email} already exists",
+            "notFoundById": "User with id {id} not found",
+            "notFoundByTrelloId": "User with Trello ID {trelloUserId} not found",
+            "notFoundByProperty": "User with property {path}: {value} not found"
+        },
+        "telegram": {
+            "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user"
+        },
+        "trello": {
+            "youAreNotConnectedToWebhook": "You are not connected to this webhook",
+            "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToUpdate.id}",
+            "webhookIsAlreadyExist": "Webhook for board {boardName} already exists for this user.",
+            "webhookNotFoundById": "Webhook with id {webhookId} not found",
+            "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
+            "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
+            "invalidToken": "Invalid Trello token",
+            "checkConnection": "Please check your Trello connection",
+            "expiredToken": "Please provide a token with a valid expiration date",
+            "alreadyConnected": "This trello profile is already binded to other user"
+        },
+        "general": {
+            "invalidRequest": "The request for the {field} field is invalid.",
+            "invalidCredentials": "Invalid credential",
+            "forbiddenResource": "Forbidden resource"
+        },
+        "auth": {
+            "resetPasswordMismatch": "Password and repeat password does not match"
+        }
+    }
+}

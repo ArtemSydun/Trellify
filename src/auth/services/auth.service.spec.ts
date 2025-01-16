@@ -64,6 +64,7 @@ describe('AuthService', () => {
 
       expect(usersService.findUserByEmail).toHaveBeenCalledWith(
         loginUserDto.email,
+        undefined,
       );
       expect(verifyPassword).toHaveBeenCalledWith(
         loginUserDto.password,
@@ -112,7 +113,10 @@ describe('AuthService', () => {
         .spyOn(mailerService, 'getLink')
         .mockReturnValue('http://localhost/auth/confirm/mockToken');
 
-      const result = await authService.initiateRegistration(createUserDto);
+      const result = await authService.initiateRegistration(
+        createUserDto,
+        undefined,
+      );
 
       expect(usersService.doesUserExist).toHaveBeenCalledWith(
         createUserDto.email,
@@ -129,7 +133,7 @@ describe('AuthService', () => {
       expect(mailerService.sendDistribution).toHaveBeenCalledWith(
         expect.any(String), // Sender
         createUserDto.email,
-        expect.objectContaining({ subject: 'Confirm Your Email' }),
+        expect.objectContaining({ subject: 'Confirm your email' }),
       );
       expect(result).toEqual({
         message: `Confirmation link sent to your email ${createUserDto.email}`,
@@ -162,10 +166,14 @@ describe('AuthService', () => {
         statusCode: HttpStatus.OK,
       });
 
-      const result = await authService.forgotPassword(forgotPasswordDto);
+      const result = await authService.forgotPassword(
+        forgotPasswordDto,
+        undefined,
+      );
 
       expect(usersService.findUserByEmail).toHaveBeenCalledWith(
         forgotPasswordDto.email,
+        undefined,
       );
       expect(jwtService.sign).toHaveBeenCalled();
       expect(mailerService.sendResetPasswordLink).toHaveBeenCalledWith(
@@ -190,12 +198,17 @@ describe('AuthService', () => {
       jest.spyOn(jwtService, 'verify').mockReturnValue({ id: userStub().id });
       jest.spyOn(usersService, 'resetPassword').mockResolvedValue();
 
-      const result = await authService.resetPassword(token, resetPasswordDto);
+      const result = await authService.resetPassword(
+        token,
+        resetPasswordDto,
+        undefined,
+      );
 
       expect(jwtService.verify).toHaveBeenCalledWith(token);
       expect(usersService.resetPassword).toHaveBeenCalledWith(
         userStub().id,
         resetPasswordDto.newPassword,
+        undefined,
       );
       expect(result).toEqual(resetPasswordMessageStub());
     });
