@@ -47,7 +47,7 @@ jobs:
             git checkout staging
             git pull
             [ -f .env.staging ] || cp .env.example .env.staging
-            STAGE=staging docker compose --env-file .env.staging up -d --build
+            STAGE=staging docker compose --env-file .env.staging -p api-trellify-staging up -d --build
 
       - name: Deploy for main
         if: github.ref == 'refs/heads/main'
@@ -63,4 +63,4 @@ jobs:
             git checkout main
             git pull
             [ -f .env.production ] || cp .env.example .env.production
-            STAGE=production docker compose --env-file .env.production up -d --build
+            STAGE=production docker compose --env-file .env.production -p api-trellify-production up -d --build
