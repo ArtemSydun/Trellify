@@ -1,5 +1,5 @@
 services:
-  trellify-node:
+  node:
     container_name: api-trellify-${STAGE}
     build:
       context: .
@@ -10,11 +10,11 @@ services:
     ports:
       - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
     depends_on:
-      - trellify-mongodb
+      - mongodb
     networks:
       - backend_network
 
-  trellify-mongodb:
+  mongodb:
     image: mongo:latest
     container_name: mongodb-trellify-${STAGE}
     hostname: ${MONGODB_HOSTNAME}
@@ -40,3 +40,4 @@ volumes:
 networks:
   backend_network:
     driver: bridge
+    name: trellify-backend-network-${STAGE}
