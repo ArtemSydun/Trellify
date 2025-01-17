@@ -667,7 +667,9 @@ export class TrelloWebhooksLogicService {
         webhooksToClear.map(async (webhook) => {
           const updateObject: any = {
             $pull: {
-              [WebhookSearchPath.Subscribers]: userToDisconnect.trello.userId,
+              [WebhookSearchPath.Subscribers]: {
+                trelloUserId: userToDisconnect.trello.userId, // Match objects with the specific `trelloUserId`
+              },
             },
           };
 
@@ -738,12 +740,18 @@ export class TrelloWebhooksLogicService {
     const webhookAuthorToken = decryptText(authorToken, this.encryptionKey);
 
     try {
-      await this.userService.removeWebhookFromAllUsers(webhookId);
-
       await this.trelloWebhookApiService.deleteWebhook(
         webhookAuthorToken,
         webhookId,
       );
+    } catch (deleteError) {
+      this.logger.warn(
+        `Webhook ${webhookId} could not be deleted from Trello: ${deleteError.message || deleteError.response.message}`,
+      );
+    }
+
+    try {
+      await this.userService.removeWebhookFromAllUsers(webhookToDelete);
 
       await this.trelloWebhookRepository.delete(webhookId);
 
@@ -755,12 +763,13 @@ export class TrelloWebhooksLogicService {
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
+      // console.log(err);
       this.logger.error(
         'Error deleting webhook:',
-        err.response ? err.response.data : err.message,
+        err.response ? err.response.message : err.message,
       );
       throw new BadRequestException(
-        err.response ? err.response.data : err.message,
+        err.response ? err.response.message : err.message,
       );
     }
   }
@@ -800,12 +809,13 @@ export class TrelloWebhooksLogicService {
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
+      // console.log(err);
       this.logger.error(
         'Error deleting all webhooks:',
-        err.response ? err.response.data : err.message,
+        err.response ? err.response.message : err.message,
       );
       throw new BadRequestException(
-        err.response ? err.response.data : err.message,
+        err.response ? err.response.message : err.message,
       );
     }
   }
