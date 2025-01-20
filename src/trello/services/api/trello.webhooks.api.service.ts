@@ -46,4 +46,17 @@ export class TrelloWebhooksApiService {
       );
     }
   }
+
+  async getWebhooksByToken(creatorToken: string): Promise<any> {
+    const url = `${trelloApiLink}/tokens/${creatorToken}/webhooks?key=${this.trelloApiKey}&token=${creatorToken}`;
+
+    try {
+      const response = await axios.get(url);
+      return response.data;
+    } catch (err) {
+      throw new BadRequestException(
+        err.response ? err.response.data : err.message,
+      );
+    }
+  }
 }

@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Schema as MongooseSchema } from 'mongoose';
 import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
+import { WebhookAuthor } from '../dto/author.dto';
 import { NotificationCategoriesDto } from '../dto/notifications.dto';
 import { WebhookSubscriber } from '../dto/subscriber.dto';
 
@@ -75,11 +76,11 @@ export class Webhook {
   boardUrl: string;
 
   @ApiProperty({
-    description: 'Webhook creator token',
-    example: 'webhook creator crypted token',
+    description: 'Webhook creator info',
+    example: WebhookAuthor,
   })
   @Prop({ required: true })
-  authorToken: string;
+  author: WebhookAuthor;
 
   @ApiProperty({
     description: 'List of Trello user IDs who are subscribed to this webhook.',
