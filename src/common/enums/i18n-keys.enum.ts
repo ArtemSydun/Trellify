@@ -4,6 +4,8 @@ export enum I18nKeys {
   MESSAGES_REGISTRATION_EMAIL_SENT_MESSAGE = 'common.messages.registrationEmailSentMessage',
   MESSAGES_TELEGRAM_CONNECTION_MESSAGE = 'common.messages.telegramConnectionMessage',
   MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE = 'common.messages.telegramDisconnectionMessage',
+  MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.webhookHealthIsOk',
+  MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED = 'common.messages.webhookWasRecreated',
 
   ERRORS_JWT_INVALID_TOKEN = 'common.errors.jwt.invalidToken',
 

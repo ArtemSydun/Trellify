@@ -21,6 +21,8 @@
             "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого телеграм-користувача"
         },
         "trello": {
+            "webhookHealthIsOk": "Вебхук до дошки {board} активний",
+            "webhookWasRecreated": "Вебхук до дошки {board} був перестворений",
             "youAreNotConnectedToWebhook": "Ви не підключені до цього вебхука",
             "userIsNotConnectedToWebhook": "Користувач не підключений до вебхука {webhookToUpdate.id}",
             "webhookIsAlreadyExist": "Вебхук для дошки {boardName} вже існує для цього користувача.",
