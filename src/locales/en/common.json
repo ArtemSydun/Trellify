@@ -4,7 +4,9 @@
         "registrationEmailMessage": "Please confirm your email by clicking the following link",
         "registrationEmailSentMessage": "Confirmation link sent to your email {email}",
         "telegramConnectionMessage": "Trellify notifier bot authorized successfully",
-        "telegramDisconnectionMessage": "Trellify notifier bot disconnected successfully"
+        "telegramDisconnectionMessage": "Trellify notifier bot disconnected successfully",
+        "webhookHealthIsOk": "Webhook to the {board} is active now",
+        "webhookWasRecreated": "Webhook was recreated"
     },
     "errors": {
         "jwt": {

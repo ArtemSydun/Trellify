@@ -91,10 +91,10 @@ export class TrelloWebhooksLogicService {
     return webhook; // If it's already a Webhook object, return it as-is
   }
 
-  async replaceWebhookIfNeeded(
+  async recreateWebhookIfUnavaible(
     webhook: Webhook | string,
     userToUpdate: User | string,
-    webhookBoard: TrelloBoard | string,
+    webhookBoard?: TrelloBoard | string,
   ): Promise<Webhook> {
     const existingWebhook = await this.getWebhook(webhook); // webhook to replace
     userToUpdate = await this.userService.getUser(userToUpdate);
@@ -104,21 +104,13 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    if (typeof webhookBoard === 'string') {
-      webhookBoard = await this.trelloBoardsApiService.fetchBoardById(
-        decryptedUserToken,
-        webhookBoard,
-      );
-    }
-
-    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${webhookBoard.id}`;
-
     const decryptedAuthorToken = decryptText(
       existingWebhook.author.trelloToken,
       this.encryptionKey,
     );
 
-    // Check if the webhook still exists in Trello
+    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${existingWebhook.idModel}`;
+
     const creatorWebhooks =
       await this.getWebhooksByCreatorToken(decryptedAuthorToken);
 
@@ -126,10 +118,30 @@ export class TrelloWebhooksLogicService {
       (trelloWebhook) => trelloWebhook.id === existingWebhook.id,
     );
 
+    if (!webhookBoard) {
+      const boardId = existingWebhook.idModel;
+      webhookBoard = await this.trelloBoardsApiService.fetchBoardById(
+        decryptedUserToken,
+        boardId,
+      );
+    }
+
+    if (typeof webhookBoard === 'string') {
+      webhookBoard = await this.trelloBoardsApiService.fetchBoardById(
+        decryptedUserToken,
+        webhookBoard,
+      );
+    }
+
+    // Check if the webhook still exists in Trello
     if (!isWebhookStillActive) {
       // Find all users connected to the old webhook
       const usersConnectedToWebhook =
         await this.userService.findUsersConnectedToWebhook(existingWebhook.id);
+
+      const usersWithoutOldAuthor = usersConnectedToWebhook.filter(
+        (user) => user.trello.userId !== existingWebhook.author.trelloUserId,
+      );
 
       // Create a filtered copy of the existing webhook
       const existingWebhookCopy =
@@ -165,34 +177,48 @@ export class TrelloWebhooksLogicService {
         await this.trelloWebhookRepository.create(createdWebhook);
 
       // Update all users connected to the old webhook
-      const updateUserPromises = usersConnectedToWebhook.map(
-        (connectedUser) => {
-          const updatedWebhooks = connectedUser.trello.webhooks.map(
-            (userWebhook) => {
-              if (userWebhook.webhookId === existingWebhook.id) {
-                return {
-                  ...userWebhook,
-                  webhookId: savedNewWebhook.id,
-                  idModel: savedNewWebhook.idModel,
-                  modelName: savedNewWebhook.boardName,
-                };
-              }
-              return userWebhook;
-            },
-          );
+      const updateUserPromises = usersWithoutOldAuthor.map((connectedUser) => {
+        const updatedWebhooks = connectedUser.trello.webhooks.map(
+          (userWebhook) => {
+            if (userWebhook.webhookId === existingWebhook.id) {
+              return {
+                ...userWebhook,
+                webhookId: savedNewWebhook.id,
+                idModel: savedNewWebhook.idModel,
+                modelName: savedNewWebhook.boardName,
+              };
+            }
+            return userWebhook;
+          },
+        );
 
-          const updatedUserProps = {
-            trello: {
-              ...connectedUser.trello,
-              webhooks: updatedWebhooks,
-            },
-          };
+        const updatedUserProps = {
+          trello: {
+            ...connectedUser.trello,
+            webhooks: updatedWebhooks,
+          },
+        };
 
-          return this.userService.updateUser(connectedUser, updatedUserProps);
-        },
-      );
+        return this.userService.updateUser(connectedUser, updatedUserProps);
+      });
 
       await Promise.all(updateUserPromises);
+
+      // Remove webhook from previous author's webhooks
+      const previousAuthor = await this.userService.findUserByTrelloId(
+        existingWebhook.author.trelloUserId,
+      );
+
+      const filteredWebhooks = previousAuthor.trello.webhooks.filter(
+        (userWebhook) => userWebhook.webhookId !== existingWebhook.id,
+      );
+
+      await this.userService.updateUser(previousAuthor, {
+        trello: {
+          ...previousAuthor.trello,
+          webhooks: filteredWebhooks,
+        },
+      });
 
       this.logger.log(
         `Old webhook for board ${existingWebhook.boardName} replaced with new webhook`,
@@ -203,6 +229,40 @@ export class TrelloWebhooksLogicService {
 
     // If the webhook is still active, return the existing webhook
     return existingWebhook;
+  }
+
+  async webhookHealthCheck(
+    webhook: Webhook | string,
+    userToUpdate: User | string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<Webhook>> {
+    const webhookToCheck = await this.getWebhook(webhook);
+
+    const healthyWebhook = await this.recreateWebhookIfUnavaible(
+      webhook,
+      userToUpdate,
+    );
+
+    if (healthyWebhook.id !== webhookToCheck.id) {
+      return {
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED, {
+            args: { board: webhookToCheck.boardName },
+          }) || `Webhook for board ${webhookToCheck.boardName} was recreated`,
+        statusCode: HttpStatus.OK,
+        data: healthyWebhook,
+      };
+    } else {
+      // If the webhook is still active, return the existing webhook
+      return {
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK, {
+            args: { board: webhookToCheck.boardName },
+          }) || `Webhook for board ${webhookToCheck.boardName} health is ok`,
+        statusCode: HttpStatus.OK,
+        data: webhookToCheck,
+      };
+    }
   }
 
   async getProfileNotifications(): Promise<NotificationProfiles> {
@@ -277,7 +337,7 @@ export class TrelloWebhooksLogicService {
     );
 
     if (webhook) {
-      webhook = await this.replaceWebhookIfNeeded(
+      webhook = await this.recreateWebhookIfUnavaible(
         webhook,
         userToUpdate,
         connectedBoard,
@@ -448,11 +508,18 @@ export class TrelloWebhooksLogicService {
 
     validateTrelloToken(userToUpdate.trello.token, i18n);
 
-    await this.replaceWebhookIfNeeded(
+    const newWebhook = await this.recreateWebhookIfUnavaible(
       webhook,
       userToUpdate,
       webhookToUpdate.idModel,
     );
+
+    if (newWebhook.id !== webhookToUpdate.id) {
+      throw new BadRequestException(
+        i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED) ||
+          'Webhook was recreated',
+      );
+    }
 
     try {
       const updatedNotifications = getUpdatedWebhookNotifications(
@@ -817,8 +884,6 @@ export class TrelloWebhooksLogicService {
       }
 
       const webhooksToClear = userToDisconnect.trello.webhooks;
-
-      console.log(webhooksToClear);
 
       //we create array of mongo operations to call them later in one request
       const bulkUpdateOperations = await Promise.all(

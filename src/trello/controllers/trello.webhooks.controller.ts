@@ -198,6 +198,44 @@ export class TrelloWebhooksController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('healthcheck/:id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check health of the chosen webhook',
+    description:
+      'This endpoint allows the authenticated user to check health of webhook.',
+  })
+  @ApiOkResponse({
+    description: 'Webhook health checked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Webhook {{boardName}} was recreated / health is ok',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Webhook),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('Webhook', 'id')
+  webhookHealthCheckById(
+    @Param('id') id: string,
+    @Req() req,
+    @I18n() i18n: I18nContext,
+  ): Promise<DefaultResponse<Webhook>> {
+    return this.webhooksService.webhookHealthCheck(req.user.id, id, i18n);
+  }
+
   @ApiExcludeEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
