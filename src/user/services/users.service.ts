@@ -18,6 +18,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
 
+import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -226,14 +227,16 @@ export class UsersService {
 
         const trelloToken =
           updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile =
-          await this.trelloMembersLogicService.findMemberProfile(
-            userToUpdate,
-            trelloToken,
-            i18n,
-          );
+        if (updateUserDto.trello.token) {
+          const trelloProfile =
+            await this.trelloMembersLogicService.findMemberProfile(
+              userToUpdate,
+              trelloToken,
+              i18n,
+            );
 
-        updatedUserProps.trello.userId = trelloProfile.id;
+          updatedUserProps.trello.userId = trelloProfile.id;
+        }
 
         if (value.webhooks) {
           updatedUserProps.trello.webhooks = value.webhooks;
@@ -371,7 +374,7 @@ export class UsersService {
   ): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.getUser(user, i18n);
     const { token } = connectTrelloDto;
-
+    // console.log(token);
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
@@ -442,9 +445,12 @@ export class UsersService {
     };
   }
 
-  public async removeWebhookFromAllUsers(webhookId: string) {
-    const usersConnectedToWebhook =
-      await this.findUsersConnectedToWebhook(webhookId);
+  public async removeWebhookFromAllUsers(webhook: string | Webhook) {
+    const webhookToRemove =
+      await this.trelloWebhooksLogicService.getWebhook(webhook);
+    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(
+      webhookToRemove.id,
+    );
 
     //prepare bulk operation for each user to delete webhook with webhookId
     const bulkUpdateOperations = usersConnectedToWebhook.map((user) => ({
@@ -452,17 +458,27 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPathEnum.TrelloWebhooks]: { webhookId },
+            [UserSearchPathEnum.TrelloWebhooks]: {
+              webhookId: webhookToRemove.id,
+            },
           },
         },
       },
     }));
+
+    const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
+      this.telegramService.sendMessageToUser(
+        user.telegram,
+        `Webhook for board ${webhookToRemove.boardName} was deleted. Please, reconnect notifications`,
+      );
+    });
 
     try {
       if (bulkUpdateOperations.length > 0) {
         const result =
           await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
         this.logger.log(result);
+        Promise.all([sendTelegramNotification]);
       }
     } catch (err) {
       this.logger.error(`Error during bulk update: ${err.message || err}`);

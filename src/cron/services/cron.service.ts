@@ -31,7 +31,7 @@ export class CronService {
       const unactiveWebhooks = [];
       for (const webhook of webhooks) {
         const decryptedAuthorToken = decryptText(
-          webhook.authorToken,
+          webhook.author.trelloToken,
           this.encryptionKey,
         );
         const dateLastActivity =
