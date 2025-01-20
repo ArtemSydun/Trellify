@@ -227,14 +227,16 @@ export class UsersService {
 
         const trelloToken =
           updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile =
-          await this.trelloMembersLogicService.findMemberProfile(
-            userToUpdate,
-            trelloToken,
-            i18n,
-          );
+        if (updateUserDto.trello.token) {
+          const trelloProfile =
+            await this.trelloMembersLogicService.findMemberProfile(
+              userToUpdate,
+              trelloToken,
+              i18n,
+            );
 
-        updatedUserProps.trello.userId = trelloProfile.id;
+          updatedUserProps.trello.userId = trelloProfile.id;
+        }
 
         if (value.webhooks) {
           updatedUserProps.trello.webhooks = value.webhooks;
@@ -372,7 +374,7 @@ export class UsersService {
   ): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.getUser(user, i18n);
     const { token } = connectTrelloDto;
-
+    // console.log(token);
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
