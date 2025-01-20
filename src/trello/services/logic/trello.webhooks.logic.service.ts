@@ -145,8 +145,6 @@ export class TrelloWebhooksLogicService {
         webhookBoard.id,
       );
 
-      console.log('new webhook id: ', newWebhook.id);
-
       const createdWebhook = {
         ...newWebhook,
         boardName: webhookBoard.name,
@@ -165,7 +163,6 @@ export class TrelloWebhooksLogicService {
       // Save the new webhook to the database
       const savedNewWebhook =
         await this.trelloWebhookRepository.create(createdWebhook);
-      console.log('created webhookId: ', savedNewWebhook.id);
 
       // Update all users connected to the old webhook
       const updateUserPromises = usersConnectedToWebhook.map(
@@ -265,7 +262,7 @@ export class TrelloWebhooksLogicService {
     const { boardId } = createWebhookDto;
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     let webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
-    console.log('old webhookId', webhook.id);
+
     const userToUpdate = await this.userService.getUser(user, i18n);
 
     validateTrelloToken(userToUpdate.trello.token, i18n);
@@ -837,7 +834,6 @@ export class TrelloWebhooksLogicService {
           const webhookToDisconnect =
             await this.trelloWebhookRepository.findOneById(webhook.webhookId);
 
-          console.log(webhookToDisconnect);
           //remove userId from all notifications in each webhook.notifications object
           if (webhookToDisconnect && webhookToDisconnect.notifications) {
             // Iterate over each category (e.g., board, card, admin)
