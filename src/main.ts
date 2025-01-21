@@ -18,27 +18,30 @@ async function bootstrap() {
     origin: '*', // Allow all origins, only for testing purposes, change later
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Trello notification bot')
-    .setDescription('Trello bot description')
-    .setVersion('1.0')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      in: 'header',
-    })
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+  if (configService.get(configServiceEnum.NODE_ENV) !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Trello notification bot')
+      .setDescription('Trello bot description')
+      .setVersion('1.0')
+      .addBearerAuth({
+        type: 'http',
+        scheme: 'bearer',
+        in: 'header',
+      })
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, documentFactory);
+
+    logger.log(
+      `Application docs is running on ${configService.get(configServiceEnum.BACKEND_LINK)}/docs`,
+    );
+  }
 
   const BACKEND_PORT =
     configService.get(configServiceEnum.BACKEND_PORT) || 3005;
   await app.listen(BACKEND_PORT);
   logger.log(
     `Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`,
-  );
-  logger.log(
-    `Application docs is running on ${configService.get(configServiceEnum.BACKEND_LINK)}/docs`,
   );
 }
 bootstrap();

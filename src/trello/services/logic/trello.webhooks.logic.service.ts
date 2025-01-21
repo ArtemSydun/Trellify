@@ -21,12 +21,13 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
+  createFilteredWebhookCopy,
+  filterUserFromWebhook,
   getCategoriesForAction,
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
   mapNotificationsToBoolean,
   notificationProfiles,
-  setAllKeysToFalse,
   sortCategories,
 } from 'src/common/helpers/trello-notifications';
 
@@ -146,8 +147,7 @@ export class TrelloWebhooksLogicService {
       );
 
       // Create a filtered copy of the existing webhook
-      const existingWebhookCopy =
-        await this.createFilteredWebhookCopy(existingWebhook);
+      const existingWebhookCopy = createFilteredWebhookCopy(existingWebhook);
 
       // Delete old webhook
       await this.trelloWebhookRepository.deleteById(existingWebhookCopy.id);
@@ -276,44 +276,6 @@ export class TrelloWebhooksLogicService {
       await this.trelloWebhookApiService.getWebhooksByToken(creatorToken);
 
     return tokenRelatedWebhooks;
-  }
-
-  async createFilteredWebhookCopy(webhook: string | Webhook): Promise<any> {
-    const webhookToCopy = await this.getWebhook(webhook);
-
-    const filteredWebhookProperties = await this.filterUserFromWebhook(
-      webhook,
-      webhookToCopy.author.trelloUserId,
-    );
-
-    const webhookCopy = {
-      ...webhookToCopy,
-      subscribers: filteredWebhookProperties.updatedWebhookSubscribers,
-      notifications: filteredWebhookProperties.updatedWebhookNotifications,
-    };
-
-    return webhookCopy;
-  }
-
-  async filterUserFromWebhook(webhook: string | Webhook, trelloUserId: string) {
-    const webhookToDisconnect = await this.getWebhook(webhook);
-
-    const updatedWebhookSubscribers = webhookToDisconnect.subscribers
-      ? webhookToDisconnect.subscribers.filter(
-          (subscriber) => subscriber.trelloUserId !== trelloUserId,
-        )
-      : [];
-    const userNotificationsDisconnectArray = setAllKeysToFalse(
-      webhookToDisconnect.notifications,
-    );
-
-    const updatedWebhookNotifications = getUpdatedWebhookNotifications(
-      trelloUserId,
-      webhookToDisconnect.notifications,
-      userNotificationsDisconnectArray,
-    );
-
-    return { updatedWebhookSubscribers, updatedWebhookNotifications };
   }
 
   async createTrelloWebhook(
@@ -831,7 +793,7 @@ export class TrelloWebhooksLogicService {
       },
     };
 
-    const filteredWebhookData = await this.filterUserFromWebhook(
+    const filteredWebhookData = filterUserFromWebhook(
       webhookToUpdate,
       userToUpdate.trello.userId,
     );
