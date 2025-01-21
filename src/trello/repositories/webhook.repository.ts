@@ -50,7 +50,7 @@ export class TrelloWebhookRepository {
     return await this.TrelloWebhookModel.create(webhook);
   }
 
-  async delete(id: string): Promise<void> {
+  async deleteById(id: string): Promise<void> {
     return this.TrelloWebhookModel.findOneAndDelete({ id });
   }
 

@@ -11,11 +11,14 @@ import {
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
+import { I18nContext } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
 
+import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -42,15 +45,18 @@ export class UsersService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
-  public async getUser(user: string | User): Promise<User> {
+  public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
     if (typeof user === 'string') {
       // If it's a string, fetch the user by ID
-      return await this.findUserById(user);
+      return await this.findUserById(user, i18n);
     }
     return user; // If it's already a User object, return it as-is
   }
 
-  public async createUser(createUserDto: CreateUserDto): Promise<User> {
+  public async createUser(
+    createUserDto: CreateUserDto,
+    i18n?: I18nContext,
+  ): Promise<User> {
     this.logger.log(`Creating user with email: ${createUserDto.email}`);
 
     const userByEmail = await this.userRepository.findOneByEmail(
@@ -59,7 +65,11 @@ export class UsersService {
 
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
-      throw new ConflictException(`User ${createUserDto.email} already exists`);
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_USER_ALREADY_EXIST, {
+          args: { email: createUserDto.email },
+        }) || `User ${createUserDto.email} already exists`,
+      );
     }
 
     const newUser = {
@@ -77,6 +87,7 @@ export class UsersService {
 
   public async deleteUserById(
     userId: string,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
     const userToDelete = await this.getUser(userId);
 
@@ -85,6 +96,7 @@ export class UsersService {
     if (userToDelete.trello.token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToDelete,
+        i18n,
       );
     }
 
@@ -101,12 +113,16 @@ export class UsersService {
     return await this.userRepository.getAll();
   }
 
-  public async findUserById(id: string): Promise<User> {
+  public async findUserById(id: string, i18n?: I18nContext): Promise<User> {
     const user = await this.userRepository.findOneById(id);
 
     if (!user) {
       this.logger.warn(`User with ID ${id} not found`);
-      throw new NotFoundException(`User with id ${id} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_ID, {
+          args: { id },
+        }) || `User with id ${id} not found`,
+      );
     }
 
     const userWithoutPass = { ...user };
@@ -114,11 +130,18 @@ export class UsersService {
     return userWithoutPass;
   }
 
-  public async findUserProfile(user: string | User): Promise<Partial<User>> {
+  public async findUserProfile(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Partial<User>> {
     const userToFind = await this.getUser(user);
     if (!user) {
       this.logger.warn(`User with ID ${userToFind.id} not found`);
-      throw new NotFoundException(`User with id ${userToFind.id} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_ID, {
+          args: { id: userToFind.id },
+        }) || `User with id ${userToFind.id} not found`,
+      );
     }
 
     delete userToFind.password;
@@ -128,14 +151,19 @@ export class UsersService {
     return userToFind;
   }
 
-  public async findUserByTrelloId(trelloUserId: string): Promise<User> {
+  public async findUserByTrelloId(
+    trelloUserId: string,
+    i18n?: I18nContext,
+  ): Promise<User> {
     const userByTrelloId =
       await this.userRepository.findOneByTrelloId(trelloUserId);
 
     if (!userByTrelloId) {
       this.logger.warn(`User with Trello ID ${trelloUserId} not found`);
       throw new NotFoundException(
-        `User with Trello ID ${trelloUserId} not found`,
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_TRELLO_ID, {
+          args: { trelloUserId },
+        }) || `User with Trello ID ${trelloUserId} not found`,
       );
     }
 
@@ -143,12 +171,19 @@ export class UsersService {
     return userByTrelloId;
   }
 
-  public async findUserByEmail(email: string): Promise<User> {
+  public async findUserByEmail(
+    email: string,
+    i18n?: I18nContext,
+  ): Promise<User> {
     const user = await this.userRepository.findOneByEmail(email);
 
     if (!user) {
       this.logger.warn(`User with email ${email} not found`);
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_EMAIL, {
+          args: { email },
+        }) || `User with email ${email} does not exists`,
+      );
     }
 
     this.logger.log(`User with email ${email} found`);
@@ -164,12 +199,13 @@ export class UsersService {
     user: string | User,
     updateUserDto: UpdateUserDto,
     reqUser?: Partial<User>,
+    i18n?: I18nContext<Record<string, unknown>>,
   ): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
     }
 
-    const userToUpdate = await this.getUser(user);
+    const userToUpdate = await this.getUser(user, i18n);
     const updatedUserProps: Partial<User> = {};
 
     for (const [key, value] of Object.entries(updateUserDto)) {
@@ -191,13 +227,16 @@ export class UsersService {
 
         const trelloToken =
           updatedUserProps.trello.token || userToUpdate.trello.token;
-        const trelloProfile =
-          await this.trelloMembersLogicService.findMemberProfile(
-            userToUpdate,
-            trelloToken,
-          );
+        if (updateUserDto.trello.token) {
+          const trelloProfile =
+            await this.trelloMembersLogicService.findMemberProfile(
+              userToUpdate,
+              trelloToken,
+              i18n,
+            );
 
-        updatedUserProps.trello.userId = trelloProfile.id;
+          updatedUserProps.trello.userId = trelloProfile.id;
+        }
 
         if (value.webhooks) {
           updatedUserProps.trello.webhooks = value.webhooks;
@@ -226,8 +265,9 @@ export class UsersService {
   public async updateUserLanguagePreference(
     user: string | User,
     updateUserLanguageDto: UpdateUserLanguageDto,
+    i18n?: I18nContext,
   ) {
-    const userToUpdate = await this.getUser(user);
+    const userToUpdate = await this.getUser(user, i18n);
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       language: updateUserLanguageDto.language,
@@ -240,8 +280,12 @@ export class UsersService {
     };
   }
 
-  public async resetPassword(id: string, newPassword: string): Promise<void> {
-    const userToReset = await this.getUser(id);
+  public async resetPassword(
+    id: string,
+    newPassword: string,
+    i18n?: I18nContext,
+  ): Promise<void> {
+    const userToReset = await this.getUser(id, i18n);
     const encryptedPassword = await hashPassword(newPassword);
 
     await this.userRepository.updateById(userToReset.id, {
@@ -258,12 +302,15 @@ export class UsersService {
   public async findUserByProperty(
     path: UserSearchPathEnum,
     value: any,
+    i18n?: I18nContext,
   ): Promise<User> {
     const user = await this.userRepository.findUserByProperty(path, value);
     if (!user) {
       this.logger.warn(`User with property ${path}: ${value} not found`);
       throw new NotFoundException(
-        `User with property ${path}: ${value} not found`,
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
+          args: { path, value },
+        }) || `User with property ${path}: ${value} not found`,
       );
     }
 
@@ -275,8 +322,9 @@ export class UsersService {
   public async manageUserTelegramConnection(
     user: string | User,
     connectTelegramDto: ConnectTelegramDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user);
+    const userToUpdate = await this.getUser(user, i18n);
     const { chatId, username } = connectTelegramDto;
 
     if (chatId && username) {
@@ -287,18 +335,21 @@ export class UsersService {
 
       if (connectedUser && connectedUser.id !== userToUpdate.id) {
         throw new ConflictException(
-          `Trello notifier bot is already connected for another user`,
+          i18n?.t(I18nKeys.ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED) ||
+            `Trellify bot is already connected for another telegram user`,
         );
       }
 
       await this.telegramService.sendMessageToUser(
         connectTelegramDto,
-        `Trello notifier bot authorized successfully`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE) ||
+          `Trellify authorized successfully`,
       );
     } else {
       await this.telegramService.sendMessageToUser(
         userToUpdate.telegram,
-        `Trello notifier bot disconnected successfully`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE) ||
+          `Trello notifier bot disconnected successfully`,
       );
     }
 
@@ -319,13 +370,15 @@ export class UsersService {
   public async manageUserTrelloConnection(
     user: string | User,
     connectTrelloDto: ConnectTrelloDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<User | string>> {
-    const userToUpdate = await this.getUser(user);
+    const userToUpdate = await this.getUser(user, i18n);
     const { token } = connectTrelloDto;
 
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
+        i18n,
       );
       const updatedUser = await this.userRepository.updateById(
         userToUpdate.id,
@@ -342,7 +395,7 @@ export class UsersService {
       };
     }
 
-    await this.trelloTokensLogicService.isTokenInfinite(token);
+    await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
 
     const updatedUserProps: Partial<User> = {
       trello: { ...userToUpdate.trello },
@@ -361,6 +414,7 @@ export class UsersService {
       await this.trelloMembersLogicService.findMemberProfile(
         userToUpdate,
         trelloToken,
+        i18n,
       );
 
     const connectedUser = await this.userRepository.findUserByProperty(
@@ -370,7 +424,8 @@ export class UsersService {
 
     if (connectedUser) {
       throw new ConflictException(
-        `This trello profile is already binded to other user`,
+        i18n?.t(I18nKeys.ERRORS_TRELLO_ALREADY_CONNECTED) ||
+          `This trello profile is already binded to other user`,
       );
     }
 
@@ -390,9 +445,12 @@ export class UsersService {
     };
   }
 
-  public async removeWebhookFromAllUsers(webhookId: string) {
-    const usersConnectedToWebhook =
-      await this.findUsersConnectedToWebhook(webhookId);
+  public async removeWebhookFromAllUsers(webhook: string | Webhook) {
+    const webhookToRemove =
+      await this.trelloWebhooksLogicService.getWebhook(webhook);
+    const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(
+      webhookToRemove.id,
+    );
 
     //prepare bulk operation for each user to delete webhook with webhookId
     const bulkUpdateOperations = usersConnectedToWebhook.map((user) => ({
@@ -400,17 +458,27 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPathEnum.TrelloWebhooks]: { webhookId },
+            [UserSearchPathEnum.TrelloWebhooks]: {
+              webhookId: webhookToRemove.id,
+            },
           },
         },
       },
     }));
+
+    const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
+      this.telegramService.sendMessageToUser(
+        user.telegram,
+        `Webhook for board ${webhookToRemove.boardName} was deleted. Please, reconnect notifications`,
+      );
+    });
 
     try {
       if (bulkUpdateOperations.length > 0) {
         const result =
           await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
         this.logger.log(result);
+        Promise.all([sendTelegramNotification]);
       }
     } catch (err) {
       this.logger.error(`Error during bulk update: ${err.message || err}`);

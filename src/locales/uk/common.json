@@ -1,0 +1,46 @@
+{
+    "messages": {
+        "registrationEmailSubject": "Підтвердіть вашу пошту",
+        "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
+        "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}",
+        "telegramConnectionMessage": "Бот-сповіщувач Trellify успішно авторизований",
+        "telegramDisconnectionMessage": "Бот-сповіщувач Trellify успішно відключений"
+    },
+    "errors": {
+        "jwt": {
+            "invalidToken": "Ваш токен не є дійсним або закінчився термін дії"
+        },
+        "user": {
+            "notFoundByEmail": "Користувача з поштою {email} не знайдено",
+            "alreadyExist": "Користувач з поштою {email} вже існує",
+            "notFoundById": "Користувача з ідентифікатором {id} не знайдено",
+            "notFoundByTrelloId": "Користувача з Trello ID {trelloUserId} не знайдено",
+            "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
+        },
+        "telegram": {
+            "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого телеграм-користувача"
+        },
+        "trello": {
+            "webhookHealthIsOk": "Вебхук до дошки {board} активний",
+            "webhookWasRecreated": "Вебхук до дошки {board} був перестворений",
+            "youAreNotConnectedToWebhook": "Ви не підключені до цього вебхука",
+            "userIsNotConnectedToWebhook": "Користувач не підключений до вебхука {webhookToUpdate.id}",
+            "webhookIsAlreadyExist": "Вебхук для дошки {boardName} вже існує для цього користувача.",
+            "webhookNotFoundById": "Вебхук з ідентифікатором {webhookId} не знайдено",
+            "webhookNotFoundByBoardId": "Вебхук з ідентифікатором дошки {boardId} не знайдено",
+            "webhooksDisconnect": "Помилка відключення всіх вебхуків Trello",
+            "invalidToken": "Невалідний токен Trello",
+            "checkConnection": "Будь ласка, перевірте ваше підключення до Trello",
+            "expiredToken": "Будь ласка, надайте токен з дійсною датою завершення",
+            "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
+        },
+        "general": {
+            "invalidRequest": "Запит для поля {field} є недійсним.",
+            "invalidCredentials": "Недійсні облікові дані.",
+            "forbiddenResource": "Доступ до ресурсу заборонено"
+        },
+        "auth": {
+            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають"
+        }
+    }
+}

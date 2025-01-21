@@ -10,6 +10,13 @@ export class WebhookSubscriber {
   trelloUserId: string;
 
   @ApiProperty({
+    description: 'Trello token of the subscriber.',
+    type: String,
+    example: 'trelloToken',
+  })
+  trelloToken: string;
+
+  @ApiProperty({
     description: 'Notification profile of the subscriber.',
     enum: TrelloWebhookNotificationProfiles,
     example: TrelloWebhookNotificationProfiles.BASIC,
