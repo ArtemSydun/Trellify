@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { I18nContext } from 'nestjs-i18n';
 import { trelloApiLink } from 'src/common/constants/trello';
+import { parseTrelloError } from 'src/common/helpers/trello-errors';
 import { TrelloMember } from 'src/trello/dto/member.dto';
 import { SharedConfigService } from '../../../config/shared.config.service';
 
@@ -19,28 +21,33 @@ export class TrelloMembersApiService {
   }
 
   // # Member
-  async fetchMemberProfile(token: string): Promise<TrelloMember> {
+  async fetchMemberProfile(
+    token: string,
+    i18n?: I18nContext,
+  ): Promise<TrelloMember> {
     const url = `${trelloApiLink}/members/me?key=${this.trelloApiKey}&token=${token}`;
     try {
       const response = await axios.get(url);
 
       return response.data;
     } catch (err) {
-      throw new BadRequestException(
-        err.response ? err.response.data : err.message,
-      );
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
     }
   }
 
-  async fetchMemberOrganizations(trelloUserId: string, token: string) {
+  async fetchMemberOrganizations(
+    trelloUserId: string,
+    token: string,
+    i18n?: I18nContext,
+  ) {
     const url = `${trelloApiLink}/members/${trelloUserId}/organizations?key=${this.trelloApiKey}&token=${token}`;
     try {
       const response = await axios.get(url);
       return response.data;
     } catch (err) {
-      throw new BadRequestException(
-        err.response ? err.response.data : err.message,
-      );
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
     }
   }
 }

@@ -14,6 +14,14 @@ export class TrelloWebhookRepository {
     return this.TrelloWebhookModel.bulkWrite(operations);
   }
 
+  async findManyByIds(ids: string[]): Promise<Webhook[]> {
+    return this.TrelloWebhookModel.find({
+      id: { $in: ids },
+    })
+      .lean()
+      .exec();
+  }
+
   async findOneByBoardId(idModel: string): Promise<Webhook> {
     return this.TrelloWebhookModel.findOne({ idModel }).lean().exec();
   }
@@ -36,6 +44,12 @@ export class TrelloWebhookRepository {
     }).exec();
   }
 
+  async findWebhooksCreatedByUser(trelloUserId: string): Promise<Webhook[]> {
+    return this.TrelloWebhookModel.find({
+      'author.trelloUserId': trelloUserId,
+    }).exec();
+  }
+
   async updateById(id: string, updateData: Partial<Webhook>): Promise<Webhook> {
     const updatedTrelloWebhook = await this.TrelloWebhookModel.findOneAndUpdate(
       { id },
@@ -52,9 +66,5 @@ export class TrelloWebhookRepository {
 
   async deleteById(id: string): Promise<void> {
     return this.TrelloWebhookModel.findOneAndDelete({ id });
-  }
-
-  async getAll(): Promise<Webhook[]> {
-    return this.TrelloWebhookModel.find();
   }
 }

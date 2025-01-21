@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmptyObject, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmptyObject,
+  ValidateNested,
+} from 'class-validator';
 import {
   initializeNotificationArrays,
   mapNotificationsToBoolean,
@@ -96,4 +101,13 @@ export class UpdateNotificationsDto {
     message: 'notificationProfile must be a valid profile value',
   })
   notificationProfile: TrelloWebhookNotificationProfiles;
+}
+
+export class UpdateManyNotificationsDto extends UpdateNotificationsDto {
+  @ApiProperty({
+    description: 'Webhooks to update',
+    type: NotificationBooleansDto,
+  })
+  @IsArray()
+  webhooks: string[];
 }

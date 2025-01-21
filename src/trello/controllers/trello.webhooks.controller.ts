@@ -33,7 +33,10 @@ import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { UpdateNotificationsDto } from '../dto/notifications.dto';
+import {
+  UpdateManyNotificationsDto,
+  UpdateNotificationsDto,
+} from '../dto/notifications.dto';
 import { Webhook } from '../entities/webhook.entity';
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
@@ -99,7 +102,7 @@ export class TrelloWebhooksController {
   })
   @ApiCustomUnathorizedResponse()
   getUserConnectedWebhooksList(@Req() req, @I18n() i18n: I18nContext) {
-    return this.webhooksService.findMemberWebhooks(req.user.id, i18n);
+    return this.webhooksService.findMemberConnectedWebhooks(req.user.id, i18n);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -151,6 +154,49 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {
     return this.webhooksService.getProfileNotifications();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('notifications/bulk')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update notification in many webhooks',
+    description:
+      'This endpoint allows the authenticated user to update many webhook notifications',
+  })
+  @ApiOkResponse({
+    description: 'Webhook updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Webhook {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Webhook),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse(`You are not connected to this webhook`)
+  @ApiCustomNotFoundResponse('Webhook', 'id')
+  updateManyWebhooksNotifications(
+    @Body() updateManyWebhooksDto: UpdateManyNotificationsDto,
+    @Req() req,
+    @I18n() i18n: I18nContext,
+  ): Promise<any> {
+    return this.webhooksService.updateManyTrelloWebhookNotifications(
+      req.user.id,
+      updateManyWebhooksDto,
+      i18n,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

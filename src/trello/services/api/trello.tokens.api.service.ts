@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { I18nContext } from 'nestjs-i18n';
 import { trelloApiLink } from 'src/common/constants/trello';
-import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { parseTrelloError } from 'src/common/helpers/trello-errors';
 import { SharedConfigService } from '../../../config/shared.config.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
@@ -28,9 +27,8 @@ export class TrelloTokensApiService {
       const response = await axios.get(url);
       return response.data;
     } catch (err) {
-      throw new BadRequestException(
-        i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_TOKEN) || 'Invalid Trello token',
-      );
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
     }
   }
 }

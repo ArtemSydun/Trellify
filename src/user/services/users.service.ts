@@ -445,9 +445,14 @@ export class UsersService {
     };
   }
 
-  public async removeWebhookFromAllUsers(webhook: string | Webhook) {
-    const webhookToRemove =
-      await this.trelloWebhooksLogicService.getWebhook(webhook);
+  public async removeWebhookFromAllUsers(
+    webhook: string | Webhook,
+    i18n?: I18nContext,
+  ) {
+    const webhookToRemove = await this.trelloWebhooksLogicService.getWebhook(
+      webhook,
+      i18n,
+    );
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(
       webhookToRemove.id,
     );
