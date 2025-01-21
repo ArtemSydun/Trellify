@@ -27,9 +27,12 @@
             "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToUpdate.id}",
             "webhookIsAlreadyExist": "Webhook for board {boardName} already exists for this user.",
             "webhookNotFoundById": "Webhook with id {webhookId} not found",
+            "invalidEntityId": "This entity was not found or was deleted",
             "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
             "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
-            "invalidToken": "Invalid Trello token",
+            "invalidToken": "Your token is not valid. Please check your token",
+            "invalidAppKey": "Something bad is going on with Trellify. Please, check your Trello token or reach Trellify support",
+            "invalidWebhookId": "Invalid value for idWebhook",
             "checkConnection": "Please check your Trello connection",
             "expiredToken": "Please provide a token with a valid expiration date",
             "alreadyConnected": "This trello profile is already binded to other user"
