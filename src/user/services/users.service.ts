@@ -374,7 +374,7 @@ export class UsersService {
   ): Promise<DefaultResponse<User | string>> {
     const userToUpdate = await this.getUser(user, i18n);
     const { token } = connectTrelloDto;
-    // console.log(token);
+
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
