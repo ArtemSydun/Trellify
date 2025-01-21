@@ -233,7 +233,7 @@ export class TrelloWebhooksController {
     @Req() req,
     @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.webhookHealthCheck(req.user.id, id, i18n);
+    return this.webhooksService.webhookHealthCheck(id, req.user.id, i18n);
   }
 
   @ApiExcludeEndpoint()
