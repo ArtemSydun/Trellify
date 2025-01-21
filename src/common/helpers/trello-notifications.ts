@@ -2,6 +2,7 @@ import {
   NotificationBooleansDto,
   NotificationCategoriesDto,
 } from 'src/trello/dto/notifications.dto';
+import { Webhook } from 'src/trello/entities/webhook.entity';
 import {
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationCategories,
@@ -179,6 +180,40 @@ export const setAllKeysToFalse = (
     return acc;
   }, {} as NotificationBooleansDto);
 };
+
+export function filterUserFromWebhook(webhook: Webhook, trelloUserId: string) {
+  const updatedWebhookSubscribers = webhook.subscribers
+    ? webhook.subscribers.filter(
+        (subscriber) => subscriber.trelloUserId !== trelloUserId,
+      )
+    : [];
+  const userNotificationsDisconnectArray = setAllKeysToFalse(
+    webhook.notifications,
+  );
+
+  const updatedWebhookNotifications = getUpdatedWebhookNotifications(
+    trelloUserId,
+    webhook.notifications,
+    userNotificationsDisconnectArray,
+  );
+
+  return { updatedWebhookSubscribers, updatedWebhookNotifications };
+}
+
+export function createFilteredWebhookCopy(webhook: Webhook): Webhook {
+  const filteredWebhookProperties = filterUserFromWebhook(
+    webhook,
+    webhook.author.trelloUserId,
+  );
+
+  const webhookCopy = {
+    ...webhook,
+    subscribers: filteredWebhookProperties.updatedWebhookSubscribers,
+    notifications: filteredWebhookProperties.updatedWebhookNotifications,
+  };
+
+  return webhookCopy;
+}
 
 export const generateProfilesNotificationBooleans = () => {
   // Step 1: Get profile action keys
