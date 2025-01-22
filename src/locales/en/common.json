@@ -1,12 +1,22 @@
 {
     "messages": {
-        "registrationEmailSubject": "Confirm your email",
-        "registrationEmailMessage": "Please confirm your email by clicking the following link",
-        "registrationEmailSentMessage": "Confirmation link sent to your email {email}",
-        "telegramConnectionMessage": "Trellify notifier bot authorized successfully",
-        "telegramDisconnectionMessage": "Trellify notifier bot disconnected successfully",
-        "webhookHealthIsOk": "Webhook to the {board} is active now",
-        "webhookWasRecreated": "Webhook was recreated"
+        "email": {
+            "registrationEmailSubject": "Confirm your email",
+            "registrationEmailMessage": "Please confirm your email by clicking the following link",
+            "registrationEmailSentMessage": "Confirmation link sent to your email {email}"
+        },
+        "telegram": {
+            "connectionMessage": "Trellify notifier bot authorized successfully",
+            "disconnectionMessage": "Trellify notifier bot disconnected successfully",
+            "greetingsMessage": "Hello {name}, click on /start to start Trellify integration",
+            "authorizeThroughWebsite": "Authorize through website"
+        },
+        "trello": {
+            "webhook": {
+                "webhookHealthIsOk": "Webhook to the {board} is active now",
+                "webhookWasRecreated": "Webhook was recreated"
+            }
+        }
     },
     "errors": {
         "jwt": {
@@ -23,23 +33,27 @@
             "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user"
         },
         "trello": {
-            "youAreNotConnectedToWebhook": "You are not connected to this webhook",
-            "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToUpdate.id}",
-            "webhookIsAlreadyExist": "Webhook for board {boardName} already exists for this user.",
-            "webhookNotFoundById": "Webhook with id {webhookId} not found",
-            "invalidEntityId": "This entity was not found or was deleted",
-            "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
-            "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
-            "invalidToken": "Your token is not valid. Please check your token",
-            "invalidAppKey": "Something bad is going on with Trellify. Please, check your Trello token or reach Trellify support",
-            "invalidWebhookId": "Invalid value for idWebhook",
-            "checkConnection": "Please check your Trello connection",
-            "expiredToken": "Please provide a token with a valid expiration date",
-            "alreadyConnected": "This trello profile is already binded to other user"
+            "webhook": {
+                "youAreNotConnectedToWebhook": "You are not connected to this webhook",
+                "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToUpdate.id}",
+                "webhookIsAlreadyExist": "Webhook for board {boardName} already exists for this user.",
+                "webhookNotFoundById": "Webhook with id {webhookId} not found",
+                "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
+                "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
+                "invalidWebhookId": "Invalid value for idWebhook"
+            },
+            "profile": {
+                "invalidToken": "Your token is not valid. Please check your token",
+                "invalidAppKey": "Something bad is going on with Trellify. Please, check your Trello token or reach Trellify support",
+                "checkConnection": "Please check your Trello connection",
+                "expiredToken": "Please provide a token with a valid expiration date",
+                "alreadyConnected": "This trello profile is already binded to other user"
+            },
+            "invalidEntityId": "This entity was not found or was deleted"
         },
         "general": {
             "invalidRequest": "The request for the {field} field is invalid.",
-            "invalidCredentials": "Invalid credential",
+            "invalidCredentials": "Invalid credentials",
             "forbiddenResource": "Forbidden resource"
         },
         "auth": {
