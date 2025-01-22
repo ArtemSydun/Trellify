@@ -1,3 +1,4 @@
+name: 'api-trellify-${STAGE}'
 services:
   node:
     build:
