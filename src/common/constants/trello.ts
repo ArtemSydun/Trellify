@@ -56,7 +56,6 @@ export const fullProfileActions = [
   TrelloWebhookDetailedActions.BOARD_CLOSED,
   TrelloWebhookDetailedActions.BOARD_REOPENED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_CREATED,
-  TrelloWebhookDetailedActions.CUSTOM_FIELD_UPDATED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
 ];

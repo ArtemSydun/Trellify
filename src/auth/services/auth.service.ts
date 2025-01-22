@@ -113,7 +113,7 @@ export class AuthService {
     const confirmationLink = this.mailService.getLink(
       this.configService.get(configServiceEnum.FRONTEND_LINK),
       `auth/confirm/${token}`,
-      i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_MESSAGE) ||
+      i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
         `Confirm your email`,
     );
 
@@ -122,10 +122,10 @@ export class AuthService {
       createUserDto.email,
       {
         subject:
-          i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_SUBJECT) ||
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
           `Confirm your email`,
         html: `<p>${
-          i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_MESSAGE) ||
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE) ||
           `Please confirm your email by clicking the following link`
         }: ${confirmationLink}</p>`,
       },
@@ -134,7 +134,7 @@ export class AuthService {
     this.logger.log(`Confirmation link sent to ${createUserDto.email}`);
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_REGISTRATION_EMAIL_SENT_MESSAGE, {
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SENT_MESSAGE, {
           args: { email: createUserDto.email },
         }) || `Confirmation link sent to your email ${createUserDto.email}`,
       statusCode: HttpStatus.OK,
