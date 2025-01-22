@@ -274,7 +274,7 @@ export class TrelloWebhooksLogicService {
     if (healthyWebhook.id !== webhookToCheck.id) {
       return {
         message:
-          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED, {
+          i18n?.t(I18nKeys.MESSAGES_WEBHOOK_WAS_RECREATED, {
             args: { board: webhookToCheck.boardName },
           }) || `Webhook for board ${webhookToCheck.boardName} was recreated`,
         statusCode: HttpStatus.OK,
@@ -284,7 +284,7 @@ export class TrelloWebhooksLogicService {
       // If the webhook is still active, return the existing webhook
       return {
         message:
-          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK, {
+          i18n?.t(I18nKeys.MESSAGES_WEBHOOK_HEALTH_IS_OK, {
             args: { board: webhookToCheck.boardName },
           }) || `Webhook for board ${webhookToCheck.boardName} health is ok`,
         statusCode: HttpStatus.OK,
@@ -511,7 +511,7 @@ export class TrelloWebhooksLogicService {
 
     if (newWebhook.id !== webhookToUpdate.id) {
       throw new BadRequestException(
-        i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED) ||
+        i18n?.t(I18nKeys.MESSAGES_WEBHOOK_WAS_RECREATED) ||
           'Webhook was recreated',
       );
     }
@@ -603,7 +603,7 @@ export class TrelloWebhooksLogicService {
 
       if (newWebhook.id !== webhookToUpdate.id) {
         throw new BadRequestException(
-          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED) ||
+          i18n?.t(I18nKeys.MESSAGES_WEBHOOK_WAS_RECREATED) ||
             'Webhook was recreated',
         );
       }
@@ -663,7 +663,7 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    console.log(JSON.stringify(webhookAction, null, 2));
+    // console.log(JSON.stringify(webhookAction, null, 2));
     const filteredLog = {
       webhookId: webhookAction.model?.id,
       actionType: webhookAction.action.type,

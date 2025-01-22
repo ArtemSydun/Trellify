@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloWebhooksLogicService } from '@trello/logic';
+import { I18nService } from 'nestjs-i18n';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -28,6 +29,7 @@ export class TrelloActionsLogicService {
     @Inject(forwardRef(() => TrelloWebhooksLogicService))
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly telegramService: TelegramService,
+    private readonly i18n: I18nService,
   ) {}
 
   async handlePersonalAction(
