@@ -22,7 +22,7 @@ export enum I18nKeys {
   ERRORS_TRELLO_WEBHOOK_IS_ALREADY_EXIST = 'common.errors.trello.webhookIsAlreadyExist',
   ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID = 'common.errors.trello.webhookNotFoundByBoardId',
   ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_ID = 'common.errors.trello.invalidEntityId',
-  ERRORS_TRELLO_INVALID_ENTITY_ID = 'common.errors.trello.',
+  ERRORS_TRELLO_INVALID_ENTITY_ID = 'common.errors.trello.webhookNotFoundById',
   ERRORS_TRELLO_WEBHOOKS_DISCONNECT = 'common.errors.trello.webhooksDisconnect',
   ERRORS_TRELLO_INVALID_TOKEN = 'common.errors.trello.invalidToken',
   ERRORS_TRELLO_INVALID_APP_KEY = 'common.errors.trello.invalidAppKey',

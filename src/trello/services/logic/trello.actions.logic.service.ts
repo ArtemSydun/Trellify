@@ -116,7 +116,7 @@ export class TrelloActionsLogicService {
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: `A member left checklist item in the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_DELETED]: `A due date was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_UPDATED]: `The due date of a checklist item in the card [${cardData?.name}](${cardData?.url}) was updated.`,
-        [TrelloWebhookCardActions.CUSTOM_FIELD_ITEM_UPDATED]: `A custom field in the card [${cardData?.name}](${cardData?.url}) was updated.`,
+        [TrelloWebhookCardActions.CUSTOM_FIELD_ITEM_UPDATED]: `${webhookAction.action?.data?.customField?.name} status in the card [${cardData?.name}](${cardData?.url}) was updated.`,
       };
 
       const message = cardActionMessages[actionType];
@@ -172,15 +172,15 @@ export class TrelloActionsLogicService {
     adminTrelloId: string,
     boardData: TrelloBoard,
     actionType: TrelloWebhookAdminActions,
-    targetMember?: any,
+    webhookAction?: any,
   ) {
     try {
       const adminToNotify =
         await this.userService.findUserByTrelloId(adminTrelloId);
 
       const targetUser = {
-        fullname: targetMember?.fullName,
-        username: targetMember?.username,
+        fullname: webhookAction?.action?.member?.fullName,
+        username: webhookAction?.action?.member?.username,
       };
 
       const adminActionMessages: Record<
@@ -193,9 +193,9 @@ export class TrelloActionsLogicService {
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: `The user left the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: `A new member joined the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: `A new normal role was added to a user on the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: '',
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_UPDATED]: '',
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: '',
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: `Custom field ${webhookAction.data?.customField?.name} created`,
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: `Custom field ${webhookAction.data?.customField?.old?.name} renamed into ${webhookAction.data?.customField?.name}`,
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: `Custom field ${webhookAction.data?.customField?.name} wasd deleted`,
       };
 
       const message = adminActionMessages[actionType];

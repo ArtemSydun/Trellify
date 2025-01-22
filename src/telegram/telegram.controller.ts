@@ -95,30 +95,43 @@ export class TelegramController {
   async myProfileCommand(ctx): Promise<any> {
     const chatID: number = ctx?.update?.message?.from?.id;
 
+    console.log(ctx.update?.message);
     if (!chatID) {
       await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+      return;
     }
 
-    const user: null | User = await this.userService.findUserByProperty(
-      UserSearchPathEnum.TelegramChatId,
-      chatID,
-    );
+    try {
+      const user: null | User = await this.userService.findUserByProperty(
+        UserSearchPathEnum.TelegramChatId,
+        chatID,
+      );
 
-    if (!user) {
-      await ctx.reply(`YOU'RE NOT REGISTERED YET`);
-    }
-
-    // Message for new user
-    if (!user) {
-      try {
-        await ctx.reply(`${BOT_MESSAGES.NEW_USER_MY_PROFILE}`);
-      } catch (error) {
-        console.log('sendMessage :::', error.message);
+      if (!user) {
+        // User not found - handle as new user
+        try {
+          await ctx.reply(`YOU'RE NOT REGISTERED YET`);
+          await ctx.reply(`${BOT_MESSAGES.NEW_USER_MY_PROFILE}`);
+        } catch (error) {
+          console.error('Error sending new user message:', error.message);
+        }
+      } else {
+        // User exists - prepare and send profile
+        const userProfile = {
+          email: user.email,
+          trello: {
+            username: user.trello.username,
+            notifications: user.trello.webhooks.map((w) => w.modelName),
+          },
+          telegram: {
+            username: user.telegram.username,
+          },
+          language: user.language,
+        };
+        await this.telegramUtils.handleMyProfileCommand({ ctx, userProfile });
       }
-    }
-    // Exist user
-    else {
-      await this.telegramUtils.handleMyProfileCommand({ ctx, user });
+    } catch (error) {
+      await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
     }
   }
 }

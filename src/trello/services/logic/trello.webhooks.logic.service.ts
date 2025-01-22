@@ -663,7 +663,7 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    console.log(JSON.stringify(webhookAction, null, 2));
     const filteredLog = {
       webhookId: webhookAction.model?.id,
       actionType: webhookAction.action.type,
@@ -861,7 +861,7 @@ export class TrelloWebhooksLogicService {
                 member.idMember,
                 boardData,
                 detailedActionType,
-                targetMember,
+                webhookAction,
               );
             });
 

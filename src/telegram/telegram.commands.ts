@@ -1,14 +1,14 @@
 export const COMMANDS = [
   {
     command: '/start',
-    description: 'Для старту',
+    description: '🚀 Start bot',
   },
   {
     command: '/my_profile',
-    description: 'Мій профіль',
+    description: '👤 Profile',
   },
   {
     command: '/help',
-    description: 'Допомога',
+    description: '❓ Help',
   },
 ];
