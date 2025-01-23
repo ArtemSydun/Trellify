@@ -53,11 +53,13 @@ export const fullProfileActions = [
   TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
   TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
   TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
+  TrelloWebhookDetailedActions.BOARD_PERM_LEVEL_CHANGED,
   TrelloWebhookDetailedActions.BOARD_CLOSED,
   TrelloWebhookDetailedActions.BOARD_REOPENED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_CREATED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
+  TrelloWebhookDetailedActions.CUSTOM_FIELD_DELETED,
 ];
 
 export const categoryKeysMap: Record<string, string[]> = {
