@@ -9,6 +9,7 @@ import {
   Action,
   Ctx,
   Command,
+  Help,
 } from 'nestjs-telegraf';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -18,7 +19,7 @@ import { UsersService } from 'src/user/services/users.service';
 import { Context, Telegraf } from 'telegraf';
 
 import { TelegramActions } from './telegram.actions';
-import { COMMANDS, setLocalizedCommands } from './telegram.commands';
+import { setLocalizedCommands } from './telegram.commands';
 import { BOT_MESSAGES } from './telegram.messages';
 import { TelegramService } from './telegram.service';
 
@@ -46,68 +47,102 @@ export class TelegramController {
 
   @Start()
   async startCommand(ctx): Promise<any> {
-    // console.log(ctx?.update?.message);
-    let userLanguage = ctx?.update?.message?.from?.language_code;
+    const userLanguage = ctx?.update?.message?.from?.language_code || 'en';
+
     const userTelegramName: string =
       ctx?.update?.message?.from?.first_name ||
       ctx?.update?.message?.from?.username;
 
-    await ctx.reply(
-      this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_GREETINGS_MESSAGE, {
-        lang: userLanguage,
-        args: {
-          name: userTelegramName,
-        },
-      }) ||
-        `Hello ${userTelegramName}, click on /start to start Trellify integration`,
-    );
-
     const chatId: number = ctx?.update?.message?.from?.id;
     const username: string = ctx?.update?.message?.chat?.username;
-
-    if (!chatId) {
-      await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
-    }
-
     try {
+      if (!chatId) {
+        await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+      }
+
       const user: User = await this.userService.findUserByProperty(
         UserSearchPathEnum.TelegramChatId,
         chatId,
       );
 
       if (user) {
-        userLanguage = user.language;
+        await ctx.reply(
+          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
+            lang: userLanguage,
+          }) || 'Authorize through website123',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: 'Trellify',
+                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
+                  },
+                ],
+              ],
+            },
+          },
+        );
       }
     } catch (err) {
-      console.log(userLanguage);
-      console.log(
+      await ctx.reply(
+        this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_GREETINGS_MESSAGE, {
+          lang: userLanguage,
+          args: {
+            name: userTelegramName,
+          },
+        }) ||
+          `Hello ${userTelegramName}, authorize through website to start Trellify integration`,
+      );
+
+      await ctx.reply(
         this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
           lang: userLanguage,
-        }),
-      );
-      await ctx.reply('Please visit our website for more information:', {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text:
-                  this.i18n?.t(
-                    I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE,
-                    { lang: userLanguage },
-                  ) || 'Authorize through website',
-                url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
-              },
+        }) || 'Authorize through website123',
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: 'Trellify',
+                  url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
+                },
+              ],
             ],
-          ],
+          },
         },
-      });
+      );
     }
   }
 
-  // @Help()
-  // async helpCommand(ctx): Promise<any> {
-  //   await ctx.reply('help command activated')
-  // }
+  @Help()
+  async helpCommand(ctx): Promise<any> {
+    const userLanguage = ctx?.update?.message?.from?.language_code || 'en';
+
+    const introMessage = this.i18n.t(
+      I18nKeys.MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE,
+      {
+        lang: userLanguage,
+      },
+    );
+    const steps = this.i18n.t(I18nKeys.MESSAGES_TELEGRAM_HELP_STEPS, {
+      lang: userLanguage,
+      args: {
+        websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
+      },
+    });
+    const closingMessage = this.i18n.t(
+      I18nKeys.MESSAGES_TELEGRAM_HELP_CLOSING,
+      {
+        lang: userLanguage,
+      },
+    );
+
+    const helpMessage =
+      `${introMessage}\n\n1️⃣ ${steps[0]}\n2️⃣ ${steps[1]}\n3️⃣ ${steps[2]}\n4️⃣ ${steps[3]}\n\n${closingMessage}`.trim();
+
+    await ctx.reply(helpMessage, { parse_mode: 'Markdown' });
+  }
 
   // @On('sticker')
   // async stickerResponse(ctx): Promise<any> {
@@ -123,6 +158,8 @@ export class TelegramController {
   @Command('my_profile')
   async myProfileCommand(ctx): Promise<any> {
     const chatID: number = ctx?.update?.message?.from?.id;
+    let userLanguage = ctx?.update?.message?.from?.language_code;
+    const username: string = ctx?.update?.message?.chat?.username;
 
     console.log(ctx.update?.message);
     if (!chatID) {
@@ -136,31 +173,43 @@ export class TelegramController {
         chatID,
       );
 
-      if (!user) {
-        // User not found - handle as new user
-        try {
-          await ctx.reply(`YOU'RE NOT REGISTERED YET`);
-          await ctx.reply(`${BOT_MESSAGES.NEW_USER_MY_PROFILE}`);
-        } catch (error) {
-          console.error('Error sending new user message:', error.message);
-        }
-      } else {
-        // User exists - prepare and send profile
-        const userProfile = {
-          email: user.email,
-          trello: {
-            username: user.trello.username,
-            notifications: user.trello.webhooks.map((w) => w.modelName),
-          },
-          telegram: {
-            username: user.telegram.username,
-          },
-          language: user.language,
-        };
-        await this.telegramUtils.handleMyProfileCommand({ ctx, userProfile });
-      }
+      userLanguage = user.language;
+
+      // User exists - prepare and send profile
+      const userProfile = {
+        email: user.email,
+        trello: {
+          username: user.trello.username,
+          notifications: user.trello.webhooks.map((w) => w.modelName),
+        },
+        telegram: {
+          username: user.telegram.username,
+        },
+        language: user.language,
+      };
+      await this.telegramUtils.handleMyProfileCommand({ ctx, userProfile });
     } catch (error) {
-      await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+      await ctx.reply(
+        this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_PROFILE_NOT_FOUND, {
+          lang: userLanguage,
+        }),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text:
+                    this.i18n?.t(
+                      I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE,
+                      { lang: userLanguage },
+                    ) || 'Authorize through website',
+                  url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatID}&username=${username}`,
+                },
+              ],
+            ],
+          },
+        },
+      );
     }
   }
 }
