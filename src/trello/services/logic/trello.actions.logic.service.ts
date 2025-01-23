@@ -42,7 +42,7 @@ export class TrelloActionsLogicService {
     try {
       const targetUser =
         await this.userService.findUserByTrelloId(userTrelloId);
-      const userInitials = targetUser.email;
+      const userInitials = targetUser.telegram.username;
 
       const targetActionMessages: Partial<
         Record<TrelloWebhookDetailedActions, string | null>
@@ -86,6 +86,10 @@ export class TrelloActionsLogicService {
       const userToNotify =
         await this.userService.findUserByTrelloId(userTrelloId);
 
+      const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
+
+      const targetMember = webhookAction?.action?.member;
+
       const cardActionMessages: Record<
         TrelloWebhookCardActions,
         string | null
@@ -103,19 +107,19 @@ export class TrelloActionsLogicService {
         [TrelloWebhookDetailedActions.CARD_LABEL_REMOVED]: `A label was removed from the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED]: `A checklist was added to the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED]: `A checklist was removed from the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED]: `A checklist item in the card [${cardData?.name}](${cardData?.url}) was marked as completed.`,
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED]: `A checklist item in the card [${cardData?.name}](${cardData?.url}) was marked as incomplete.`,
+        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED]: `A checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}) was marked as completed.`,
+        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED]: `A checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}) was marked as incomplete.`,
         [TrelloWebhookDetailedActions.CHECKLIST_ITEM_CONVERTED_TO_CARD]: `A checklist item in the card [${cardData?.name}](${cardData?.url}) was converted into a new card.`,
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED]: `A checklist item was added in the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CARD_MEMBER_ADDED]: `A member was added to the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CARD_MEMBER_REMOVED]: `A member was removed from the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CARD_MEMBER_JOINED]: `A member joined the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CARD_MEMBER_LEFT]: `A member left the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED]: `A checklist item ${checklistItemName} was added in the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CARD_MEMBER_ADDED]: `A member ${targetMember.username} was added to the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CARD_MEMBER_REMOVED]: `A member ${targetMember.username} was removed from the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CARD_MEMBER_JOINED]: `A member ${targetMember.username} joined the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CARD_MEMBER_LEFT]: `A member ${targetMember.username} left the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DELETED]: `A checklist item was deleted from the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_ADDED]: `A member was added to a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: `A member was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: `A member joined checklist item in the card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: `A member left checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_ADDED]: `A member ${targetMember.username} was added to a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: `A member ${targetMember.username} was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: `A member ${targetMember.username} joined checklist item in the card [${cardData?.name}](${cardData?.url}).`,
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: `A member ${targetMember.username} left checklist item in the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_DELETED]: `A due date was removed from a checklist item in the card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_UPDATED]: `The due date of a checklist item in the card [${cardData?.name}](${cardData?.url}) was updated.`,
         [TrelloWebhookCardActions.CUSTOM_FIELD_ITEM_UPDATED]: `${webhookAction.action?.data?.customField?.name} status in the card [${cardData?.name}](${cardData?.url}) was updated.`,
@@ -166,6 +170,7 @@ export class TrelloActionsLogicService {
         this.logger.warn(`Unsupported board action: ${actionType}`);
       }
     } catch (error) {
+      console.log(error);
       this.logger.error('Error handling board action:', error);
     }
   }
@@ -179,6 +184,8 @@ export class TrelloActionsLogicService {
     try {
       const adminToNotify =
         await this.userService.findUserByTrelloId(adminTrelloId);
+
+      const customField = webhookAction.data?.customField;
 
       const targetUser = {
         fullname: webhookAction?.action?.member?.fullName,
@@ -195,9 +202,10 @@ export class TrelloActionsLogicService {
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: `The user left the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: `A new member joined the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: `A new normal role was added to a user on the board [${boardData?.name}](${boardData.url}). \n User: ${JSON.stringify(targetUser, null, 2)}`,
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: `Custom field ${webhookAction.data?.customField?.name} created`,
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: `Custom field ${webhookAction.data?.customField?.old?.name} renamed into ${webhookAction.data?.customField?.name}`,
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: `Custom field ${webhookAction.data?.customField?.name} wasd deleted`,
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: `Custom field ${customField?.name} created`,
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: `Custom field ${customField?.old?.name} renamed into ${webhookAction.data?.customField?.name}`,
+        [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: `Custom field ${customField?.name} was deleted`,
+        [TrelloWebhookAdminActions.BOARD_PERM_LEVEL_CHANGED]: `Board [${boardData?.name}](${boardData.url}) permission level was changed to ${webhookAction.action?.data?.board?.prefs?.permissionLevel}`,
       };
 
       const message = adminActionMessages[actionType];

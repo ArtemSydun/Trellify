@@ -663,7 +663,10 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    delete webhookAction.model?.prefs;
+    delete webhookAction.model?.labelNames;
+    console.log(JSON.stringify(webhookAction, null, 2));
+
     const filteredLog = {
       webhookId: webhookAction.model?.id,
       actionType: webhookAction.action.type,
@@ -760,8 +763,8 @@ export class TrelloWebhooksLogicService {
 
     let notifiedTargetUser: string | null;
     let boardMemberships: BoardMember[] | null;
-
     for (const category of sortedCategories) {
+      console.log(category);
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
@@ -776,11 +779,15 @@ export class TrelloWebhooksLogicService {
         case TrelloWebhookNotificationCategories.CARD:
           if (cardData) {
             const cardMembers = cardData.idMembers || [];
+            console.log('notifiedTargetUser: ', notifiedTargetUser);
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser,
+                memberId !== notifiedTargetUser &&
+                memberId !== targetMember.id,
             );
+
+            console.log('membersToNotify: ', membersToNotify);
 
             const userPromises = membersToNotify.map((member) =>
               this.actionsService.handleCardActions(
@@ -821,6 +828,7 @@ export class TrelloWebhooksLogicService {
                   : null,
               );
             notifiedTargetUser = targetedUserId;
+            console.log(notifiedTargetUser);
           }
 
           if (targetMember && actionSubscribers.includes(targetMember.id)) {
@@ -837,6 +845,7 @@ export class TrelloWebhooksLogicService {
                 : null,
             );
             notifiedTargetUser = targetMember.id;
+            console.log(notifiedTargetUser);
           }
           break;
 
@@ -871,6 +880,7 @@ export class TrelloWebhooksLogicService {
 
         case TrelloWebhookNotificationCategories.BOARD:
           if (boardData) {
+            console.log(boardData);
             boardMemberships =
               boardMemberships ??
               (await this.trelloBoardsApiService.fetchBoardMemberships(

@@ -161,7 +161,6 @@ export class TelegramController {
     let userLanguage = ctx?.update?.message?.from?.language_code;
     const username: string = ctx?.update?.message?.chat?.username;
 
-    console.log(ctx.update?.message);
     if (!chatID) {
       await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
       return;
