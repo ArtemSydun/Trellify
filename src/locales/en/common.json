@@ -8,8 +8,18 @@
         "telegram": {
             "connectionMessage": "Trellify notifier bot authorized successfully",
             "disconnectionMessage": "Trellify notifier bot disconnected successfully",
-            "greetingsMessage": "Hello {name}, click on /start to start Trellify integration",
-            "authorizeThroughWebsite": "Authorize through website"
+            "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
+            "authorizeThroughWebsite": "Authorize through website",
+            "help": {
+                "introMessage": "Hello! This is Trellify — a bot for notifications about events from Trello. To be able to use our app, please, follow these steps",
+                "steps": [
+                    "**Register on the Trellify website**: Visit our [website]({websiteUrl}) and create an account.",
+                    "**Connect your Trello profile**: Log in to Trello and link your account with Trellify.",
+                    "**Connect your Telegram account**: Use this bot to link your Telegram account for receiving notifications.",
+                    "**Set up notifications**: Enable notifications for the boards you want to monitor in the Trellify settings."
+                ],
+                "closingMessage": "If you have any questions, reach out to support."
+            }
         },
         "trello": {
             "webhook": {
@@ -30,7 +40,8 @@
             "notFoundByProperty": "User with property {path}: {value} not found"
         },
         "telegram": {
-            "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user"
+            "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user",
+            "profileNotFound": "Your profile was not found. Please check if you are registered"
         },
         "trello": {
             "webhook": {

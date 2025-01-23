@@ -4,11 +4,16 @@ export enum I18nKeys {
   MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE = 'common.messages.email.registrationEmailMessage',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SENT_MESSAGE = 'common.messages.email.registrationEmailSentMessage',
 
-  // Telegram Messages
+  // Telegram Notifications
   MESSAGES_TELEGRAM_CONNECTION_MESSAGE = 'common.messages.telegram.connectionMessage',
   MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE = 'common.messages.telegram.disconnectionMessage',
+
+  //Telegram bot responses
   MESSAGES_TELEGRAM_GREETINGS_MESSAGE = 'common.messages.telegram.greetingsMessage',
   MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE = 'common.messages.telegram.authorizeThroughWebsite',
+  MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE = 'common.messages.telegram.help.introMessage',
+  MESSAGES_TELEGRAM_HELP_STEPS = 'common.messages.telegram.help.steps',
+  MESSAGES_TELEGRAM_HELP_CLOSING = 'common.messages.telegram.help.closingMessage',
 
   // Webhook Messages
   MESSAGES_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
@@ -26,6 +31,7 @@ export enum I18nKeys {
 
   // Telegram Errors
   ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED = 'common.errors.telegram.botAlreadyConnected',
+  ERRORS_TELEGRAM_PROFILE_NOT_FOUND = 'common.errors.telegram.profileNotFound',
 
   // Trello Errors
   ERRORS_TRELLO_YOU_ARE_NOT_CONNECTED_TO_WEBHOOK = 'common.errors.trello.webhook.youAreNotConnectedToWebhook',
