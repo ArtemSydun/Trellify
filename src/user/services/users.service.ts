@@ -171,6 +171,13 @@ export class UsersService {
     return userByTrelloId;
   }
 
+  public async findUsersByTrelloIds(trelloUserIds: string[]): Promise<User[]> {
+    const usersByTrelloId =
+      await this.userRepository.findManyByTrelloIds(trelloUserIds);
+
+    return usersByTrelloId;
+  }
+
   public async findUserByEmail(
     email: string,
     i18n?: I18nContext,
