@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloWebhooksLogicService } from '@trello/logic';
 import { I18nService } from 'nestjs-i18n';
+import { escapeMarkdown } from 'src/common/helpers/telegram';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -42,7 +43,8 @@ export class TrelloActionsLogicService {
     try {
       const targetUser =
         await this.userService.findUserByTrelloId(userTrelloId);
-      const userInitials = targetUser.telegram.username;
+
+      const userInitials = escapeMarkdown(`${targetUser.telegram.username}`);
 
       const targetActionMessages: Partial<
         Record<TrelloWebhookDetailedActions, string | null>
@@ -241,7 +243,6 @@ export class TrelloActionsLogicService {
         this.logger.warn(`Unsupported board action: ${actionType}`);
       }
     } catch (error) {
-      console.log(error);
       this.logger.error('Error handling board action:', error);
     }
   }

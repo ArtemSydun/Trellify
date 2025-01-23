@@ -40,3 +40,7 @@ export const validateUserLastName = (userLastName: string): boolean => {
 
   return result;
 };
+
+export const escapeMarkdown = (text) => {
+  return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+};
