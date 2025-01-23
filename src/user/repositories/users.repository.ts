@@ -27,7 +27,9 @@ export class UsersRepository {
   async findOneByTrelloId(trelloUserId: string): Promise<User> {
     return this.UserModel.findOne({
       [UserSearchPathEnum.TrelloUserId]: trelloUserId,
-    });
+    })
+      .lean()
+      .exec();
   }
 
   async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {

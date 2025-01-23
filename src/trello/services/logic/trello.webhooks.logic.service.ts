@@ -468,7 +468,6 @@ export class TrelloWebhooksLogicService {
         data: createdWebhook,
       };
     } catch (err) {
-      console.log(err);
       this.logger.error(
         'Error creating webhook:',
         err.response ? err.response.data : err.response.message,
@@ -764,7 +763,6 @@ export class TrelloWebhooksLogicService {
     let notifiedTargetUser: string | null;
     let boardMemberships: BoardMember[] | null;
     for (const category of sortedCategories) {
-      console.log(category);
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
@@ -779,15 +777,12 @@ export class TrelloWebhooksLogicService {
         case TrelloWebhookNotificationCategories.CARD:
           if (cardData) {
             const cardMembers = cardData.idMembers || [];
-            console.log('notifiedTargetUser: ', notifiedTargetUser);
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
                 memberId !== notifiedTargetUser &&
                 memberId !== targetMember?.id,
             );
-
-            console.log('membersToNotify: ', membersToNotify);
 
             await this.actionsService.handleCardActions(
               membersToNotify,
@@ -847,7 +842,6 @@ export class TrelloWebhooksLogicService {
                   : null,
               );
             notifiedTargetUser = targetedUserId;
-            console.log(notifiedTargetUser);
           }
 
           if (targetMember && actionSubscribers.includes(targetMember.id)) {
@@ -864,7 +858,6 @@ export class TrelloWebhooksLogicService {
                 : null,
             );
             notifiedTargetUser = targetMember.id;
-            console.log(notifiedTargetUser);
           }
           break;
 
