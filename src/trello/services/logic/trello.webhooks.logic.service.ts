@@ -665,7 +665,10 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
+    // delete webhookAction.model?.prefs;
+    // delete webhookAction.model?.labelNames;
     // console.log(JSON.stringify(webhookAction, null, 2));
+
     const filteredLog = {
       webhookId: webhookAction.model?.id,
       actionType: webhookAction.action.type,
@@ -759,8 +762,8 @@ export class TrelloWebhooksLogicService {
 
     let notifiedTargetUser: string | null;
     let boardMemberships: BoardMember[] | null;
-
     for (const category of sortedCategories) {
+      console.log(category);
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
@@ -775,23 +778,46 @@ export class TrelloWebhooksLogicService {
         case TrelloWebhookNotificationCategories.CARD:
           if (cardData) {
             const cardMembers = cardData.idMembers || [];
+            console.log('notifiedTargetUser: ', notifiedTargetUser);
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser,
+                memberId !== notifiedTargetUser &&
+                memberId !== targetMember?.id,
             );
 
-            const userPromises = membersToNotify.map((member) =>
-              this.actionsService.handleCardActions(
-                member,
-                cardData,
-                detailedActionType,
-                webhookAction,
-              ),
-            );
+            console.log('membersToNotify: ', membersToNotify);
 
-            await Promise.all(userPromises);
+            await this.actionsService.handleCardActions(
+              membersToNotify,
+              cardData,
+              detailedActionType,
+              webhookAction,
+            );
           }
+          // if (cardData) {
+          //   const cardMembers = cardData.idMembers || [];
+          //   console.log('notifiedTargetUser: ', notifiedTargetUser);
+          //   const membersToNotify = cardMembers.filter(
+          //     (memberId) =>
+          //       actionSubscribers.includes(memberId) &&
+          //       memberId !== notifiedTargetUser &&
+          //       memberId !== targetMember.id,
+          //   );
+
+          //   console.log('membersToNotify: ', membersToNotify);
+
+          //   const userPromises = membersToNotify.map((member) =>
+          //     this.actionsService.handleCardActions(
+          //       member,
+          //       cardData,
+          //       detailedActionType,
+          //       webhookAction,
+          //     ),
+          //   );
+
+          //   await Promise.all(userPromises);
+          // }
           break;
 
         case TrelloWebhookNotificationCategories.PERSONAL:
@@ -820,6 +846,7 @@ export class TrelloWebhooksLogicService {
                   : null,
               );
             notifiedTargetUser = targetedUserId;
+            console.log(notifiedTargetUser);
           }
 
           if (targetMember && actionSubscribers.includes(targetMember.id)) {
@@ -836,6 +863,7 @@ export class TrelloWebhooksLogicService {
                 : null,
             );
             notifiedTargetUser = targetMember.id;
+            console.log(notifiedTargetUser);
           }
           break;
 
@@ -848,24 +876,47 @@ export class TrelloWebhooksLogicService {
                 boardData.id,
               ));
 
-            const membersToNotify = boardMemberships.filter(
-              (member) =>
-                actionSubscribers.includes(member.idMember) &&
-                member.memberType === 'admin' &&
-                member.idMember !== notifiedTargetUser,
+            const membersToNotify = boardMemberships
+              .filter(
+                (member) =>
+                  actionSubscribers.includes(member.idMember) &&
+                  member.idMember !== notifiedTargetUser,
+              )
+              .map((member) => member.idMember);
+
+            await this.actionsService.handleAdminActions(
+              membersToNotify,
+              boardData,
+              detailedActionType,
+              webhookAction,
             );
-
-            const userPromises = membersToNotify.map(async (member) => {
-              await this.actionsService.handleAdminActions(
-                member.idMember,
-                boardData,
-                detailedActionType,
-                webhookAction,
-              );
-            });
-
-            await Promise.all(userPromises);
           }
+          // if (boardData) {
+          //   boardMemberships =
+          //     boardMemberships ??
+          //     (await this.trelloBoardsApiService.fetchBoardMemberships(
+          //       authorizedToken,
+          //       boardData.id,
+          //     ));
+
+          //   const membersToNotify = boardMemberships.filter(
+          //     (member) =>
+          //       actionSubscribers.includes(member.idMember) &&
+          //       member.memberType === 'admin' &&
+          //       member.idMember !== notifiedTargetUser,
+          //   );
+
+          //   const userPromises = membersToNotify.map(async (member) => {
+          //     await this.actionsService.handleAdminActions(
+          //       member.idMember,
+          //       boardData,
+          //       detailedActionType,
+          //       webhookAction,
+          //     );
+          //   });
+
+          //   await Promise.all(userPromises);
+          // }
           break;
 
         case TrelloWebhookNotificationCategories.BOARD:
@@ -877,22 +928,45 @@ export class TrelloWebhooksLogicService {
                 boardData.id,
               ));
 
-            const membersToNotify = boardMemberships.filter(
-              (member) =>
-                actionSubscribers.includes(member.idMember) &&
-                member.idMember !== notifiedTargetUser,
+            const membersToNotify = boardMemberships
+              .filter(
+                (member) =>
+                  actionSubscribers.includes(member.idMember) &&
+                  member.idMember !== notifiedTargetUser,
+              )
+              .map((member) => member.idMember);
+
+            await this.actionsService.handleBoardActions(
+              membersToNotify,
+              boardData,
+              detailedActionType,
             );
-
-            const userPromises = membersToNotify.map(async (member) => {
-              await this.actionsService.handleBoardActions(
-                member.idMember,
-                boardData,
-                detailedActionType,
-              );
-            });
-
-            await Promise.all(userPromises);
           }
+          // if (boardData) {
+          //   console.log(boardData);
+          //   boardMemberships =
+          //     boardMemberships ??
+          //     (await this.trelloBoardsApiService.fetchBoardMemberships(
+          //       authorizedToken,
+          //       boardData.id,
+          //     ));
+
+          //   const membersToNotify = boardMemberships.filter(
+          //     (member) =>
+          //       actionSubscribers.includes(member.idMember) &&
+          //       member.idMember !== notifiedTargetUser,
+          //   );
+
+          //   const userPromises = membersToNotify.map(async (member) => {
+          //     await this.actionsService.handleBoardActions(
+          //       member.idMember,
+          //       boardData,
+          //       detailedActionType,
+          //     );
+          //   });
+
+          //   await Promise.all(userPromises);
+          // }
           break;
 
         default:

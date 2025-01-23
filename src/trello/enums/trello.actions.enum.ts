@@ -110,6 +110,7 @@ export enum TrelloWebhookDetailedActions {
   BOARD_MEMBER_NORMAL_ROLE_ADDED = 'action_made_a_normal_user_on',
   BOARD_CLOSED = 'action_closed_board',
   BOARD_REOPENED = 'action_reopened_board',
+  BOARD_PERM_LEVEL_CHANGED = 'action_board_perm_level',
   // BOARD_DELETED = 'action_remove_from_organization_board',
 
   CUSTOM_FIELD_CREATED = 'action_create_custom_field',
@@ -178,6 +179,8 @@ export enum TrelloWebhookAdminActions {
 
   BOARD_MEMBER_NORMAL_ROLE_ADDED = TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
   BOARD_ADMIN_ADDED = TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
+
+  BOARD_PERM_LEVEL_CHANGED = TrelloWebhookDetailedActions.BOARD_PERM_LEVEL_CHANGED,
 
   CUSTOM_FIELD_CREATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_CREATED,
   // CUSTOM_FIELD_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_UPDATED,

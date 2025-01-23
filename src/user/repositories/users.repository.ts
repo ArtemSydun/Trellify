@@ -30,6 +30,14 @@ export class UsersRepository {
     });
   }
 
+  async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {
+    return this.UserModel.find({
+      [UserSearchPathEnum.TrelloUserId]: { $in: trelloUserIds },
+    })
+      .lean()
+      .exec();
+  }
+
   async findUserByProperty(
     path: UserSearchPathEnum,
     value: any,
