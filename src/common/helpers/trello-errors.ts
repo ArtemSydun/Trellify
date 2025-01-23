@@ -15,7 +15,6 @@ export function parseTrelloError(err: any, i18n?: I18nContext): string {
     message = err.message;
   }
 
-  console.log(i18n.lang);
   switch (message.toLowerCase()) {
     case 'invalid key':
       message =
