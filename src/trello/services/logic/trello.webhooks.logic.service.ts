@@ -790,29 +790,6 @@ export class TrelloWebhooksLogicService {
               webhookAction,
             );
           }
-          // if (cardData) {
-          //   const cardMembers = cardData.idMembers || [];
-          //   console.log('notifiedTargetUser: ', notifiedTargetUser);
-          //   const membersToNotify = cardMembers.filter(
-          //     (memberId) =>
-          //       actionSubscribers.includes(memberId) &&
-          //       memberId !== notifiedTargetUser &&
-          //       memberId !== targetMember.id,
-          //   );
-
-          //   console.log('membersToNotify: ', membersToNotify);
-
-          //   const userPromises = membersToNotify.map((member) =>
-          //     this.actionsService.handleCardActions(
-          //       member,
-          //       cardData,
-          //       detailedActionType,
-          //       webhookAction,
-          //     ),
-          //   );
-
-          //   await Promise.all(userPromises);
-          // }
           break;
 
         case TrelloWebhookNotificationCategories.PERSONAL:
@@ -884,32 +861,6 @@ export class TrelloWebhooksLogicService {
               webhookAction,
             );
           }
-          // if (boardData) {
-          //   boardMemberships =
-          //     boardMemberships ??
-          //     (await this.trelloBoardsApiService.fetchBoardMemberships(
-          //       authorizedToken,
-          //       boardData.id,
-          //     ));
-
-          //   const membersToNotify = boardMemberships.filter(
-          //     (member) =>
-          //       actionSubscribers.includes(member.idMember) &&
-          //       member.memberType === 'admin' &&
-          //       member.idMember !== notifiedTargetUser,
-          //   );
-
-          //   const userPromises = membersToNotify.map(async (member) => {
-          //     await this.actionsService.handleAdminActions(
-          //       member.idMember,
-          //       boardData,
-          //       detailedActionType,
-          //       webhookAction,
-          //     );
-          //   });
-
-          //   await Promise.all(userPromises);
-          // }
           break;
 
         case TrelloWebhookNotificationCategories.BOARD:
@@ -933,33 +884,9 @@ export class TrelloWebhooksLogicService {
               membersToNotify,
               boardData,
               detailedActionType,
+              webhookAction,
             );
           }
-          // if (boardData) {
-          //   console.log(boardData);
-          //   boardMemberships =
-          //     boardMemberships ??
-          //     (await this.trelloBoardsApiService.fetchBoardMemberships(
-          //       authorizedToken,
-          //       boardData.id,
-          //     ));
-
-          //   const membersToNotify = boardMemberships.filter(
-          //     (member) =>
-          //       actionSubscribers.includes(member.idMember) &&
-          //       member.idMember !== notifiedTargetUser,
-          //   );
-
-          //   const userPromises = membersToNotify.map(async (member) => {
-          //     await this.actionsService.handleBoardActions(
-          //       member.idMember,
-          //       boardData,
-          //       detailedActionType,
-          //     );
-          //   });
-
-          //   await Promise.all(userPromises);
-          // }
           break;
 
         default:
