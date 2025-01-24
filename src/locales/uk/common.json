@@ -19,6 +19,64 @@
                     "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
                 ],
                 "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
+            },
+            "notifications": {
+                "personal": {
+                    "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
+                    "cardMemberRemovedSelf": "{userInitials}, вас було видалено з картки [{cardName}]({cardUrl}).",
+                    "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа в картці [{cardName}]({cardUrl}).",
+                    "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа в картці [{cardName}]({cardUrl}).",
+                    "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
+                    "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
+                },
+                "board": {
+                    "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
+                    "boardClosed": "Дошку {boardName} було закрито.",
+                    "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито."
+                },
+                "card": {
+                    "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
+                    "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
+                    "cardMemberAdded": "Додано нового учасника {memberName} до картки [{cardName}]({cardUrl}).",
+                    "cardMemberRemoved": "Видалено учасника {memberName} з картки [{cardName}]({cardUrl}).",
+                    "cardMemberJoined": "Учасник {memberName} приєднався до картки [{cardName}]({cardUrl}).",
+                    "cardMemberLeft": "Учасник {memberName} вийшов з картки [{cardName}]({cardUrl}).",
+                    "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
+                    "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
+                    "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
+                    "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
+                    "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
+                    "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
+                    "cardCommentAdded": "Додано коментар до картки [{cardName}]({cardUrl}).",
+                    "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
+                    "cardChecklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
+                    "cardChecklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+                    "checklistItemAdded": "Додано елемент чек-листа {checklistItemName} до картки [{cardName}]({cardUrl}).",
+                    "checklistItemDeleted": "Видалено елемент чек-листа {checklistItemName} з картки [{cardName}]({cardUrl}).",
+                    "checklistItemMemberAdded": "Додано учасника {memberName} до елемента чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemMemberRemoved": "Видалено учасника {memberName} з елемента чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemMemberJoined": "Учасник {memberName} приєднався до елемента чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemMemberLeft": "Учасник {memberName} залишив елемент чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}).",
+                    "checklistItemCompleted": "Елемент чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
+                    "checklistItemIncompleted": "Елемент чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
+                    "checklistItemConvertedToCard": "Елемент чек-листа {checklistItemName} в картці [{cardName}]({cardUrl}) було перетворено на нову картку.",
+                    "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
+                    "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
+                },
+                "admin": {
+                    "boardMemberInvitationJoined": "Користувач {targetUser} приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
+                    "boardMemberJoined": "Новий учасник {targetUser} приєднався до дошки [{boardName}]({boardUrl}).",
+                    "boardMemberLeft": "Користувач {targetUser} залишив дошку [{boardName}]({boardUrl}).",
+                    "boardMemberRemoved": "Користувача {targetUser} було видалено з дошки [{boardName}]({boardUrl}).",
+                    "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було додано нову звичайну роль для користувача {targetUser}.",
+                    "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора {targetUser}.",
+                    "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
+                    "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
+                    "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}.",
+                    "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}."
+                }
             }
         },
         "trello": {
