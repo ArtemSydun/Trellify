@@ -287,8 +287,7 @@ export class UsersController {
     return this.usersService.findUserById(id, req.i18nContext);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete a user by ID (Superadmin only)',
@@ -318,7 +317,7 @@ export class UsersController {
     @Param('id') id: string,
     @Req() req,
   ): Promise<DefaultResponse<string>> {
-    return this.usersService.deleteUserById(id, req.i18nContext);
+    return this.usersService.deleteUserById(req.user.id, id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
