@@ -26,7 +26,10 @@ export class TrelloCardsController {
   })
   @ApiCustomUnathorizedResponse()
   findCardsMemberRelatedTo(@Req() req): Promise<TrelloCard[]> {
-    return this.cardsService.findMemberRelatedCards(req.user.id);
+    return this.cardsService.findMemberRelatedCards(
+      req.user.id,
+      req.i18nContext,
+    );
   }
 
   @Get(':id')
@@ -41,6 +44,10 @@ export class TrelloCardsController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('Card', 'id')
   getBoardById(@Req() req, @Param(':id') boardId): Promise<TrelloCard> {
-    return this.cardsService.findCardById(req.user.id, boardId);
+    return this.cardsService.findCardById(
+      req.user.id,
+      boardId,
+      req.i18nContext,
+    );
   }
 }
