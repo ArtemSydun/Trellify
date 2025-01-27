@@ -972,14 +972,6 @@ export class TrelloWebhooksLogicService {
       },
     );
 
-    console.log(
-      i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
-        args: {
-          boardName: webhookToUpdate.boardName,
-          boardUrl: webhookToUpdate.boardUrl,
-        },
-      }),
-    );
     await Promise.all([
       this.userService.updateUser(userToUpdate, updatedUser, i18n),
 
@@ -1202,7 +1194,7 @@ export class TrelloWebhooksLogicService {
 
     try {
       await Promise.all(
-        webhooks.map((webhook) => this.removeTrelloWebhook(webhook)),
+        webhooks.map((webhook) => this.removeTrelloWebhook(webhook, i18n)),
       );
 
       this.logger.log('All webhooks deleted successfully.');

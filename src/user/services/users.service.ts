@@ -533,6 +533,7 @@ export class UsersService {
 
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
       const userLanguage = user.language || Languages.EN;
+
       this.telegramService.sendMessageToUser(
         user.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
