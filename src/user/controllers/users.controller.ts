@@ -19,7 +19,6 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -161,15 +160,11 @@ export class UsersController {
     'Invalid trello token',
     'Please provide us token with valid expiration date',
   )
-  handleTrelloQuery(
-    @Req() req,
-    @Body() connectTrelloDto: ConnectTrelloDto,
-    @I18n() i18n: I18nContext,
-  ) {
+  handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
     return this.usersService.manageUserTrelloConnection(
       req.user.id,
       connectTrelloDto,
-      i18n,
+      req.i18nContext,
     );
   }
 
@@ -225,7 +220,7 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   getUserProfile(@Req() req): Promise<Partial<User>> {
-    return this.usersService.findUserProfile(req.user.id);
+    return this.usersService.findUserProfile(req.user.id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -259,12 +254,11 @@ export class UsersController {
   updateUserLanguagePreference(
     @Req() req,
     @Body() updateUserLangueageDto: UpdateUserLanguageDto,
-    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<User>> {
     return this.usersService.updateUserLanguagePreference(
       req.user,
       updateUserLangueageDto,
-      i18n,
+      req.i18nContext,
     );
   }
 
