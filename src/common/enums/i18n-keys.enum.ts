@@ -9,11 +9,17 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE = 'common.messages.telegram.disconnectionMessage',
 
   //Telegram bot responses
+  MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED = 'common.messages.telegram.notificationsConnected',
+  MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED = 'common.messages.telegram.notificationsDisconnected',
   MESSAGES_TELEGRAM_GREETINGS_MESSAGE = 'common.messages.telegram.greetingsMessage',
   MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE = 'common.messages.telegram.authorizeThroughWebsite',
   MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE = 'common.messages.telegram.help.introMessage',
   MESSAGES_TELEGRAM_HELP_STEPS = 'common.messages.telegram.help.steps',
   MESSAGES_TELEGRAM_HELP_CLOSING = 'common.messages.telegram.help.closingMessage',
+
+  // user related messages
+  MESSAGES_USER_DELETED = 'common.messages.user.deleted',
+  MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
 
   // Webhook Messages
   MESSAGES_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',

@@ -359,8 +359,8 @@ export class UsersController {
     return this.usersService.updateUser(
       id,
       updateUserDto,
-      req.user,
       req.i18nContext,
+      req.user,
     );
   }
 }

@@ -14,6 +14,7 @@ import {
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 import {
   decryptText,
   encryptText,
@@ -104,7 +105,8 @@ export class UsersService {
       requestAuthor.id !== targetUser.id
     ) {
       throw new ForbiddenException(
-        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE),
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
       );
     }
 
@@ -114,7 +116,8 @@ export class UsersService {
       requestAuthor.id === targetUser.id
     ) {
       throw new ForbiddenException(
-        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE),
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
       );
     }
 
@@ -123,6 +126,11 @@ export class UsersService {
     // Disconnect the user from Trello webhooks if they have a token
     if (targetUser.trello.token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+        targetUser,
+        i18n,
+      );
+
+      await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
         targetUser,
         i18n,
       );
@@ -141,9 +149,14 @@ export class UsersService {
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
 
-    this.logger.log(`User ${targetUser.id} deleted successfully`);
+    this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
-      message: `User ${targetUser.id} was deleted successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_DELETED, {
+          args: {
+            email: targetUser.email,
+          },
+        }) || `All user data ${targetUser.email} has been deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -244,8 +257,8 @@ export class UsersService {
   public async updateUser(
     user: string | User,
     updateUserDto: UpdateUserDto,
+    i18n?: I18nContext,
     reqUser?: Partial<User>,
-    i18n?: I18nContext<Record<string, unknown>>,
   ): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
@@ -499,6 +512,7 @@ export class UsersService {
       webhook,
       i18n,
     );
+
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(
       webhookToRemove.id,
     );
@@ -518,9 +532,17 @@ export class UsersService {
     }));
 
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
+      const userLanguage = user.language || Languages.EN;
       this.telegramService.sendMessageToUser(
         user.telegram,
-        `Webhook for board ${webhookToRemove.boardName} was deleted. Please, reconnect notifications`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+          lang: userLanguage,
+          args: {
+            boardName: webhookToRemove.boardName,
+            boardUrl: webhookToRemove.boardUrl,
+          },
+        }) ||
+          `Notifications for board [${webhookToRemove.boardName}](${webhookToRemove.boardUrl}) has been disconnected. Please, reconnect notifications`,
       );
     });
 
