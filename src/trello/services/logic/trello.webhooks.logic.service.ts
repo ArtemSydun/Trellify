@@ -226,7 +226,11 @@ export class TrelloWebhooksLogicService {
           },
         };
 
-        return this.userService.updateUser(connectedUser, updatedUserProps);
+        return this.userService.updateUser(
+          connectedUser,
+          updatedUserProps,
+          i18n,
+        );
       });
 
       await Promise.all(updateUserPromises);
@@ -241,12 +245,16 @@ export class TrelloWebhooksLogicService {
         (userWebhook) => userWebhook.webhookId !== existingWebhook.id,
       );
 
-      await this.userService.updateUser(previousAuthor, {
-        trello: {
-          ...previousAuthor.trello,
-          webhooks: filteredWebhooks,
+      await this.userService.updateUser(
+        previousAuthor,
+        {
+          trello: {
+            ...previousAuthor.trello,
+            webhooks: filteredWebhooks,
+          },
         },
-      });
+        i18n,
+      );
 
       this.logger.log(
         `Old webhook for board ${existingWebhook.boardName} replaced with new webhook`,
@@ -329,6 +337,7 @@ export class TrelloWebhooksLogicService {
     const connectedBoard = await this.trelloBoardsApiService.fetchBoardById(
       decryptedUserToken,
       boardId,
+      i18n,
     );
 
     if (webhook) {
@@ -388,14 +397,21 @@ export class TrelloWebhooksLogicService {
       };
 
       await Promise.all([
-        this.userService.updateUser(userToUpdate, updatedUserProps),
+        this.userService.updateUser(userToUpdate, updatedUserProps, i18n),
         this.trelloWebhookRepository.updateById(webhook.id, {
           subscribers: webhook.subscribers,
           notifications: updatedNotifications,
         }),
         this.telegramService.sendMessageToUser(
           userToUpdate.telegram,
-          `Notifications for board [${webhook.boardName}](${webhook.boardUrl}) connected successfully`,
+          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+            lang: userToUpdate.language,
+            args: {
+              boardName: webhook.boardName,
+              boardUrl: webhook.boardUrl,
+            },
+          }) ||
+            `Notifications for board [${webhook.boardName}](${webhook.boardUrl}) connected successfully`,
         ),
       ]);
 
@@ -415,6 +431,7 @@ export class TrelloWebhooksLogicService {
       decryptedUserToken,
       boardPersonalWebhookURL,
       boardId,
+      i18n,
     );
     console.log('Webhook created: ', response);
 
@@ -452,11 +469,18 @@ export class TrelloWebhooksLogicService {
       };
 
       await Promise.all([
-        this.userService.updateUser(user, updatedUserProps),
+        this.userService.updateUser(user, updatedUserProps, i18n),
         this.trelloWebhookRepository.create(createdWebhook),
         this.telegramService.sendMessageToUser(
           userToUpdate.telegram,
-          `Notifications for board [${createdWebhook.boardName}](${createdWebhook.boardUrl}) connected successfully`,
+          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+            lang: userToUpdate.language,
+            args: {
+              boardName: createdWebhook.boardName,
+              boardUrl: createdWebhook.boardUrl,
+            },
+          }) ||
+            `Notifications for board [${createdWebhook.boardName}](${createdWebhook.boardUrl}) connected successfully`,
         ),
       ]);
 
@@ -900,8 +924,8 @@ export class TrelloWebhooksLogicService {
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
-    const userToUpdate = await this.userService.getUser(user);
-    const webhookToUpdate = await this.getWebhook(webhook);
+    const userToUpdate = await this.userService.getUser(user, i18n);
+    const webhookToUpdate = await this.getWebhook(webhook, i18n);
 
     validateTrelloToken(userToUpdate.trello.token, i18n);
 
@@ -911,8 +935,10 @@ export class TrelloWebhooksLogicService {
       )
     ) {
       throw new BadRequestException(
-        i18n?.t(I18nKeys.ERRORS_TRELLO_USER_IS_NOT_CONNECTED_TO_WEBHOOK),
-        `User is not connected to webhook ${webhookToUpdate.id}`,
+        i18n?.t(I18nKeys.ERRORS_TRELLO_USER_IS_NOT_CONNECTED_TO_WEBHOOK, {
+          args: { webhookToDisconnect: webhookToUpdate.boardName },
+        }),
+        `User is not connected to webhook ${webhookToUpdate.boardName}`,
       );
     }
 
@@ -946,12 +972,26 @@ export class TrelloWebhooksLogicService {
       },
     );
 
+    console.log(
+      i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+        args: {
+          boardName: webhookToUpdate.boardName,
+          boardUrl: webhookToUpdate.boardUrl,
+        },
+      }),
+    );
     await Promise.all([
-      this.userService.updateUser(userToUpdate, updatedUser),
+      this.userService.updateUser(userToUpdate, updatedUser, i18n),
 
       this.telegramService.sendMessageToUser(
         userToUpdate.telegram,
-        `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) disconnected successfully`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+          args: {
+            boardName: webhookToUpdate.boardName,
+            boardUrl: webhookToUpdate.boardUrl,
+          },
+        }) ||
+          `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) has been disconnected. Please, check notifications status`,
       ),
     ]);
 
@@ -974,7 +1014,11 @@ export class TrelloWebhooksLogicService {
         userToDisconnect.trello.webhooks.length === 0
       ) {
         return {
-          message: `User ${userToDisconnect.id} disconnected from all Trello webhooks successfully`,
+          message:
+            i18n?.t(I18nKeys.MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED, {
+              args: { email: userToDisconnect.email },
+            }) ||
+            `User ${userToDisconnect.email} disconnected from all Trello webhooks successfully`,
           statusCode: HttpStatus.OK,
         };
       }
@@ -1035,7 +1079,11 @@ export class TrelloWebhooksLogicService {
         },
       };
 
-      await this.userService.updateUser(userToDisconnect, updatedUserProps);
+      await this.userService.updateUser(
+        userToDisconnect,
+        updatedUserProps,
+        i18n,
+      );
 
       return {
         message: `User ${userToDisconnect.id} disconnected from all Trello webhooks successfully`,

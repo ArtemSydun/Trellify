@@ -6,6 +6,8 @@
             "registrationEmailSentMessage": "Confirmation link sent to your email {email}"
         },
         "telegram": {
+            "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully",
+            "notificationsDisconnected": "Notifications for board [{boardName}]({boardUrl}) has been disconnected. Please, check notifications status",
             "connectionMessage": "Trellify notifier bot authorized successfully",
             "disconnectionMessage": "Trellify notifier bot disconnected successfully",
             "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
@@ -84,6 +86,10 @@
                 "webhookHealthIsOk": "Webhook to the {board} is active now",
                 "webhookWasRecreated": "Webhook was recreated"
             }
+        },
+        "user": {
+            "deleted": "All user {targetEmail} data has been deleted.",
+            "allWebhooksDisconnected": "User {email} disconnected from all webhooks"
         }
     },
     "errors": {
@@ -104,7 +110,7 @@
         "trello": {
             "webhook": {
                 "youAreNotConnectedToWebhook": "You are not connected to this webhook",
-                "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToUpdate}",
+                "userIsNotConnectedToWebhook": "User is not connected to webhook {webhookToDisconnect}",
                 "webhookIsAlreadyExist": "Webhook for board {boardName} already exists for this user.",
                 "webhookNotFoundById": "Webhook with id {webhookId} not found",
                 "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",

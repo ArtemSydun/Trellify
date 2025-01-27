@@ -19,7 +19,7 @@ export class TrelloTokensLogicService {
 
   async isTokenInfinite(
     trelloToken: string,
-    i18n: I18nContext,
+    i18n?: I18nContext,
   ): Promise<boolean> {
     const token = await this.trelloTokensApiService.fetchAccessToken(
       trelloToken,
@@ -36,5 +36,11 @@ export class TrelloTokensLogicService {
 
     this.logger.log('Trello token is infinite');
     return true;
+  }
+
+  async deleteUserToken(token: string, i18n?: I18nContext) {
+    await this.isTokenInfinite(token, i18n);
+
+    await this.trelloTokensApiService.deleteUserToken(token, i18n);
   }
 }

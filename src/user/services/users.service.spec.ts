@@ -24,6 +24,7 @@ import { UserSearchPathEnum } from '../enums/query.enum';
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
   encryptText: jest.fn(),
+  decryptText: jest.fn(),
 }));
 
 describe('UsersService', () => {
@@ -170,15 +171,22 @@ describe('UsersService', () => {
         });
       jest.spyOn(usersRepository, 'delete').mockResolvedValue();
 
-      const result = await usersService.deleteUserById(userToDelete.id);
+      const result = await usersService.deleteUserById(
+        userToDelete.id,
+        userToDelete.id,
+        undefined,
+      );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userToDelete.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToDelete.id,
+        undefined,
+      );
       expect(
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(result).toEqual({
-        message: `User ${userToDelete.id} was deleted successfully`,
+        message: `All user data ${userToDelete.email} has been deleted successfully`,
         statusCode: HttpStatus.OK,
       });
     });
@@ -192,10 +200,10 @@ describe('UsersService', () => {
           new NotFoundException(`User with id ${userId} not found`),
         );
 
-      await expect(usersService.deleteUserById(userId)).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(usersService.getUser).toHaveBeenCalledWith(userId);
+      await expect(
+        usersService.deleteUserById(userId, userId, undefined),
+      ).rejects.toThrow(NotFoundException);
+      expect(usersService.getUser).toHaveBeenCalledWith(userId, undefined);
       expect(
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).not.toHaveBeenCalled();

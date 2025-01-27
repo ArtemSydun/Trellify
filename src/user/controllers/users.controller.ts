@@ -287,13 +287,11 @@ export class UsersController {
     return this.usersService.findUserById(id, req.i18nContext);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({
-    summary: 'Delete a user by ID (Superadmin only)',
-    description:
-      'This endpoint allows to delete a user by their ID. It can only be accessed by users with the superadmin role.',
+    summary: 'Delete a user by ID.',
+    description: 'This endpoint allows to delete a user by their ID.',
   })
   @ApiOkResponse({
     description: 'User deleted successfully',
@@ -318,7 +316,7 @@ export class UsersController {
     @Param('id') id: string,
     @Req() req,
   ): Promise<DefaultResponse<string>> {
-    return this.usersService.deleteUserById(id, req.i18nContext);
+    return this.usersService.deleteUserById(req.user.id, id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -360,8 +358,8 @@ export class UsersController {
     return this.usersService.updateUser(
       id,
       updateUserDto,
-      req.user,
       req.i18nContext,
+      req.user,
     );
   }
 }

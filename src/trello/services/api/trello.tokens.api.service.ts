@@ -31,4 +31,16 @@ export class TrelloTokensApiService {
       throw new BadRequestException(errorMessage);
     }
   }
+
+  async deleteUserToken(token: string, i18n?: I18nContext): Promise<any> {
+    const url = `${trelloApiLink}/tokens/${token}?key=${this.trelloApiKey}&token=${token}`;
+
+    try {
+      const response = await axios.delete(url);
+      return response;
+    } catch (err) {
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
+    }
+  }
 }
