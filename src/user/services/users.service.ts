@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   TrelloMembersLogicService,
@@ -13,7 +14,12 @@ import {
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
-import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import { Languages } from 'src/common/enums/languages.enum';
+import {
+  decryptText,
+  encryptText,
+  hashPassword,
+} from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
@@ -86,25 +92,71 @@ export class UsersService {
   }
 
   public async deleteUserById(
-    userId: string,
+    requestedAuthor: string | User,
+    userToDelete: string | User,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
-    const userToDelete = await this.getUser(userId);
+    const requestAuthor = await this.getUser(requestedAuthor, i18n);
+    const targetUser = await this.getUser(userToDelete, i18n);
 
-    this.logger.log(`Deleting user with ID: ${userToDelete.id}`);
+    // Check if the requesting user is allowed to delete the target user
+    if (
+      requestAuthor.role !== UserRoles.superadmin &&
+      requestAuthor.id !== targetUser.id
+    ) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
 
-    if (userToDelete.trello.token) {
+    // Prevent a superadmin from deleting themselves
+    if (
+      requestAuthor.role === UserRoles.superadmin &&
+      requestAuthor.id === targetUser.id
+    ) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
+    this.logger.log(`Deleting user with ID: ${targetUser.id}`);
+
+    // Disconnect the user from Trello webhooks if they have a token
+    if (targetUser.trello.token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
-        userToDelete,
+        targetUser,
+        i18n,
+      );
+
+      await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
+        targetUser,
+        i18n,
+      );
+
+      const decryptedTargetUserToken = decryptText(
+        targetUser.trello.token,
+        this.encryptionKey,
+      );
+
+      await this.trelloTokensLogicService.deleteUserToken(
+        decryptedTargetUserToken,
         i18n,
       );
     }
 
-    await this.userRepository.delete(userToDelete.id);
+    // Perform the user deletion
+    await this.userRepository.delete(targetUser.id);
 
-    this.logger.log(`User ${userToDelete.id} deleted successfully`);
+    this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
-      message: `User ${userToDelete.id} was deleted successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_DELETED, {
+          args: {
+            email: targetUser.email,
+          },
+        }) || `All user data ${targetUser.email} has been deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -205,8 +257,8 @@ export class UsersService {
   public async updateUser(
     user: string | User,
     updateUserDto: UpdateUserDto,
+    i18n?: I18nContext,
     reqUser?: Partial<User>,
-    i18n?: I18nContext<Record<string, unknown>>,
   ): Promise<DefaultResponse<User>> {
     if (reqUser?.role !== UserRoles.superadmin) {
       delete updateUserDto.role;
@@ -460,6 +512,7 @@ export class UsersService {
       webhook,
       i18n,
     );
+
     const usersConnectedToWebhook = await this.findUsersConnectedToWebhook(
       webhookToRemove.id,
     );
@@ -479,9 +532,17 @@ export class UsersService {
     }));
 
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
+      const userLanguage = user.language || Languages.EN;
       this.telegramService.sendMessageToUser(
         user.telegram,
-        `Webhook for board ${webhookToRemove.boardName} was deleted. Please, reconnect notifications`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+          lang: userLanguage,
+          args: {
+            boardName: webhookToRemove.boardName,
+            boardUrl: webhookToRemove.boardUrl,
+          },
+        }) ||
+          `Notifications for board [${webhookToRemove.boardName}](${webhookToRemove.boardUrl}) has been disconnected. Please, reconnect notifications`,
       );
     });
 

@@ -6,6 +6,8 @@
             "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}"
         },
         "telegram": {
+            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
+            "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
             "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований",
             "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
             "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
@@ -84,6 +86,10 @@
                 "webhookHealthIsOk": "Вебхук до дошки {board} активний",
                 "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз"
             }
+        },
+        "user": {
+            "deleted": "Усі дані про користувача {email} було видалено.",
+            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень"
         }
     },
     "errors": {
