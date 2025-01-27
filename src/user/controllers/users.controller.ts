@@ -290,9 +290,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({
-    summary: 'Delete a user by ID (Superadmin only)',
-    description:
-      'This endpoint allows to delete a user by their ID. It can only be accessed by users with the superadmin role.',
+    summary: 'Delete a user by ID.',
+    description: 'This endpoint allows to delete a user by their ID.',
   })
   @ApiOkResponse({
     description: 'User deleted successfully',
