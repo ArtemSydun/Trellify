@@ -132,7 +132,6 @@ export class TrelloWebhooksLogicService {
         i18n,
       );
     } catch (error) {
-      console.log(error.message);
       if (error.message === i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_APP_KEY)) {
         authorWebhooks = [];
         // await this.removeAllWebhooksCreatedByUser(webhooksAuthor, i18n);
@@ -1093,7 +1092,6 @@ export class TrelloWebhooksLogicService {
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
-      // console.log(err);
       this.logger.error('Error during bulk update of webhooks:', err);
       throw new BadRequestException(
         i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOKS_DISCONNECT) ||
@@ -1139,7 +1137,6 @@ export class TrelloWebhooksLogicService {
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
-      // console.log(err);
       this.logger.error(
         'Error deleting webhook:',
         err.response ? err.response.message : err.message,
@@ -1215,7 +1212,6 @@ export class TrelloWebhooksLogicService {
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
-      // console.log(err);
       this.logger.error(
         'Error deleting all webhooks:',
         err.response ? err.response.message : err.message,

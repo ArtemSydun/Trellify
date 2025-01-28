@@ -48,7 +48,6 @@ export class TrelloActionsLogicService {
 
       const notificationLanguage = targetUser.language || Languages.EN;
 
-      console.log('telegramUsername', targetUser.telegram.username);
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
       );
