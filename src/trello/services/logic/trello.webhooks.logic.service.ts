@@ -298,7 +298,7 @@ export class TrelloWebhooksLogicService {
       return {
         message:
           i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK, {
-            args: { board: webhookToCheck.boardName },
+            args: { boardName: webhookToCheck.boardName },
           }) || `Webhook for board ${webhookToCheck.boardName} health is ok`,
         statusCode: HttpStatus.OK,
         data: webhookToCheck,
@@ -1224,12 +1224,26 @@ export class TrelloWebhooksLogicService {
 
   async findMemberConnectedWebhooks(
     user: string | User,
-    i18n: I18nContext,
+    i18n?: I18nContext,
   ): Promise<Webhook[]> {
-    const requestedUser = await this.userService.getUser(user);
+    const requestedUser = await this.userService.getUser(user, i18n);
     validateTrelloToken(requestedUser.trello.token, i18n);
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksConnectedToUser(
+        requestedUser.trello.userId,
+      );
+
+    return webhooks;
+  }
+
+  async findMemberCreatedWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const requestedUser = await this.userService.getUser(user, i18n);
+    validateTrelloToken(requestedUser.trello.token, i18n);
+    const webhooks =
+      await this.trelloWebhookRepository.findWebhooksCreatedByUser(
         requestedUser.trello.userId,
       );
 
@@ -1248,6 +1262,58 @@ export class TrelloWebhooksLogicService {
           args: { webhookId },
         }) || `Webhook with id ${webhookId} not found`,
       );
+    }
+
+    const decryptedAuthorToken = decryptText(
+      webhook.author.trelloToken,
+      this.encryptionKey,
+    );
+
+    const boardData = await this.trelloBoardsApiService.fetchBoardById(
+      decryptedAuthorToken,
+      webhook.idModel,
+    );
+
+    if (boardData.name !== webhook.boardName) {
+      const updatedWebhook = await this.trelloWebhookRepository.updateById(
+        webhook.id,
+        {
+          boardName: boardData.name,
+          boardUrl: boardData.url,
+        },
+      );
+
+      const usersToUpdate = await this.userService.findUsersConnectedToWebhook(
+        updatedWebhook.id,
+      );
+
+      const updateUserPromises = usersToUpdate.map((subscriber) => {
+        const updatedWebhooks = subscriber.trello.webhooks.map(
+          (userWebhook) => {
+            if (userWebhook.webhookId === webhook.id) {
+              return {
+                ...userWebhook,
+                idModel: updatedWebhook.idModel,
+                modelName: updatedWebhook.boardName,
+              };
+            }
+            return userWebhook;
+          },
+        );
+
+        const updatedUserProps = {
+          trello: {
+            ...subscriber.trello,
+            webhooks: updatedWebhooks,
+          },
+        };
+
+        return this.userService.updateUser(subscriber, updatedUserProps, i18n);
+      });
+
+      await Promise.all(updateUserPromises);
+
+      return updatedWebhook;
     }
 
     return webhook;

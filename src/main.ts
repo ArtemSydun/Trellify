@@ -15,10 +15,8 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.enableCors({
-    origin: configService.get(configServiceEnum.FRONTEND_LINK), // Allow all origins, only for testing purposes, change later
+    origin: configService.get(configServiceEnum.FRONTEND_LINK),
   });
-
-  console.log(configService.get(configServiceEnum.NODE_ENV));
 
   if (configService.get(configServiceEnum.NODE_ENV) !== 'production') {
     const config = new DocumentBuilder()

@@ -83,7 +83,7 @@
         },
         "trello": {
             "webhook": {
-                "webhookHealthIsOk": "Webhook to the {board} is active now",
+                "webhookHealthIsOk": "Webhook to the {boardName} is active now",
                 "webhookWasRecreated": "Webhook has been recreated",
                 "webhooksWasUpdated": "Webhooks has been updated successfully"
             }
