@@ -130,10 +130,10 @@ export class UsersService {
         i18n,
       );
 
-      await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
-        targetUser,
-        i18n,
-      );
+      // await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
+      //   targetUser,
+      //   i18n,
+      // );
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
