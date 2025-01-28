@@ -84,7 +84,8 @@
         "trello": {
             "webhook": {
                 "webhookHealthIsOk": "Вебхук до дошки {board} активний",
-                "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз"
+                "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз",
+                "webhooksWasUpdated": "Вебхуки було оновлено успішно"
             }
         },
         "user": {
@@ -115,7 +116,8 @@
                 "webhookNotFoundById": "Вебхук з ідентифікатором {webhookId} не знайдено",
                 "webhookNotFoundByBoardId": "Вебхук з ідентифікатором дошки {boardId} не знайдено",
                 "webhooksDisconnect": "Помилка відключення всіх вебхуків Trello",
-                "invalidWebhookId": "Невірний формат ідентифікатора вебхука"
+                "invalidWebhookId": "Невірний формат ідентифікатора вебхука",
+                "failedToUpdateWebhooks": "Сповіщення до дошок {failedWebhooks} не вдалося оновити"
             },
             "profile": {
                 "invalidToken": "Невалідний токен Trello. Будь ласка, переконайтеся в працездатності вашого токену",
