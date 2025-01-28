@@ -52,11 +52,11 @@ export class TelegramUtils {
     );
   }
 
-  async handleMyProfileCommand(params: { ctx; user }) {
-    const { ctx, user } = params;
+  async handleMyProfileCommand(params: { ctx; userProfile }) {
+    const { ctx, userProfile } = params;
 
     return await ctx.reply(
-      `Here is your profile: ${JSON.stringify(user, null, 2)}`,
+      `Email: ${userProfile.email} \nTrello user: ${userProfile.trello.username}\nTracking boards: ${userProfile.trello.notifications.join(', ')}\nTelegram user: ${userProfile.telegram.username}\nLanguage: ${userProfile.language}`,
     );
   }
 }

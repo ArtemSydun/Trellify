@@ -18,7 +18,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -33,7 +32,10 @@ import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
-import { UpdateNotificationsDto } from '../dto/notifications.dto';
+import {
+  UpdateManyNotificationsDto,
+  UpdateNotificationsDto,
+} from '../dto/notifications.dto';
 import { Webhook } from '../entities/webhook.entity';
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
@@ -80,9 +82,12 @@ export class TrelloWebhooksController {
   createTrelloWebhook(
     @Req() req,
     @Body() body: CreateWebhookDto,
-    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.createTrelloWebhook(req.user.id, body, i18n);
+    return this.webhooksService.createTrelloWebhook(
+      req.user.id,
+      body,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -98,8 +103,11 @@ export class TrelloWebhooksController {
     type: [Webhook],
   })
   @ApiCustomUnathorizedResponse()
-  getUserConnectedWebhooksList(@Req() req, @I18n() i18n: I18nContext) {
-    return this.webhooksService.findMemberWebhooks(req.user.id, i18n);
+  getUserConnectedWebhooksList(@Req() req) {
+    return this.webhooksService.findMemberConnectedWebhooks(
+      req.user.id,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -154,6 +162,48 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch('notifications/bulk')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update notification in many webhooks',
+    description:
+      'This endpoint allows the authenticated user to update many webhook notifications',
+  })
+  @ApiOkResponse({
+    description: 'Webhook updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Webhook {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Webhook),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse(`You are not connected to this webhook`)
+  @ApiCustomNotFoundResponse('Webhook', 'id')
+  updateManyWebhooksNotifications(
+    @Body() updateManyWebhooksDto: UpdateManyNotificationsDto,
+    @Req() req,
+  ): Promise<any> {
+    return this.webhooksService.updateManyTrelloWebhookNotifications(
+      req.user.id,
+      updateManyWebhooksDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('notifications/:id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -188,13 +238,12 @@ export class TrelloWebhooksController {
     @Param('id') id: string,
     @Body() notificationBooleansDto: UpdateNotificationsDto,
     @Req() req,
-    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.updateTrelloWebhookNotifications(
       req.user.id,
       id,
       notificationBooleansDto,
-      i18n,
+      req.i18nContext,
     );
   }
 
@@ -231,9 +280,12 @@ export class TrelloWebhooksController {
   webhookHealthCheckById(
     @Param('id') id: string,
     @Req() req,
-    @I18n() i18n: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
-    return this.webhooksService.webhookHealthCheck(id, req.user.id, i18n);
+    return this.webhooksService.webhookHealthCheck(
+      id,
+      req.user.id,
+      req.i18nContext,
+    );
   }
 
   @ApiExcludeEndpoint()
@@ -241,7 +293,7 @@ export class TrelloWebhooksController {
   @Roles(UserRoles.superadmin)
   @Delete('delete/all')
   removeAllWebhooks(@Req() req): Promise<DefaultResponse<null>> {
-    return this.webhooksService.removeAllWebhooks(req.user.id);
+    return this.webhooksService.removeAllWebhooks(req.user.id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -275,8 +327,9 @@ export class TrelloWebhooksController {
   @ApiCustomNotFoundResponse('Webhook', 'id')
   removeWebhookById(
     @Param('id') webhookId: string,
+    @Req() req,
   ): Promise<DefaultResponse<null>> {
-    return this.webhooksService.removeTrelloWebhook(webhookId);
+    return this.webhooksService.removeTrelloWebhook(webhookId, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -320,6 +373,7 @@ export class TrelloWebhooksController {
     return this.webhooksService.disconnectFromTrelloWebhook(
       req.user.id,
       webhookId,
+      req.i18nContext,
     );
   }
 }
