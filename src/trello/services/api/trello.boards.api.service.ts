@@ -25,6 +25,7 @@ export class TrelloBoardsApiService {
   async fetchBoardsMemberBelongsTo(
     token: string,
     trelloUserId: string,
+    i18n?: I18nContext,
   ): Promise<TrelloBoard[]> {
     const url = `${trelloApiLink}/members/${trelloUserId}/boards?key=${this.trelloApiKey}&token=${token}`;
 
@@ -32,9 +33,8 @@ export class TrelloBoardsApiService {
       const response = await axios.get(url);
       return response.data;
     } catch (err) {
-      throw new BadRequestException(
-        err.response ? err.response.data : err.message,
-      );
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
     }
   }
 
@@ -42,6 +42,7 @@ export class TrelloBoardsApiService {
     token: string,
     boardId: string,
     fieldName: TrelloBoardField,
+    i18n?: I18nContext,
   ): Promise<any> {
     const url = `${trelloApiLink}/boards/${boardId}/${fieldName}?key=${this.trelloApiKey}&token=${token}`;
 
@@ -59,9 +60,8 @@ export class TrelloBoardsApiService {
 
       return result;
     } catch (err) {
-      throw new BadRequestException(
-        err.response ? err.response.data : err.message,
-      );
+      const errorMessage = parseTrelloError(err, i18n);
+      throw new BadRequestException(errorMessage);
     }
   }
 

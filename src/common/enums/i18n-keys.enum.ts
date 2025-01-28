@@ -22,8 +22,9 @@ export enum I18nKeys {
   MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
 
   // Webhook Messages
-  MESSAGES_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
-  MESSAGES_WEBHOOK_WAS_RECREATED = 'common.messages.trello.webhook.webhookWasRecreated',
+  MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
+  MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED = 'common.messages.trello.webhook.webhookWasRecreated',
+  MESSAGES_TRELLO_WEBHOOKS_WAS_UPDATED = 'common.messages.trello.webhook.webhooksWasUpdated',
 
   // JWT Errors
   ERRORS_JWT_INVALID_TOKEN = 'common.errors.jwt.invalidToken',
@@ -40,6 +41,7 @@ export enum I18nKeys {
   ERRORS_TELEGRAM_PROFILE_NOT_FOUND = 'common.errors.telegram.profileNotFound',
 
   // Trello Errors
+  ERRORS_TRELLO_WEBHOOKS_BULK_FAIL = 'common.errors.trello.webhook.failedToUpdateWebhooks',
   ERRORS_TRELLO_YOU_ARE_NOT_CONNECTED_TO_WEBHOOK = 'common.errors.trello.webhook.youAreNotConnectedToWebhook',
   ERRORS_TRELLO_USER_IS_NOT_CONNECTED_TO_WEBHOOK = 'common.errors.trello.webhook.userIsNotConnectedToWebhook',
   ERRORS_TRELLO_WEBHOOK_IS_ALREADY_EXIST = 'common.errors.trello.webhook.webhookIsAlreadyExist',

@@ -41,13 +41,17 @@ export class TrelloWebhookRepository {
           trelloUserId: trelloUserId,
         },
       },
-    }).exec();
+    })
+      .lean()
+      .exec();
   }
 
   async findWebhooksCreatedByUser(trelloUserId: string): Promise<Webhook[]> {
     return this.TrelloWebhookModel.find({
       'author.trelloUserId': trelloUserId,
-    }).exec();
+    })
+      .lean()
+      .exec();
   }
 
   async updateById(id: string, updateData: Partial<Webhook>): Promise<Webhook> {
@@ -55,7 +59,9 @@ export class TrelloWebhookRepository {
       { id },
       { $set: updateData },
       { new: true, lean: true },
-    ).exec();
+    )
+      .lean()
+      .exec();
 
     return updatedTrelloWebhook;
   }
