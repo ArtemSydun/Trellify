@@ -12,6 +12,7 @@ import { TelegramModule } from './telegram/telegram.module';
 import { TrelloModule } from './trello/trello.module';
 import { UsersModule } from './user/users.module';
 
+console.log(parseInt(process.env.API_REQUEST_LIMIT));
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,8 +23,8 @@ import { UsersModule } from './user/users.module';
     //number of requests for route and each user per minute
     ThrottlerModule.forRoot([
       {
-        ttl: 10 * 1000,
-        limit: 20,
+        ttl: (parseInt(process.env.API_REQUEST_LIMIT) || 10) * 1000,
+        limit: parseInt(process.env.API_REQUEST_LIMIT) || 20,
       },
     ]),
     I18nModule.forRoot({
