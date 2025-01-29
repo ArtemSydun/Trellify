@@ -11,15 +11,18 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
-import { userStub } from '../__mocks__/user.stub';
+import { superAdminStub, userStub } from '../__mocks__/user.stub';
 import { encryptText, hashPassword } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
 import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserRoles } from '../enums/role.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -37,7 +40,7 @@ describe('UsersService', () => {
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let telegramService: TelegramService;
 
-  const fixedDate = userStub().telegram.updatedAt;
+  const fixedDate = superAdminStub().telegram.updatedAt;
 
   beforeEach(async () => {
     originalDate = global.Date;
@@ -91,20 +94,15 @@ describe('UsersService', () => {
     global.Date = originalDate;
   });
 
-  jest.mock('src/common/helpers/hashing', () => ({
-    hashPassword: jest.fn(),
-    encryptText: jest.fn(),
-  }));
-
   describe('createUser', () => {
     it('should create a new user successfully', async () => {
       const createUserDto = {
-        email: userStub().email,
+        email: superAdminStub().email,
         password: 'password123',
       };
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
       (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
-      jest.spyOn(usersRepository, 'create').mockResolvedValue(userStub());
+      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
 
       const result = await usersService.createUser(createUserDto);
 
@@ -117,44 +115,21 @@ describe('UsersService', () => {
         email: createUserDto.email,
         password: 'hashedPassword',
       });
-      expect(result).toEqual(userStub());
+      expect(result).toEqual(superAdminStub());
     });
 
     it('should throw ConflictException if the user already exists', async () => {
       const createUserDto = {
-        email: userStub().email,
+        email: superAdminStub().email,
         password: 'password123',
       };
       jest
         .spyOn(usersRepository, 'findOneByEmail')
-        .mockResolvedValue(userStub());
+        .mockResolvedValue(superAdminStub());
 
       await expect(usersService.createUser(createUserDto)).rejects.toThrow(
         ConflictException,
       );
-    });
-  });
-
-  describe('findUserByEmail', () => {
-    it('should find a user by email', async () => {
-      jest
-        .spyOn(usersRepository, 'findOneByEmail')
-        .mockResolvedValue(userStub());
-
-      const result = await usersService.findUserByEmail(userStub().email);
-
-      expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
-        userStub().email,
-      );
-      expect(result).toEqual(userStub());
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
-
-      await expect(
-        usersService.findUserByEmail('nonexistent@gmail.com'),
-      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -191,6 +166,25 @@ describe('UsersService', () => {
       });
     });
 
+    it('should throw Forbidden exception if user to delete is superadmin', async () => {
+      const userToDelete = { ...superAdminStub() };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
+
+      await expect(
+        usersService.deleteUserById(
+          userToDelete.id,
+          userToDelete.id,
+          undefined,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToDelete.id,
+        undefined,
+      );
+    });
+
     it('should throw NotFoundException if user does not exist', async () => {
       const userId = 'non-existent-id';
 
@@ -211,31 +205,385 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findUserById', () => {
+    it('should find a user by id', async () => {
+      jest
+        .spyOn(usersRepository, 'findOneById')
+        .mockResolvedValue(superAdminStub());
+
+      const result = await usersService.findUserById(superAdminStub().email);
+
+      expect(usersRepository.findOneById).toHaveBeenCalledWith(
+        superAdminStub().email,
+      );
+      const userWithoutPassword = { ...superAdminStub() };
+
+      delete userWithoutPassword.password;
+      expect(result).toEqual(userWithoutPassword);
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(null);
+
+      await expect(usersService.findUserById('nonexistentid')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findUserByEmail', () => {
+    it('should find a user by email', async () => {
+      jest
+        .spyOn(usersRepository, 'findOneByEmail')
+        .mockResolvedValue(superAdminStub());
+
+      const result = await usersService.findUserByEmail(superAdminStub().email);
+
+      expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+        superAdminStub().email,
+      );
+      expect(result).toEqual(superAdminStub());
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+
+      await expect(
+        usersService.findUserByEmail('nonexistent@gmail.com'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findUserProfile', () => {
+    it('should return user profile without sensitive data', async () => {
+      const user = { ...superAdminStub(), password: 'hashedPassword' };
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
+
+      const result = await usersService.findUserProfile(user.id);
+
+      expect(usersService.getUser).toHaveBeenCalledWith(user.id);
+      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('telegram.chatId');
+      expect(result).not.toHaveProperty('trello.token');
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'findUserProfile')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.findUserProfile('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findUserByTrelloId', () => {
+    it('should find a user by Trello Id', async () => {
+      jest
+        .spyOn(usersRepository, 'findOneByTrelloId')
+        .mockResolvedValue(superAdminStub());
+
+      const result = await usersService.findUserByTrelloId(
+        superAdminStub().trello.userId,
+      );
+
+      expect(usersRepository.findOneByTrelloId).toHaveBeenCalledWith(
+        superAdminStub().trello.userId,
+      );
+      expect(result).toEqual(superAdminStub());
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      jest.spyOn(usersRepository, 'findOneByTrelloId').mockResolvedValue(null);
+
+      await expect(usersService.findUserByTrelloId('user1234')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findUserByTrelloIds', () => {
+    it('should find users by Trello Ids, skip wrong IDs', async () => {
+      jest
+        .spyOn(usersRepository, 'findManyByTrelloIds')
+        .mockResolvedValue([superAdminStub(), userStub()]);
+
+      const result = await usersService.findUsersByTrelloIds([
+        superAdminStub().trello.userId,
+        userStub().trello.userId,
+        'trellouserid1',
+      ]);
+
+      expect(usersRepository.findManyByTrelloIds).toHaveBeenCalledWith([
+        superAdminStub().trello.userId,
+        userStub().trello.userId,
+        'trellouserid1',
+      ]);
+      expect(result).toEqual([superAdminStub(), userStub()]);
+    });
+  });
+
+  describe('doesUserExist', () => {
+    it('should return true if user exists', async () => {
+      jest.spyOn(usersRepository, 'existsByEmail').mockResolvedValue(true);
+
+      const result = await usersService.doesUserExist(superAdminStub().email);
+
+      expect(usersRepository.existsByEmail).toHaveBeenCalledWith(
+        superAdminStub().email,
+      );
+      expect(result).toEqual(true);
+    });
+
+    it('should return false if user does not exists', async () => {
+      jest.spyOn(usersRepository, 'existsByEmail').mockResolvedValue(false);
+
+      const result = await usersService.doesUserExist('wrongEmail');
+
+      expect(usersRepository.existsByEmail).toHaveBeenCalledWith('wrongEmail');
+      expect(result).toEqual(false);
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update a user successfully', async () => {
+      const user = {
+        ...superAdminStub(),
+        trello: {
+          ...superAdminStub().trello,
+          webhooks: [],
+        },
+      };
+      const updateUserDto = {
+        trello: {
+          ...user.trello,
+          webhooks: superAdminStub().trello.webhooks,
+        },
+      };
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
+      jest
+        .spyOn(usersRepository, 'updateById')
+        .mockResolvedValue(superAdminStub());
+
+      jest
+        .spyOn(trelloMembersLogicService, 'findMemberProfile')
+        .mockResolvedValue(trelloProfileMock);
+
+      const result = await usersService.updateUser(user.id, updateUserDto);
+
+      expect(usersRepository.updateById).toHaveBeenCalledWith(
+        user.id,
+        updateUserDto,
+      );
+      expect(result).toEqual({
+        message: `User ${user.id} updated successfully`,
+        statusCode: HttpStatus.OK,
+        data: result.data,
+      });
+    });
+
+    it('should not update role if user is not superadmin', async () => {
+      const userToUpdate = { ...superAdminStub() };
+      const requestAuthor = { ...userStub() };
+      const updateUserDto = { role: UserRoles.admin };
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userToUpdate);
+
+      const result = await usersService.updateUser(
+        userToUpdate,
+        updateUserDto,
+        undefined,
+        requestAuthor,
+      );
+
+      expect(usersRepository.updateById).toHaveBeenCalledWith(
+        userToUpdate.id,
+        updateUserDto,
+      );
+
+      expect(result.data?.role).toEqual(userToUpdate.role);
+
+      expect(result).toEqual({
+        message: `User ${userToUpdate.id} updated successfully`,
+        statusCode: HttpStatus.OK,
+        data: result.data,
+      });
+    });
+
+    it('should fetch Trello profile and update trello property if token is provided', async () => {
+      const userToUpdate = { ...userStub() };
+      const updateUserDto = { trello: { token: 'newToken' } };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
+        ...userToUpdate,
+        trello: {
+          ...userToUpdate.trello,
+          token: 'encryptednewToken',
+          userId: trelloProfileMock.id,
+          username: trelloProfileMock.username,
+        },
+      });
+
+      jest
+        .spyOn(trelloMembersLogicService, 'findMemberProfile')
+        .mockResolvedValue(trelloProfileMock);
+
+      expect(userToUpdate.trello.username).not.toEqual(
+        trelloProfileMock.username,
+      );
+
+      (encryptText as jest.Mock).mockImplementation(
+        (text: string) => `encrypted${text}`,
+      );
+      const result = await usersService.updateUser(userToUpdate, updateUserDto);
+
+      expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
+        userToUpdate,
+        'encryptednewToken',
+        undefined,
+      );
+
+      expect(result.data?.trello?.userId).toEqual(trelloProfileMock.id);
+
+      expect(result).toEqual({
+        message: `User ${userToUpdate.id} updated successfully`,
+        statusCode: HttpStatus.OK,
+        data: result.data,
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.updateUser('non-existent-id', {}),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('updateUserLanguagePreference', () => {
+    it('should change user language preference', async () => {
+      const userToUpdate = { ...userStub() };
+      const languageUpdateDto = { language: Languages.UA };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+      jest
+        .spyOn(usersRepository, 'updateById')
+        .mockResolvedValue({ ...userToUpdate, ...languageUpdateDto });
+
+      const result = await usersService.updateUserLanguagePreference(
+        userToUpdate,
+        languageUpdateDto,
+      );
+
+      expect(result.data?.language).toEqual(languageUpdateDto.language);
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.updateUserLanguagePreference('non-existent-id', {
+          language: Languages.UA,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('resetPassword', () => {
     it('should reset the user password', async () => {
       const resetPasswordDto: ResetPasswordDto = {
         newPassword: 'newpassword',
         repeatPassword: 'newpassword',
       };
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub());
-      jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(superAdminStub());
+      jest
+        .spyOn(usersRepository, 'updateById')
+        .mockResolvedValue(superAdminStub());
 
       (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
 
       await usersService.resetPassword(
-        userStub().id,
+        superAdminStub().id,
         resetPasswordDto.newPassword,
         undefined,
       );
 
       expect(usersService.getUser).toHaveBeenCalledWith(
-        userStub().id,
+        superAdminStub().id,
         undefined,
       );
       expect(hashPassword).toHaveBeenCalledWith(resetPasswordDto.newPassword);
-      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub().id, {
-        password: 'hashedPassword',
-      });
+      expect(usersRepository.updateById).toHaveBeenCalledWith(
+        superAdminStub().id,
+        {
+          password: 'hashedPassword',
+        },
+      );
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.resetPassword('non-existent-id', 'newPassword'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findUsersConnectedToWebhook', () => {
+    it('should return users connected to webhook', async () => {
+      const webhookId = userStub().trello.webhooks[0].webhookId;
+
+      jest
+        .spyOn(usersRepository, 'findUsersConnectedToWebhook')
+        .mockResolvedValue([userStub(), superAdminStub()]);
+
+      const usersConnectedToWebhook =
+        await usersService.findUsersConnectedToWebhook(webhookId);
+
+      expect(usersConnectedToWebhook).toEqual([userStub(), superAdminStub()]);
+    });
+  });
+
+  describe('findUserByProperty', () => {
+    it('should return a user when found', async () => {
+      const user = { ...userStub() };
+      jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(user);
+
+      const result = await usersService.findUserByProperty(
+        UserSearchPathEnum.Email,
+        user.email,
+      );
+
+      expect(result).toEqual(user);
+      expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
+        UserSearchPathEnum.Email,
+        user.email,
+      );
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(null);
+
+      await expect(
+        usersService.findUserByProperty(
+          UserSearchPathEnum.Email,
+          'nonexistent@example.com',
+        ),
+      ).rejects.toThrow(
+        new NotFoundException(
+          'User with property email: nonexistent@example.com not found',
+        ),
+      );
     });
   });
 
@@ -243,12 +591,12 @@ describe('UsersService', () => {
     const fixedDate = new Date('2025-01-03T13:38:58.285Z');
     it('should connect Telegram successfully', async () => {
       const userToUpdate = {
-        ...userStub(),
+        ...superAdminStub(),
         telegram: { chatId: null, username: null, updatedAt: fixedDate },
       };
       const connectTelegramDto = {
-        chatId: userStub().telegram.chatId,
-        username: userStub().telegram.username,
+        chatId: superAdminStub().telegram.chatId,
+        username: superAdminStub().telegram.username,
         updatedAt: fixedDate,
       };
 
@@ -292,10 +640,10 @@ describe('UsersService', () => {
 
     it('should throw ConflictException if Telegram is already connected', async () => {
       const userToUpdate = {
-        ...userStub(),
+        ...superAdminStub(),
         telegram: {
-          chatId: userStub().telegram.chatId,
-          username: userStub().telegram.username,
+          chatId: superAdminStub().telegram.chatId,
+          username: superAdminStub().telegram.username,
         },
       };
       const connectTelegramDto = { chatId: 123, username: 'tgusername' };
@@ -318,7 +666,7 @@ describe('UsersService', () => {
 
     it('should disconnect Telegram successfully', async () => {
       const fixedDate = new Date('2025-01-03T13:38:58.285Z');
-      const userToUpdate = { ...userStub() };
+      const userToUpdate = { ...superAdminStub() };
       const connectTelegramDto = {
         chatId: null,
         username: null,
@@ -362,12 +710,22 @@ describe('UsersService', () => {
         },
       });
     });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.findUserProfile('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 
   describe('manageUserTrelloConnection', () => {
     it('should disconnect Trello and all webhooks successfully', async () => {
       const userToUpdate = {
-        ...userStub(),
+        ...superAdminStub(),
       };
       const connectTrelloDto = { token: null };
 
@@ -411,7 +769,7 @@ describe('UsersService', () => {
 
     it('should connect Trello and update user data successfully', async () => {
       const userToUpdate = {
-        ...userStub(),
+        ...superAdminStub(),
         trello: { userId: null, username: null, webhooks: [], token: null },
       };
       const connectTrelloDto = { token: 'newtoken' };
@@ -480,7 +838,7 @@ describe('UsersService', () => {
     });
 
     it('should throw an error if token is invalid or not infinite', async () => {
-      const userToUpdate = { ...userStub() };
+      const userToUpdate = { ...superAdminStub() };
       const connectTrelloDto = { token: 'invalidtoken' };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
@@ -515,11 +873,11 @@ describe('UsersService', () => {
 
     it('should throw an error if Trello profile is already connected to another user', async () => {
       const userToUpdate = {
-        ...userStub(),
+        ...superAdminStub(),
         trello: { userId: null, username: null, webhooks: [], token: null },
       };
       const connectTrelloDto = { token: 'newtoken' };
-      const connectedUser = { ...userStub(), id: 'differentUserId' };
+      const connectedUser = { ...superAdminStub(), id: 'differentUserId' };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
@@ -567,5 +925,19 @@ describe('UsersService', () => {
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();
     });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        usersService.findUserProfile('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('removeWebhookFromAllUsers', () => {
+    it('should remove webhook from all users', async () => {});
   });
 });

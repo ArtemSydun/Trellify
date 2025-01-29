@@ -209,6 +209,25 @@ export class UsersService {
     return userWithoutPass;
   }
 
+  public async findUserByEmail(
+    email: string,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const user = await this.userRepository.findOneByEmail(email);
+
+    if (!user) {
+      this.logger.warn(`User with email ${email} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_EMAIL, {
+          args: { email },
+        }) || `User with email ${email} does not exists`,
+      );
+    }
+
+    this.logger.log(`User with email ${email} found`);
+    return user;
+  }
+
   public async findUserProfile(
     user: string | User,
     i18n?: I18nContext,
@@ -255,25 +274,6 @@ export class UsersService {
       await this.userRepository.findManyByTrelloIds(trelloUserIds);
 
     return usersByTrelloId;
-  }
-
-  public async findUserByEmail(
-    email: string,
-    i18n?: I18nContext,
-  ): Promise<User> {
-    const user = await this.userRepository.findOneByEmail(email);
-
-    if (!user) {
-      this.logger.warn(`User with email ${email} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_EMAIL, {
-          args: { email },
-        }) || `User with email ${email} does not exists`,
-      );
-    }
-
-    this.logger.log(`User with email ${email} found`);
-    return user;
   }
 
   public async doesUserExist(email: string): Promise<boolean> {

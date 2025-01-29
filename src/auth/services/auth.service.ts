@@ -92,6 +92,7 @@ export class AuthService {
     const userByEmail = await this.userService.doesUserExist(
       createUserDto.email,
     );
+
     if (userByEmail) {
       this.logger.warn(`User ${createUserDto.email} already exists`);
       throw new ConflictException(
