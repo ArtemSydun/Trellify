@@ -1,18 +1,18 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 : ${MONGODUMP:="/usr/local/bin/mongodump"}
 : ${GPG:="/usr/bin/gpg"}
 : ${AGE:="/usr/local/bin/age"}
 : ${RCLONE:="/usr/local/bin/rclone"}
-: ${PROJECT_ROOT="/Users/user/my/work/redHotTeam/projects/src/trellify/api"}
+: ${BACKUP_ROOT:="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"}
 
-source "${PROJECT_ROOT}/backup/backup.conf"
+PROJECT_ROOT="$(cd "${BACKUP_ROOT}/.." && pwd)"
+
 source "${PROJECT_ROOT}/.env.production"
+source "${BACKUP_ROOT}/backup.conf"
 
-BACKUP_ROOT="${PROJECT_ROOT}/backup"
-BACKUP_TIMESTAMP="$(date '+%d-%m-%Y_%H-%M-%S')"
 MONGO_DIR_NAME="mongodb-backup-${BACKUP_TIMESTAMP}"
 MONGO_DIR_PATH="${BACKUP_ROOT}/${MONGO_DIR_NAME}"
 BACKUP_ARCHIVES_DIR="archives"
@@ -24,8 +24,8 @@ MONGO_PORT=$MONGODB_HOST_PORT
 MONGO_USER=$MONGODB_USERNAME
 MONGO_PASS=$MONGODB_PASSWORD
 
-cd "${PROJECT_ROOT}"
-mkdir -p "${BACKUP_ROOT}/${BACKUP_ARCHIVES_DIR}"
+cd "${BACKUP_ROOT}"
+mkdir -p "${BACKUP_ARCHIVES_DIR}"
 
 ${MONGODUMP} --authenticationDatabase="admin" \
              --host="localhost" \
@@ -33,8 +33,6 @@ ${MONGODUMP} --authenticationDatabase="admin" \
              --username="${MONGO_USER}" \
              --password="${MONGO_PASS}" \
              --out="${MONGO_DIR_PATH}"
-
-echo "✅ Mongodump is successful"
 
 tar -cJf "${BACKUP_ARCHIVE_PATH}" -C "${BACKUP_ROOT}" "${MONGO_DIR_NAME}"
 rm -rf "${MONGO_DIR_PATH}"
