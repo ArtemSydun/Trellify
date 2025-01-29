@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   BadRequestException,
   ForbiddenException,
@@ -68,7 +69,7 @@ export class TrelloWebhooksLogicService {
   private readonly webhookCallbackURL: string;
   private readonly encryptionKey: string;
   private readonly logger = new Logger(TrelloWebhooksLogicService.name);
-  private webhookActionCount: Map<string, number> = new Map();
+  private webhookActionCount: number;
 
   constructor(
     @Inject(forwardRef(() => UsersService))
@@ -86,6 +87,7 @@ export class TrelloWebhooksLogicService {
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+    this.webhookActionCount = 0;
   }
 
   async getWebhook(
@@ -712,12 +714,9 @@ export class TrelloWebhooksLogicService {
 
     console.log(JSON.stringify(filteredLog, null, 2));
 
-    const currentCount =
-      this.webhookActionCount.get(webhookAction?.webhook?.id) || 0;
-    this.webhookActionCount.set(webhookAction?.webhook?.id, currentCount + 1);
-
+    this.webhookActionCount += 1;
     this.logger.log(
-      `Webhook id: ${webhookAction.model?.id}, actions count: ${this.webhookActionCount.get(webhookAction?.webhook?.id)}`,
+      `Webhook id: ${webhookAction.model?.id}, application processed actions count: ${this.webhookActionCount}`,
     );
 
     const webhook = await this.getWebhook(webhookAction?.webhook?.id);
