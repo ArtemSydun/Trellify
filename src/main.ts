@@ -14,11 +14,13 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
+  console.log('node env: ', configService.get(configServiceEnum.NODE_ENV));
   app.enableCors({
-    origin: configService.get(configServiceEnum.FRONTEND_LINK), // Allow all origins, only for testing purposes, change later
+    origin:
+      configService.get(configServiceEnum.NODE_ENV) === 'production'
+        ? configService.get(configServiceEnum.FRONTEND_LINK)
+        : '*',
   });
-
-  console.log(configService.get(configServiceEnum.NODE_ENV));
 
   if (configService.get(configServiceEnum.NODE_ENV) !== 'production') {
     const config = new DocumentBuilder()
