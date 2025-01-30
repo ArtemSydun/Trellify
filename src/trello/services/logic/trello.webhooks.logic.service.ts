@@ -50,6 +50,7 @@ import {
 } from 'src/trello/enums/trello.actions.enum';
 import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { User } from 'src/user/entities/user.entity';
+import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersService } from 'src/user/services/users.service';
 import { SharedConfigService } from '../../../config/shared.config.service';
@@ -1263,6 +1264,7 @@ export class TrelloWebhooksLogicService {
       );
     }
 
+    //update boardName in case if board was renamed
     const decryptedAuthorToken = decryptText(
       webhook.author.trelloToken,
       this.encryptionKey,
@@ -1300,17 +1302,19 @@ export class TrelloWebhooksLogicService {
           },
         );
 
-        const updatedUserProps = {
-          trello: {
-            ...subscriber.trello,
-            webhooks: updatedWebhooks,
+        return {
+          updateOne: {
+            filter: { id: subscriber.id },
+            update: {
+              $set: {
+                [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+              },
+            },
           },
         };
-
-        return this.userService.updateUser(subscriber, updatedUserProps, i18n);
       });
 
-      await Promise.all(updateUserPromises);
+      await this.userService.updateManyUsers(updateUserPromises);
 
       return updatedWebhook;
     }

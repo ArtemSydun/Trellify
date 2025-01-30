@@ -31,7 +31,6 @@ export class TrelloMembersApiService {
 
       return response.data;
     } catch (err) {
-      console.log(err);
       const errorMessage = parseTrelloError(err, i18n);
       throw new BadRequestException(errorMessage);
     }

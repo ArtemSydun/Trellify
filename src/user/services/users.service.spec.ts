@@ -23,6 +23,7 @@ import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
 import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
+import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -87,6 +88,25 @@ describe('UsersService', () => {
       TrelloWebhooksLogicService,
     );
     telegramService = moduleRef.get<TelegramService>(TelegramService);
+
+    (encryptText as jest.Mock).mockImplementation(
+      (text: string) => `encrypted${text}`,
+    );
+    (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
+
+    jest
+      .spyOn(trelloWebhooksLogicService, 'getWebhook')
+      .mockResolvedValue(webhookStub());
+
+    jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub());
+
+    jest
+      .spyOn(usersService, 'findUsersConnectedToWebhook')
+      .mockResolvedValue([userStub(), superAdminStub()]);
+
+    jest
+      .spyOn(trelloMembersLogicService, 'findMemberProfile')
+      .mockResolvedValue(trelloProfileMock);
   });
 
   afterEach(() => {
@@ -101,7 +121,6 @@ describe('UsersService', () => {
         password: 'password123',
       };
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
-      (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
       jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
 
       const result = await usersService.createUser(createUserDto);
@@ -172,11 +191,7 @@ describe('UsersService', () => {
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
 
       await expect(
-        usersService.deleteUserById(
-          userToDelete.id,
-          userToDelete.id,
-          undefined,
-        ),
+        usersService.deleteUserById(userToDelete.id, userToDelete.id),
       ).rejects.toThrow(ForbiddenException);
 
       expect(usersService.getUser).toHaveBeenCalledWith(
@@ -256,8 +271,7 @@ describe('UsersService', () => {
 
   describe('findUserProfile', () => {
     it('should return user profile without sensitive data', async () => {
-      const user = { ...superAdminStub(), password: 'hashedPassword' };
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
+      const user = { ...userStub(), password: 'hashedPassword' };
 
       const result = await usersService.findUserProfile(user.id);
 
@@ -267,7 +281,7 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('trello.token');
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'findUserProfile')
         .mockRejectedValue(new NotFoundException());
@@ -349,7 +363,7 @@ describe('UsersService', () => {
   describe('updateUser', () => {
     it('should update a user successfully', async () => {
       const user = {
-        ...superAdminStub(),
+        ...userStub(),
         trello: {
           ...superAdminStub().trello,
           webhooks: [],
@@ -361,14 +375,7 @@ describe('UsersService', () => {
           webhooks: superAdminStub().trello.webhooks,
         },
       };
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
-      jest
-        .spyOn(usersRepository, 'updateById')
-        .mockResolvedValue(superAdminStub());
-
-      jest
-        .spyOn(trelloMembersLogicService, 'findMemberProfile')
-        .mockResolvedValue(trelloProfileMock);
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
 
       const result = await usersService.updateUser(user.id, updateUserDto);
 
@@ -415,7 +422,6 @@ describe('UsersService', () => {
       const userToUpdate = { ...userStub() };
       const updateUserDto = { trello: { token: 'newToken' } };
 
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...userToUpdate,
         trello: {
@@ -426,17 +432,10 @@ describe('UsersService', () => {
         },
       });
 
-      jest
-        .spyOn(trelloMembersLogicService, 'findMemberProfile')
-        .mockResolvedValue(trelloProfileMock);
-
       expect(userToUpdate.trello.username).not.toEqual(
         trelloProfileMock.username,
       );
 
-      (encryptText as jest.Mock).mockImplementation(
-        (text: string) => `encrypted${text}`,
-      );
       const result = await usersService.updateUser(userToUpdate, updateUserDto);
 
       expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
@@ -454,7 +453,7 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'getUser')
         .mockRejectedValue(new NotFoundException());
@@ -483,7 +482,7 @@ describe('UsersService', () => {
       expect(result.data?.language).toEqual(languageUpdateDto.language);
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'getUser')
         .mockRejectedValue(new NotFoundException());
@@ -507,8 +506,6 @@ describe('UsersService', () => {
         .spyOn(usersRepository, 'updateById')
         .mockResolvedValue(superAdminStub());
 
-      (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
-
       await usersService.resetPassword(
         superAdminStub().id,
         resetPasswordDto.newPassword,
@@ -528,7 +525,7 @@ describe('UsersService', () => {
       );
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'getUser')
         .mockRejectedValue(new NotFoundException());
@@ -542,10 +539,6 @@ describe('UsersService', () => {
   describe('findUsersConnectedToWebhook', () => {
     it('should return users connected to webhook', async () => {
       const webhookId = userStub().trello.webhooks[0].webhookId;
-
-      jest
-        .spyOn(usersRepository, 'findUsersConnectedToWebhook')
-        .mockResolvedValue([userStub(), superAdminStub()]);
 
       const usersConnectedToWebhook =
         await usersService.findUsersConnectedToWebhook(webhookId);
@@ -571,7 +564,7 @@ describe('UsersService', () => {
       );
     });
 
-    it('should throw NotFoundException when user is not found', async () => {
+    it('should throw NotFoundException when user does not exist', async () => {
       jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(null);
 
       await expect(
@@ -711,7 +704,7 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'getUser')
         .mockRejectedValue(new NotFoundException());
@@ -725,11 +718,10 @@ describe('UsersService', () => {
   describe('manageUserTrelloConnection', () => {
     it('should disconnect Trello and all webhooks successfully', async () => {
       const userToUpdate = {
-        ...superAdminStub(),
+        ...userStub(),
       };
       const connectTrelloDto = { token: null };
 
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(trelloWebhooksLogicService, 'disconnectFromAllTrelloWebhooks')
         .mockResolvedValue({
@@ -769,7 +761,7 @@ describe('UsersService', () => {
 
     it('should connect Trello and update user data successfully', async () => {
       const userToUpdate = {
-        ...superAdminStub(),
+        ...userStub(),
         trello: { userId: null, username: null, webhooks: [], token: null },
       };
       const connectTrelloDto = { token: 'newtoken' };
@@ -838,10 +830,9 @@ describe('UsersService', () => {
     });
 
     it('should throw an error if token is invalid or not infinite', async () => {
-      const userToUpdate = { ...superAdminStub() };
+      const userToUpdate = { ...userStub() };
       const connectTrelloDto = { token: 'invalidtoken' };
 
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
         .mockRejectedValue(
@@ -883,9 +874,7 @@ describe('UsersService', () => {
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
         .mockResolvedValue(true);
-      jest
-        .spyOn(trelloMembersLogicService, 'findMemberProfile')
-        .mockResolvedValue(trelloProfileMock);
+
       jest
         .spyOn(usersRepository, 'findUserByProperty')
         .mockResolvedValue(connectedUser);
@@ -926,7 +915,7 @@ describe('UsersService', () => {
       expect(usersRepository.updateById).not.toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
+    it('should throw NotFoundException if user does not exist', async () => {
       jest
         .spyOn(usersService, 'getUser')
         .mockRejectedValue(new NotFoundException());
@@ -938,6 +927,82 @@ describe('UsersService', () => {
   });
 
   describe('removeWebhookFromAllUsers', () => {
-    it('should remove webhook from all users', async () => {});
+    it('should remove webhook from all users', async () => {
+      const webhookToDelete = webhookStub();
+      const connectedUsers = [userStub(), superAdminStub()];
+      const disconnectedUsersMock = connectedUsers.map((user) => ({
+        ...user,
+        trello: {
+          ...user.trello,
+          webhooks: user.trello.webhooks.filter(
+            (webhook) => webhook.webhookId !== webhookToDelete.id,
+          ),
+        },
+      }));
+
+      jest
+        .spyOn(usersService, 'updateManyUsers')
+        .mockResolvedValue({ acknowledged: true, modifiedCount: 2 });
+      jest
+        .spyOn(telegramService, 'sendMessageToUser')
+        .mockImplementation(jest.fn());
+
+      await usersService.removeWebhookFromAllUsers(webhookToDelete);
+
+      expect(trelloWebhooksLogicService.getWebhook).toHaveBeenCalledWith(
+        webhookToDelete,
+        undefined,
+      );
+
+      expect(usersService.findUsersConnectedToWebhook).toHaveBeenCalledWith(
+        webhookToDelete.id,
+      );
+
+      expect(usersService.updateManyUsers).toHaveBeenCalledWith(
+        connectedUsers.map((user) => ({
+          updateOne: {
+            filter: { id: user.id },
+            update: {
+              $pull: {
+                [UserSearchPathEnum.TrelloWebhooks]: {
+                  webhookId: webhookToDelete.id,
+                },
+              },
+            },
+          },
+        })),
+      );
+
+      expect(usersService.updateManyUsers).toHaveBeenCalled();
+      expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
+        connectedUsers.length,
+      );
+
+      jest
+        .spyOn(usersService, 'findUsersByTrelloIds')
+        .mockResolvedValue(disconnectedUsersMock);
+
+      // Check if webhooks were removed, direct fetch we do not have in function
+      const disconnectedUsers = await usersService.findUsersByTrelloIds(
+        disconnectedUsersMock.map((user) => user.trello.userId),
+      );
+
+      console.log(disconnectedUsers);
+      disconnectedUsers.forEach((user) => {
+        expect(user.trello.webhooks).not.toContainEqual(
+          expect.objectContaining({ webhookId: webhookToDelete.id }),
+        );
+      });
+    });
+
+    it('should throw NotFoundException if webhook does not exist', async () => {
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(
+        trelloWebhooksLogicService.getWebhook('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 });

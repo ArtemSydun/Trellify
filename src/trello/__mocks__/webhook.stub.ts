@@ -1,1 +1,97 @@
-export const webhookStub = () => {};
+import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
+
+export const webhookStub = () => ({
+  id: '67692151f8ed7956d9323222',
+  description: '',
+  idModel: '6763dcb33e9016a37e973222',
+  callbackURL:
+    'https://7410-185-208-231-18.ngrok-free.app/trello/webhooks/provider/6763dcb33e9016a37e973222',
+  active: true,
+  consecutiveFailures: 0,
+  firstConsecutiveFailDate: null,
+  boardName: 'test',
+  boardUrl: 'https://trello.com/b/2MBku64r/test',
+  author: {
+    trelloToken:
+      '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+    trelloUserId: '674ec752cba1224342f87c20',
+  },
+  subscribers: [
+    {
+      trelloUserId: '674ec752cba1224342f87c20',
+      trelloToken:
+        '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+      notificationProfile: TrelloWebhookNotificationProfiles.CUSTOM,
+    },
+    {
+      trelloUserId: '674ec752cba1224342f87c21',
+      trelloToken:
+        '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+      notificationProfile: TrelloWebhookNotificationProfiles.CUSTOM,
+    },
+  ],
+  notifications: {
+    personal: {
+      cardMemberAdded: ['674ec752cba1224342f87c20', '674ec752cba1224342f87c21'],
+      cardMemberRemoved: [
+        '674ec752cba1224342f87c20',
+        '674ec752cba1224342f87c21',
+      ],
+      checklistItemMemberAdded: ['674ec752cba1224342f87c21'],
+      checklistItemMemberRemoved: [],
+      boardAdminAdded: [],
+      boardMemberNormalRoleAdded: [],
+      boardMemberRemoved: ['674ec752cba1224342f87c20'],
+    },
+    board: {
+      boardRenamed: [],
+      boardClosed: [],
+      boardReopened: [],
+    },
+    card: {
+      cardRenamed: ['674ec752cba1224342f87c20'],
+      cardArchived: [],
+      cardMemberAdded: ['674ec752cba1224342f87c20'],
+      cardMemberRemoved: ['674ec752cba1224342f87c20'],
+      cardMemberJoined: [],
+      cardMemberLeft: [],
+      cardDueDateAdded: ['674ec752cba1224342f87c20'],
+      cardDueDateChanged: ['674ec752cba1224342f87c20'],
+      cardStartDateAdded: ['674ec752cba1224342f87c20'],
+      cardStartDateChanged: ['674ec752cba1224342f87c20'],
+      cardLabelAdded: [],
+      cardLabelRemoved: [],
+      cardCommentAdded: ['674ec752cba1224342f87c20'],
+      cardAttachmentAdded: ['674ec752cba1224342f87c20'],
+      cardChecklistAdded: [],
+      cardChecklistRemoved: [],
+      checklistItemAdded: [],
+      checklistItemDeleted: [],
+      checklistItemMemberAdded: [],
+      checklistItemMemberRemoved: [],
+      checklistItemMemberJoined: [],
+      checklistItemMemberLeft: [],
+      checklistItemDueDateUpdated: [],
+      checklistItemDueDateDeleted: [],
+      checklistItemStateChangedCompleted: [],
+      checklistItemStateChangedIncompleted: [],
+      checklistItemConvertedToCard: [],
+      customFieldItemUpdated: [],
+      cardMovedToList: ['674ec752cba1224342f87c20'],
+    },
+    admin: {
+      boardMemberInvitationJoined: [],
+      boardMemberJoined: [],
+      boardMemberLeft: [],
+      boardMemberRemoved: ['674ec752cba1224342f87c20'],
+      boardMemberNormalRoleAdded: [],
+      boardAdminAdded: [],
+      boardPermLevelChanged: [],
+      customFieldCreated: [],
+      customFieldRenamed: [],
+      customFieldDeleted: [],
+    },
+  },
+  createdAt: new Date('2025-01-28T13:46:34.890Z'),
+  updatedAt: new Date('2025-01-28T13:51:22.130Z'),
+});

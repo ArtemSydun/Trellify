@@ -348,6 +348,10 @@ export class UsersService {
     };
   }
 
+  public async updateManyUsers(operations: any[]) {
+    return await this.userRepository.bulkUpdateUsers(operations);
+  }
+
   public async updateUserLanguagePreference(
     user: string | User,
     updateUserLanguageDto: UpdateUserLanguageDto,
@@ -576,8 +580,7 @@ export class UsersService {
 
     try {
       if (bulkUpdateOperations.length > 0) {
-        const result =
-          await this.userRepository.bulkUpdateUsers(bulkUpdateOperations);
+        const result = await this.updateManyUsers(bulkUpdateOperations);
         this.logger.log(result);
         Promise.all([sendTelegramNotification]);
       }
