@@ -1,4 +1,7 @@
 archives
+dump
 services
+dumps
 logs
 backup.conf
+key.txt
