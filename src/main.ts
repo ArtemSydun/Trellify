@@ -14,8 +14,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
+  console.log('node env: ', configService.get(configServiceEnum.NODE_ENV));
   app.enableCors({
-    origin: '*', // Allow all origins, only for testing purposes, change later
+    origin:
+      configService.get(configServiceEnum.NODE_ENV) === 'production'
+        ? configService.get(configServiceEnum.FRONTEND_LINK)
+        : '*',
   });
 
   if (configService.get(configServiceEnum.NODE_ENV) !== 'production') {
@@ -39,7 +43,9 @@ async function bootstrap() {
 
   const BACKEND_PORT =
     configService.get(configServiceEnum.BACKEND_PORT) || 3005;
+
   await app.listen(BACKEND_PORT);
+
   logger.log(
     `Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`,
   );

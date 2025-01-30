@@ -130,10 +130,37 @@ export class UsersService {
         i18n,
       );
 
-      await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
-        targetUser,
-        i18n,
-      );
+      const authorWebhooks =
+        await this.trelloWebhooksLogicService.findMemberCreatedWebhooks(
+          targetUser,
+          i18n,
+        );
+
+      const notificationPromises = authorWebhooks.map(async (webhook) => {
+        webhook.subscribers.map(async (subscriber) => {
+          const subscriberToNotify = await this.findUserByTrelloId(
+            subscriber.trelloUserId,
+          );
+
+          this.telegramService.sendMessageToUser(
+            subscriberToNotify.telegram,
+            i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+              args: {
+                boardName: webhook.boardName,
+                boardUrl: webhook.boardUrl,
+              },
+            }) ||
+              `Notifications for board [${webhook.boardName}](${webhook.boardUrl}) has been disconnected. Please, check notifications status`,
+          );
+        });
+      });
+
+      await Promise.all(notificationPromises);
+
+      // await this.trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
+      //   targetUser,
+      //   i18n,
+      // );
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,

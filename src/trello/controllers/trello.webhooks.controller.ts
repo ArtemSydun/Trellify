@@ -122,8 +122,8 @@ export class TrelloWebhooksController {
     type: Webhook,
   })
   @ApiCustomUnathorizedResponse()
-  getWebhookById(@Param('id') id: string): Promise<Webhook> {
-    return this.webhooksService.findWebhookById(id);
+  getWebhookById(@Param('id') id: string, @Req() req): Promise<Webhook> {
+    return this.webhooksService.findWebhookById(id, req.i18nContext);
   }
 
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms,

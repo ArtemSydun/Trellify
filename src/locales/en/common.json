@@ -83,8 +83,9 @@
         },
         "trello": {
             "webhook": {
-                "webhookHealthIsOk": "Webhook to the {board} is active now",
-                "webhookWasRecreated": "Webhook was recreated"
+                "webhookHealthIsOk": "Webhook to the {boardName} is active now",
+                "webhookWasRecreated": "Webhook has been recreated",
+                "webhooksWasUpdated": "Webhooks has been updated successfully"
             }
         },
         "user": {
@@ -115,7 +116,8 @@
                 "webhookNotFoundById": "Webhook with id {webhookId} not found",
                 "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
                 "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
-                "invalidWebhookId": "Invalid value for idWebhook"
+                "invalidWebhookId": "Invalid value for idWebhook",
+                "failedToUpdateWebhooks": "Webhooks {failedWebhooks} failed to update"
             },
             "profile": {
                 "invalidToken": "Your token is not valid. Please check your token",

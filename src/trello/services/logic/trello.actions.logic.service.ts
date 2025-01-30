@@ -48,7 +48,6 @@ export class TrelloActionsLogicService {
 
       const notificationLanguage = targetUser.language || Languages.EN;
 
-      console.log('telegramUsername', targetUser.telegram.username);
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
       );
@@ -79,7 +78,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you were deleted from card [${cardData?.name}](${cardData?.url})`,
+          `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
         [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_BOARD_MEMBER_REMOVED,
@@ -90,7 +89,8 @@ export class TrelloActionsLogicService {
                 boardName: boardData?.name,
               },
             },
-          ) || `${userInitials} you were removed from board ${boardData?.name}`,
+          ) ||
+          `${userInitials} you has been removed from board ${boardData?.name}`,
         [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_ADDED,
@@ -103,7 +103,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you were added to checklist in card [${cardData?.name}](${cardData?.url}).`,
+          `${userInitials} you has been added to checklist in card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED,
@@ -116,7 +116,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you were removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
+          `${userInitials} you has been removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_BOARD_ADMIN_ADDED,
@@ -129,7 +129,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you were added to the board [${boardData?.name}](${boardData.url}) as admin`,
+          `${userInitials} you has been added to the board [${boardData?.name}](${boardData.url}) as admin`,
       };
 
       const message = targetActionMessages[actionType];
