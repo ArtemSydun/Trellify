@@ -2,9 +2,6 @@
 
 set -e
 
-: ${MONGODUMP:="/usr/local/bin/mongodump"}
-: ${AGE:="/usr/local/bin/age"}
-: ${RCLONE:="/usr/local/bin/rclone"}
 : ${BACKUP_ROOT:="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"}
 
 PROJECT_ROOT="$(cd "${BACKUP_ROOT}/.." && pwd)"
@@ -19,6 +16,7 @@ ARCHIVES_DIR="archives"
 ARCHIVE_FILENAME="${DATABASE_DUMP_DIRNAME}.tar.xz"
 ARCHIVE_FILE_PATH="${BACKUP_ROOT}/${ARCHIVES_DIR}/${ARCHIVE_FILENAME}"
 
+MONGO_HOST=$HOST
 MONGO_PORT=$MONGODB_HOST_PORT
 MONGO_USER=$MONGODB_USERNAME
 MONGO_PASS=$MONGODB_PASSWORD
@@ -29,7 +27,7 @@ mkdir -p "${ARCHIVES_DIR}"
 
 echo "1️⃣ Database dumping"
 ${MONGODUMP} --authenticationDatabase="admin" \
-             --host="localhost" \
+             --host="${MONGO_HOST}" \
              --port="${MONGO_PORT}" \
              --username="${MONGO_USER}" \
              --password="${MONGO_PASS}" \

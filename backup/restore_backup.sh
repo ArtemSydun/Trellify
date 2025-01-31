@@ -2,9 +2,6 @@
 
 set -e
 
-: ${MONGORESTORE:="/usr/local/bin/mongorestore"}
-: ${AGE:="/usr/local/bin/age"}
-: ${RCLONE:="/usr/local/bin/rclone"}
 : ${BACKUP_ROOT:="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"}
 
 PROJECT_ROOT="$(cd "${BACKUP_ROOT}/.." && pwd)"
