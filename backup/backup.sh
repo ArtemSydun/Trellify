@@ -53,10 +53,9 @@ success=0
 echo "6️⃣ Uploading encrypted archive to remote cloud using RCLONE: ${ENCRYPTED_ARCHIVE_FILE_PATH}"
 for dest in "${RCLONE_DESTS[@]}"; do
     if ${RCLONE} -vv --no-check-dest copy "${ENCRYPTED_ARCHIVE_FILE_PATH}" "${dest}"; then
-        (( success++ ))
         echo "✅ Uploading is successful"
-    else
-        echo "❌ Uploading is unsuccessful"
+        success=$((success + 1))
+        echo "Success: ${success}"
     fi
 done
 
