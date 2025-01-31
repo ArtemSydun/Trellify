@@ -55,18 +55,8 @@ for dest in "${RCLONE_DESTS[@]}"; do
     if ${RCLONE} -vv --no-check-dest copy "${ENCRYPTED_ARCHIVE_FILE_PATH}" "${dest}"; then
         (( success++ ))
         echo "✅ Uploading is successful"
-    else
-        echo "❌ Uploading is unsuccessful"
     fi
 done
-
-send_telegram_message() {
-    local message=$1
-    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-        -d chat_id="${CHAT_ID}" \
-        -d text="${message}" \
-        -d parse_mode="MarkdownV2"
-}
 
 echo "7️⃣ Sending a message to a Telegram bot"
 if [[ ${success} == ${#RCLONE_DESTS[@]} ]]; then
