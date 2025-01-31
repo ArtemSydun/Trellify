@@ -54,8 +54,8 @@ echo "6️⃣ Uploading encrypted archive to remote cloud using RCLONE: ${ENCRYP
 for dest in "${RCLONE_DESTS[@]}"; do
     if ${RCLONE} -vv --no-check-dest copy "${ENCRYPTED_ARCHIVE_FILE_PATH}" "${dest}"; then
         echo "✅ Uploading is successful"
+        success=$((success + 1))
         echo "Success: ${success}"
-        (( success++ ))
     fi
 done
 
