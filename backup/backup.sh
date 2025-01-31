@@ -56,6 +56,7 @@ for dest in "${RCLONE_DESTS[@]}"; do
         echo "✅ Uploading is successful"
         echo "Success: ${success}"
         (( success++ ))
+    fi
 done
 
 send_telegram_message() {
