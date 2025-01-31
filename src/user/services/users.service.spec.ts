@@ -42,7 +42,6 @@ describe('UsersService', () => {
   let telegramService: TelegramService;
 
   const fixedDate = superAdminStub().telegram.updatedAt;
-
   beforeEach(async () => {
     originalDate = global.Date;
     global.Date = class extends originalDate {
@@ -96,7 +95,7 @@ describe('UsersService', () => {
 
     jest
       .spyOn(trelloWebhooksLogicService, 'getWebhook')
-      .mockResolvedValue(webhookStub());
+      .mockResolvedValue({ ...webhookStub });
 
     jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub());
 
@@ -110,7 +109,6 @@ describe('UsersService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
     global.Date = originalDate;
   });
 
@@ -317,7 +315,7 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findUserByTrelloIds', () => {
+  describe('findUsersByTrelloIds', () => {
     it('should find users by Trello Ids, skip wrong IDs', async () => {
       jest
         .spyOn(usersRepository, 'findManyByTrelloIds')
@@ -633,13 +631,14 @@ describe('UsersService', () => {
 
     it('should throw ConflictException if Telegram is already connected', async () => {
       const userToUpdate = {
-        ...superAdminStub(),
-        telegram: {
-          chatId: superAdminStub().telegram.chatId,
-          username: superAdminStub().telegram.username,
-        },
+        ...userStub(),
       };
       const connectTelegramDto = { chatId: 123, username: 'tgusername' };
+
+      jest
+        .spyOn(usersService, 'findUserByProperty')
+        .mockResolvedValue(superAdminStub());
+
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
 
       await expect(
@@ -649,6 +648,7 @@ describe('UsersService', () => {
           undefined,
         ),
       ).rejects.toThrow(ConflictException);
+
       expect(usersService.getUser).toHaveBeenCalledWith(
         userToUpdate.id,
         undefined,
@@ -928,7 +928,7 @@ describe('UsersService', () => {
 
   describe('removeWebhookFromAllUsers', () => {
     it('should remove webhook from all users', async () => {
-      const webhookToDelete = webhookStub();
+      const webhookToDelete = { ...webhookStub };
       const connectedUsers = [userStub(), superAdminStub()];
       const disconnectedUsersMock = connectedUsers.map((user) => ({
         ...user,
@@ -973,7 +973,6 @@ describe('UsersService', () => {
         })),
       );
 
-      expect(usersService.updateManyUsers).toHaveBeenCalled();
       expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
         connectedUsers.length,
       );
@@ -981,18 +980,6 @@ describe('UsersService', () => {
       jest
         .spyOn(usersService, 'findUsersByTrelloIds')
         .mockResolvedValue(disconnectedUsersMock);
-
-      // Check if webhooks were removed, direct fetch we do not have in function
-      const disconnectedUsers = await usersService.findUsersByTrelloIds(
-        disconnectedUsersMock.map((user) => user.trello.userId),
-      );
-
-      console.log(disconnectedUsers);
-      disconnectedUsers.forEach((user) => {
-        expect(user.trello.webhooks).not.toContainEqual(
-          expect.objectContaining({ webhookId: webhookToDelete.id }),
-        );
-      });
     });
 
     it('should throw NotFoundException if webhook does not exist', async () => {

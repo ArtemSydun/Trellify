@@ -104,7 +104,8 @@
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@trello/logic$": "<rootDir>/trello/services/logic",
-      "^@trello/api$": "<rootDir>/trello/services/api"
+      "^@trello/api$": "<rootDir>/trello/services/api",
+      "^@trello/controllers$": "<rootDir>/trello/controllers"
     }
   }
 }

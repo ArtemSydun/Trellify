@@ -1,6 +1,6 @@
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
-export const webhookStub = () => ({
+export const webhookStub = {
   id: '67692151f8ed7956d9323222',
   description: '',
   idModel: '6763dcb33e9016a37e973222',
@@ -10,7 +10,7 @@ export const webhookStub = () => ({
   consecutiveFailures: 0,
   firstConsecutiveFailDate: null,
   boardName: 'test',
-  boardUrl: 'https://trello.com/b/2MBku64r/test',
+  boardUrl: 'https://trello.com/b/EVPkihab/test',
   author: {
     trelloToken:
       '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
@@ -94,4 +94,4 @@ export const webhookStub = () => ({
   },
   createdAt: new Date('2025-01-28T13:46:34.890Z'),
   updatedAt: new Date('2025-01-28T13:51:22.130Z'),
-});
+};
