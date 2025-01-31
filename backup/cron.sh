@@ -4,9 +4,10 @@
 
 source "${BACKUP_ROOT}/backup.conf"
 
-BACKUP_LOGS="${BACKUP_ROOT}/logs"
+LOGS_DIR="logs"
 
-mkdir -p "${BACKUP_LOGS}"
+cd "${BACKUP_ROOT}"
+mkdir -p "${LOGS_DIR}"
 
 if "${BACKUP_ROOT}"/backup.sh >"${BACKUP_ROOT}"/backup.log 2>&1; then
     RESULT="success"
@@ -16,5 +17,6 @@ else
     EXITCODE=1
 fi
 
-cp -a "${BACKUP_ROOT}"/backup.log "${BACKUP_LOGS}"/backup-${RESULT}-${BACKUP_TIMESTAMP}.log
+cp -a "${BACKUP_ROOT}"/backup.log "${LOGS_DIR}"/backup-${RESULT}-${BACKUP_TIMESTAMP}.log
+rm backup.log
 exit ${EXITCODE}
