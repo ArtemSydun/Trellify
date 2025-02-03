@@ -576,6 +576,7 @@ export class TrelloWebhooksLogicService {
         subscribers: [
           {
             trelloUserId: userToUpdate.trello.userId,
+            trelloToken: userToUpdate.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
           },
         ],
@@ -799,9 +800,7 @@ export class TrelloWebhooksLogicService {
           err.response ? err.response.data : err.message,
         );
         failedUpdates.push(webhookToUpdate.boardName);
-        throw new BadRequestException(
-          err.response ? err.response.data : err.message,
-        );
+        return;
       }
     });
 

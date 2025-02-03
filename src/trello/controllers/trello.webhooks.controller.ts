@@ -90,6 +90,14 @@ export class TrelloWebhooksController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @Get('all')
+  @ApiCustomUnathorizedResponse()
+  getAllWebhooksList() {
+    return this.webhooksService.findAllWebhooks();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('list')
   @ApiBearerAuth()
