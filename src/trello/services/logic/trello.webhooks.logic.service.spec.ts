@@ -130,12 +130,13 @@ describe('TrelloWebhooksLogicService', () => {
     usersService = moduleRef.get<UsersService>(UsersService);
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
 
-    (encryptText as jest.Mock).mockImplementation(
-      (text: string) => `encrypted${text}`,
-    );
-    (decryptText as jest.Mock).mockImplementation(
-      (text: string) => `decrypted${text}`,
-    );
+    (encryptText as jest.Mock).mockImplementation((text: string) => {
+      return text.includes('encrypted') ? text : `encrypted${text}`; // ✅ Avoid double encryption
+    });
+
+    (decryptText as jest.Mock).mockImplementation((text: string) => {
+      return text.replace('encrypted', ''); // ✅ Strip only one level of encryption
+    });
 
     (validateTrelloToken as jest.Mock).mockImplementation(() => {});
 
@@ -186,6 +187,10 @@ describe('TrelloWebhooksLogicService', () => {
   describe('findWebhookById', () => {
     it('should return the webhook if it exists and board name has not changed', async () => {
       const webhook = { ...webhookStub };
+      const decryptedAuthorToken = webhook.author.trelloToken.replace(
+        'encrypted',
+        '',
+      );
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneById')
@@ -204,7 +209,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(trelloBoardsApiService.fetchBoardById).toHaveBeenCalledWith(
-        `decrypted${webhook.author.trelloToken}`,
+        decryptedAuthorToken,
         webhook.idModel,
       );
 
@@ -228,6 +233,11 @@ describe('TrelloWebhooksLogicService', () => {
       };
 
       const userMock = userStub();
+
+      const decryptedAuthorToken = webhook.author.trelloToken.replace(
+        'encrypted',
+        '',
+      );
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneById')
@@ -258,7 +268,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(trelloBoardsApiService.fetchBoardById).toHaveBeenCalledWith(
-        `decrypted${webhook.author.trelloToken}`,
+        decryptedAuthorToken,
         webhook.idModel,
       );
 
@@ -567,9 +577,15 @@ describe('TrelloWebhooksLogicService', () => {
     });
 
     it('should recreate the webhook if Trello API returns an invalid token error', async () => {
-      const decryptedAuthorToken = `decrypted${webhookStub.author.trelloToken}`;
+      const decryptedAuthorToken = webhookStub.author.trelloToken.replace(
+        'encrypted',
+        '',
+      );
 
-      const decryptedUserToken = `decrypted${requestedUser.trello.token}`;
+      const decryptedUserToken = requestedUser.trello.token.replace(
+        'encrypted',
+        '',
+      );
 
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
@@ -608,9 +624,15 @@ describe('TrelloWebhooksLogicService', () => {
     });
 
     it('should recreate the webhook and update all subscribers', async () => {
-      const decryptedAuthorToken = `decrypted${webhookStub.author.trelloToken}`;
+      const decryptedAuthorToken = webhookStub.author.trelloToken.replace(
+        'encrypted',
+        '',
+      );
 
-      const decryptedUserToken = `decrypted${requestedUser.trello.token}`;
+      const decryptedUserToken = requestedUser.trello.token.replace(
+        'encrypted',
+        '',
+      );
 
       jest
         .spyOn(trelloWebhookApiService, 'getWebhooksByToken')

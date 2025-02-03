@@ -17,7 +17,11 @@ import {
 } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { superAdminStub, userStub } from '../__mocks__/user.stub';
-import { encryptText, hashPassword } from 'src/common/helpers/hashing';
+import {
+  decryptText,
+  encryptText,
+  hashPassword,
+} from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
 import { UserSearchPathEnum } from '../enums/query.enum';
@@ -88,9 +92,14 @@ describe('UsersService', () => {
     );
     telegramService = moduleRef.get<TelegramService>(TelegramService);
 
-    (encryptText as jest.Mock).mockImplementation(
-      (text: string) => `encrypted${text}`,
-    );
+    (encryptText as jest.Mock).mockImplementation((text: string) => {
+      return text.includes('encrypted') ? text : `encrypted${text}`; // ✅ Avoid double encryption
+    });
+
+    (decryptText as jest.Mock).mockImplementation((text: string) => {
+      return text.replace('encrypted', ''); // ✅ Strip only one level of encryption
+    });
+
     (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
 
     jest
@@ -367,12 +376,15 @@ describe('UsersService', () => {
           webhooks: [],
         },
       };
+
       const updateUserDto = {
         trello: {
           ...user.trello,
           webhooks: superAdminStub().trello.webhooks,
+          token: user.trello.token,
         },
       };
+
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
 
       const result = await usersService.updateUser(user.id, updateUserDto);
@@ -381,6 +393,7 @@ describe('UsersService', () => {
         user.id,
         updateUserDto,
       );
+
       expect(result).toEqual({
         message: `User ${user.id} updated successfully`,
         statusCode: HttpStatus.OK,
@@ -419,12 +432,13 @@ describe('UsersService', () => {
     it('should fetch Trello profile and update trello property if token is provided', async () => {
       const userToUpdate = { ...userStub() };
       const updateUserDto = { trello: { token: 'newToken' } };
+      const encryptedToken = `encrypted${updateUserDto.trello.token}`;
 
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...userToUpdate,
         trello: {
           ...userToUpdate.trello,
-          token: 'encryptednewToken',
+          token: encryptedToken,
           userId: trelloProfileMock.id,
           username: trelloProfileMock.username,
         },
@@ -438,7 +452,7 @@ describe('UsersService', () => {
 
       expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
         userToUpdate,
-        'encryptednewToken',
+        encryptedToken,
         undefined,
       );
 
@@ -766,6 +780,8 @@ describe('UsersService', () => {
       };
       const connectTrelloDto = { token: 'newtoken' };
 
+      const encryptedToken = `encrypted${connectTrelloDto.token}`;
+
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
@@ -780,12 +796,9 @@ describe('UsersService', () => {
           userId: trelloProfileMock.id,
           username: trelloProfileMock.username,
           webhooks: [],
-          token: `encrypted${connectTrelloDto.token}`,
+          token: encryptedToken,
         },
       });
-      (encryptText as jest.Mock).mockImplementation(
-        (text: string) => `encrypted${text}`,
-      );
 
       const result = await usersService.manageUserTrelloConnection(
         userToUpdate.id,
@@ -803,7 +816,7 @@ describe('UsersService', () => {
       );
       expect(trelloMembersLogicService.findMemberProfile).toHaveBeenCalledWith(
         userToUpdate,
-        `encrypted${connectTrelloDto.token}`,
+        encryptedToken,
         undefined,
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {

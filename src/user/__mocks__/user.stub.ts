@@ -25,7 +25,7 @@ export const superAdminStub = () => {
         },
       ],
       token:
-        '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+        'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
     },
     telegram: {
       chatId: 123,
@@ -60,7 +60,7 @@ export const userStub = () => {
         },
       ],
       token:
-        '222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM83/',
+        'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM83/',
     },
     telegram: {
       chatId: 1234,
