@@ -29,6 +29,7 @@ export class TrelloMembersLogicService {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
 
+  //it accepts encrypted tokens only, better to rewrite this function to accept plain token later
   async findMemberProfile(
     user: string | User,
     token?: string,

@@ -33,6 +33,7 @@ export class TrelloMembersController {
   getTrelloMemberProfile(@Req() req): Promise<TrelloMember> {
     return this.trelloMembersService.findMemberProfile(
       req.user.id,
+      undefined,
       req.i18nContext,
     );
   }

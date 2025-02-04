@@ -90,6 +90,14 @@ export class TrelloWebhooksController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @Get('all')
+  @ApiCustomUnathorizedResponse()
+  getAllWebhooksList() {
+    return this.webhooksService.findAllWebhooks();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('list')
   @ApiBearerAuth()
@@ -129,7 +137,6 @@ export class TrelloWebhooksController {
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms,
   //they send a GET request to your callback URL first to validate the endpoint before they start sending POST requests.
   //This is a standard webhook behavior to verify the callback URL is correct and responds appropriately.
-
   @SkipThrottle()
   @Get('provider/:boardId')
   @ApiExcludeEndpoint()
@@ -144,7 +151,7 @@ export class TrelloWebhooksController {
     return { status: 'success' };
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get('notifications/profiles')
   @ApiBearerAuth()
   @ApiOperation({
