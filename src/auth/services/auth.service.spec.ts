@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { userStub } from 'src/user/__mocks__/user.stub';
+import { superAdminStub } from 'src/user/__mocks__/user.stub';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UsersService } from 'src/user/services/users.service';
 import { resetPasswordMessageStub } from '../__mocks__/auth.stub';
@@ -50,7 +50,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access token and user object for valid credentials', async () => {
-      const user = { ...userStub() };
+      const user = { ...superAdminStub() };
       const loginUserDto: LoginUserDto = {
         email: user.email,
         password: user.password,
@@ -83,7 +83,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for invalid credentials', async () => {
-      const user = { ...userStub(), password: 'hashedpassword' };
+      const user = { ...superAdminStub(), password: 'hashedpassword' };
       const loginUserDto: LoginUserDto = {
         email: user.email,
         password: 'wrongpassword',
@@ -158,7 +158,7 @@ describe('AuthService', () => {
   describe('forgotPassword', () => {
     it('should send a password reset email', async () => {
       const forgotPasswordDto: ForgotPasswordDto = { email: 'test@gmail.com' };
-      const user = userStub();
+      const user = superAdminStub();
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockResetToken');
       jest.spyOn(mailerService, 'sendResetPasswordLink').mockResolvedValue({
@@ -195,7 +195,9 @@ describe('AuthService', () => {
         repeatPassword: 'newpassword123',
       };
 
-      jest.spyOn(jwtService, 'verify').mockReturnValue({ id: userStub().id });
+      jest
+        .spyOn(jwtService, 'verify')
+        .mockReturnValue({ id: superAdminStub().id });
       jest.spyOn(usersService, 'resetPassword').mockResolvedValue();
 
       const result = await authService.resetPassword(
@@ -206,7 +208,7 @@ describe('AuthService', () => {
 
       expect(jwtService.verify).toHaveBeenCalledWith(token);
       expect(usersService.resetPassword).toHaveBeenCalledWith(
-        userStub().id,
+        superAdminStub().id,
         resetPasswordDto.newPassword,
         undefined,
       );

@@ -83,3 +83,29 @@ export const trelloProfileMock = {
   isAaMastered: true,
   ixUpdate: '779',
 };
+
+export const trelloBoardMock = {
+  id: '6763dcb33e9016a37e973222',
+  name: 'test',
+  desc: '',
+  closed: false,
+  dateClosed: null,
+  pinned: false,
+  starred: false,
+  url: 'https://trello.com/b/EVPkihab/test',
+  shortLink: 'EVPkihab',
+  subscribed: false,
+  dateLastActivity: '2025-01-24T10:31:03.336Z',
+  dateLastView: '2025-01-30T09:38:24.753Z',
+  shortUrl: 'https://trello.com/b/EVPkihab',
+  idMemberCreator: '674ec752cba1224342f87c20',
+  memberships: [
+    {
+      id: '67570886e58adaf576a80afa',
+      idMember: '674ec752cba1224342f87c20',
+      memberType: 'admin',
+      unconfirmed: false,
+      deactivated: false,
+    },
+  ],
+};

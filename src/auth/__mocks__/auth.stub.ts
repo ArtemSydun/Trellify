@@ -1,10 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
-import { userStub } from 'src/user/__mocks__/user.stub';
+import { superAdminStub } from 'src/user/__mocks__/user.stub';
 
 export const loginStub = () => {
   return {
     accessToken: 'jwttoken',
-    user: userStub(),
+    user: superAdminStub(),
   };
 };
 
