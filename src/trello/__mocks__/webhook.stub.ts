@@ -1,4 +1,8 @@
-import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
+import {
+  TrelloWebhookActions,
+  TrelloWebhookDetailedActions,
+  TrelloWebhookNotificationProfiles,
+} from '../enums/trello.actions.enum';
 
 export const webhookStub = {
   id: 'webhook1',
@@ -184,5 +188,127 @@ export const newWebhookStub = {
       customFieldRenamed: [],
       customFieldDeleted: [],
     },
+  },
+};
+
+export const webhookActionStub = {
+  model: {
+    id: '6763dcb33e9016a37e973222',
+    name: 'test',
+    desc: '',
+    descData: null,
+    closed: false,
+    idOrganization: '66e8137ba706295655f65f30',
+    idEnterprise: null,
+    pinned: false,
+    url: 'https://trello.com/b/mVj5JYPV/test',
+    shortUrl: 'https://trello.com/b/mVj5JYPV',
+  },
+  action: {
+    id: '67a1f1476c76c0a2c699d368',
+    idMemberCreator: '674ec752cba1224342f87c20',
+    data: {
+      idCard: '6780cc0c87dd60564cce3541',
+      text: 'xd',
+      textData: {
+        emoji: {},
+      },
+      card: {
+        id: '6780cc0c87dd60564cce3541',
+        name: 'xdxd',
+        idShort: 23,
+        shortLink: 'yQZWHAn9',
+      },
+      board: {
+        id: '6763dcb33e9016a37e97d9df',
+        name: 'test',
+        shortLink: 'mVj5JYPV',
+      },
+      list: {
+        id: '6763dcb8574ccc1f7a905964',
+        name: 'fgsdf',
+      },
+    },
+    appCreator: null,
+    type: TrelloWebhookActions.CARD_COMMENT_ADDED,
+    date: '2025-02-04T10:51:51.123Z',
+    limits: {
+      reactions: {
+        perAction: {
+          status: 'ok',
+          disableAt: 900,
+          warnAt: 720,
+        },
+        uniquePerAction: {
+          status: 'ok',
+          disableAt: 17,
+          warnAt: 14,
+        },
+      },
+    },
+    display: {
+      translationKey: TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
+      entities: {
+        contextOn: {
+          type: 'translatable',
+          translationKey: 'action_on',
+          hideIfContext: true,
+          idContext: '6780cc0c87dd60564cce3541',
+        },
+        card: {
+          type: 'card',
+          hideIfContext: true,
+          id: '6780cc0c87dd60564cce3541',
+          shortLink: 'yQZWHAn9',
+          text: 'xdxd',
+        },
+        comment: {
+          type: 'comment',
+          text: 'xd',
+        },
+        memberCreator: {
+          type: 'member',
+          id: '674ec752cba1224342f87c20',
+          username: 'artem74631131',
+          text: 'Artem',
+        },
+      },
+    },
+    member: {
+      id: '674ec752cba1224342f87c21',
+      activityBlocked: false,
+      avatarHash: '4a582021cc0dbead8b50ccbb25446b07',
+      avatarUrl:
+        'https://trello-members.s3.amazonaws.com/673ef1f4c1d0247b538a4ac3/4a582021cc0dbead8b50ccbb25446b07',
+      fullName: 'User',
+      idMemberReferrer: null,
+      initials: 'А',
+      nonPublic: {},
+      nonPublicAvailable: true,
+      username: 'user22246838',
+    },
+    memberCreator: {
+      id: '674ec752cba1224342f87c20',
+      activityBlocked: false,
+      avatarHash: '16cf853676c47ab6acde850a3ec04b44',
+      avatarUrl:
+        'https://trello-members.s3.amazonaws.com/674ec752cba1224342f87c20/16cf853676c47ab6acde850a3ec04b44',
+      fullName: 'Artem',
+      idMemberReferrer: '6659d9bafae6eef88b9a7713',
+      initials: 'A',
+      nonPublic: {},
+      nonPublicAvailable: true,
+      username: 'artem74631131',
+    },
+  },
+  webhook: {
+    id: 'webhook1',
+    description: '',
+    idModel: '6763dcb33e9016a37e973222',
+    callbackURL:
+      'https://9f76-185-208-231-18.ngrok-free.app/trello/webhooks/provider/6763dcb33e9016a37e97d9df',
+    active: true,
+    consecutiveFailures: 0,
+    firstConsecutiveFailDate: null,
   },
 };
