@@ -1,7 +1,7 @@
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
 export const webhookStub = {
-  id: '67692151f8ed7956d9323222',
+  id: 'webhook1',
   description: '',
   idModel: '6763dcb33e9016a37e973222',
   callbackURL:
@@ -97,7 +97,7 @@ export const webhookStub = {
 };
 
 export const newWebhookStub = {
-  id: '67692151f8ed7956d9323222',
+  id: 'webhook2',
   description: '',
   idModel: '6763dcb33e9016a37e973222',
   callbackURL:
@@ -117,6 +117,12 @@ export const newWebhookStub = {
       trelloUserId: '674ec752cba1224342f87c20',
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+      notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+    },
+    {
+      trelloUserId: '674ec752cba1224342f87c21',
+      trelloToken:
+        'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM83/',
       notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
     },
   ],
