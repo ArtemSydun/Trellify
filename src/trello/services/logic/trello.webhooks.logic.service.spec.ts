@@ -48,6 +48,7 @@ import {
   UpdateManyNotificationsDto,
   UpdateNotificationsDto,
 } from 'src/trello/dto/notifications.dto';
+import { UserRoles } from 'src/user/enums/role.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -1330,6 +1331,274 @@ describe('TrelloWebhooksLogicService', () => {
           userStubData,
           updateManyWebhooksDto,
         ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('removeTrelloWebhook', () => {
+    let webhookStubData: Webhook;
+    let decryptedToken: string;
+
+    beforeEach(() => {
+      webhookStubData = { ...webhookStub, id: 'webhook1' };
+      decryptedToken = webhookStub.author.trelloToken.replace('encrypted', '');
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockResolvedValue(webhookStubData);
+    });
+
+    it('should remove a webhook successfully', async () => {
+      jest
+        .spyOn(trelloWebhookApiService, 'deleteWebhook')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(usersService, 'removeWebhookFromAllUsers')
+        .mockResolvedValue(null);
+      jest.spyOn(trelloWebhookRepository, 'deleteById').mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.removeTrelloWebhook(webhookStubData);
+
+      expect(trelloWebhooksLogicService.getWebhook).toHaveBeenCalledWith(
+        webhookStubData,
+        undefined,
+      );
+
+      expect(trelloWebhookApiService.deleteWebhook).toHaveBeenCalledWith(
+        decryptedToken,
+        webhookStubData.id,
+      );
+
+      expect(usersService.removeWebhookFromAllUsers).toHaveBeenCalledWith(
+        webhookStubData,
+        undefined,
+      );
+
+      expect(trelloWebhookRepository.deleteById).toHaveBeenCalledWith(
+        webhookStubData.id,
+      );
+
+      expect(result).toEqual({
+        message: `Webhook ${webhookStubData.id} deleted successfully from Trello and all connected users`,
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should log a warning if Trello API webhook deletion fails but continue deletion', async () => {
+      jest
+        .spyOn(trelloWebhookApiService, 'deleteWebhook')
+        .mockRejectedValue(new Error('Trello API error'));
+
+      jest
+        .spyOn(usersService, 'removeWebhookFromAllUsers')
+        .mockResolvedValue(null);
+      jest.spyOn(trelloWebhookRepository, 'deleteById').mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.removeTrelloWebhook(webhookStubData);
+
+      expect(trelloWebhookApiService.deleteWebhook).toHaveBeenCalledWith(
+        decryptedToken,
+        webhookStubData.id,
+      );
+      expect(usersService.removeWebhookFromAllUsers).toHaveBeenCalled();
+      expect(trelloWebhookRepository.deleteById).toHaveBeenCalled();
+
+      expect(result).toEqual({
+        message: `Webhook ${webhookStubData.id} deleted successfully from Trello and all connected users`,
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw BadRequestException if user webhook removal or repository deletion fails', async () => {
+      jest
+        .spyOn(trelloWebhookApiService, 'deleteWebhook')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(usersService, 'removeWebhookFromAllUsers')
+        .mockRejectedValue(
+          new BadRequestException('User webhook removal failed'),
+        );
+
+      await expect(
+        trelloWebhooksLogicService.removeTrelloWebhook(webhookStubData),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('removeAllWebhooksCreatedByUser', () => {
+    let userStubData: User;
+    let webhooksStubData: Webhook[];
+
+    beforeEach(() => {
+      userStubData = { ...userStub() };
+
+      webhooksStubData = [
+        {
+          ...webhookStub,
+          id: 'webhook1',
+          author: {
+            trelloUserId: userStubData.trello.userId,
+            trelloToken: userStubData.trello.token,
+          },
+        },
+        {
+          ...webhookStub,
+          id: 'webhook2',
+          author: {
+            trelloUserId: userStubData.trello.userId,
+            trelloToken: userStubData.trello.token,
+          },
+        },
+      ];
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
+    });
+
+    it('should return a success message if no webhooks are found for the user', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
+        .mockResolvedValue([]);
+
+      jest.spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook');
+
+      const result =
+        await trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
+          userStubData,
+        );
+
+      expect(
+        trelloWebhookRepository.findWebhooksCreatedByUser,
+      ).toHaveBeenCalledWith(userStubData.trello.userId);
+
+      expect(
+        trelloWebhooksLogicService.removeTrelloWebhook,
+      ).not.toHaveBeenCalled();
+
+      expect(result).toEqual({
+        message: `No webhooks found for user: ${userStubData.trello.userId}`,
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should delete all webhooks created by the user successfully', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
+        .mockResolvedValue(webhooksStubData);
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
+        .mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(
+          userStubData,
+        );
+
+      expect(
+        trelloWebhookRepository.findWebhooksCreatedByUser,
+      ).toHaveBeenCalledWith(userStubData.trello.userId);
+
+      expect(
+        trelloWebhooksLogicService.removeTrelloWebhook,
+      ).toHaveBeenCalledTimes(webhooksStubData.length);
+
+      expect(result).toEqual({
+        message: `Removed ${webhooksStubData.length} webhooks created by user: ${userStubData.trello.userId}`,
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw BadRequestException if webhook deletion fails', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
+        .mockResolvedValue(webhooksStubData);
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
+        .mockRejectedValue(new BadRequestException('Deletion failed'));
+
+      await expect(
+        trelloWebhooksLogicService.removeAllWebhooksCreatedByUser(userStubData),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('removeAllWebhooks', () => {
+    let superAdminStubData: User;
+    let webhookStubData: Webhook[];
+
+    beforeEach(() => {
+      superAdminStubData = { ...superAdminStub() };
+
+      webhookStubData = [
+        { ...webhookStub, id: 'webhook1' },
+        { ...webhookStub, id: 'webhook2' },
+      ];
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(superAdminStubData);
+    });
+
+    it('should throw ForbiddenException if the user is not a superadmin', async () => {
+      const nonAdminUser = { ...userStub(), role: UserRoles.user };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(nonAdminUser);
+
+      await expect(
+        trelloWebhooksLogicService.removeAllWebhooks(nonAdminUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return a success message if no webhooks are found', async () => {
+      jest
+        .spyOn(trelloWebhooksLogicService, 'findAllWebhooks')
+        .mockResolvedValue([]);
+
+      const result =
+        await trelloWebhooksLogicService.removeAllWebhooks(superAdminStubData);
+
+      expect(result).toEqual({
+        message: 'No webhooks to delete.',
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should delete all webhooks successfully', async () => {
+      jest
+        .spyOn(trelloWebhooksLogicService, 'findAllWebhooks')
+        .mockResolvedValue(webhookStubData);
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
+        .mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.removeAllWebhooks(superAdminStubData);
+
+      expect(trelloWebhooksLogicService.findAllWebhooks).toHaveBeenCalled();
+      expect(
+        trelloWebhooksLogicService.removeTrelloWebhook,
+      ).toHaveBeenCalledTimes(webhookStubData.length);
+
+      expect(result).toEqual({
+        message:
+          'All webhooks deleted successfully from Trello and all connected users.',
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw BadRequestException if webhook deletion fails', async () => {
+      jest
+        .spyOn(trelloWebhooksLogicService, 'findAllWebhooks')
+        .mockResolvedValue(webhookStubData);
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
+        .mockRejectedValue(new BadRequestException('Deletion failed'));
+
+      await expect(
+        trelloWebhooksLogicService.removeAllWebhooks(superAdminStubData),
       ).rejects.toThrow(BadRequestException);
     });
   });

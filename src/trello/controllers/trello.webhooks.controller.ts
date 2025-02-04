@@ -151,7 +151,7 @@ export class TrelloWebhooksController {
     return { status: 'success' };
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get('notifications/profiles')
   @ApiBearerAuth()
   @ApiOperation({

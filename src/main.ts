@@ -17,7 +17,10 @@ async function bootstrap() {
   app.enableCors({
     origin:
       configService.get(configServiceEnum.NODE_ENV) === 'production'
-        ? configService.get(configServiceEnum.FRONTEND_LINK)
+        ? [
+            configService.get(configServiceEnum.FRONTEND_LINK),
+            configService.get(configServiceEnum.LANDING_LINK),
+          ]
         : '*',
   });
 
