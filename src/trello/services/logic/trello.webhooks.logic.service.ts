@@ -824,7 +824,7 @@ export class TrelloWebhooksLogicService {
     // console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
-      webhookId: webhookAction.model?.id,
+      webhookId: webhookAction.webhook?.id,
       actionType: webhookAction.action.type,
       translationKey: webhookAction.action.display?.translationKey,
       memberCreator: webhookAction.action.memberCreator?.username,
@@ -841,7 +841,9 @@ export class TrelloWebhooksLogicService {
       `Webhook id: ${webhookAction.model?.id}, application processed actions count: ${this.webhookActionCount}`,
     );
 
-    const webhook = await this.getWebhook(webhookAction?.webhook?.id);
+    const webhook = await this.trelloWebhookRepository.findOneById(
+      webhookAction?.webhook?.id,
+    );
 
     if (!webhook) {
       this.logger.warn('Missing action or webhook data.');
@@ -934,8 +936,7 @@ export class TrelloWebhooksLogicService {
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser &&
-                memberId !== targetMember?.id,
+                memberId !== notifiedTargetUser,
             );
 
             await this.actionsService.handleCardActions(

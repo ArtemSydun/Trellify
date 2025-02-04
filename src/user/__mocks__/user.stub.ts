@@ -16,12 +16,12 @@ export const superAdminStub = () => {
         {
           idModel: '6763dcb33e9016a37e973222',
           modelName: 'test',
-          webhookId: '67692151f8ed7956d9323222',
+          webhookId: 'webhook1',
         },
         {
           idModel: '6763dcb33e9016a37e973223',
           modelName: 'test1',
-          webhookId: '676a7a16fc88f6d9ba673223',
+          webhookId: 'webhook2',
         },
       ],
       token:
@@ -51,12 +51,12 @@ export const userStub = () => {
         {
           idModel: '6763dcb33e9016a37e973222',
           modelName: 'test',
-          webhookId: '67692151f8ed7956d9323222',
+          webhookId: 'webhook1',
         },
         {
           idModel: '6763dcb33e9016a37e973223',
           modelName: 'test1',
-          webhookId: '676a7a16fc88f6d9ba673223',
+          webhookId: 'webhook2',
         },
       ],
       token:
