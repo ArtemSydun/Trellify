@@ -69,7 +69,6 @@ describe('AuthService', () => {
         ...user,
         lastLoginDate: fixedDate,
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       });
       (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to succeed
 

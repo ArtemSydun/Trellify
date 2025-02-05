@@ -52,6 +52,7 @@ export class SeederService implements OnModuleInit {
       const existingAdmins = await this.userModel.find({
         role: UserRoles.superadmin,
       });
+
       if (existingAdmins.length === 0) {
         console.log('No admin users found, seeding...');
 

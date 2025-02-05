@@ -362,7 +362,6 @@ export class UsersService {
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       language: updateUserLanguageDto.language,
-      updatedAt: updateDate,
       lastActivityDate: updateDate,
     });
 
@@ -385,7 +384,6 @@ export class UsersService {
     await this.userRepository.updateById(userToReset.id, {
       password: encryptedPassword,
       lastActivityDate: updateDate,
-      updatedAt: updateDate,
     });
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
@@ -451,8 +449,7 @@ export class UsersService {
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
-      telegram: { chatId, username, updatedAt: new Date() },
-      updatedAt: updateDate,
+      telegram: { chatId, username, updatedAt: updateDate },
       lastActivityDate: updateDate,
     });
 
@@ -485,7 +482,6 @@ export class UsersService {
         userToUpdate.id,
         {
           trello: { userId: null, username: null, webhooks: [], token: null },
-          updatedAt: updateDate,
           lastActivityDate: updateDate,
         },
       );
@@ -537,7 +533,6 @@ export class UsersService {
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       ...updatedUserProps,
-      updatedAt: updateDate,
       lastActivityDate: updateDate,
     });
 

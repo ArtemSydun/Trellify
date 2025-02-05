@@ -80,7 +80,6 @@ export class AuthService {
     const loginedUser = await this.userRepository.updateById(user.id, {
       lastLoginDate: loginDate,
       lastActivityDate: loginDate,
-      updatedAt: loginDate,
     });
 
     delete loginedUser.password;

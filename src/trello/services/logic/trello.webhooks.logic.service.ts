@@ -524,7 +524,6 @@ export class TrelloWebhooksLogicService {
           ...userToUpdate.trello,
           webhooks: userToUpdate.trello.webhooks,
         },
-        updatedAt: updateDate,
         lastActivityDate: updateDate,
       };
 
@@ -599,7 +598,6 @@ export class TrelloWebhooksLogicService {
             ? [...userToUpdate.trello.webhooks, userWebhook]
             : [userWebhook],
         },
-        updatedAt: updateDate,
         lastActivityDate: updateDate,
       };
 
@@ -834,9 +832,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // delete webhookAction.model?.prefs;
-    // delete webhookAction.model?.labelNames;
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    delete webhookAction.model?.prefs;
+    delete webhookAction.model?.labelNames;
+    console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
@@ -1101,7 +1099,6 @@ export class TrelloWebhooksLogicService {
         webhooks: updatedUserWebhooks,
       },
       lastActivityDate: updateDate,
-      updatedAt: updateDate,
     };
 
     const filteredWebhookData = filterUserFromWebhook(

@@ -384,7 +384,6 @@ describe('UsersService', () => {
           token: user.trello.token,
         },
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       };
 
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
@@ -436,7 +435,6 @@ describe('UsersService', () => {
       const updateUserDto = {
         trello: { token: 'newToken' },
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       };
       const encryptedToken = `encrypted${updateUserDto.trello.token}`;
 
@@ -449,7 +447,6 @@ describe('UsersService', () => {
           username: trelloProfileMock.username,
         },
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       });
 
       expect(userToUpdate.trello.username).not.toEqual(
@@ -542,7 +539,6 @@ describe('UsersService', () => {
         {
           password: 'hashedPassword',
           lastActivityDate: fixedDate,
-          updatedAt: fixedDate,
         },
       );
     });
@@ -603,7 +599,6 @@ describe('UsersService', () => {
   });
 
   describe('manageUserTelegramConnection', () => {
-    const fixedDate = new Date('2025-01-03T13:38:58.285Z');
     it('should connect Telegram successfully', async () => {
       const userToUpdate = {
         ...superAdminStub(),
@@ -645,7 +640,6 @@ describe('UsersService', () => {
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
-        updatedAt: fixedDate,
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
@@ -719,7 +713,6 @@ describe('UsersService', () => {
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
-        updatedAt: fixedDate,
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
@@ -777,7 +770,6 @@ describe('UsersService', () => {
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         trello: { userId: null, username: null, webhooks: [], token: null },
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       });
       expect(result).toEqual({
         message: expect.stringContaining(userToUpdate.trello.username),
@@ -843,7 +835,6 @@ describe('UsersService', () => {
           token: `encrypted${connectTrelloDto.token}`,
         },
         lastActivityDate: fixedDate,
-        updatedAt: fixedDate,
       });
       expect(result).toEqual({
         message: expect.stringContaining(trelloProfileMock.username),
