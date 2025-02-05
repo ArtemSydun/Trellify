@@ -19,7 +19,9 @@ export class TelegramService {
       await this.bot.telegram.sendMessage(telegramInfo.chatId, message, {
         parse_mode: parseMode,
       });
-      this.logger.log(`Telegram message sent to user ${telegramInfo.username}`);
+      this.logger.log(
+        `Telegram message sent to user ${telegramInfo.username}'}`,
+      );
     }
   }
 }

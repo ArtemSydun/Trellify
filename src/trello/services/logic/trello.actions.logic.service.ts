@@ -55,17 +55,19 @@ export class TrelloActionsLogicService {
       const targetActionMessages: Partial<
         Record<TrelloWebhookDetailedActions, string | null>
       > = {
-        [TrelloWebhookDetailedActions.CARD_MEMBER_ADDED]: this.i18n?.t(
-          I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CARD_MEMBER_ADDED,
-          {
-            lang: notificationLanguage,
-            args: {
-              userInitials,
-              cardName: cardData?.name,
-              cardUrl: cardData?.url,
+        [TrelloWebhookDetailedActions.CARD_MEMBER_ADDED]:
+          this.i18n?.t(
+            I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CARD_MEMBER_ADDED,
+            {
+              lang: notificationLanguage,
+              args: {
+                userInitials,
+                cardName: cardData?.name,
+                cardUrl: cardData?.url,
+              },
             },
-          },
-        ),
+          ) ||
+          `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
         [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CARD_MEMBER_REMOVED,
@@ -173,6 +175,7 @@ export class TrelloActionsLogicService {
         webhookAction?.action?.member?.username ||
           webhookAction?.action?.memberCreator?.username,
       );
+      const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
 
       const cardActionMessages: Record<
         TrelloWebhookCardActions,
@@ -373,44 +376,48 @@ export class TrelloActionsLogicService {
             lang: args.lang,
             args: {
               memberName: args.memberName,
+              memberUrl: args.memberUrl,
               cardName: args.cardName,
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member ${targetMemberUsername} has been added to the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [[${targetMemberUsername}](${targetMemberProfileUrl})](${targetMemberProfileUrl}) has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_REMOVED, {
             lang: args.lang,
             args: {
               memberName: args.memberName,
+              memberUrl: args.memberUrl,
               cardName: args.cardName,
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member ${targetMemberUsername} has been removed from the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [[${targetMemberUsername}](${targetMemberProfileUrl})](${targetMemberProfileUrl}) has been removed from the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_JOINED, {
             lang: args.lang,
             args: {
               memberName: args.memberName,
+              memberUrl: args.memberUrl,
               cardName: args.cardName,
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member ${targetMemberUsername} has joined the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_LEFT, {
             lang: args.lang,
             args: {
               memberName: args.memberName,
+              memberUrl: args.memberUrl,
               cardName: args.cardName,
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member ${targetMemberUsername} has left the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has left the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DELETED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_DELETED, {
@@ -430,13 +437,14 @@ export class TrelloActionsLogicService {
               lang: args.lang,
               args: {
                 memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 checklistItemName: args.checklistItemName,
                 cardName: args.cardName,
                 cardUrl: args.cardUrl,
               },
             },
           ) ||
-          `A member ${targetMemberUsername} has been added to a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been added to a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(
@@ -445,13 +453,14 @@ export class TrelloActionsLogicService {
               lang: args.lang,
               args: {
                 memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 checklistItemName: args.checklistItemName,
                 cardName: args.cardName,
                 cardUrl: args.cardUrl,
               },
             },
           ) ||
-          `A member ${targetMemberUsername} has been removed from a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: (args) =>
           this.i18n?.t(
@@ -460,13 +469,14 @@ export class TrelloActionsLogicService {
               lang: args.lang,
               args: {
                 memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 checklistItemName: args.checklistItemName,
                 cardName: args.cardName,
                 cardUrl: args.cardUrl,
               },
             },
           ) ||
-          `A member ${targetMemberUsername} has joined checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: (args) =>
           this.i18n?.t(
@@ -475,13 +485,14 @@ export class TrelloActionsLogicService {
               lang: args.lang,
               args: {
                 memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 checklistItemName: args.checklistItemName,
                 cardName: args.cardName,
                 cardUrl: args.cardUrl,
               },
             },
           ) ||
-          `A member ${targetMemberUsername} has left checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has left checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_DELETED]: (args) =>
           this.i18n?.t(
@@ -539,6 +550,7 @@ export class TrelloActionsLogicService {
         const message = cardActionMessages[actionType]({
           lang: userLanguage,
           memberName: targetMemberUsername,
+          memberUrl: targetMemberProfileUrl,
           customFieldName,
           oldCardName,
           cardName: cardData?.name,
@@ -653,6 +665,8 @@ export class TrelloActionsLogicService {
       const targetUsername = escapeMarkdown(
         webhookAction?.action?.member?.username || '',
       );
+      const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
+
       const oldCustomFieldName = webhookAction.action?.data?.old?.name;
       const customFieldName = webhookAction.action?.data?.customField?.name;
       const oldBoardName = webhookAction?.action?.data?.old?.name;
@@ -667,23 +681,25 @@ export class TrelloActionsLogicService {
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_ADMIN_ADDED, {
             lang: args.lang,
             args: {
-              targetUser: args.targetUser,
+              memberName: args.memberName,
+              memberUrl: args.memberUrl,
               boardName: args.boardName,
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new admin ${targetUsername} has been added on the board [${boardData?.name}](${boardData.url}).`,
+          `A new admin [${targetUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED, {
             lang: args.lang,
             args: {
-              targetUser: args.targetUser,
+              memberName: args.memberName,
+              memberUrl: args.memberUrl,
               boardName: args.boardName,
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user ${targetUsername} has been removed from the board  [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
           this.i18n?.t(
@@ -691,35 +707,38 @@ export class TrelloActionsLogicService {
             {
               lang: args.lang,
               args: {
-                targetUser: args.targetUser,
+                memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 boardName: args.boardName,
                 boardUrl: args.boardUrl,
               },
             },
           ) ||
-          `The user ${targetUsername} has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
+          `The user [${targetUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT, {
             lang: args.lang,
             args: {
-              targetUser: args.targetUser,
+              memberName: args.memberName,
+              memberUrl: args.memberUrl,
               boardName: args.boardName,
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user ${targetUsername} has left the board [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_JOINED, {
             lang: args.lang,
             args: {
-              targetUser: args.targetUser,
+              memberName: args.memberName,
+              memberUrl: args.memberUrl,
               boardName: args.boardName,
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new member ${targetUsername} has joined the board [${boardData?.name}](${boardData.url}).`,
+          `A new member [${targetUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
           this.i18n?.t(
@@ -727,13 +746,14 @@ export class TrelloActionsLogicService {
             {
               lang: args.lang,
               args: {
-                targetUser: args.targetUser,
+                memberName: args.memberName,
+                memberUrl: args.memberUrl,
                 boardName: args.boardName,
                 boardUrl: args.boardUrl,
               },
             },
           ) ||
-          `A new normal role has been added to a user ${targetUsername} on the board [${boardData?.name}](${boardData.url}).`,
+          `A new normal role has been added to a user [${targetUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED, {
@@ -763,7 +783,8 @@ export class TrelloActionsLogicService {
             lang: args.lang,
             args: {
               customFieldName: args.customFieldName,
-              targetUser: args.targetUser,
+              memberName: args.memberName,
+              memberUrl: args.memberUrl,
               boardName: args.boardName,
               boardUrl: args.boardUrl,
             },
@@ -797,7 +818,8 @@ export class TrelloActionsLogicService {
 
         const message = adminActionMessages[actionType]({
           lang: userLanguage,
-          targetUser: targetUsername,
+          memberName: targetUsername,
+          memberUrl: targetMemberProfileUrl,
           oldCustomFieldName,
           customFieldName,
           oldBoardName,
