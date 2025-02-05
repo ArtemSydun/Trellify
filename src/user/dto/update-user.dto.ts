@@ -20,4 +20,12 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({ type: String, enum: UserRoles })
   @Optional()
   role?: UserRoles;
+
+  @ApiPropertyOptional({ type: Date })
+  @Optional()
+  lastLoginDate?: Date;
+
+  @ApiPropertyOptional({ type: Date })
+  @Optional()
+  lastActivityDate?: Date;
 }

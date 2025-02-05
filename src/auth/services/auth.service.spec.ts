@@ -18,6 +18,7 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AuthService } from './auth.service';
+import { UsersRepository } from 'src/user/repositories/users.repository';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -27,8 +28,11 @@ describe('AuthService', () => {
   let authService: AuthService;
   let jwtService: JwtService;
   let usersService: UsersService;
+  let usersRepository: UsersRepository;
   let configService: ConfigService;
   let mailerService: MailerService;
+
+  const fixedDate = superAdminStub().lastLoginDate;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -36,6 +40,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: JwtService, useValue: createMock<JwtService>() },
         { provide: UsersService, useValue: createMock<UsersService>() },
+        { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
       ],
@@ -44,6 +49,7 @@ describe('AuthService', () => {
     authService = moduleRef.get<AuthService>(AuthService);
     jwtService = moduleRef.get<JwtService>(JwtService);
     usersService = moduleRef.get<UsersService>(UsersService);
+    usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     configService = moduleRef.get<ConfigService>(ConfigService);
     mailerService = moduleRef.get<MailerService>(MailerService);
   });
@@ -56,8 +62,15 @@ describe('AuthService', () => {
         password: user.password,
       };
       delete user.password;
+
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
+        ...user,
+        lastLoginDate: fixedDate,
+        lastActivityDate: fixedDate,
+        updatedAt: fixedDate,
+      });
       (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to succeed
 
       const result = await authService.login(loginUserDto);

@@ -59,6 +59,35 @@ export class User {
   })
   @Prop({ type: String, enum: Languages, default: Languages.EN })
   language: Languages;
+
+  @ApiProperty({
+    description: 'Date of last user login',
+    example: new Date(),
+    default: new Date(),
+  })
+  @Prop({ type: Date, default: new Date() })
+  lastLoginDate: Date;
+
+  @ApiProperty({
+    description:
+      'Date of last user activity date (updating something, last notification send)',
+    example: new Date(),
+    default: new Date(),
+  })
+  @Prop({ type: Date, default: new Date() })
+  lastActivityDate: Date;
+
+  @ApiProperty({
+    description: 'Date when the user was created',
+    example: new Date(),
+  })
+  createdAt?: Date;
+
+  @ApiProperty({
+    description: 'Date when the user was last updated',
+    example: new Date(),
+  })
+  updatedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

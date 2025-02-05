@@ -946,6 +946,8 @@ describe('TrelloWebhooksLogicService', () => {
             },
           ],
         },
+        lastActivityDate: fixedDate,
+        updatedAt: fixedDate,
       };
       const updatedUser = {
         ...userStubData,
@@ -1029,6 +1031,8 @@ describe('TrelloWebhooksLogicService', () => {
             },
           ],
         },
+        lastActivityDate: fixedDate,
+        updatedAt: fixedDate,
       };
 
       const updatedUser = {
@@ -1696,6 +1700,8 @@ describe('TrelloWebhooksLogicService', () => {
             (webhook) => webhook.webhookId !== webhookStubData.id,
           ),
         },
+        lastActivityDate: fixedDate,
+        updatedAt: fixedDate,
       };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
