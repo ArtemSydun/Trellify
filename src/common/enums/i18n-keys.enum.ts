@@ -1,4 +1,11 @@
 export enum I18nKeys {
+  // field names
+  FIELDS_AUTHOR = 'common.fields.author',
+  FIELDS_TARGET = 'common.fields.target',
+  FIELDS_BOARD = 'common.fields.board',
+  FIELDS_CARD = 'common.fields.card',
+  FIELDS_DATE = 'common.fields.date',
+
   // Email Messages
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE = 'common.messages.email.registrationEmailMessage',

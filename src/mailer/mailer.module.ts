@@ -1,4 +1,3 @@
-/* eslint-disable require-await */
 import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule as NodeMailerModule } from '@nestjs-modules/mailer';

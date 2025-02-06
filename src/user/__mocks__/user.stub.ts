@@ -33,6 +33,10 @@ export const superAdminStub = () => {
       updatedAt: fixedDate,
     },
     language: Languages.EN,
+    createdAt: fixedDate,
+    updatedAt: fixedDate,
+    lastLoginDate: fixedDate,
+    lastActivityDate: fixedDate,
   };
 };
 
@@ -68,5 +72,7 @@ export const userStub = () => {
       updatedAt: fixedDate,
     },
     language: Languages.EN,
+    lastLoginDate: fixedDate,
+    lastActivityDate: fixedDate,
   };
 };

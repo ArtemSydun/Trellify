@@ -1,8 +1,11 @@
+import { I18nService } from 'nestjs-i18n';
 import {
   NotificationBooleansDto,
   NotificationCategoriesDto,
 } from 'src/trello/dto/notifications.dto';
 import { Webhook } from 'src/trello/entities/webhook.entity';
+import { User } from 'src/user/entities/user.entity';
+import { UserRoles } from 'src/user/enums/role.enum';
 import {
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationCategories,
@@ -13,6 +16,7 @@ import {
   categoryKeysMap,
   fullProfileActions,
 } from '../constants/trello';
+import { I18nKeys } from '../enums/i18n-keys.enum';
 import { toCamelCase } from './camelCase';
 
 const getKeysFromProfileActions = <T extends string>(
@@ -247,3 +251,57 @@ export const generateProfilesNotificationBooleans = () => {
 };
 
 export const notificationProfiles = generateProfilesNotificationBooleans();
+
+export const notificationMessageGenerator = (
+  userToNotify: User,
+  actionData: {
+    boardName: string;
+    boardUrl: string;
+    actionDate: string;
+    translatedMessage: string;
+    actionAuthor?: string;
+    actionAuthorUrl?: string;
+    cardName?: string;
+    cardUrl?: string;
+    actionTarget?: string;
+    actionTargetUrl?: string;
+  },
+  i18n: I18nService,
+): string => {
+  const {
+    boardName,
+    boardUrl,
+    actionDate,
+    translatedMessage,
+    actionTarget,
+    actionTargetUrl,
+    actionAuthor,
+    actionAuthorUrl,
+    cardName,
+    cardUrl,
+  } = actionData;
+  const { language: lang, role } = userToNotify;
+  let formattedMessage = translatedMessage + '\n';
+
+  if (cardName) {
+    formattedMessage += `📋 **${i18n.t(I18nKeys.FIELDS_CARD, { lang })}: [${cardName}](${cardUrl})\n`;
+  }
+
+  if (boardName) {
+    formattedMessage += `📌 **${i18n.t(I18nKeys.FIELDS_BOARD, { lang })}: [${boardName}](${boardUrl})\n`;
+  }
+
+  if (actionAuthor && role !== UserRoles.user) {
+    formattedMessage += `👤 **${i18n.t(I18nKeys.FIELDS_AUTHOR, { lang })}: [${actionAuthor}](${actionAuthorUrl})\n`;
+  }
+
+  if (actionTarget && role !== UserRoles.user) {
+    formattedMessage += `👤 **${i18n.t(I18nKeys.FIELDS_TARGET, { lang })}: [${actionTarget}](${actionTargetUrl})\n`;
+  }
+
+  if (actionDate) {
+    formattedMessage += `📆 **${i18n.t(I18nKeys.FIELDS_DATE, { lang })}: ${actionDate} \n`;
+  }
+
+  return formattedMessage;
+};

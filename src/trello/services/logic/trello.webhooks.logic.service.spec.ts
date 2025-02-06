@@ -946,6 +946,7 @@ describe('TrelloWebhooksLogicService', () => {
             },
           ],
         },
+        lastActivityDate: fixedDate,
       };
       const updatedUser = {
         ...userStubData,
@@ -1029,6 +1030,7 @@ describe('TrelloWebhooksLogicService', () => {
             },
           ],
         },
+        lastActivityDate: fixedDate,
       };
 
       const updatedUser = {
@@ -1464,6 +1466,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
         [userStubData.trello.userId],
+        trelloBoardMock,
         trelloCardMock,
         TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
         webhookCardAction,
@@ -1574,6 +1577,7 @@ describe('TrelloWebhooksLogicService', () => {
         userStubData.trello.userId,
         trelloBoardMock,
         TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+        webhookPersonalAction,
         webhookStubPersonalNotifications,
         trelloCardMock,
       );
@@ -1618,12 +1622,14 @@ describe('TrelloWebhooksLogicService', () => {
         userStubData.trello.userId,
         trelloBoardMock,
         TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+        webhookCardAction,
         webhookStubCardNotifications,
         trelloCardMock,
       );
 
       expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
         ['674ec752cba1224342f87c20'],
+        trelloBoardMock,
         trelloCardMock,
         TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
         webhookCardAction,
@@ -1696,6 +1702,7 @@ describe('TrelloWebhooksLogicService', () => {
             (webhook) => webhook.webhookId !== webhookStubData.id,
           ),
         },
+        lastActivityDate: fixedDate,
       };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
