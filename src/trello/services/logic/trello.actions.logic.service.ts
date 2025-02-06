@@ -1,9 +1,12 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { TrelloWebhooksLogicService } from '@trello/logic';
+import { format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
+import * as emoji from 'node-emoji';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
+import { notificationMessageGenerator } from 'src/common/helpers/trello-notifications';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -39,6 +42,7 @@ export class TrelloActionsLogicService {
     userTrelloId: string,
     boardData: TrelloBoard,
     actionType: TrelloWebhookPersonalActions,
+    webhookAction: any,
     webhook: string | Webhook,
     cardData?: TrelloCard,
   ) {
@@ -46,11 +50,27 @@ export class TrelloActionsLogicService {
       const targetUser =
         await this.userService.findUserByTrelloId(userTrelloId);
 
+      const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
+      const webhookActionDate = format(
+        new Date(webhookAction?.action?.date),
+        'yyyy-MM-dd HH:mm:ss',
+      );
       const notificationLanguage = targetUser.language || Languages.EN;
+      const actionAuthor = webhookAction?.action?.memberCreator?.username;
+      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+
+      const targetMemberUsername = escapeMarkdown(
+        webhookAction?.action?.member?.username ||
+          webhookAction?.action?.memberCreator?.username,
+      );
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
 
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
-      );
+      )
+        .replace(/@/g, '＠')
+        .replace(/\./g, '.\u200B');
 
       const targetActionMessages: Partial<
         Record<TrelloWebhookDetailedActions, string | null>
@@ -99,19 +119,21 @@ export class TrelloActionsLogicService {
             {
               lang: notificationLanguage,
               args: {
+                checklistItemName,
                 userInitials,
                 cardName: cardData?.name,
                 cardUrl: cardData?.url,
               },
             },
           ) ||
-          `${userInitials} you has been added to checklist in card [${cardData?.name}](${cardData?.url}).`,
+          `${userInitials} you has been added to checklist item '${checklistItemName}' in card [${cardData?.name}](${cardData?.url}).`,
         [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED,
             {
               lang: notificationLanguage,
               args: {
+                checklistItemName,
                 userInitials,
                 cardName: cardData?.name,
                 cardUrl: cardData?.url,
@@ -143,9 +165,27 @@ export class TrelloActionsLogicService {
             webhook,
           );
         }
+
+        const formattedMessage = notificationMessageGenerator(
+          targetUser,
+          {
+            boardName: boardData.name,
+            boardUrl: boardData.url,
+            actionDate: webhookActionDate,
+            translatedMessage: message,
+            cardName: cardData.name,
+            cardUrl: cardData.url,
+            actionAuthor,
+            actionAuthorUrl,
+            actionTarget: targetMemberUsername,
+            actionTargetUrl: targetMemberProfileUrl,
+          },
+          this.i18n,
+        );
+
         await this.telegramService.sendMessageToUser(
           targetUser.telegram,
-          message,
+          formattedMessage,
         );
       } else {
         this.logger.warn(`Unsupported target action: ${actionType}`);
@@ -157,6 +197,7 @@ export class TrelloActionsLogicService {
 
   async handleCardActions(
     trelloUserIds: string[],
+    boardData: TrelloBoard,
     cardData: TrelloCard,
     actionType: TrelloWebhookCardActions,
     webhookAction: any,
@@ -165,23 +206,33 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
 
+      const webhookActionDate = format(
+        new Date(webhookAction?.action?.date),
+        'yyyy-MM-dd HH:mm:ss',
+      );
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
+      const actionAuthor = webhookAction?.action?.memberCreator?.username;
+      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
       const listBefore = webhookAction.action?.data?.listBefore?.name;
       const listAfter = webhookAction.action?.data?.listAfter?.name;
       const customFieldName = webhookAction.action?.data?.customField?.name;
       const oldCardName = webhookAction?.action?.data?.old?.name;
-
+      const commentText = emoji
+        .emojify(webhookAction?.action?.data?.text || '')
+        .replace(/@/g, '＠')
+        .replace(/\./g, '.\u200B');
       const targetMemberUsername = escapeMarkdown(
         webhookAction?.action?.member?.username ||
           webhookAction?.action?.memberCreator?.username,
       );
-      const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
 
       const cardActionMessages: Record<
         TrelloWebhookCardActions,
         (args: any) => string
       > = {
-        [TrelloWebhookDetailedActions.CARD_RENAMED]: (args) =>
+        [TrelloWebhookCardActions.CARD_RENAMED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_RENAMED, {
             lang: args.lang,
             args: {
@@ -192,11 +243,12 @@ export class TrelloActionsLogicService {
           }) ||
           `The card ${oldCardName} has been renamed into [${args.cardName}](${args.cardUrl})`,
 
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED]: (
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED]: (
           args,
         ) =>
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_STATE_CHANGED_COMPLETED,
+
             {
               lang: args.lang,
               args: {
@@ -206,9 +258,9 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `The checklist item, ${checklistItemName}, in the card [${args.cardName}](${args.cardUrl}) has been marked as completed.`,
+          `The checklist item, '${checklistItemName}', in the card [${args.cardName}](${args.cardUrl}) has been marked as completed.`,
 
-        [TrelloWebhookDetailedActions.CARD_ARCHIVED]: (args) =>
+        [TrelloWebhookCardActions.CARD_ARCHIVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_ARCHIVED, {
             lang: args.lang,
             args: {
@@ -218,17 +270,20 @@ export class TrelloActionsLogicService {
           }) ||
           `The card [${cardData?.name}](${cardData?.url}) has been archived.`,
 
-        [TrelloWebhookDetailedActions.CARD_COMMENT_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_COMMENT_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_COMMENT_ADDED, {
             lang: args.lang,
             args: {
+              actionAuthor,
+              actionAuthorUrl,
+              commentText: args.commentText,
               cardName: args.cardName,
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A comment has been added to the card [${cardData?.name}](${cardData?.url}).`,
+          `A comment '${commentText}' has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_ATTACHMENT_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_ATTACHMENT_ADDED, {
             lang: args.lang,
             args: {
@@ -238,7 +293,7 @@ export class TrelloActionsLogicService {
           }) ||
           `An attachment has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_DUE_DATE_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_DUE_DATE_ADDED, {
             lang: args.lang,
             args: {
@@ -248,7 +303,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A due date has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED]: (args) =>
+        [TrelloWebhookCardActions.CARD_DUE_DATE_CHANGED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_DUE_DATE_CHANGED, {
             lang: args.lang,
             args: {
@@ -258,7 +313,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The due date on the card [${cardData?.name}](${cardData?.url}) has been changed.`,
 
-        [TrelloWebhookDetailedActions.CARD_START_DATE_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_START_DATE_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_START_DATE_ADDED, {
             lang: args.lang,
             args: {
@@ -268,7 +323,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A start date has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED]: (args) =>
+        [TrelloWebhookCardActions.CARD_START_DATE_CHANGED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_START_DATE_CHANGED, {
             lang: args.lang,
             args: {
@@ -278,7 +333,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The start date on the card [${cardData?.name}](${cardData?.url}) has been changed.`,
 
-        [TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST]: (args) =>
+        [TrelloWebhookCardActions.CARD_MOVED_TO_LIST]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MOVED_TO_LIST, {
             lang: args.lang,
             args: {
@@ -290,7 +345,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The card [${cardData?.name}](${cardData?.url}) has been moved from ${listBefore} to ${listAfter}.`,
 
-        [TrelloWebhookDetailedActions.CARD_LABEL_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_LABEL_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_LABEL_ADDED, {
             lang: args.lang,
             args: {
@@ -300,7 +355,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A label has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_LABEL_REMOVED]: (args) =>
+        [TrelloWebhookCardActions.CARD_LABEL_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_LABEL_REMOVED, {
             lang: args.lang,
             args: {
@@ -310,7 +365,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A label has been removed from the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CARD_CHECKLIST_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_CHECKLIST_ADDED, {
             lang: args.lang,
             args: {
@@ -320,7 +375,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A checklist has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED]: (args) =>
+        [TrelloWebhookCardActions.CARD_CHECKLIST_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_CHECKLIST_REMOVED, {
             lang: args.lang,
             args: {
@@ -330,24 +385,23 @@ export class TrelloActionsLogicService {
           }) ||
           `A checklist has been removed from the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED]:
-          (args) =>
-            this.i18n?.t(
-              I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED,
-              {
-                lang: args.lang,
-                args: {
-                  checklistItemName: args.checklistItemName,
-                  cardName: args.cardName,
-                  cardUrl: args.cardUrl,
-                },
-              },
-            ) ||
-            `A checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}) has been marked as incompleted.`,
-
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_CONVERTED_TO_CARD]: (
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED]: (
           args,
         ) =>
+          this.i18n?.t(
+            I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED,
+            {
+              lang: args.lang,
+              args: {
+                checklistItemName: args.checklistItemName,
+                cardName: args.cardName,
+                cardUrl: args.cardUrl,
+              },
+            },
+          ) ||
+          `A checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}) has been marked as incompleted.`,
+
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_CONVERTED_TO_CARD]: (args) =>
           this.i18n?.t(
             I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_CONVERTED_TO_CARD,
             {
@@ -358,9 +412,9 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A checklist item in the card [${cardData?.name}](${cardData?.url}) has been converted into a new card.`,
+          `A checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}) has been converted into a new card.`,
 
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED]: (args) =>
+        [TrelloWebhookCardActions.CHECKLIST_ITEM_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CHECKLIST_ITEM_ADDED, {
             lang: args.lang,
             args: {
@@ -369,7 +423,7 @@ export class TrelloActionsLogicService {
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A checklist item ${checklistItemName} has been added in the card [${cardData?.name}](${cardData?.url}).`,
+          `A checklist item '${checklistItemName}' has been added in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_ADDED, {
@@ -428,7 +482,7 @@ export class TrelloActionsLogicService {
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A checklist item ${checklistItemName} has been deleted from the card [${cardData?.name}](${cardData?.url}).`,
+          `A checklist item '${checklistItemName}' has been deleted from the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_ADDED]: (args) =>
           this.i18n?.t(
@@ -444,7 +498,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been added to a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been added to a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(
@@ -460,7 +514,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from a checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: (args) =>
           this.i18n?.t(
@@ -476,7 +530,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_LEFT]: (args) =>
           this.i18n?.t(
@@ -492,7 +546,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has left checklist item ${checklistItemName} in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has left checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_DUE_DATE_DELETED]: (args) =>
           this.i18n?.t(
@@ -537,20 +591,16 @@ export class TrelloActionsLogicService {
           `${customFieldName} status in the card [${cardData?.name}](${cardData?.url}) has been updated.`,
       };
 
-      const message = cardActionMessages[actionType];
-
-      if (!message) {
-        this.logger.warn(`Unsupported card action: ${actionType}`);
-        return;
-      }
-
       const userPromises = usersToNotify.map(async (userToNotify) => {
         const userLanguage = userToNotify.language || Languages.EN;
 
         const message = cardActionMessages[actionType]({
           lang: userLanguage,
+          actionAuthor,
+          actionAuthorUrl,
           memberName: targetMemberUsername,
           memberUrl: targetMemberProfileUrl,
+          commentText,
           customFieldName,
           oldCardName,
           cardName: cardData?.name,
@@ -559,11 +609,32 @@ export class TrelloActionsLogicService {
           listBefore,
           listAfter,
         });
-
         if (message) {
+          if (!message) {
+            this.logger.warn(`Unsupported card action: ${actionType}`);
+            return;
+          }
+
+          const formattedMessage = notificationMessageGenerator(
+            userToNotify,
+            {
+              boardName: boardData.name,
+              boardUrl: boardData.url,
+              actionDate: webhookActionDate,
+              translatedMessage: message,
+              cardName: cardData.name,
+              cardUrl: cardData.url,
+              actionAuthor,
+              actionAuthorUrl,
+              actionTarget: targetMemberUsername,
+              actionTargetUrl: targetMemberProfileUrl,
+            },
+            this.i18n,
+          );
+
           await this.telegramService.sendMessageToUser(
             userToNotify.telegram,
-            message,
+            formattedMessage,
           );
         }
       });
@@ -585,6 +656,18 @@ export class TrelloActionsLogicService {
         await this.userService.findUsersByTrelloIds(userTrelloIds);
 
       const oldBoardName = webhookAction?.action?.data?.old?.name;
+
+      const webhookActionDate = format(
+        new Date(webhookAction?.action?.date),
+        'yyyy-MM-dd HH:mm:ss',
+      );
+      const actionAuthor = webhookAction?.action?.memberCreator?.username;
+      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+      const targetMemberUsername = escapeMarkdown(
+        webhookAction?.action?.member?.username || '',
+      );
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
 
       const boardActionMessages: Record<
         TrelloWebhookBoardActions,
@@ -638,10 +721,25 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const formattedMessage = notificationMessageGenerator(
+          userToNotify,
+          {
+            boardName: boardData.name,
+            boardUrl: boardData.url,
+            actionDate: webhookActionDate,
+            translatedMessage: message,
+            actionAuthor,
+            actionAuthorUrl,
+            actionTarget: targetMemberUsername,
+            actionTargetUrl: targetMemberProfileUrl,
+          },
+          this.i18n,
+        );
+
         if (message) {
           await this.telegramService.sendMessageToUser(
             userToNotify.telegram,
-            message,
+            formattedMessage,
           );
         }
       });

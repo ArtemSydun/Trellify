@@ -954,6 +954,7 @@ export class TrelloWebhooksLogicService {
 
             await this.actionsService.handleCardActions(
               membersToNotify,
+              boardData,
               cardData,
               detailedActionType,
               webhookAction,
@@ -978,8 +979,9 @@ export class TrelloWebhooksLogicService {
                 targetedUserId,
                 boardData,
                 detailedActionType,
+                webhookAction,
                 webhook,
-                targetCard
+                cardData
                   ? await this.trelloCardsApiService.fetchCardById(
                       authorizedToken,
                       targetCard.id,
@@ -994,6 +996,7 @@ export class TrelloWebhooksLogicService {
               targetMember.id,
               boardData,
               detailedActionType,
+              webhookAction,
               webhook,
               targetCard
                 ? await this.trelloCardsApiService.fetchCardById(
