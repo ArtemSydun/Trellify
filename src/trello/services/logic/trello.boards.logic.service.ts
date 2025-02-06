@@ -3,6 +3,7 @@ import { TrelloBoardsApiService } from '@trello/api';
 import { I18nContext } from 'nestjs-i18n';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
+import { BoardMember } from 'src/trello/dto/member.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
 import { SharedConfigService } from '../../../config/shared.config.service';
@@ -186,7 +187,7 @@ export class TrelloBoardsLogicService {
     user: string | User,
     boardId: string,
     i18n: I18nContext,
-  ): Promise<any> {
+  ): Promise<BoardMember[]> {
     const requestedUser = await this.userService.getUser(user);
 
     validateTrelloToken(requestedUser.trello.token, i18n);

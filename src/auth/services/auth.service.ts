@@ -13,11 +13,13 @@ import { I18nContext } from 'nestjs-i18n';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
+import { UsersRepository } from 'src/user/repositories/users.repository';
 import { UsersService } from 'src/user/services/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserDto } from '../dto/login.dto';
@@ -30,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
+    private readonly userRepository: UsersRepository,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
   ) {}
@@ -56,10 +59,13 @@ export class AuthService {
       i18n,
     );
 
+    const loginDate = new Date();
+
     const isCredentialsValid = await verifyPassword(
       loginUserDto.password,
       user.password,
     );
+
     if (!isCredentialsValid) {
       this.logger.warn(`Invalid credentials for email: ${loginUserDto.email}`);
       throw new UnauthorizedException(
@@ -71,13 +77,18 @@ export class AuthService {
     const payload = { email: user.email, id: user.id, role: user.role };
     const token: string = this.jwtService.sign(payload);
 
-    delete user.password;
+    const loginedUser = await this.userRepository.updateById(user.id, {
+      lastLoginDate: loginDate,
+      lastActivityDate: loginDate,
+    });
+
+    delete loginedUser.password;
 
     this.logger.log(`User logged in successfully: ${user.email}`);
 
     return {
       accessToken: token,
-      user,
+      user: loginedUser,
     };
   }
 
@@ -88,6 +99,12 @@ export class AuthService {
     this.logger.log(
       `Initiating user registration for email: ${createUserDto.email}`,
     );
+
+    const language = supportedLanguages.includes(
+      i18n?.lang?.split('-')[0] as Languages,
+    )
+      ? i18n?.lang?.split('-')[0]
+      : Languages.EN;
 
     const userByEmail = await this.userService.doesUserExist(
       createUserDto.email,
@@ -107,6 +124,7 @@ export class AuthService {
       password: createUserDto.password,
       telegram: { username: null, chatId: null },
       trello: { userId: null, token: null, webhooks: [] },
+      language,
     };
 
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });

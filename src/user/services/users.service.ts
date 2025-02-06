@@ -358,9 +358,11 @@ export class UsersService {
     i18n?: I18nContext,
   ) {
     const userToUpdate = await this.getUser(user, i18n);
+    const updateDate = new Date();
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       language: updateUserLanguageDto.language,
+      lastActivityDate: updateDate,
     });
 
     return {
@@ -377,9 +379,11 @@ export class UsersService {
   ): Promise<void> {
     const userToReset = await this.getUser(id, i18n);
     const encryptedPassword = await hashPassword(newPassword);
+    const updateDate = new Date();
 
     await this.userRepository.updateById(userToReset.id, {
       password: encryptedPassword,
+      lastActivityDate: updateDate,
     });
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
@@ -416,6 +420,7 @@ export class UsersService {
   ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user, i18n);
     const { chatId, username } = connectTelegramDto;
+    const updateDate = new Date();
 
     if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
@@ -444,7 +449,8 @@ export class UsersService {
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
-      telegram: { chatId, username, updatedAt: new Date() },
+      telegram: { chatId, username, updatedAt: updateDate },
+      lastActivityDate: updateDate,
     });
 
     this.logger.log(
@@ -465,6 +471,8 @@ export class UsersService {
     const userToUpdate = await this.getUser(user, i18n);
     const { token } = connectTrelloDto;
 
+    const updateDate = new Date();
+
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
@@ -474,6 +482,7 @@ export class UsersService {
         userToUpdate.id,
         {
           trello: { userId: null, username: null, webhooks: [], token: null },
+          lastActivityDate: updateDate,
         },
       );
 
@@ -522,10 +531,10 @@ export class UsersService {
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
-    const updatedUser = await this.userRepository.updateById(
-      userToUpdate.id,
-      updatedUserProps,
-    );
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      ...updatedUserProps,
+      lastActivityDate: updateDate,
+    });
 
     this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
     return {

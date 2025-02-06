@@ -454,6 +454,7 @@ export class TrelloWebhooksLogicService {
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
     let webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
+    const updateDate = new Date();
     const userToUpdate = await this.userService.getUser(user, i18n);
 
     validateTrelloToken(userToUpdate.trello.token, i18n);
@@ -523,6 +524,7 @@ export class TrelloWebhooksLogicService {
           ...userToUpdate.trello,
           webhooks: userToUpdate.trello.webhooks,
         },
+        lastActivityDate: updateDate,
       };
 
       await Promise.all([
@@ -596,6 +598,7 @@ export class TrelloWebhooksLogicService {
             ? [...userToUpdate.trello.webhooks, userWebhook]
             : [userWebhook],
         },
+        lastActivityDate: updateDate,
       };
 
       await Promise.all([
@@ -716,6 +719,7 @@ export class TrelloWebhooksLogicService {
     i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
     const userToUpdate = await this.userService.getUser(user, i18n);
+    const updateDate = new Date();
 
     const { notificationProfile, notifications, webhooks } =
       updateManyWebhooksDto;
@@ -806,6 +810,15 @@ export class TrelloWebhooksLogicService {
 
     await Promise.all(updatePromises);
 
+    await this.userService.updateUser(
+      userToUpdate,
+      {
+        lastActivityDate: updateDate,
+        lastLoginDate: updateDate,
+      },
+      i18n,
+    );
+
     return {
       message:
         failedUpdates.length > 0
@@ -824,7 +837,7 @@ export class TrelloWebhooksLogicService {
     // console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
-      webhookId: webhookAction.model?.id,
+      webhookId: webhookAction.webhook?.id,
       actionType: webhookAction.action.type,
       translationKey: webhookAction.action.display?.translationKey,
       memberCreator: webhookAction.action.memberCreator?.username,
@@ -841,7 +854,9 @@ export class TrelloWebhooksLogicService {
       `Webhook id: ${webhookAction.model?.id}, application processed actions count: ${this.webhookActionCount}`,
     );
 
-    const webhook = await this.getWebhook(webhookAction?.webhook?.id);
+    const webhook = await this.trelloWebhookRepository.findOneById(
+      webhookAction?.webhook?.id,
+    );
 
     if (!webhook) {
       this.logger.warn('Missing action or webhook data.');
@@ -934,12 +949,12 @@ export class TrelloWebhooksLogicService {
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser &&
-                memberId !== targetMember?.id,
+                memberId !== notifiedTargetUser,
             );
 
             await this.actionsService.handleCardActions(
               membersToNotify,
+              boardData,
               cardData,
               detailedActionType,
               webhookAction,
@@ -964,8 +979,9 @@ export class TrelloWebhooksLogicService {
                 targetedUserId,
                 boardData,
                 detailedActionType,
+                webhookAction,
                 webhook,
-                targetCard
+                cardData
                   ? await this.trelloCardsApiService.fetchCardById(
                       authorizedToken,
                       targetCard.id,
@@ -980,6 +996,7 @@ export class TrelloWebhooksLogicService {
               targetMember.id,
               boardData,
               detailedActionType,
+              webhookAction,
               webhook,
               targetCard
                 ? await this.trelloCardsApiService.fetchCardById(
@@ -1057,6 +1074,7 @@ export class TrelloWebhooksLogicService {
   ): Promise<DefaultResponse<Webhook>> {
     const userToUpdate = await this.userService.getUser(user, i18n);
     const webhookToUpdate = await this.getWebhook(webhook, i18n);
+    const updateDate = new Date();
 
     validateTrelloToken(userToUpdate.trello.token, i18n);
 
@@ -1083,6 +1101,7 @@ export class TrelloWebhooksLogicService {
       trello: {
         webhooks: updatedUserWebhooks,
       },
+      lastActivityDate: updateDate,
     };
 
     const filteredWebhookData = filterUserFromWebhook(

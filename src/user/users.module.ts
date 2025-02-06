@@ -20,6 +20,6 @@ import { UsersService } from './services/users.service';
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, SharedConfigService],
-  exports: [UsersService],
+  exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}

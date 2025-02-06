@@ -55,6 +55,7 @@ export class TelegramController {
 
     const chatId: number = ctx?.update?.message?.from?.id;
     const username: string = ctx?.update?.message?.chat?.username;
+
     try {
       if (!chatId) {
         await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
@@ -69,7 +70,7 @@ export class TelegramController {
         await ctx.reply(
           this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
             lang: userLanguage,
-          }) || 'Authorize through website123',
+          }) || 'Authorize through website',
           {
             reply_markup: {
               inline_keyboard: [

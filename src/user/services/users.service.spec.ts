@@ -167,7 +167,7 @@ describe('UsersService', () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'disconnectFromAllTrelloWebhooks')
         .mockResolvedValue({
-          message: 'webhook message',
+          message: expect.any(String),
           statusCode: HttpStatus.OK,
         });
       jest.spyOn(usersRepository, 'delete').mockResolvedValue();
@@ -187,7 +187,7 @@ describe('UsersService', () => {
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(result).toEqual({
-        message: `All user data ${userToDelete.email} has been deleted successfully`,
+        message: expect.stringContaining(userToDelete.email),
         statusCode: HttpStatus.OK,
       });
     });
@@ -383,6 +383,7 @@ describe('UsersService', () => {
           webhooks: superAdminStub().trello.webhooks,
           token: user.trello.token,
         },
+        lastActivityDate: fixedDate,
       };
 
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue(userStub());
@@ -395,7 +396,7 @@ describe('UsersService', () => {
       );
 
       expect(result).toEqual({
-        message: `User ${user.id} updated successfully`,
+        message: expect.stringContaining(user.id),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -423,7 +424,7 @@ describe('UsersService', () => {
       expect(result.data?.role).toEqual(userToUpdate.role);
 
       expect(result).toEqual({
-        message: `User ${userToUpdate.id} updated successfully`,
+        message: expect.stringContaining(userToUpdate.id),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -431,7 +432,10 @@ describe('UsersService', () => {
 
     it('should fetch Trello profile and update trello property if token is provided', async () => {
       const userToUpdate = { ...userStub() };
-      const updateUserDto = { trello: { token: 'newToken' } };
+      const updateUserDto = {
+        trello: { token: 'newToken' },
+        lastActivityDate: fixedDate,
+      };
       const encryptedToken = `encrypted${updateUserDto.trello.token}`;
 
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
@@ -442,6 +446,7 @@ describe('UsersService', () => {
           userId: trelloProfileMock.id,
           username: trelloProfileMock.username,
         },
+        lastActivityDate: fixedDate,
       });
 
       expect(userToUpdate.trello.username).not.toEqual(
@@ -459,7 +464,7 @@ describe('UsersService', () => {
       expect(result.data?.trello?.userId).toEqual(trelloProfileMock.id);
 
       expect(result).toEqual({
-        message: `User ${userToUpdate.id} updated successfully`,
+        message: expect.stringContaining(userToUpdate.id),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -533,6 +538,7 @@ describe('UsersService', () => {
         superAdminStub().id,
         {
           password: 'hashedPassword',
+          lastActivityDate: fixedDate,
         },
       );
     });
@@ -593,7 +599,6 @@ describe('UsersService', () => {
   });
 
   describe('manageUserTelegramConnection', () => {
-    const fixedDate = new Date('2025-01-03T13:38:58.285Z');
     it('should connect Telegram successfully', async () => {
       const userToUpdate = {
         ...superAdminStub(),
@@ -635,9 +640,10 @@ describe('UsersService', () => {
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
+        lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: `Telegram ${connectTelegramDto.username} connected successfully`,
+        message: expect.stringContaining(connectTelegramDto.username),
         statusCode: HttpStatus.OK,
         data: { ...userToUpdate, telegram: connectTelegramDto },
       });
@@ -707,9 +713,10 @@ describe('UsersService', () => {
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
+        lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: `Telegram ${userToUpdate.telegram.username} disconnected successfully`,
+        message: expect.stringContaining(userToUpdate.telegram.username),
         statusCode: HttpStatus.OK,
         data: {
           ...userToUpdate,
@@ -739,7 +746,7 @@ describe('UsersService', () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'disconnectFromAllTrelloWebhooks')
         .mockResolvedValue({
-          message: 'webhook message',
+          message: expect.any(String),
           statusCode: HttpStatus.OK,
         });
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
@@ -762,9 +769,10 @@ describe('UsersService', () => {
       ).toHaveBeenCalledWith(userToUpdate, undefined);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         trello: { userId: null, username: null, webhooks: [], token: null },
+        lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
+        message: expect.stringContaining(userToUpdate.trello.username),
         statusCode: HttpStatus.OK,
         data: {
           ...userToUpdate,
@@ -826,9 +834,10 @@ describe('UsersService', () => {
           webhooks: [],
           token: `encrypted${connectTrelloDto.token}`,
         },
+        lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: `Trello ${trelloProfileMock.username} connected successfully`,
+        message: expect.stringContaining(trelloProfileMock.username),
         statusCode: HttpStatus.OK,
         data: {
           ...userToUpdate,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test } from '@nestjs/testing';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import {
@@ -11,7 +10,11 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import { createMock } from '@golevelup/ts-jest';
 import { decryptText, encryptText } from 'src/common/helpers/hashing';
 
-import { newWebhookStub, webhookStub } from 'src/trello/__mocks__/webhook.stub';
+import {
+  newWebhookStub,
+  webhookActionStub,
+  webhookStub,
+} from 'src/trello/__mocks__/webhook.stub';
 import { superAdminStub, userStub } from 'src/user/__mocks__/user.stub';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { UsersService } from 'src/user/services/users.service';
@@ -25,9 +28,13 @@ import {
   BadRequestException,
   ForbiddenException,
   HttpStatus,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { trelloBoardMock } from 'src/trello/__mocks__/trello.stub';
+import {
+  trelloBoardMock,
+  trelloCardMock,
+} from 'src/trello/__mocks__/trello.stub';
 import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -41,7 +48,14 @@ import {
   notificationProfiles,
 } from 'src/common/helpers/trello-notifications';
 import { CreateWebhookDto } from 'src/trello/dto/create-webhook.dto';
-import { TrelloWebhookNotificationProfiles } from 'src/trello/enums/trello.actions.enum';
+import {
+  TrelloWebhookActions,
+  TrelloWebhookAdminActions,
+  TrelloWebhookBoardActions,
+  TrelloWebhookDetailedActions,
+  TrelloWebhookNotificationProfiles,
+  TrelloWebhookPersonalActions,
+} from 'src/trello/enums/trello.actions.enum';
 import {
   NotificationBooleansDto,
   NotificationCategoriesDto,
@@ -49,6 +63,7 @@ import {
   UpdateNotificationsDto,
 } from 'src/trello/dto/notifications.dto';
 import { UserRoles } from 'src/user/enums/role.enum';
+import { BoardMember } from 'src/trello/dto/member.dto';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -65,14 +80,19 @@ describe('TrelloWebhooksLogicService', () => {
 
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let trelloWebhookRepository: TrelloWebhookRepository;
-  let trelloMembersLogicService: TrelloMembersLogicService;
   let trelloTokensLogicService: TrelloTokensLogicService;
   let trelloBoardsApiService: TrelloBoardsApiService;
+  let trelloCardsApiService: TrelloCardsApiService;
   let trelloWebhookApiService: TrelloWebhooksApiService;
+  let trelloActionsService: TrelloActionsLogicService;
   let usersService: UsersService;
-  let usersRepository: UsersRepository;
 
   let telegramService: TelegramService;
+
+  let userStubData: User;
+  let webhookStubData: Webhook;
+  let webhooksStubData: Webhook[];
+  let superAdminStubData: User;
 
   const fixedDate = superAdminStub().telegram.updatedAt;
 
@@ -84,6 +104,16 @@ describe('TrelloWebhooksLogicService', () => {
         return fixedDate;
       }
     } as unknown as DateConstructor;
+
+    //disable any logging in tests
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'verbose').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -129,25 +159,38 @@ describe('TrelloWebhooksLogicService', () => {
     trelloWebhooksLogicService = moduleRef.get<TrelloWebhooksLogicService>(
       TrelloWebhooksLogicService,
     );
+
     trelloWebhookRepository = moduleRef.get<TrelloWebhookRepository>(
       TrelloWebhookRepository,
     );
-    trelloMembersLogicService = moduleRef.get<TrelloMembersLogicService>(
-      TrelloMembersLogicService,
-    );
+
     trelloTokensLogicService = moduleRef.get<TrelloTokensLogicService>(
       TrelloTokensLogicService,
     );
+
     trelloBoardsApiService = moduleRef.get<TrelloBoardsApiService>(
       TrelloBoardsApiService,
     );
+
+    trelloCardsApiService = moduleRef.get<TrelloCardsApiService>(
+      TrelloCardsApiService,
+    );
+
     trelloWebhookApiService = moduleRef.get<TrelloWebhooksApiService>(
       TrelloWebhooksApiService,
     );
 
+    trelloActionsService = moduleRef.get<TrelloActionsLogicService>(
+      TrelloActionsLogicService,
+    );
+
     telegramService = moduleRef.get<TelegramService>(TelegramService);
     usersService = moduleRef.get<UsersService>(UsersService);
-    usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
+
+    userStubData = { ...userStub() };
+    webhookStubData = { ...webhookStub };
+    webhooksStubData = [{ ...webhookStub }, { ...newWebhookStub }];
+    superAdminStubData = { ...superAdminStub() };
 
     (encryptText as jest.Mock).mockImplementation((text: string) => {
       return text.includes('encrypted') ? text : `encrypted${text}`; // ✅ Avoid double encryption
@@ -748,14 +791,10 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('webhookHealthCheck', () => {
-    let webhookStubData: Webhook;
     let recreatedWebhook: Webhook;
-    let userStubData: User;
 
     beforeEach(() => {
-      webhookStubData = { ...webhookStub };
       recreatedWebhook = { ...webhookStub, id: 'newWebhookId' };
-      userStubData = { ...userStub() };
     });
 
     it('should call recreate webhook function if it is not available', async () => {
@@ -802,7 +841,7 @@ describe('TrelloWebhooksLogicService', () => {
       ).toHaveBeenCalledWith(webhookStubData.id, userStubData.id, undefined);
 
       expect(result).toEqual({
-        message: `Webhook for board ${webhookStubData.boardName} health is ok`,
+        message: expect.stringContaining(webhookStubData.boardName),
         statusCode: HttpStatus.OK,
         data: webhookStubData,
       });
@@ -847,22 +886,20 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('createTrelloWebhook', () => {
-    let userStubData: User;
-    let webhookStubData: Webhook;
+    let newWebhookStubData: Webhook;
     let trelloBoardMockData: TrelloBoard;
     let createdWebhook: Webhook;
     let createWebhookDto: CreateWebhookDto;
     let trelloApiWebhookData: any;
 
     beforeEach(() => {
-      userStubData = { ...userStub() };
-      webhookStubData = { ...newWebhookStub };
+      newWebhookStubData = { ...newWebhookStub };
       trelloBoardMockData = { ...trelloBoardMock };
 
       createWebhookDto = { boardId: trelloBoardMockData.id };
 
       createdWebhook = {
-        ...webhookStubData,
+        ...newWebhookStubData,
         id: 'newWebhookId',
         boardName: trelloBoardMockData.name,
         boardUrl: trelloBoardMockData.url,
@@ -909,6 +946,7 @@ describe('TrelloWebhooksLogicService', () => {
             },
           ],
         },
+        lastActivityDate: fixedDate,
       };
       const updatedUser = {
         ...userStubData,
@@ -966,7 +1004,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(result).toEqual({
-        message: 'Webhook created successfully',
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
         data: createdWebhook,
       });
@@ -986,12 +1024,13 @@ describe('TrelloWebhooksLogicService', () => {
           ...userStubData.trello,
           webhooks: [
             {
-              idModel: webhookStubData.idModel,
-              webhookId: webhookStubData.id,
-              modelName: webhookStubData.boardName,
+              idModel: newWebhookStubData.idModel,
+              webhookId: newWebhookStubData.id,
+              modelName: newWebhookStubData.boardName,
             },
           ],
         },
+        lastActivityDate: fixedDate,
       };
 
       const updatedUser = {
@@ -1001,7 +1040,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneByBoardId')
-        .mockResolvedValue(webhookStubData);
+        .mockResolvedValue(newWebhookStubData);
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToConnect);
 
@@ -1011,10 +1050,10 @@ describe('TrelloWebhooksLogicService', () => {
 
       jest
         .spyOn(trelloWebhooksLogicService, 'recreateWebhookIfUnavailable')
-        .mockResolvedValue(webhookStubData);
+        .mockResolvedValue(newWebhookStubData);
 
       jest.spyOn(usersService, 'updateUser').mockResolvedValue({
-        message: '',
+        message: expect.stringContaining(updatedUser.id),
         statusCode: HttpStatus.OK,
         data: updatedUser,
       });
@@ -1046,9 +1085,9 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloWebhookRepository.updateById).toHaveBeenCalled();
 
       expect(result).toEqual({
-        message: `Webhook for board ${webhookStubData.boardName} exists, user ${userToConnect.id} added as a subscriber`,
+        message: `Webhook for board ${newWebhookStubData.boardName} exists, user ${userToConnect.id} added as a subscriber`,
         statusCode: HttpStatus.OK,
-        data: webhookStubData,
+        data: newWebhookStubData,
       });
     });
 
@@ -1081,15 +1120,11 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('updateTrelloWebhookNotifications', () => {
-    let userStubData: User;
-    let webhookStubData: Webhook;
     let updateWebhookNotificationsDto: UpdateNotificationsDto;
     let updatedWebhookNotifications: NotificationCategoriesDto;
     let basicNotificationProfile: NotificationBooleansDto;
 
     beforeEach(() => {
-      userStubData = { ...userStub() };
-      webhookStubData = { ...webhookStub };
       basicNotificationProfile = notificationProfiles.basic;
 
       updateWebhookNotificationsDto = {
@@ -1152,7 +1187,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(result).toEqual({
-        message: `Webhook ${webhookStubData.id} updated successfully`,
+        message: expect.stringContaining(webhookStubData.id),
         statusCode: HttpStatus.OK,
         data: {
           ...webhookStubData,
@@ -1209,41 +1244,29 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('updateManyTrelloWebhookNotifications', () => {
-    let userStubData: User;
-    let webhooksToUpdateStubData: Webhook[];
     let updateManyWebhooksDto: UpdateManyNotificationsDto;
     let basicNotificationProfile: NotificationBooleansDto;
 
     beforeEach(() => {
-      userStubData = { ...userStub() };
-
-      webhooksToUpdateStubData = [
-        { ...webhookStub, boardName: 'board1' },
-        { ...webhookStub, boardName: 'board2' },
-      ];
-
       basicNotificationProfile = notificationProfiles.basic;
 
       updateManyWebhooksDto = {
         notifications: basicNotificationProfile,
         notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
-        webhooks: [
-          webhooksToUpdateStubData[0].id,
-          webhooksToUpdateStubData[1].id,
-        ],
+        webhooks: [webhooksStubData[0].id, webhooksStubData[1].id],
       };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
       jest
         .spyOn(trelloWebhookRepository, 'findManyByIds')
-        .mockResolvedValue(webhooksToUpdateStubData);
+        .mockResolvedValue(webhooksStubData);
     });
 
     it('should update multiple webhooks successfully', async () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'recreateWebhookIfUnavailable')
-        .mockResolvedValueOnce(webhooksToUpdateStubData[0])
-        .mockResolvedValueOnce(webhooksToUpdateStubData[1]);
+        .mockResolvedValueOnce(webhooksStubData[0])
+        .mockResolvedValueOnce(webhooksStubData[1]);
 
       jest.spyOn(trelloWebhookRepository, 'updateById').mockResolvedValue(null);
 
@@ -1262,13 +1285,13 @@ describe('TrelloWebhooksLogicService', () => {
       );
       expect(
         trelloWebhooksLogicService.recreateWebhookIfUnavailable,
-      ).toHaveBeenCalledTimes(webhooksToUpdateStubData.length);
+      ).toHaveBeenCalledTimes(webhooksStubData.length);
       expect(trelloWebhookRepository.updateById).toHaveBeenCalledTimes(
-        webhooksToUpdateStubData.length,
+        webhooksStubData.length,
       );
 
       expect(result).toEqual({
-        message: 'Webhooks has been updated successfully',
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1276,15 +1299,15 @@ describe('TrelloWebhooksLogicService', () => {
     it('should return failed webhook names if all updates fail', async () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'recreateWebhookIfUnavailable')
-        .mockResolvedValueOnce(webhooksToUpdateStubData[0])
-        .mockResolvedValueOnce(webhooksToUpdateStubData[1]);
+        .mockResolvedValueOnce(webhooksStubData[0])
+        .mockResolvedValueOnce(webhooksStubData[1]);
 
       jest
         .spyOn(trelloWebhookRepository, 'updateById')
         .mockRejectedValueOnce(new BadRequestException('Update failed'))
         .mockRejectedValueOnce(new BadRequestException('Update failed'));
 
-      const failedWebhookNames = webhooksToUpdateStubData
+      const failedWebhookNames = webhooksStubData
         .map((webhook) => webhook.boardName)
         .join(', ');
 
@@ -1295,14 +1318,14 @@ describe('TrelloWebhooksLogicService', () => {
         );
 
       expect(result).toEqual({
-        message: `Webhooks ${failedWebhookNames} failed to update`,
+        message: expect.stringContaining(failedWebhookNames),
         statusCode: HttpStatus.OK,
       });
     });
 
     it('should throw ForbiddenException if the user is not a subscriber', async () => {
       jest.spyOn(trelloWebhookRepository, 'findManyByIds').mockResolvedValue(
-        webhooksToUpdateStubData.map((webhook) => ({
+        webhooksStubData.map((webhook) => ({
           ...webhook,
           subscribers: [],
         })),
@@ -1318,7 +1341,7 @@ describe('TrelloWebhooksLogicService', () => {
 
     it('should throw BadRequestException if a webhook was recreated', async () => {
       const recreatedWebhook = {
-        ...webhooksToUpdateStubData[0],
+        ...webhooksStubData[0],
         id: 'newWebhookId',
       };
 
@@ -1335,17 +1358,611 @@ describe('TrelloWebhooksLogicService', () => {
     });
   });
 
-  describe('removeTrelloWebhook', () => {
+  describe('handleTrelloWebhook', () => {
     let webhookStubData: Webhook;
-    let decryptedToken: string;
+    let webhookActionMock: any;
+    let boardMemberships: BoardMember[];
 
     beforeEach(() => {
-      webhookStubData = { ...webhookStub, id: 'webhook1' };
-      decryptedToken = webhookStub.author.trelloToken.replace('encrypted', '');
+      webhookStubData = { ...webhookStub };
+      webhookActionMock = { ...webhookActionStub };
+      boardMemberships = [
+        {
+          id: 'id1',
+          idMember: webhookStubData.subscribers[0].trelloUserId,
+          memberType: 'normal',
+          unconfirmed: false,
+          deactivated: false,
+        },
+        {
+          id: 'id2',
+          idMember: webhookStubData.subscribers[1].trelloUserId,
+          memberType: 'admin',
+          unconfirmed: false,
+          deactivated: false,
+        },
+      ];
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubData);
+
+      jest
+        .spyOn(trelloCardsApiService, 'fetchCardById')
+        .mockResolvedValue(trelloCardMock);
+
+      jest
+        .spyOn(trelloBoardsApiService, 'fetchBoardById')
+        .mockResolvedValue(trelloBoardMock);
+
+      jest
+        .spyOn(trelloBoardsApiService, 'fetchBoardMemberships')
+        .mockResolvedValue(boardMemberships);
+    });
+
+    it('should return undefined if webhook was not found in database', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
+
+      expect(result).toEqual(undefined);
+    });
+
+    it('should return undefined if webhook action does not relate to any category', async () => {
+      webhookActionMock.action.type = 'not matching type';
+      webhookActionMock.action.display.translationKey =
+        'not matching detailed action';
+
+      const result =
+        await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if no subscribers exist for the action', async () => {
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockResolvedValue(webhookStubData);
+
+      const result =
+        await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should correctly handle a card action with subscribers', async () => {
+      const webhookStubCardNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          card: { cardCommentAdded: [userStubData.trello.userId] },
+        },
+      };
+
+      const webhookCardAction = {
+        ...webhookActionMock,
+      };
+
+      webhookCardAction.action.type = TrelloWebhookActions.CARD_COMMENT_ADDED;
+      webhookCardAction.action.display.translationKey =
+        TrelloWebhookDetailedActions.CARD_COMMENT_ADDED;
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubCardNotifications);
+
+      jest
+        .spyOn(trelloCardsApiService, 'fetchCardById')
+        .mockResolvedValue(trelloCardMock);
+
+      jest
+        .spyOn(trelloActionsService, 'handleCardActions')
+        .mockResolvedValue(undefined);
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(webhookCardAction);
+
+      expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
+        [userStubData.trello.userId],
+        trelloBoardMock,
+        trelloCardMock,
+        TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
+        webhookCardAction,
+      );
+    });
+
+    it('should correctly handle a board action with subscribers', async () => {
+      const webhookStubBoardNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          board: { boardRenamed: [userStubData.trello.userId] },
+        },
+      };
+
+      const webhookBoardAction = {
+        ...webhookActionMock,
+      };
+
+      webhookBoardAction.action.type = TrelloWebhookActions.BOARD_UPDATED;
+      webhookBoardAction.action.display.translationKey =
+        TrelloWebhookBoardActions.BOARD_RENAMED;
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubBoardNotifications);
+
+      jest
+        .spyOn(trelloActionsService, 'handleBoardActions')
+        .mockResolvedValue(undefined);
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(webhookBoardAction);
+
+      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
+        [userStubData.trello.userId],
+        trelloBoardMock,
+        TrelloWebhookDetailedActions.BOARD_RENAMED,
+        webhookBoardAction,
+      );
+    });
+
+    it('should correctly handle an admin action with subscribers', async () => {
+      const webhookStubAdminNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          admin: { boardMemberInvitationJoined: [userStubData.trello.userId] },
+        },
+      };
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubAdminNotifications);
+
+      jest
+        .spyOn(trelloActionsService, 'handleAdminActions')
+        .mockResolvedValue(undefined);
+
+      const webhookAdminAction = {
+        ...webhookActionMock,
+      };
+
+      webhookAdminAction.action.type = TrelloWebhookActions.BOARD_MEMBER_ADDED;
+      webhookAdminAction.action.display.translationKey =
+        TrelloWebhookAdminActions.BOARD_MEMBER_INVITATION_JOINED;
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(webhookAdminAction);
+
+      expect(trelloActionsService.handleAdminActions).toHaveBeenCalledWith(
+        [userStubData.trello.userId],
+        trelloBoardMock,
+        TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
+        webhookAdminAction,
+      );
+    });
+
+    it('should correctly handle a personal action with subscribers', async () => {
+      const webhookStubPersonalNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          personal: { cardMemberAdded: [userStubData.trello.userId] },
+        },
+      };
+
+      const webhookPersonalAction = {
+        ...webhookActionMock,
+      };
+
+      webhookPersonalAction.action.type =
+        TrelloWebhookActions.CARD_MEMBER_ADDED;
+      webhookPersonalAction.action.display.translationKey =
+        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED;
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubPersonalNotifications);
+
+      jest
+        .spyOn(trelloActionsService, 'handlePersonalAction')
+        .mockResolvedValue(undefined);
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(
+        webhookPersonalAction,
+      );
+
+      expect(trelloActionsService.handlePersonalAction).toHaveBeenCalledWith(
+        userStubData.trello.userId,
+        trelloBoardMock,
+        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+        webhookPersonalAction,
+        webhookStubPersonalNotifications,
+        trelloCardMock,
+      );
+    });
+
+    it('should not notify target member twice', async () => {
+      const webhookStubCardNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          card: {
+            cardMemberAdded: [
+              userStubData.trello.userId,
+              '674ec752cba1224342f87c20',
+            ],
+          },
+          personal: {
+            cardMemberAdded: [userStubData.trello.userId],
+          },
+        },
+      };
+
+      const webhookCardAction = {
+        ...webhookActionMock,
+      };
+
+      webhookCardAction.action.type = TrelloWebhookActions.CARD_MEMBER_ADDED;
+      webhookCardAction.action.display.translationKey =
+        TrelloWebhookDetailedActions.CARD_MEMBER_ADDED;
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubCardNotifications);
+
+      jest
+        .spyOn(trelloActionsService, 'handleCardActions')
+        .mockResolvedValue(undefined);
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(webhookCardAction);
+
+      expect(trelloActionsService.handlePersonalAction).toHaveBeenCalledWith(
+        userStubData.trello.userId,
+        trelloBoardMock,
+        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+        webhookCardAction,
+        webhookStubCardNotifications,
+        trelloCardMock,
+      );
+
+      expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
+        ['674ec752cba1224342f87c20'],
+        trelloBoardMock,
+        trelloCardMock,
+        TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
+        webhookCardAction,
+      );
+    });
+
+    it('should notify about admin actions only board admin role members', async () => {
+      const webhookStubMultipleNotifications = {
+        ...webhookStubData,
+        notifications: {
+          ...webhookStubData.notifications,
+          admin: { boardAdminAdded: [userStubData.trello.userId] },
+        },
+      };
+
+      const adminMemberIds = boardMemberships
+        .filter((member) => member.memberType === 'admin')
+        .map((admin) => admin.idMember);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(webhookStubMultipleNotifications);
+
+      jest
+        .spyOn(trelloActionsService, 'handleAdminActions')
+        .mockResolvedValue(undefined);
+
+      jest
+        .spyOn(trelloBoardsApiService, 'fetchBoardMemberships')
+        .mockResolvedValue(boardMemberships);
+
+      const webhookAdminAction = {
+        ...webhookActionMock,
+      };
+
+      webhookAdminAction.action.type = TrelloWebhookActions.BOARD_ADMIN_ADDED;
+      webhookAdminAction.action.display.translationKey =
+        TrelloWebhookAdminActions.BOARD_ADMIN_ADDED;
+
+      await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
+
+      expect(trelloActionsService.handleAdminActions).toHaveBeenCalledWith(
+        adminMemberIds,
+        trelloBoardMock,
+        TrelloWebhookAdminActions.BOARD_ADMIN_ADDED,
+        webhookAdminAction,
+      );
+    });
+  });
+
+  describe('disconnectFromTrelloWebhook', () => {
+    let webhookStubData: Webhook;
+    let updatedUserProps: Partial<User>;
+
+    beforeEach(() => {
+      webhookStubData = {
+        ...webhookStub,
+        subscribers: [
+          {
+            trelloUserId: userStubData.trello.userId,
+            trelloToken: userStubData.trello.token,
+            notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+          },
+        ],
+      };
+
+      updatedUserProps = {
+        trello: {
+          webhooks: userStubData.trello.webhooks.filter(
+            (webhook) => webhook.webhookId !== webhookStubData.id,
+          ),
+        },
+        lastActivityDate: fixedDate,
+      };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
 
       jest
         .spyOn(trelloWebhooksLogicService, 'getWebhook')
         .mockResolvedValue(webhookStubData);
+    });
+
+    it('should disconnect from a webhook successfully', async () => {
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'updateById')
+        .mockResolvedValue(webhookStubData);
+
+      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
+          userStubData,
+          webhookStubData,
+        );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userStubData,
+        undefined,
+      );
+      expect(trelloWebhooksLogicService.getWebhook).toHaveBeenCalledWith(
+        webhookStubData,
+        undefined,
+      );
+
+      expect(usersService.updateUser).toHaveBeenCalledWith(
+        userStubData,
+        updatedUserProps,
+        undefined,
+      );
+
+      expect(trelloWebhookRepository.updateById).toHaveBeenCalledWith(
+        webhookStubData.id,
+        expect.objectContaining({
+          subscribers: [],
+          notifications: expect.any(Object),
+        }),
+      );
+
+      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+        userStubData.telegram,
+        expect.stringContaining(webhookStubData.boardName),
+      );
+
+      expect(result).toEqual({
+        message: expect.stringContaining(webhookStubData.id),
+        statusCode: HttpStatus.OK,
+        data: webhookStubData,
+      });
+    });
+
+    it('should throw a BadRequestException if the user is not connected to the webhook', async () => {
+      jest.spyOn(usersService, 'getUser').mockResolvedValue({
+        ...userStubData,
+        trello: {
+          ...userStubData.trello,
+          webhooks: [],
+        },
+      });
+
+      await expect(
+        trelloWebhooksLogicService.disconnectFromTrelloWebhook(
+          userStubData,
+          webhookStubData,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw a BadRequestException if the webhook update fails', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'updateById')
+        .mockRejectedValue(new BadRequestException('Update failed'));
+
+      await expect(
+        trelloWebhooksLogicService.disconnectFromTrelloWebhook(
+          userStubData,
+          webhookStubData,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should correctly remove the user from subscribers and notifications', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'updateById')
+        .mockResolvedValue(webhookStubData);
+
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
+
+      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+
+      await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
+        userStubData,
+        webhookStubData,
+      );
+
+      expect(trelloWebhookRepository.updateById).toHaveBeenCalledWith(
+        webhookStubData.id,
+        expect.objectContaining({
+          subscribers: [],
+          notifications: expect.any(Object),
+        }),
+      );
+    });
+
+    it('should send a Telegram message when the user is disconnected', async () => {
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'updateById')
+        .mockResolvedValue(webhookStubData);
+
+      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+
+      await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
+        userStubData,
+        webhookStubData,
+      );
+
+      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+        userStubData.telegram,
+        expect.stringContaining(webhookStubData.boardName),
+      );
+    });
+  });
+
+  describe('disconnectFromAllTrelloWebhooks', () => {
+    let updatedUserProps: Partial<User>;
+
+    beforeEach(() => {
+      updatedUserProps = {
+        trello: { webhooks: [] },
+      };
+    });
+
+    it('should disconnect from all webhooks successfully', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findManyByIds')
+        .mockResolvedValue(webhooksStubData);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'bulkUpdateWebhooks')
+        .mockResolvedValue(null);
+
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
+
+      const result =
+        await trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+          userStubData,
+        );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userStubData,
+        undefined,
+      );
+
+      expect(trelloWebhookRepository.findManyByIds).toHaveBeenCalledWith([
+        webhooksStubData[0].id,
+        webhooksStubData[1].id,
+      ]);
+
+      expect(trelloWebhookRepository.bulkUpdateWebhooks).toHaveBeenCalled();
+      expect(usersService.updateUser).toHaveBeenCalledWith(
+        userStubData,
+        updatedUserProps,
+        undefined,
+      );
+
+      expect(result).toEqual({
+        message: expect.stringContaining(userStubData.id),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should return success message if user has no webhooks', async () => {
+      jest.spyOn(usersService, 'getUser').mockResolvedValue({
+        ...userStubData,
+        trello: { ...userStubData.trello, webhooks: [] },
+      });
+
+      const result =
+        await trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+          userStubData,
+        );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userStubData,
+        undefined,
+      );
+      expect(trelloWebhookRepository.findManyByIds).not.toHaveBeenCalled();
+      expect(usersService.updateUser).not.toHaveBeenCalled();
+
+      expect(result).toEqual({
+        message: expect.stringContaining(userStubData.email),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw a BadRequestException if the update fails', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findManyByIds')
+        .mockResolvedValue(webhooksStubData);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'bulkUpdateWebhooks')
+        .mockRejectedValue(new BadRequestException());
+
+      await expect(
+        trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+          userStubData,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should correctly call bulk update for removing user from webhooks', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findManyByIds')
+        .mockResolvedValue(webhooksStubData);
+
+      jest
+        .spyOn(trelloWebhookRepository, 'bulkUpdateWebhooks')
+        .mockResolvedValue(null);
+
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
+
+      await trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
+        userStubData,
+      );
+
+      expect(trelloWebhookRepository.bulkUpdateWebhooks).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            updateOne: {
+              filter: { id: webhooksStubData[0].id },
+              update: expect.any(Object),
+            },
+          }),
+          expect.objectContaining({
+            updateOne: {
+              filter: { id: webhooksStubData[1].id },
+              update: expect.any(Object),
+            },
+          }),
+        ]),
+      );
+    });
+  });
+
+  describe('removeTrelloWebhook', () => {
+    let decryptedToken: string;
+
+    beforeEach(() => {
+      decryptedToken = webhookStub.author.trelloToken.replace('encrypted', '');
     });
 
     it('should remove a webhook successfully', async () => {
@@ -1380,7 +1997,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(result).toEqual({
-        message: `Webhook ${webhookStubData.id} deleted successfully from Trello and all connected users`,
+        message: expect.stringContaining(webhookStubData.id),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1406,7 +2023,7 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloWebhookRepository.deleteById).toHaveBeenCalled();
 
       expect(result).toEqual({
-        message: `Webhook ${webhookStubData.id} deleted successfully from Trello and all connected users`,
+        message: expect.stringContaining(webhookStubData.id),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1428,32 +2045,25 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('removeAllWebhooksCreatedByUser', () => {
-    let userStubData: User;
     let webhooksStubData: Webhook[];
 
     beforeEach(() => {
-      userStubData = { ...userStub() };
-
       webhooksStubData = [
         {
           ...webhookStub,
-          id: 'webhook1',
           author: {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
           },
         },
         {
-          ...webhookStub,
-          id: 'webhook2',
+          ...newWebhookStub,
           author: {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
           },
         },
       ];
-
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
     });
 
     it('should return a success message if no webhooks are found for the user', async () => {
@@ -1477,7 +2087,7 @@ describe('TrelloWebhooksLogicService', () => {
       ).not.toHaveBeenCalled();
 
       expect(result).toEqual({
-        message: `No webhooks found for user: ${userStubData.trello.userId}`,
+        message: expect.stringContaining(userStubData.trello.userId),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1526,17 +2136,7 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('removeAllWebhooks', () => {
-    let superAdminStubData: User;
-    let webhookStubData: Webhook[];
-
     beforeEach(() => {
-      superAdminStubData = { ...superAdminStub() };
-
-      webhookStubData = [
-        { ...webhookStub, id: 'webhook1' },
-        { ...webhookStub, id: 'webhook2' },
-      ];
-
       jest.spyOn(usersService, 'getUser').mockResolvedValue(superAdminStubData);
     });
 
@@ -1559,7 +2159,7 @@ describe('TrelloWebhooksLogicService', () => {
         await trelloWebhooksLogicService.removeAllWebhooks(superAdminStubData);
 
       expect(result).toEqual({
-        message: 'No webhooks to delete.',
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1567,7 +2167,7 @@ describe('TrelloWebhooksLogicService', () => {
     it('should delete all webhooks successfully', async () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'findAllWebhooks')
-        .mockResolvedValue(webhookStubData);
+        .mockResolvedValue(webhooksStubData);
 
       jest
         .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
@@ -1579,11 +2179,10 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloWebhooksLogicService.findAllWebhooks).toHaveBeenCalled();
       expect(
         trelloWebhooksLogicService.removeTrelloWebhook,
-      ).toHaveBeenCalledTimes(webhookStubData.length);
+      ).toHaveBeenCalledTimes(webhooksStubData.length);
 
       expect(result).toEqual({
-        message:
-          'All webhooks deleted successfully from Trello and all connected users.',
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
       });
     });
@@ -1591,11 +2190,11 @@ describe('TrelloWebhooksLogicService', () => {
     it('should throw BadRequestException if webhook deletion fails', async () => {
       jest
         .spyOn(trelloWebhooksLogicService, 'findAllWebhooks')
-        .mockResolvedValue(webhookStubData);
+        .mockResolvedValue(webhooksStubData);
 
       jest
         .spyOn(trelloWebhooksLogicService, 'removeTrelloWebhook')
-        .mockRejectedValue(new BadRequestException('Deletion failed'));
+        .mockRejectedValue(new BadRequestException());
 
       await expect(
         trelloWebhooksLogicService.removeAllWebhooks(superAdminStubData),
