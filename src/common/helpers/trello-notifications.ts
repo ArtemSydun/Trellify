@@ -281,7 +281,7 @@ export const notificationMessageGenerator = (
     cardUrl,
   } = actionData;
   const { language: lang, role } = userToNotify;
-  let formattedMessage = translatedMessage + '\n';
+  let formattedMessage = translatedMessage + '\n\n';
 
   if (cardName) {
     formattedMessage += `📋 **${i18n.t(I18nKeys.FIELDS_CARD, { lang })}: [${cardName}](${cardUrl})\n`;
