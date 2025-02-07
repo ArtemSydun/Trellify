@@ -17,6 +17,7 @@ import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { TelegramService } from 'src/telegram/telegram.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersRepository } from 'src/user/repositories/users.repository';
@@ -35,6 +36,7 @@ export class AuthService {
     private readonly userRepository: UsersRepository,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   private verifyToken(token: string, i18n?: I18nContext): any {
@@ -58,9 +60,9 @@ export class AuthService {
       loginUserDto.email,
       i18n,
     );
-
     const loginDate = new Date();
 
+    // Validate password
     const isCredentialsValid = await verifyPassword(
       loginUserDto.password,
       user.password,
@@ -74,21 +76,41 @@ export class AuthService {
       );
     }
 
-    const payload = { email: user.email, id: user.id, role: user.role };
-    const token: string = this.jwtService.sign(payload);
+    let updatedTelegramUsername = user.telegram.username;
 
-    const loginedUser = await this.userRepository.updateById(user.id, {
+    if (user.telegram.chatId) {
+      const telegramUserProfile = await this.telegramService.fetchTelegramUser(
+        user.telegram.chatId,
+      );
+
+      if (telegramUserProfile.username) {
+        updatedTelegramUsername = telegramUserProfile.username;
+      }
+    }
+
+    const updatedUser = await this.userRepository.updateById(user.id, {
       lastLoginDate: loginDate,
       lastActivityDate: loginDate,
+      telegram: {
+        ...user.telegram,
+        username: updatedTelegramUsername,
+      },
     });
 
-    delete loginedUser.password;
+    delete updatedUser.password;
 
-    this.logger.log(`User logged in successfully: ${user.email}`);
+    const payload = {
+      email: updatedUser.email,
+      id: updatedUser.id,
+      role: updatedUser.role,
+    };
+    const token: string = this.jwtService.sign(payload);
+
+    this.logger.log(`User logged in successfully: ${updatedUser.email}`);
 
     return {
       accessToken: token,
-      user: loginedUser,
+      user: updatedUser,
     };
   }
 

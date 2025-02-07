@@ -19,22 +19,33 @@ import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
 }));
 
 describe('AuthService', () => {
+  let originalDate = Date;
+
   let authService: AuthService;
   let jwtService: JwtService;
   let usersService: UsersService;
   let usersRepository: UsersRepository;
   let configService: ConfigService;
   let mailerService: MailerService;
+  let telegramService: TelegramService;
 
   const fixedDate = superAdminStub().lastLoginDate;
 
   beforeEach(async () => {
+    originalDate = global.Date;
+    global.Date = class extends originalDate {
+      constructor() {
+        super();
+        return fixedDate;
+      }
+    } as unknown as DateConstructor;
     const moduleRef = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -43,6 +54,7 @@ describe('AuthService', () => {
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
+        { provide: TelegramService, useValue: createMock<TelegramService>() },
       ],
     }).compile();
 
@@ -52,25 +64,37 @@ describe('AuthService', () => {
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     configService = moduleRef.get<ConfigService>(ConfigService);
     mailerService = moduleRef.get<MailerService>(MailerService);
+    telegramService = moduleRef.get<TelegramService>(TelegramService);
   });
 
   describe('login', () => {
     it('should return access token and user object for valid credentials', async () => {
-      const user = { ...superAdminStub() };
+      const user = {
+        ...superAdminStub(),
+        telegram: { ...superAdminStub().telegram, username: 'old_username' },
+      };
+
+      delete user.password;
+
       const loginUserDto: LoginUserDto = {
         email: user.email,
-        password: user.password,
+        password: 'valid_password',
       };
-      delete user.password;
+
+      const mockTelegramUser = { username: 'new_telegram_username' };
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest
+        .spyOn(telegramService, 'fetchTelegramUser')
+        .mockResolvedValue(mockTelegramUser);
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...user,
+        telegram: { ...user.telegram, username: mockTelegramUser.username },
         lastLoginDate: fixedDate,
         lastActivityDate: fixedDate,
       });
-      (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to succeed
+      (verifyPassword as jest.Mock).mockResolvedValue(true);
 
       const result = await authService.login(loginUserDto);
 
@@ -82,20 +106,37 @@ describe('AuthService', () => {
         loginUserDto.password,
         user.password,
       );
+      expect(telegramService.fetchTelegramUser).toHaveBeenCalledWith(
+        user.telegram.chatId,
+      );
+      expect(usersRepository.updateById).toHaveBeenCalledWith(user.id, {
+        lastLoginDate: fixedDate,
+        lastActivityDate: fixedDate,
+        telegram: { ...user.telegram, username: mockTelegramUser.username },
+      });
       expect(jwtService.sign).toHaveBeenCalledWith({
         email: user.email,
         id: user.id,
         role: user.role,
       });
-      expect(result.user.email).toEqual(loginUserDto.email);
       expect(result).toEqual({
         accessToken: 'mockToken',
-        user,
+        user: {
+          ...user,
+          telegram: { ...user.telegram, username: mockTelegramUser.username },
+          lastLoginDate: fixedDate,
+          lastActivityDate: fixedDate,
+        },
       });
     });
 
     it('should throw UnauthorizedException for invalid credentials', async () => {
-      const user = { ...superAdminStub(), password: 'hashedpassword' };
+      const user = {
+        ...superAdminStub(),
+        password: 'hashedpassword',
+        telegram: { chatId: 123456789, username: 'telegram_username' },
+      };
+
       const loginUserDto: LoginUserDto = {
         email: user.email,
         password: 'wrongpassword',
@@ -103,11 +144,22 @@ describe('AuthService', () => {
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(telegramService, 'fetchTelegramUser').mockResolvedValue(null);
       (verifyPassword as jest.Mock).mockResolvedValue(false); // Mock password validation to fail
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
         UnauthorizedException,
       );
+
+      expect(usersService.findUserByEmail).toHaveBeenCalledWith(
+        loginUserDto.email,
+        undefined,
+      );
+      expect(verifyPassword).toHaveBeenCalledWith(
+        loginUserDto.password,
+        user.password,
+      );
+      expect(telegramService.fetchTelegramUser).not.toHaveBeenCalled();
     });
   });
 
@@ -169,7 +221,9 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it('should send a password reset email', async () => {
-      const forgotPasswordDto: ForgotPasswordDto = { email: 'test@gmail.com' };
+      const forgotPasswordDto: ForgotPasswordDto = {
+        email: 'test@gmail.com',
+      };
       const user = superAdminStub();
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockResetToken');

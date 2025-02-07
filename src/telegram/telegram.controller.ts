@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
+import axios from 'axios';
 import { I18nService } from 'nestjs-i18n';
 import {
   InjectBot,
@@ -70,15 +71,6 @@ export class TelegramController {
       );
 
       if (user) {
-        if (username && user.telegram.username !== username) {
-          await this.userService.updateUser(user, {
-            telegram: {
-              username,
-              updatedAt: new Date(),
-            },
-          });
-        }
-
         await ctx.reply(
           this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_PROFILE_FOUND, {
             lang: user.language,
@@ -92,7 +84,6 @@ export class TelegramController {
         );
       }
     } catch (err) {
-      console.log(err);
       await ctx.reply(
         this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_GREETINGS_MESSAGE, {
           lang: userLanguage,

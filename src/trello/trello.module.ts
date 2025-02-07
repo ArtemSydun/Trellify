@@ -16,7 +16,7 @@ import { TrelloWebhookRepository } from './repositories/webhook.repository';
     forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
-    TelegramModule,
+    forwardRef(() => TelegramModule),
   ],
   controllers: [
     Controllers.TrelloWebhooksController,
