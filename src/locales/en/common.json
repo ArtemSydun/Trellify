@@ -19,6 +19,7 @@
             "disconnectionMessage": "Trellify notifier bot disconnected successfully",
             "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
             "authorizeThroughWebsite": "Authorize through website",
+            "profileFound": "Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here]({infoUrl})",
             "help": {
                 "introMessage": "Hello! This is Trellify — a bot for notifications about events from Trello. To be able to use our app, please, follow these steps",
                 "steps": [

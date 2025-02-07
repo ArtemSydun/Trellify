@@ -13,6 +13,7 @@ import {
 } from 'nestjs-telegraf';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
@@ -47,10 +48,12 @@ export class TelegramController {
 
   @Start()
   async startCommand(ctx): Promise<any> {
-    const userLanguage = ctx?.update?.message?.from?.language_code || 'en';
+    const userLanguage =
+      ctx?.update?.message?.from?.language_code || Languages.EN;
 
     const userTelegramName: string =
       ctx?.update?.message?.from?.first_name ||
+      ctx?.update?.message?.from?.last_name ||
       ctx?.update?.message?.from?.username;
 
     const chatId: number = ctx?.update?.message?.from?.id;
@@ -67,25 +70,29 @@ export class TelegramController {
       );
 
       if (user) {
-        await ctx.reply(
-          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
-            lang: userLanguage,
-          }) || 'Authorize through website',
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: 'Trellify',
-                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
-                  },
-                ],
-              ],
+        if (username && user.telegram.username !== username) {
+          await this.userService.updateUser(user, {
+            telegram: {
+              username,
+              updatedAt: new Date(),
             },
-          },
+          });
+        }
+
+        await ctx.reply(
+          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_PROFILE_FOUND, {
+            lang: user.language,
+            args: {
+              infoUrl: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help`,
+            },
+          }) ||
+            `Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here](${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help)`,
+
+          { parse_mode: 'Markdown' },
         );
       }
     } catch (err) {
+      console.log(err);
       await ctx.reply(
         this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_GREETINGS_MESSAGE, {
           lang: userLanguage,
@@ -99,7 +106,7 @@ export class TelegramController {
       await ctx.reply(
         this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
           lang: userLanguage,
-        }) || 'Authorize through website123',
+        }) || 'Authorize through website',
         {
           reply_markup: {
             inline_keyboard: [
