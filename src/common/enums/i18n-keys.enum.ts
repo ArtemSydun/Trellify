@@ -20,6 +20,7 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED = 'common.messages.telegram.notificationsDisconnected',
   MESSAGES_TELEGRAM_GREETINGS_MESSAGE = 'common.messages.telegram.greetingsMessage',
   MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE = 'common.messages.telegram.authorizeThroughWebsite',
+  MESSAGES_TELEGRAM_PROFILE_FOUND = 'common.messages.telegram.profileFound',
   MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE = 'common.messages.telegram.help.introMessage',
   MESSAGES_TELEGRAM_HELP_STEPS = 'common.messages.telegram.help.steps',
   MESSAGES_TELEGRAM_HELP_CLOSING = 'common.messages.telegram.help.closingMessage',
