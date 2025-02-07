@@ -832,9 +832,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // delete webhookAction.model?.prefs;
-    // delete webhookAction.model?.labelNames;
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    delete webhookAction.model?.prefs;
+    delete webhookAction.model?.labelNames;
+    console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
@@ -871,9 +871,15 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    const generalActionType = webhookAction?.action?.type;
-    let detailedActionType = webhookAction?.action?.display?.translationKey;
-    const targetMember = webhookAction?.action?.member;
+    const generalActionType = webhookAction?.action?.type || '';
+    let detailedActionType =
+      webhookAction?.action?.display?.translationKey || '';
+    const targetMember = webhookAction?.action?.member || '';
+    const authorMember = webhookAction?.action?.memberCreator || '';
+    const targetedChecklistUserId =
+      webhookAction?.action?.data?.checkItem?.idMember ||
+      webhookAction?.action?.data?.old?.idMember ||
+      '';
 
     // to handle unknown detailed type actions which has clear generalActionType etc createCheckItem
     if (detailedActionType === 'unknown') {
@@ -929,13 +935,29 @@ export class TrelloWebhooksLogicService {
       );
     }
 
-    let notifiedTargetUser: string | null;
+    let notifiedTargetUser: string | null = '';
+    let notifiedAuthorUser: string | null = '';
+
     let boardMemberships: BoardMember[] | null;
+
+    if (
+      (targetedChecklistUserId &&
+        authorMember?.id === targetedChecklistUserId) ||
+      (!targetedChecklistUserId && !targetMember?.id) ||
+      (targetMember?.id && authorMember?.id === targetMember?.id)
+    ) {
+      notifiedAuthorUser = authorMember?.id;
+    }
+
     for (const category of sortedCategories) {
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
-      if (actionSubscribers.length === 0) {
+      if (
+        actionSubscribers.length === 0 ||
+        (actionSubscribers.length === 1 &&
+          actionSubscribers.includes(notifiedAuthorUser))
+      ) {
         this.logger.warn(
           `Nobody tracks ${enumKey} action in category ${category}.`,
         );
@@ -949,7 +971,8 @@ export class TrelloWebhooksLogicService {
             const membersToNotify = cardMembers.filter(
               (memberId) =>
                 actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser,
+                memberId !== notifiedTargetUser &&
+                memberId !== notifiedAuthorUser,
             );
 
             await this.actionsService.handleCardActions(
@@ -963,7 +986,7 @@ export class TrelloWebhooksLogicService {
           break;
 
         case TrelloWebhookNotificationCategories.PERSONAL:
-          //separate handler because this two actions does not have
+          //separate handler because checklist memeber actions does not have
           // webhookAction?.action?.member even though it is targeted action
           if (
             detailedActionType ===
@@ -971,12 +994,9 @@ export class TrelloWebhooksLogicService {
             detailedActionType ===
               TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
           ) {
-            const targetedUserId =
-              webhookAction.action.data.checkItem.idMember ||
-              webhookAction.action.data.old.idMember;
-            if (actionSubscribers.includes(targetedUserId))
+            if (actionSubscribers.includes(targetedChecklistUserId))
               await this.actionsService.handlePersonalAction(
-                targetedUserId,
+                targetedChecklistUserId,
                 boardData,
                 detailedActionType,
                 webhookAction,
@@ -988,7 +1008,7 @@ export class TrelloWebhooksLogicService {
                     )
                   : null,
               );
-            notifiedTargetUser = targetedUserId;
+            notifiedTargetUser = targetedChecklistUserId;
           }
 
           if (targetMember && actionSubscribers.includes(targetMember.id)) {
@@ -1022,7 +1042,8 @@ export class TrelloWebhooksLogicService {
               .filter(
                 (member) =>
                   actionSubscribers.includes(member.idMember) &&
-                  member.idMember !== notifiedTargetUser,
+                  member.idMember !== notifiedTargetUser &&
+                  member.idMember !== notifiedAuthorUser,
               )
               .map((member) => member.idMember);
 
@@ -1048,7 +1069,8 @@ export class TrelloWebhooksLogicService {
               .filter(
                 (member) =>
                   actionSubscribers.includes(member.idMember) &&
-                  member.idMember !== notifiedTargetUser,
+                  member.idMember !== notifiedTargetUser &&
+                  member.idMember !== notifiedAuthorUser,
               )
               .map((member) => member.idMember);
 

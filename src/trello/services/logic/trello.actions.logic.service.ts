@@ -1,8 +1,10 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TrelloWebhooksLogicService } from '@trello/logic';
 import { format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import * as emoji from 'node-emoji';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
@@ -36,6 +38,7 @@ export class TrelloActionsLogicService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly telegramService: TelegramService,
     private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
   ) {}
 
   async handlePersonalAction(
@@ -53,7 +56,7 @@ export class TrelloActionsLogicService {
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const notificationLanguage = targetUser.language || Languages.EN;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
@@ -208,7 +211,7 @@ export class TrelloActionsLogicService {
 
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
@@ -659,7 +662,7 @@ export class TrelloActionsLogicService {
 
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
