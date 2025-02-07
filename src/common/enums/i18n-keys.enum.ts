@@ -1,4 +1,11 @@
 export enum I18nKeys {
+  // field names
+  FIELDS_AUTHOR = 'common.fields.author',
+  FIELDS_TARGET = 'common.fields.target',
+  FIELDS_BOARD = 'common.fields.board',
+  FIELDS_CARD = 'common.fields.card',
+  FIELDS_DATE = 'common.fields.date',
+
   // Email Messages
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE = 'common.messages.email.registrationEmailMessage',
@@ -13,6 +20,7 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED = 'common.messages.telegram.notificationsDisconnected',
   MESSAGES_TELEGRAM_GREETINGS_MESSAGE = 'common.messages.telegram.greetingsMessage',
   MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE = 'common.messages.telegram.authorizeThroughWebsite',
+  MESSAGES_TELEGRAM_PROFILE_FOUND = 'common.messages.telegram.profileFound',
   MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE = 'common.messages.telegram.help.introMessage',
   MESSAGES_TELEGRAM_HELP_STEPS = 'common.messages.telegram.help.steps',
   MESSAGES_TELEGRAM_HELP_CLOSING = 'common.messages.telegram.help.closingMessage',

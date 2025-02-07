@@ -45,6 +45,7 @@
     "date-fns": "^4.1.0",
     "nestjs-i18n": "^10.5.0",
     "nestjs-telegraf": "^2.8.1",
+    "node-emoji": "^2.2.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
@@ -104,7 +105,8 @@
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@trello/logic$": "<rootDir>/trello/services/logic",
-      "^@trello/api$": "<rootDir>/trello/services/api"
+      "^@trello/api$": "<rootDir>/trello/services/api",
+      "^@trello/controllers$": "<rootDir>/trello/controllers"
     }
   }
 }

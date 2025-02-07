@@ -12,7 +12,6 @@ import { TelegramModule } from './telegram/telegram.module';
 import { TrelloModule } from './trello/trello.module';
 import { UsersModule } from './user/users.module';
 
-console.log(parseInt(process.env.API_REQUEST_LIMIT));
 @Module({
   imports: [
     ConfigModule.forRoot({

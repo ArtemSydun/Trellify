@@ -37,6 +37,7 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | BACKEND_PORT                | The internal port inside the container where the backend application listens. |
 | BACKEND_LINK                | URL for the backend's external link.                                          |
 | FRONTEND_LINK               | URL for the frontend's external link.                                         |
+| LANDING_LINK                | URL for the website landing.                                                  |
 | API_REQUEST_LIMIT           | Allowed number of requests per certain period of time.                        |
 | API_REFRESH_LIMIT_TIME      | Requests limit refresh time (in seconds).                                     |
 | **Database settings:**      |                                                                               |
