@@ -2,9 +2,9 @@
     "fields": {
         "author": "Author",
         "target": "Target",
-        "board": "Дошка",
-        "card": "Картка",
-        "date": "Дата"
+        "board": "Board",
+        "card": "Card",
+        "date": "Date"
     },
     "messages": {
         "email": {

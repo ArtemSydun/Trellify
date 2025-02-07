@@ -1,8 +1,10 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TrelloWebhooksLogicService } from '@trello/logic';
 import { format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import * as emoji from 'node-emoji';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
@@ -36,6 +38,7 @@ export class TrelloActionsLogicService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly telegramService: TelegramService,
     private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
   ) {}
 
   async handlePersonalAction(
@@ -53,7 +56,7 @@ export class TrelloActionsLogicService {
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const notificationLanguage = targetUser.language || Languages.EN;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
@@ -208,7 +211,7 @@ export class TrelloActionsLogicService {
 
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
@@ -659,7 +662,7 @@ export class TrelloActionsLogicService {
 
       const webhookActionDate = format(
         new Date(webhookAction?.action?.date),
-        'yyyy-MM-dd HH:mm:ss',
+        this.configService.get(configServiceEnum.DATE_FORMAT),
       );
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
@@ -760,10 +763,19 @@ export class TrelloActionsLogicService {
       const adminsToNotify =
         await this.userService.findUsersByTrelloIds(adminTrelloIds);
 
-      const targetUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username || '',
+      const webhookActionDate = format(
+        new Date(webhookAction?.action?.date),
+        this.configService.get(configServiceEnum.DATE_FORMAT),
+      );
+
+      const targetMemberUsername = escapeMarkdown(
+        webhookAction?.action?.member?.username ||
+          webhookAction?.action?.memberCreator?.username,
       );
       const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
+
+      const actionAuthor = webhookAction?.action?.memberCreator?.username;
+      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
 
       const oldCustomFieldName = webhookAction.action?.data?.old?.name;
       const customFieldName = webhookAction.action?.data?.customField?.name;
@@ -785,7 +797,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new admin [${targetUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData.url}).`,
+          `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED, {
@@ -797,7 +809,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
           this.i18n?.t(
@@ -812,7 +824,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `The user [${targetUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT, {
@@ -824,7 +836,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_JOINED, {
@@ -836,7 +848,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new member [${targetUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}).`,
+          `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
           this.i18n?.t(
@@ -851,7 +863,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A new normal role has been added to a user [${targetUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData.url}).`,
+          `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData.url}).`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED, {
@@ -916,7 +928,7 @@ export class TrelloActionsLogicService {
 
         const message = adminActionMessages[actionType]({
           lang: userLanguage,
-          memberName: targetUsername,
+          memberName: targetMemberUsername,
           memberUrl: targetMemberProfileUrl,
           oldCustomFieldName,
           customFieldName,
@@ -925,10 +937,25 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const formattedMessage = notificationMessageGenerator(
+          userToNotify,
+          {
+            boardName: boardData.name,
+            boardUrl: boardData.url,
+            actionDate: webhookActionDate,
+            translatedMessage: message,
+            actionAuthor,
+            actionAuthorUrl,
+            actionTarget: targetMemberUsername,
+            actionTargetUrl: targetMemberProfileUrl,
+          },
+          this.i18n,
+        );
+
         if (message) {
           await this.telegramService.sendMessageToUser(
             userToNotify.telegram,
-            message,
+            formattedMessage,
           );
         }
       });
