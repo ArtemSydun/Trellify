@@ -19,7 +19,6 @@ export const basicProfileActions = [
   TrelloWebhookDetailedActions.CARD_START_DATE_ADDED,
   TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
   TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST,
-  TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED,
 ];
 
 export const advancedProfileActions = [
