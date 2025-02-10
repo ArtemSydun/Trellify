@@ -20,7 +20,10 @@ import {
   encryptText,
   hashPassword,
 } from 'src/common/helpers/hashing';
-import { DefaultResponse } from 'src/common/interfaces/responses';
+import {
+  DefaultPaginatedResponse,
+  DefaultResponse,
+} from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
 
@@ -30,9 +33,11 @@ import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserQuery } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
+
 import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
@@ -188,8 +193,10 @@ export class UsersService {
     };
   }
 
-  public async findAll(): Promise<User[]> {
-    return await this.userRepository.getAll();
+  public async findAll(
+    filters: UserQuery = {},
+  ): Promise<DefaultPaginatedResponse<User>> {
+    return this.userRepository.getAll(filters);
   }
 
   public async findUserById(id: string, i18n?: I18nContext): Promise<User> {

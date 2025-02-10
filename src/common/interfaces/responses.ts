@@ -5,3 +5,11 @@ export interface DefaultResponse<T> {
   statusCode: HttpStatus;
   data?: T;
 }
+
+export interface DefaultPaginatedResponse<T> {
+  total: number;
+  totalPages: number;
+  limitPerPage: number;
+  currentPage: number;
+  data?: T[];
+}
