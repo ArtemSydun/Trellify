@@ -24,6 +24,7 @@ export class CronService {
   @Cron(CronExpression.EVERY_WEEK)
   async clearUnactiveWebhooks() {
     try {
+      this.logger.log(`Unactive webhooks clear cron started`);
       const webhooks = await this.trelloWebhooksLogicService.findAllWebhooks();
 
       const currentDate = new Date();
@@ -116,6 +117,7 @@ export class CronService {
 
       const removedWebhooks = await Promise.all(removePromises);
       console.log('Successfully removed inactive webhooks:', removedWebhooks);
+      this.logger.log(`Unactive webhooks clear cron finished`);
     } catch (error) {
       console.error('Error in clearUnactiveBoards:', error.message);
     }
