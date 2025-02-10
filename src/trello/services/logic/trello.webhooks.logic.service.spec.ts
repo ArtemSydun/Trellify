@@ -64,6 +64,7 @@ import {
 } from 'src/trello/dto/notifications.dto';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { BoardMember } from 'src/trello/dto/member.dto';
+import { I18nService } from 'nestjs-i18n';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -86,6 +87,7 @@ describe('TrelloWebhooksLogicService', () => {
   let trelloWebhookApiService: TrelloWebhooksApiService;
   let trelloActionsService: TrelloActionsLogicService;
   let usersService: UsersService;
+  let i18nService: I18nService;
 
   let telegramService: TelegramService;
 
@@ -153,6 +155,7 @@ describe('TrelloWebhooksLogicService', () => {
           useValue: createMock<TrelloCardsApiService>(),
         },
         { provide: TelegramService, useValue: createMock<TelegramService>() },
+        { provide: I18nService, useValue: createMock<I18nService>() },
       ],
     }).compile();
 
@@ -186,6 +189,7 @@ describe('TrelloWebhooksLogicService', () => {
 
     telegramService = moduleRef.get<TelegramService>(TelegramService);
     usersService = moduleRef.get<UsersService>(UsersService);
+    i18nService = moduleRef.get<I18nService>(I18nService);
 
     userStubData = { ...userStub() };
     webhookStubData = { ...webhookStub };
@@ -201,6 +205,10 @@ describe('TrelloWebhooksLogicService', () => {
     });
 
     (validateTrelloToken as jest.Mock).mockImplementation(() => {});
+
+    jest.spyOn(i18nService, 't').mockImplementation(() => {
+      'translated message';
+    });
 
     jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub());
 
@@ -1822,7 +1830,9 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'updateById')
         .mockResolvedValue(webhookStubData);
 
-      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+      jest
+        .spyOn(telegramService, 'sendMessageToUser')
+        .mockResolvedValue(undefined);
 
       await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
         userStubData,

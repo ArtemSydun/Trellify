@@ -156,7 +156,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you has been added to the board [${boardData?.name}](${boardData.url}) as admin`,
+          `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
       };
 
       const message = targetActionMessages[actionType];
@@ -172,12 +172,12 @@ export class TrelloActionsLogicService {
         const formattedMessage = notificationMessageGenerator(
           targetUser,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
             actionDate: webhookActionDate,
             translatedMessage: message,
-            cardName: cardData.name,
-            cardUrl: cardData.url,
+            cardName: cardData?.name,
+            cardUrl: cardData?.url,
             actionAuthor,
             actionAuthorUrl,
             actionTarget: targetMemberUsername,
@@ -621,8 +621,8 @@ export class TrelloActionsLogicService {
           const formattedMessage = notificationMessageGenerator(
             userToNotify,
             {
-              boardName: boardData.name,
-              boardUrl: boardData.url,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
               actionDate: webhookActionDate,
               translatedMessage: message,
               cardName: cardData.name,
@@ -691,7 +691,7 @@ export class TrelloActionsLogicService {
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_CLOSED, {
             lang: args.lang,
             args: {
-              boardName: boardData.name,
+              boardName: boardData?.name,
             },
           }) || `Board ${boardData?.name} has been closed.`,
 
@@ -699,8 +699,8 @@ export class TrelloActionsLogicService {
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_REOPENED, {
             lang: args.lang,
             args: {
-              boardName: boardData.name,
-              boardUrl: boardData.url,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
             },
           }) ||
           `Board [${boardData?.name}](${boardData?.url}) has been reopened.`,
@@ -727,8 +727,8 @@ export class TrelloActionsLogicService {
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
             actionDate: webhookActionDate,
             translatedMessage: message,
             actionAuthor,
@@ -797,7 +797,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData.url}).`,
+          `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED, {
@@ -809,7 +809,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
           this.i18n?.t(
@@ -824,7 +824,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}) via invitation.`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT, {
@@ -836,7 +836,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_JOINED, {
@@ -848,7 +848,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}).`,
+          `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
           this.i18n?.t(
@@ -863,7 +863,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData.url}).`,
+          `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED, {
@@ -874,7 +874,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field ${customFieldName} has been created on the board [${boardData.name}](${boardData.url})`,
+          `The custom field ${customFieldName} has been created on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_RENAMED, {
@@ -886,7 +886,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field has been renamed from ${oldCustomFieldName} to ${customFieldName} on the board [${boardData.name}](${boardData.url})`,
+          `The custom field has been renamed from ${oldCustomFieldName} to ${customFieldName} on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_DELETED, {
@@ -899,7 +899,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field ${customFieldName} has been deleted on the board [${boardData.name}](${boardData.url})`,
+          `The custom field ${customFieldName} has been deleted on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.BOARD_PERM_LEVEL_CHANGED]: (args) =>
           this.i18n?.t(
@@ -913,7 +913,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `Board [${boardData?.name}](${boardData.url}) permission level has been changed to ${permissionLevel}`,
+          `Board [${boardData?.name}](${boardData?.url}) permission level has been changed to ${permissionLevel}`,
       };
 
       const message = adminActionMessages[actionType];
@@ -940,8 +940,8 @@ export class TrelloActionsLogicService {
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
             actionDate: webhookActionDate,
             translatedMessage: message,
             actionAuthor,
