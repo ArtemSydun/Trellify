@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { DefaultPaginatedResponse } from 'src/common/interfaces/responses';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { UserQuery } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
 
@@ -79,8 +81,71 @@ export class UsersRepository {
     return this.UserModel.findOneAndDelete({ id });
   }
 
-  async getAll(): Promise<User[]> {
-    return this.UserModel.find();
+  public async getAll(
+    filters: UserQuery,
+  ): Promise<DefaultPaginatedResponse<User>> {
+    const {
+      order = 'desc',
+      orderBy = 'createdAt',
+      limit = 10,
+      page = 1,
+      email,
+      role,
+      date,
+      fromDate,
+      toDate,
+      trelloUserId,
+      trelloUserName,
+      telegramChatId,
+      telegramUserName,
+      language,
+    } = filters;
+    const perPage = limit; // Elements per page
+    const offset = (page - 1) * perPage; // Calculate skip amount
+
+    const query: any = {};
+
+    if (email) query.email = { $regex: email, $options: 'i' };
+    if (role) query.role = role;
+    if (date && (fromDate || toDate)) {
+      query[date] = {}; // Dynamically assign the date field
+      if (fromDate) query[date].$gte = new Date(fromDate);
+      if (toDate) query[date].$lte = new Date(toDate);
+    }
+    if (trelloUserId) query[UserSearchPathEnum.TrelloUserId] = trelloUserId;
+    if (trelloUserName)
+      query[UserSearchPathEnum.TrelloUsername] = {
+        $regex: trelloUserName,
+        $options: 'i',
+      };
+    if (telegramChatId)
+      query[UserSearchPathEnum.TelegramChatId] = +telegramChatId;
+    if (telegramUserName)
+      query[UserSearchPathEnum.TelegramUsername] = {
+        $regex: telegramUserName,
+        $options: 'i',
+      };
+    if (language) query.language = language;
+
+    // Define sorting
+    const sortOrder = order === 'asc' ? 1 : -1;
+
+    // Get total query count
+    const total = await this.UserModel.countDocuments(query);
+
+    // Fetch paginated results
+    const users = await this.UserModel.find(query)
+      .sort({ [orderBy]: sortOrder })
+      .skip(offset)
+      .limit(perPage);
+
+    return {
+      total,
+      totalPages: Math.ceil(total / perPage),
+      limitPerPage: +perPage,
+      currentPage: +page,
+      data: users,
+    };
   }
 
   async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {

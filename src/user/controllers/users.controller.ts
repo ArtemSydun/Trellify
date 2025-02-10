@@ -9,6 +9,7 @@ import {
   Req,
   Get,
   Delete,
+  Query,
 } from '@nestjs/common';
 
 import {
@@ -16,6 +17,7 @@ import {
   ApiConflictResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   getSchemaPath,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -29,11 +31,16 @@ import {
   ApiCustomUnathorizedResponse,
 } from 'src/common/decorators/swagger.decorators';
 import { Errors } from 'src/common/enums/errors.enum';
-import { DefaultResponse } from 'src/common/interfaces/responses';
+import { Languages } from 'src/common/enums/languages.enum';
+import {
+  DefaultPaginatedResponse,
+  DefaultResponse,
+} from 'src/common/interfaces/responses';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserQuery } from '../dto/user.query.dto';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
 import { User } from '../entities/user.entity';
 import { UserRoles } from '../enums/role.enum';
@@ -52,14 +59,101 @@ export class UsersController {
     description:
       'This endpoint retrieves a list of all users in the system. It can only be accessed by users with the admin or superadmin role.',
   })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filter by email (case-insensitive)',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: UserRoles,
+    description: 'Filter by user role',
+  })
+  @ApiQuery({
+    name: 'lastLoginDate',
+    required: false,
+    description: 'Filter by last login date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'lastActivityDate',
+    required: false,
+    description: 'Filter by last activity date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'trelloUserId',
+    required: false,
+    description: 'Filter by Trello user ID',
+  })
+  @ApiQuery({
+    name: 'trelloUserName',
+    required: false,
+    description: 'Filter by Trello username',
+  })
+  @ApiQuery({
+    name: 'telegramChatId',
+    required: false,
+    description: 'Filter by Telegram Chat ID',
+  })
+  @ApiQuery({
+    name: 'telegramUserName',
+    required: false,
+    description: 'Filter by Telegram username',
+  })
+  @ApiQuery({
+    name: 'language',
+    required: false,
+    enum: Languages,
+    description: 'Filter by user language',
+  })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Date field to filter by (e.g., createdAt, lastLoginDate)',
+  })
+  @ApiQuery({
+    name: 'fromDate',
+    required: false,
+    description: 'Start of date range (ISO format)',
+  })
+  @ApiQuery({
+    name: 'toDate',
+    required: false,
+    description: 'End of date range (ISO format)',
+  })
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sorting order (asc or desc)',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    description: 'Field to order results by (default: createdAt)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
   @ApiOkResponse({
     description: 'All users list',
     type: [User],
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  async findAll(
+    @Query() queryParams: UserQuery,
+  ): Promise<DefaultPaginatedResponse<User>> {
+    return this.usersService.findAll(queryParams);
   }
 
   @UseGuards(JwtAuthGuard)

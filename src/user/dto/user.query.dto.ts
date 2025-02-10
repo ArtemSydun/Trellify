@@ -1,0 +1,59 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { CommonQueryParams } from 'src/common/dto/common.query.dto';
+import { Languages } from 'src/common/enums/languages.enum';
+import { UserRoles } from 'src/user/enums/role.enum';
+
+export class UserQuery extends CommonQueryParams {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional({ enum: UserRoles })
+  @IsOptional()
+  @IsString()
+  role?: UserRoles;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  date?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  fromDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  toDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  trelloUserId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  trelloUserName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  telegramChatId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  telegramUserName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  language?: Languages;
+}

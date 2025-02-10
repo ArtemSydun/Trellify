@@ -18,8 +18,9 @@ import {
   TrelloActionsLogicService,
   TrelloTokensLogicService,
 } from '@trello/logic';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
@@ -84,6 +85,7 @@ export class TrelloWebhooksLogicService {
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly telegramService: TelegramService,
+    private readonly i18nService: I18nService,
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -1151,11 +1153,22 @@ export class TrelloWebhooksLogicService {
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
           args: {
-            boardName: webhookToUpdate.boardName,
-            boardUrl: webhookToUpdate.boardUrl,
+            boardName: webhookToUpdate?.boardName,
+            boardUrl: webhookToUpdate?.boardUrl,
           },
+          lang: userToUpdate.language || Languages.EN,
         }) ||
-          `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) has been disconnected. Please, check notifications status`,
+          this.i18nService.t(
+            I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED,
+            {
+              args: {
+                boardName: webhookToUpdate?.boardName,
+                boardUrl: webhookToUpdate?.boardUrl,
+              },
+              lang: userToUpdate.language || Languages.EN,
+            },
+          ) ||
+          `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) has been disconnected.`,
       ),
     ]);
 
