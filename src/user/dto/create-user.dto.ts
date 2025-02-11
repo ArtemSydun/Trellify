@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsEmail, IsNumber, IsString, Matches } from 'class-validator';
 import {
   PASSWORD_REGEX,
   PASSWORD_ERROR_MESSAGE,
@@ -14,4 +15,9 @@ export class CreateUserDto {
   @IsString()
   @Matches(PASSWORD_REGEX, { message: PASSWORD_ERROR_MESSAGE })
   password: string;
+
+  @ApiProperty()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  timezone: number;
 }
