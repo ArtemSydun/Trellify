@@ -11,6 +11,7 @@ import {
   Ctx,
   Command,
   Help,
+  Hears,
 } from 'nestjs-telegraf';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -18,7 +19,7 @@ import { Languages } from 'src/common/enums/languages.enum';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
-import { Context, Telegraf } from 'telegraf';
+import { Context, Markup, Telegraf } from 'telegraf';
 
 import { TelegramActions } from './telegram.actions';
 import { setLocalizedCommands } from './telegram.commands';
@@ -60,6 +61,12 @@ export class TelegramController {
     const chatId: number = ctx?.update?.message?.from?.id;
     const username: string = ctx?.update?.message?.chat?.username;
 
+    const keyboard = Markup.keyboard([
+      ['💻 Trellify Website', '⚙️ Trellify Configuration'],
+    ])
+      .resize()
+      .persistent();
+
     try {
       if (!chatId) {
         await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
@@ -80,7 +87,7 @@ export class TelegramController {
           }) ||
             `Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here](${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help)`,
 
-          { parse_mode: 'Markdown' },
+          { parse_mode: 'Markdown', ...keyboard },
         );
       }
     } catch (err) {
@@ -92,6 +99,7 @@ export class TelegramController {
           },
         }) ||
           `Hello ${userTelegramName}, authorize through website to start Trellify integration`,
+        keyboard,
       );
 
       await ctx.reply(
@@ -124,12 +132,14 @@ export class TelegramController {
         lang: userLanguage,
       },
     );
+
     const steps = this.i18n.t(I18nKeys.MESSAGES_TELEGRAM_HELP_STEPS, {
       lang: userLanguage,
       args: {
         websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
       },
     });
+
     const closingMessage = this.i18n.t(
       I18nKeys.MESSAGES_TELEGRAM_HELP_CLOSING,
       {
@@ -143,16 +153,21 @@ export class TelegramController {
     await ctx.reply(helpMessage, { parse_mode: 'Markdown' });
   }
 
-  // @On('sticker')
-  // async stickerResponse(ctx): Promise<any> {
-  //   await ctx.reply('👍');
-  // }
+  @Hears('💻 Trellify Website')
+  async sendLinks(ctx: Context) {
+    await ctx.reply(
+      `[💻 Trellify Website](${this.configService.get(configServiceEnum.LANDING_LINK)})\n`,
+      { parse_mode: 'Markdown' },
+    );
+  }
 
-  // @Hears('hi')
-  // async hearsMessage(ctx: Context): Promise<any> {
-  //   const tgUser = ctx.from;
-  //   await ctx.reply(`hello, ${tgUser.first_name}, your nickname is ${tgUser.username}, your country code is ${tgUser.language_code}`);
-  // }
+  @Hears('⚙️ Trellify Configuration')
+  async sendConfigurationLink(ctx: Context) {
+    await ctx.reply(
+      `[⚙️ Trellify Configuration](${this.configService.get(configServiceEnum.FRONTEND_LINK)})\n`,
+      { parse_mode: 'Markdown' },
+    );
+  }
 
   @Command('my_profile')
   async myProfileCommand(ctx): Promise<any> {
