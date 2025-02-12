@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TrelloWebhooksLogicService } from '@trello/logic';
-import { format } from 'date-fns';
+import { addMinutes, format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import * as emoji from 'node-emoji';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
@@ -54,10 +54,7 @@ export class TrelloActionsLogicService {
         await this.userService.findUserByTrelloId(userTrelloId);
 
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
       const notificationLanguage = targetUser.language || Languages.EN;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
@@ -169,12 +166,21 @@ export class TrelloActionsLogicService {
           );
         }
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, targetUser.timezone * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           targetUser,
           {
             boardName: boardData?.name,
             boardUrl: boardData?.url,
-            actionDate: webhookActionDate,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
             cardName: cardData?.name,
             cardUrl: cardData?.url,
@@ -209,10 +215,7 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
@@ -597,6 +600,12 @@ export class TrelloActionsLogicService {
       const userPromises = usersToNotify.map(async (userToNotify) => {
         const userLanguage = userToNotify.language || Languages.EN;
 
+        const userTimeZone = new Date(addMinutes(serverDate, 5 * -60));
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const message = cardActionMessages[actionType]({
           lang: userLanguage,
           actionAuthor,
@@ -623,7 +632,7 @@ export class TrelloActionsLogicService {
             {
               boardName: boardData?.name,
               boardUrl: boardData?.url,
-              actionDate: webhookActionDate,
+              actionDate: formattedTimeZone,
               translatedMessage: message,
               cardName: cardData.name,
               cardUrl: cardData.url,
@@ -660,10 +669,8 @@ export class TrelloActionsLogicService {
 
       const oldBoardName = webhookAction?.action?.data?.old?.name;
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
+
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
       const targetMemberUsername = escapeMarkdown(
@@ -724,12 +731,21 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, userToNotify.timezone * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
             boardName: boardData?.name,
             boardUrl: boardData?.url,
-            actionDate: webhookActionDate,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
             actionAuthor,
             actionAuthorUrl,
@@ -763,10 +779,7 @@ export class TrelloActionsLogicService {
       const adminsToNotify =
         await this.userService.findUsersByTrelloIds(adminTrelloIds);
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
 
       const targetMemberUsername = escapeMarkdown(
         webhookAction?.action?.member?.username ||
@@ -937,12 +950,21 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, userToNotify.timezone * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
             boardName: boardData?.name,
             boardUrl: boardData?.url,
-            actionDate: webhookActionDate,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
             actionAuthor,
             actionAuthorUrl,

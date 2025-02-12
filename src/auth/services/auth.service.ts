@@ -147,6 +147,7 @@ export class AuthService {
       telegram: { username: null, chatId: null },
       trello: { userId: null, token: null, webhooks: [] },
       language,
+      timezone: createUserDto.timezone / 60,
     };
 
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });

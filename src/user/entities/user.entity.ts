@@ -61,6 +61,14 @@ export class User {
   language: Languages;
 
   @ApiProperty({
+    description: 'User timezone (GMT +7)',
+    example: 7,
+    default: 0,
+  })
+  @Prop({ type: Number, default: 0 })
+  timezone: number;
+
+  @ApiProperty({
     description: 'Date of last user login',
     example: new Date(),
     default: new Date(),
