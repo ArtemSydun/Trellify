@@ -38,7 +38,7 @@ import {
 } from 'src/common/interfaces/responses';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
-import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
+import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQuery } from '../dto/user.query.dto';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
@@ -318,19 +318,20 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch('language')
+  @Patch('preferences')
   @ApiOperation({
-    summary: 'Update a user language preference',
-    description: 'This endpoint allows to update user language preference.',
+    summary: 'Update a user preferences (language, timezone)',
+    description:
+      'This endpoint allows to update user locale preferences (language, timezone).',
   })
   @ApiOkResponse({
-    description: 'User language preference updated successfully',
+    description: 'User preferences updated successfully',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'User {{id}} language preference updated successfully',
+          example: 'User {{id}} preferences updated successfully',
         },
         statusCode: {
           type: 'number',
@@ -345,13 +346,13 @@ export class UsersController {
   })
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
-  updateUserLanguagePreference(
+  updateUserPreferences(
     @Req() req,
-    @Body() updateUserLangueageDto: UpdateUserLanguageDto,
+    @Body() updateUserPreferencesDto: UpdateUserPreferencesDto,
   ): Promise<DefaultResponse<User>> {
-    return this.usersService.updateUserLanguagePreference(
+    return this.usersService.updateUserPreferences(
       req.user,
-      updateUserLangueageDto,
+      updateUserPreferencesDto,
       req.i18nContext,
     );
   }
