@@ -25,7 +25,7 @@ import {
   DefaultResponse,
 } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
@@ -51,7 +51,7 @@ export class UsersService {
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
-    private readonly telegramService: TelegramService,
+    private readonly NotificationBotService: NotificationBotService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
@@ -147,7 +147,7 @@ export class UsersService {
             subscriber.trelloUserId,
           );
 
-          this.telegramService.sendMessageToUser(
+          this.NotificationBotService.sendMessageToUser(
             subscriberToNotify.telegram,
             i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
               args: {
@@ -454,13 +454,13 @@ export class UsersService {
         );
       }
 
-      await this.telegramService.sendMessageToUser(
+      await this.NotificationBotService.sendMessageToUser(
         connectTelegramDto,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE) ||
           `Trellify authorized successfully`,
       );
     } else {
-      await this.telegramService.sendMessageToUser(
+      await this.NotificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE) ||
           `Trello notifier bot disconnected successfully`,
@@ -593,7 +593,7 @@ export class UsersService {
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
       const userLanguage = user.language || Languages.EN;
 
-      this.telegramService.sendMessageToUser(
+      this.NotificationBotService.sendMessageToUser(
         user.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
           lang: userLanguage,

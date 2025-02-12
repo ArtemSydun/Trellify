@@ -2,9 +2,9 @@ import { TELEGRAM_BTN_ACTIONS } from 'src/common/constants/telegram';
 import { ISendMessageOptions } from 'src/common/interfaces/sendMessageOptions';
 import { Markup } from 'telegraf';
 
-import { BOT_MESSAGES } from './telegram.messages';
+import { BOT_MESSAGES } from './admin-bot.messages';
 
-export class TelegramUtils {
+export class AdminBotUtils {
   async createDelayedSendMessage(timerValue: number): Promise<any> {
     return new Promise((resolve) => setTimeout(resolve, timerValue));
   }

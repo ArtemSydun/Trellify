@@ -19,7 +19,7 @@ import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -34,7 +34,7 @@ describe('AuthService', () => {
   let usersRepository: UsersRepository;
   let configService: ConfigService;
   let mailerService: MailerService;
-  let telegramService: TelegramService;
+  let notificationBotService: NotificationBotService;
 
   const fixedDate = superAdminStub().lastLoginDate;
 
@@ -54,7 +54,10 @@ describe('AuthService', () => {
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
-        { provide: TelegramService, useValue: createMock<TelegramService>() },
+        {
+          provide: NotificationBotService,
+          useValue: createMock<NotificationBotService>(),
+        },
       ],
     }).compile();
 
@@ -64,7 +67,9 @@ describe('AuthService', () => {
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     configService = moduleRef.get<ConfigService>(ConfigService);
     mailerService = moduleRef.get<MailerService>(MailerService);
-    telegramService = moduleRef.get<TelegramService>(TelegramService);
+    notificationBotService = moduleRef.get<NotificationBotService>(
+      NotificationBotService,
+    );
   });
 
   describe('login', () => {
@@ -86,7 +91,7 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
       jest
-        .spyOn(telegramService, 'fetchTelegramUser')
+        .spyOn(notificationBotService, 'fetchTelegramUser')
         .mockResolvedValue(mockTelegramUser);
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...user,
@@ -106,7 +111,7 @@ describe('AuthService', () => {
         loginUserDto.password,
         user.password,
       );
-      expect(telegramService.fetchTelegramUser).toHaveBeenCalledWith(
+      expect(notificationBotService.fetchTelegramUser).toHaveBeenCalledWith(
         user.telegram.chatId,
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(user.id, {
@@ -144,7 +149,9 @@ describe('AuthService', () => {
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
-      jest.spyOn(telegramService, 'fetchTelegramUser').mockResolvedValue(null);
+      jest
+        .spyOn(notificationBotService, 'fetchTelegramUser')
+        .mockResolvedValue(null);
       (verifyPassword as jest.Mock).mockResolvedValue(false); // Mock password validation to fail
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
@@ -159,7 +166,7 @@ describe('AuthService', () => {
         loginUserDto.password,
         user.password,
       );
-      expect(telegramService.fetchTelegramUser).not.toHaveBeenCalled();
+      expect(notificationBotService.fetchTelegramUser).not.toHaveBeenCalled();
     });
   });
 
@@ -168,6 +175,7 @@ describe('AuthService', () => {
       const createUserDto: CreateUserDto = {
         email: 'test@gmail.com',
         password: 'password123',
+        timezone: 0,
       };
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(false);
@@ -209,6 +217,7 @@ describe('AuthService', () => {
       const createUserDto: CreateUserDto = {
         email: 'test@gmail.com',
         password: 'password123',
+        timezone: 0,
       };
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(true);

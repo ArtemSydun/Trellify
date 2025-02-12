@@ -9,7 +9,7 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
 import { notificationMessageGenerator } from 'src/common/helpers/trello-notifications';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
 import {
@@ -36,7 +36,7 @@ export class TrelloActionsLogicService {
     private readonly userService: UsersService,
     @Inject(forwardRef(() => TrelloWebhooksLogicService))
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
-    private readonly telegramService: TelegramService,
+    private readonly notificationBotService: NotificationBotService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,
   ) {}
@@ -192,7 +192,7 @@ export class TrelloActionsLogicService {
           this.i18n,
         );
 
-        await this.telegramService.sendMessageToUser(
+        await this.notificationBotService.sendMessageToUser(
           targetUser.telegram,
           formattedMessage,
         );
@@ -644,7 +644,7 @@ export class TrelloActionsLogicService {
             this.i18n,
           );
 
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );
@@ -756,7 +756,7 @@ export class TrelloActionsLogicService {
         );
 
         if (message) {
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );
@@ -975,7 +975,7 @@ export class TrelloActionsLogicService {
         );
 
         if (message) {
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );
