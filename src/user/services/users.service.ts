@@ -20,7 +20,10 @@ import {
   encryptText,
   hashPassword,
 } from 'src/common/helpers/hashing';
-import { DefaultResponse } from 'src/common/interfaces/responses';
+import {
+  DefaultPaginatedResponse,
+  DefaultResponse,
+} from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { TelegramService } from 'src/telegram/telegram.service';
 
@@ -28,11 +31,13 @@ import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserLanguageDto } from '../dto/update-user-language.dto';
+import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserQuery } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
+
 import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
@@ -188,8 +193,10 @@ export class UsersService {
     };
   }
 
-  public async findAll(): Promise<User[]> {
-    return await this.userRepository.getAll();
+  public async findAll(
+    filters: UserQuery = {},
+  ): Promise<DefaultPaginatedResponse<User>> {
+    return this.userRepository.getAll(filters);
   }
 
   public async findUserById(id: string, i18n?: I18nContext): Promise<User> {
@@ -338,6 +345,7 @@ export class UsersService {
       userToUpdate.id,
       updatedUserProps,
     );
+
     delete updatedUser.password;
 
     this.logger.log(`User with ID ${userToUpdate.id} updated successfully`);
@@ -352,21 +360,32 @@ export class UsersService {
     return await this.userRepository.bulkUpdateUsers(operations);
   }
 
-  public async updateUserLanguagePreference(
+  public async updateUserPreferences(
     user: string | User,
-    updateUserLanguageDto: UpdateUserLanguageDto,
+    updateUserPreferencesDto: UpdateUserPreferencesDto,
     i18n?: I18nContext,
-  ) {
+  ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user, i18n);
     const updateDate = new Date();
 
-    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
-      language: updateUserLanguageDto.language,
+    const updatedFields: Partial<User> = {
       lastActivityDate: updateDate,
-    });
+    };
+
+    if (updateUserPreferencesDto.language) {
+      updatedFields.language = updateUserPreferencesDto.language;
+    }
+    if (updateUserPreferencesDto.timezone !== undefined) {
+      updatedFields.timezone = updateUserPreferencesDto.timezone;
+    }
+
+    const updatedUser = await this.userRepository.updateById(
+      userToUpdate.id,
+      updatedFields,
+    );
 
     return {
-      message: `User ${userToUpdate.id} language preference updated successfully`,
+      message: `User ${userToUpdate.id} preferences updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };

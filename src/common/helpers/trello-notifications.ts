@@ -225,10 +225,12 @@ export const generateProfilesNotificationBooleans = () => {
     basicProfileActions,
     TrelloWebhookDetailedActions,
   );
+
   const advancedProfile = getKeysFromProfileActions(
     advancedProfileActions,
     TrelloWebhookDetailedActions,
   );
+
   const fullProfile = getKeysFromProfileActions(
     fullProfileActions,
     TrelloWebhookDetailedActions,

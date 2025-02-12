@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TrelloWebhooksLogicService } from '@trello/logic';
-import { format } from 'date-fns';
+import { addMinutes, format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import * as emoji from 'node-emoji';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
@@ -54,10 +54,7 @@ export class TrelloActionsLogicService {
         await this.userService.findUserByTrelloId(userTrelloId);
 
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
       const notificationLanguage = targetUser.language || Languages.EN;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
@@ -156,7 +153,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `${userInitials} you has been added to the board [${boardData?.name}](${boardData.url}) as admin`,
+          `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
       };
 
       const message = targetActionMessages[actionType];
@@ -169,15 +166,24 @@ export class TrelloActionsLogicService {
           );
         }
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (targetUser.timezone || 0) * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           targetUser,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
-            actionDate: webhookActionDate,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
-            cardName: cardData.name,
-            cardUrl: cardData.url,
+            cardName: cardData?.name,
+            cardUrl: cardData?.url,
             actionAuthor,
             actionAuthorUrl,
             actionTarget: targetMemberUsername,
@@ -209,10 +215,7 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
@@ -597,6 +600,14 @@ export class TrelloActionsLogicService {
       const userPromises = usersToNotify.map(async (userToNotify) => {
         const userLanguage = userToNotify.language || Languages.EN;
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (userToNotify.timezone || 0) * -60),
+        );
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const message = cardActionMessages[actionType]({
           lang: userLanguage,
           actionAuthor,
@@ -621,9 +632,9 @@ export class TrelloActionsLogicService {
           const formattedMessage = notificationMessageGenerator(
             userToNotify,
             {
-              boardName: boardData.name,
-              boardUrl: boardData.url,
-              actionDate: webhookActionDate,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+              actionDate: formattedTimeZone,
               translatedMessage: message,
               cardName: cardData.name,
               cardUrl: cardData.url,
@@ -660,10 +671,8 @@ export class TrelloActionsLogicService {
 
       const oldBoardName = webhookAction?.action?.data?.old?.name;
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
+
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
       const targetMemberUsername = escapeMarkdown(
@@ -691,7 +700,7 @@ export class TrelloActionsLogicService {
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_CLOSED, {
             lang: args.lang,
             args: {
-              boardName: boardData.name,
+              boardName: boardData?.name,
             },
           }) || `Board ${boardData?.name} has been closed.`,
 
@@ -699,8 +708,8 @@ export class TrelloActionsLogicService {
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_REOPENED, {
             lang: args.lang,
             args: {
-              boardName: boardData.name,
-              boardUrl: boardData.url,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
             },
           }) ||
           `Board [${boardData?.name}](${boardData?.url}) has been reopened.`,
@@ -724,12 +733,21 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
-            actionDate: webhookActionDate,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
             actionAuthor,
             actionAuthorUrl,
@@ -763,10 +781,7 @@ export class TrelloActionsLogicService {
       const adminsToNotify =
         await this.userService.findUsersByTrelloIds(adminTrelloIds);
 
-      const webhookActionDate = format(
-        new Date(webhookAction?.action?.date),
-        this.configService.get(configServiceEnum.DATE_FORMAT),
-      );
+      const serverDate = new Date(webhookAction?.action?.date);
 
       const targetMemberUsername = escapeMarkdown(
         webhookAction?.action?.member?.username ||
@@ -797,7 +812,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData.url}).`,
+          `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED, {
@@ -809,7 +824,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
           this.i18n?.t(
@@ -824,7 +839,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}) via invitation.`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}) via invitation.`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT, {
@@ -836,7 +851,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData.url}).`,
+          `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_JOINED, {
@@ -848,7 +863,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData.url}).`,
+          `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
           this.i18n?.t(
@@ -863,7 +878,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData.url}).`,
+          `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED, {
@@ -874,7 +889,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field ${customFieldName} has been created on the board [${boardData.name}](${boardData.url})`,
+          `The custom field ${customFieldName} has been created on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_RENAMED, {
@@ -886,7 +901,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field has been renamed from ${oldCustomFieldName} to ${customFieldName} on the board [${boardData.name}](${boardData.url})`,
+          `The custom field has been renamed from ${oldCustomFieldName} to ${customFieldName} on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_DELETED, {
@@ -899,7 +914,7 @@ export class TrelloActionsLogicService {
               boardUrl: args.boardUrl,
             },
           }) ||
-          `The custom field ${customFieldName} has been deleted on the board [${boardData.name}](${boardData.url})`,
+          `The custom field ${customFieldName} has been deleted on the board [${boardData?.name}](${boardData?.url})`,
 
         [TrelloWebhookAdminActions.BOARD_PERM_LEVEL_CHANGED]: (args) =>
           this.i18n?.t(
@@ -913,7 +928,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `Board [${boardData?.name}](${boardData.url}) permission level has been changed to ${permissionLevel}`,
+          `Board [${boardData?.name}](${boardData?.url}) permission level has been changed to ${permissionLevel}`,
       };
 
       const message = adminActionMessages[actionType];
@@ -937,12 +952,21 @@ export class TrelloActionsLogicService {
           boardUrl: boardData?.url,
         });
 
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
+        );
+
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceEnum.DATE_FORMAT),
+        );
+
         const formattedMessage = notificationMessageGenerator(
           userToNotify,
           {
-            boardName: boardData.name,
-            boardUrl: boardData.url,
-            actionDate: webhookActionDate,
+            boardName: boardData?.name,
+            boardUrl: boardData?.url,
+            actionDate: formattedTimeZone,
             translatedMessage: message,
             actionAuthor,
             actionAuthorUrl,

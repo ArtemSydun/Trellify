@@ -33,6 +33,7 @@ export const superAdminStub = () => {
       updatedAt: fixedDate,
     },
     language: Languages.EN,
+    timezone: 2,
     createdAt: fixedDate,
     updatedAt: fixedDate,
     lastLoginDate: fixedDate,
@@ -72,6 +73,7 @@ export const userStub = () => {
       updatedAt: fixedDate,
     },
     language: Languages.EN,
+    timezone: 2,
     lastLoginDate: fixedDate,
     lastActivityDate: fixedDate,
   };

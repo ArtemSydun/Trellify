@@ -122,6 +122,7 @@ export class AuthService {
       `Initiating user registration for email: ${createUserDto.email}`,
     );
 
+    const { email, password, timezone } = createUserDto;
     const language = supportedLanguages.includes(
       i18n?.lang?.split('-')[0] as Languages,
     )
@@ -142,11 +143,12 @@ export class AuthService {
     }
 
     const payload = {
-      email: createUserDto.email,
-      password: createUserDto.password,
+      email,
+      password,
       telegram: { username: null, chatId: null },
       trello: { userId: null, token: null, webhooks: [] },
       language,
+      timezone: timezone !== 0 ? timezone / 60 : timezone,
     };
 
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });

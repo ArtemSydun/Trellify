@@ -28,6 +28,8 @@ import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
+import { UserQuery } from '../dto/user.query.dto';
+import { User } from '../entities/user.entity';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -44,6 +46,7 @@ describe('UsersService', () => {
   let trelloTokensLogicService: TrelloTokensLogicService;
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let telegramService: TelegramService;
+  let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
   beforeEach(async () => {
@@ -91,6 +94,7 @@ describe('UsersService', () => {
       TrelloWebhooksLogicService,
     );
     telegramService = moduleRef.get<TelegramService>(TelegramService);
+    mockUsers = [userStub(), superAdminStub()];
 
     (encryptText as jest.Mock).mockImplementation((text: string) => {
       return text.includes('encrypted') ? text : `encrypted${text}`; // ✅ Avoid double encryption
@@ -126,6 +130,7 @@ describe('UsersService', () => {
       const createUserDto = {
         email: superAdminStub().email,
         password: 'password123',
+        timezone: 0,
       };
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
       jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
@@ -138,7 +143,7 @@ describe('UsersService', () => {
       expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
       expect(usersRepository.create).toHaveBeenCalledWith({
         id: expect.any(String),
-        email: createUserDto.email,
+        ...createUserDto,
         password: 'hashedPassword',
       });
       expect(result).toEqual(superAdminStub());
@@ -148,6 +153,7 @@ describe('UsersService', () => {
       const createUserDto = {
         email: superAdminStub().email,
         password: 'password123',
+        timezone: 0,
       };
       jest
         .spyOn(usersRepository, 'findOneByEmail')
@@ -224,6 +230,50 @@ describe('UsersService', () => {
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).not.toHaveBeenCalled();
       expect(usersRepository.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return filtered users based on email', async () => {
+      const query: UserQuery = {
+        email: mockUsers[0].email,
+        limit: 10,
+        page: 1,
+      };
+
+      jest.spyOn(usersRepository, 'getAll').mockResolvedValue({
+        total: 1,
+        totalPages: 1,
+        limitPerPage: 10,
+        currentPage: 1,
+        data: [mockUsers[0]],
+      });
+
+      const result = await usersService.findAll(query);
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].email).toBe('test1@gmail.com');
+      expect(usersRepository.getAll).toHaveBeenCalledWith(query);
+    });
+
+    it('should return an empty array when no users match the filters', async () => {
+      const query: UserQuery = {
+        email: 'nonexistent@example.com',
+        limit: 10,
+        page: 1,
+      };
+
+      jest.spyOn(usersRepository, 'getAll').mockResolvedValue({
+        total: 0,
+        totalPages: 0,
+        limitPerPage: 10,
+        currentPage: 1,
+        data: [],
+      });
+
+      const result = await usersService.findAll(query);
+      expect(result.data.length).toBe(0);
+      expect(result.total).toBe(0);
+      expect(usersRepository.getAll).toHaveBeenCalledWith(query);
     });
   });
 
@@ -481,22 +531,57 @@ describe('UsersService', () => {
     });
   });
 
-  describe('updateUserLanguagePreference', () => {
-    it('should change user language preference', async () => {
+  describe('updateUserPreferences', () => {
+    it('should update user language preference', async () => {
       const userToUpdate = { ...userStub() };
-      const languageUpdateDto = { language: Languages.UA };
+      const preferencesUpdateDto = { language: Languages.UA };
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(usersRepository, 'updateById')
-        .mockResolvedValue({ ...userToUpdate, ...languageUpdateDto });
+        .mockResolvedValue({ ...userToUpdate, ...preferencesUpdateDto });
 
-      const result = await usersService.updateUserLanguagePreference(
+      const result = await usersService.updateUserPreferences(
         userToUpdate,
-        languageUpdateDto,
+        preferencesUpdateDto,
       );
 
-      expect(result.data?.language).toEqual(languageUpdateDto.language);
+      expect(result.data?.language).toEqual(preferencesUpdateDto.language);
+    });
+
+    it('should update user timezone preference', async () => {
+      const userToUpdate = { ...userStub() };
+      const preferencesUpdateDto = { timezone: -5 };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+      jest
+        .spyOn(usersRepository, 'updateById')
+        .mockResolvedValue({ ...userToUpdate, ...preferencesUpdateDto });
+
+      const result = await usersService.updateUserPreferences(
+        userToUpdate,
+        preferencesUpdateDto,
+      );
+
+      expect(result.data?.timezone).toEqual(preferencesUpdateDto.timezone);
+    });
+
+    it('should update both language and timezone', async () => {
+      const userToUpdate = { ...userStub() };
+      const preferencesUpdateDto = { language: Languages.EN, timezone: 3 };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+      jest
+        .spyOn(usersRepository, 'updateById')
+        .mockResolvedValue({ ...userToUpdate, ...preferencesUpdateDto });
+
+      const result = await usersService.updateUserPreferences(
+        userToUpdate,
+        preferencesUpdateDto,
+      );
+
+      expect(result.data?.language).toEqual(preferencesUpdateDto.language);
+      expect(result.data?.timezone).toEqual(preferencesUpdateDto.timezone);
     });
 
     it('should throw NotFoundException if user does not exist', async () => {
@@ -505,7 +590,7 @@ describe('UsersService', () => {
         .mockRejectedValue(new NotFoundException());
 
       await expect(
-        usersService.updateUserLanguagePreference('non-existent-id', {
+        usersService.updateUserPreferences('non-existent-id', {
           language: Languages.UA,
         }),
       ).rejects.toThrow(NotFoundException);
