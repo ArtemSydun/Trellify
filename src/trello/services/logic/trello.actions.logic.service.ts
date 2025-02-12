@@ -167,7 +167,7 @@ export class TrelloActionsLogicService {
         }
 
         const userTimeZone = new Date(
-          addMinutes(serverDate, targetUser.timezone * 60),
+          addMinutes(serverDate, (targetUser.timezone || 0) * 60),
         );
 
         const formattedTimeZone = format(
@@ -600,7 +600,9 @@ export class TrelloActionsLogicService {
       const userPromises = usersToNotify.map(async (userToNotify) => {
         const userLanguage = userToNotify.language || Languages.EN;
 
-        const userTimeZone = new Date(addMinutes(serverDate, 5 * -60));
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (userToNotify.timezone || 0) * -60),
+        );
         const formattedTimeZone = format(
           userTimeZone,
           this.configService.get(configServiceEnum.DATE_FORMAT),
@@ -732,7 +734,7 @@ export class TrelloActionsLogicService {
         });
 
         const userTimeZone = new Date(
-          addMinutes(serverDate, userToNotify.timezone * 60),
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
         );
 
         const formattedTimeZone = format(
@@ -951,7 +953,7 @@ export class TrelloActionsLogicService {
         });
 
         const userTimeZone = new Date(
-          addMinutes(serverDate, userToNotify.timezone * 60),
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
         );
 
         const formattedTimeZone = format(
