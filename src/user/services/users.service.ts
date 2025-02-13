@@ -13,6 +13,7 @@ import {
   TrelloWebhooksLogicService,
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -25,11 +26,14 @@ import {
   DefaultResponse,
 } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { MailerService } from 'src/mailer/services/mailer.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { ContactUsDto } from '../dto/contact-us.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -51,7 +55,9 @@ export class UsersService {
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
-    private readonly NotificationBotService: NotificationBotService,
+    private readonly notificationBotService: NotificationBotService,
+    private readonly adminBotService: AdminBotService,
+    private readonly mailerService: MailerService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
   }
@@ -147,7 +153,7 @@ export class UsersService {
             subscriber.trelloUserId,
           );
 
-          this.NotificationBotService.sendMessageToUser(
+          this.notificationBotService.sendMessageToUser(
             subscriberToNotify.telegram,
             i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
               args: {
@@ -180,6 +186,11 @@ export class UsersService {
 
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
+
+    await this.adminBotService.notifyAdmins(
+      AdminBotActionsEnum.USER_DELETED,
+      targetUser,
+    );
 
     this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
@@ -454,13 +465,13 @@ export class UsersService {
         );
       }
 
-      await this.NotificationBotService.sendMessageToUser(
+      await this.notificationBotService.sendMessageToUser(
         connectTelegramDto,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE) ||
           `Trellify authorized successfully`,
       );
     } else {
-      await this.NotificationBotService.sendMessageToUser(
+      await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE) ||
           `Trello notifier bot disconnected successfully`,
@@ -593,7 +604,7 @@ export class UsersService {
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
       const userLanguage = user.language || Languages.EN;
 
-      this.NotificationBotService.sendMessageToUser(
+      this.notificationBotService.sendMessageToUser(
         user.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
           lang: userLanguage,
@@ -618,5 +629,32 @@ export class UsersService {
         this.logger.error(`Bulk write error: ${err.writeErrors}`);
       }
     }
+  }
+
+  public async contactUs(
+    formBody: ContactUsDto,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const { email, subject, message, authorized } = formBody;
+    await this.mailerService.sendContactForm(
+      email,
+      subject,
+      message,
+      i18n,
+      authorized,
+    );
+
+    await this.adminBotService.notifyAdmins(AdminBotActionsEnum.CONTACT_US, {
+      email,
+      subject,
+      message,
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_CONTACT_US_EMAIL_SENT_MESSAGE) ||
+        `Your message were sent to Trellify team. We will send you a response in 12-48 hours`,
+      statusCode: HttpStatus.OK,
+    };
   }
 }

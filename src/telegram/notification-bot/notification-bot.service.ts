@@ -213,7 +213,7 @@ export class NotificationBotService implements OnModuleInit {
       }
     });
 
-    this.bot.hears('💻 Trellify Website', async (ctx) => {
+    this.bot.hears('💻 Trellify Website', async (ctx: any) => {
       await ctx.reply(
         `[💻 Trellify Website](${this.configService.get(
           configServiceEnum.LANDING_LINK,
@@ -222,7 +222,7 @@ export class NotificationBotService implements OnModuleInit {
       );
     });
 
-    this.bot.hears('⚙️ Trellify Configuration', async (ctx) => {
+    this.bot.hears('⚙️ Trellify Configuration', async (ctx: any) => {
       await ctx.reply(
         `[⚙️ Trellify Configuration](${this.configService.get(
           configServiceEnum.FRONTEND_LINK,

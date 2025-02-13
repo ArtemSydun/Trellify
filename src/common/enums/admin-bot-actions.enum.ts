@@ -1,0 +1,5 @@
+export enum AdminBotActionsEnum {
+  USER_REGISTERED = 'USER_REGISTERED',
+  USER_DELETED = 'USER_DELETED',
+  CONTACT_US = 'CONTACT_US',
+}

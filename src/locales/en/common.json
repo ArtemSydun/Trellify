@@ -10,7 +10,8 @@
         "email": {
             "registrationEmailSubject": "Confirm your email",
             "registrationEmailMessage": "Please confirm your email by clicking the following link",
-            "registrationEmailSentMessage": "Confirmation link sent to your email {email}"
+            "registrationEmailSentMessage": "Confirmation link sent to your email {email}",
+            "contactUsEmailSentMessage": "Your message were sent to Trellify team. We will send you a response in 12-48 hours"
         },
         "telegram": {
             "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully",
@@ -139,7 +140,8 @@
         "general": {
             "invalidRequest": "The request for the {field} field is invalid.",
             "invalidCredentials": "Invalid credentials",
-            "forbiddenResource": "Forbidden resource"
+            "forbiddenResource": "Forbidden resource",
+            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
             "resetPasswordMismatch": "Password and repeat password does not match"

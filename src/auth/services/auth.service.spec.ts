@@ -20,6 +20,8 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -35,6 +37,7 @@ describe('AuthService', () => {
   let configService: ConfigService;
   let mailerService: MailerService;
   let notificationBotService: NotificationBotService;
+  let adminBotService: AdminBotService;
 
   const fixedDate = superAdminStub().lastLoginDate;
 
@@ -58,6 +61,10 @@ describe('AuthService', () => {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),
         },
+        {
+          provide: AdminBotService,
+          useValue: createMock<AdminBotService>(),
+        },
       ],
     }).compile();
 
@@ -70,6 +77,7 @@ describe('AuthService', () => {
     notificationBotService = moduleRef.get<NotificationBotService>(
       NotificationBotService,
     );
+    adminBotService = moduleRef.get<AdminBotService>(AdminBotService);
   });
 
   describe('login', () => {
@@ -225,6 +233,44 @@ describe('AuthService', () => {
       await expect(
         authService.initiateRegistration(createUserDto),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('confirmRegistration', () => {
+    it('should confirm registration, create user, notify admins, and return success message', async () => {
+      jest.spyOn(authService, 'verifyToken').mockReturnValue({
+        email: 'test@example.com',
+        password: 'hashedpassword',
+        username: 'testuser',
+      });
+
+      const response = await authService.confirmRegistration(
+        'mockToken',
+        undefined,
+      );
+
+      expect(usersService.createUser).toHaveBeenCalledWith(
+        {
+          email: 'test@example.com',
+          password: 'hashedpassword',
+          username: 'testuser',
+        },
+        undefined,
+      );
+
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        AdminBotActionsEnum.USER_REGISTERED,
+        {
+          email: 'test@example.com',
+          password: 'hashedpassword',
+          username: 'testuser',
+        },
+      );
+
+      expect(response).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
     });
   });
 
