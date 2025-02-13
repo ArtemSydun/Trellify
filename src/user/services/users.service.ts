@@ -7,6 +7,7 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   TrelloMembersLogicService,
   TrelloTokensLogicService,
@@ -14,6 +15,7 @@ import {
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -25,7 +27,6 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
-import { SharedConfigService } from 'src/config/shared.config.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
@@ -46,21 +47,18 @@ import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class UsersService {
-  private readonly encryptionKey: string;
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
     private readonly userRepository: UsersRepository,
-    private readonly sharedConfigService: SharedConfigService,
+    private readonly configService: ConfigService,
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly mailerService: MailerService,
-  ) {
-    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-  }
+  ) {}
 
   public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
     if (typeof user === 'string') {
@@ -175,7 +173,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.encryptionKey,
+        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -322,7 +320,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.encryptionKey,
+              this.configService.get(configServiceEnum.ENCRYPTION_KEY),
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -467,8 +465,11 @@ export class UsersService {
 
       await this.notificationBotService.sendMessageToUser(
         connectTelegramDto,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE) ||
-          `Trellify authorized successfully`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE, {
+          args: {
+            workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+          },
+        }) || `Trellify authorized successfully`,
       );
     } else {
       await this.notificationBotService.sendMessageToUser(
@@ -531,7 +532,10 @@ export class UsersService {
     };
 
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
-      updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
+      updatedUserProps.trello.token = encryptText(
+        token,
+        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+      );
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
     }

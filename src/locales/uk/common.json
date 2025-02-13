@@ -16,7 +16,7 @@
         "telegram": {
             "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
             "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
-            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований",
+            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
             "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
             "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
             "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",

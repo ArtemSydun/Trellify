@@ -16,7 +16,7 @@
         "telegram": {
             "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully",
             "notificationsDisconnected": "Notifications for board [{boardName}]({boardUrl}) has been disconnected. Please, check notifications status",
-            "connectionMessage": "Trellify notifier bot authorized successfully",
+            "connectionMessage": "Trellify notifier bot authorized successfully. To manage your notifications setup forward [here]({workspacesLink})",
             "disconnectionMessage": "Trellify notifier bot disconnected successfully",
             "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
             "authorizeThroughWebsite": "Authorize through website",

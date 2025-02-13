@@ -1,7 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { UsersRepository } from '../repositories/users.repository';
-import { SharedConfigService } from 'src/config/shared.config.service';
 import {
   TrelloMembersLogicService,
   TrelloTokensLogicService,
@@ -33,6 +32,7 @@ import { User } from '../entities/user.entity';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -67,8 +67,8 @@ describe('UsersService', () => {
         UsersService,
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         {
-          provide: SharedConfigService,
-          useValue: createMock<SharedConfigService>(),
+          provide: ConfigService,
+          useValue: createMock<ConfigService>(),
         },
         {
           provide: TrelloMembersLogicService,
