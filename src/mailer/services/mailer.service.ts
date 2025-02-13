@@ -98,11 +98,8 @@ export class MailerService {
         text: `${authorized ? `Message from Trellify user` : `Message from website visitor`}\n Email: ${fromEmail}\n\n${message}`,
       });
 
-      console.log('send contact form');
-
       this.logger.log(`📩 Contact form submitted successfully by ${fromEmail}`);
     } catch (error) {
-      console.log(error);
       this.logger.error(`❌ Failed to send contact form: ${error.message}`);
       throw new BadRequestException(
         i18n?.t(I18nKeys.ERRORS_GENERAL_FAILED_SEND_EMAIL, {
