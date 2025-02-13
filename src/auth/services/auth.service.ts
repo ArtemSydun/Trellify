@@ -10,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { I18nContext } from 'nestjs-i18n';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -17,7 +18,8 @@ import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersRepository } from 'src/user/repositories/users.repository';
@@ -36,10 +38,11 @@ export class AuthService {
     private readonly userRepository: UsersRepository,
     private readonly configService: ConfigService,
     private readonly mailService: MailerService,
-    private readonly telegramService: TelegramService,
+    private readonly notificationBotService: NotificationBotService,
+    private readonly adminBotService: AdminBotService,
   ) {}
 
-  private verifyToken(token: string, i18n?: I18nContext): any {
+  public verifyToken(token: string, i18n?: I18nContext): any {
     try {
       const decoded = this.jwtService.verify(token);
       return decoded;
@@ -79,9 +82,10 @@ export class AuthService {
     let updatedTelegramUsername = user.telegram.username;
 
     if (user.telegram.chatId) {
-      const telegramUserProfile = await this.telegramService.fetchTelegramUser(
-        user.telegram.chatId,
-      );
+      const telegramUserProfile =
+        await this.notificationBotService.fetchTelegramUser(
+          user.telegram.chatId,
+        );
 
       if (telegramUserProfile.username) {
         updatedTelegramUsername = telegramUserProfile.username;
@@ -196,7 +200,13 @@ export class AuthService {
       password,
       ...userData,
     };
+
     await this.userService.createUser(newUser, i18n);
+
+    await this.adminBotService.notifyAdmins(
+      AdminBotActionsEnum.USER_REGISTERED,
+      newUser,
+    );
 
     this.logger.log(`User registered successfully: ${email}`);
     return {

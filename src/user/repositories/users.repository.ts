@@ -6,6 +6,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UserQuery } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserRoles } from '../enums/role.enum';
 
 @Injectable()
 export class UsersRepository {
@@ -32,6 +33,13 @@ export class UsersRepository {
     })
       .lean()
       .exec();
+  }
+
+  async findAdmins(): Promise<User[]> {
+    return this.UserModel.find({
+      role: { $in: [UserRoles.admin, UserRoles.superadmin] },
+      // [UserSearchPathEnum.TelegramChatId]: { $exists: true, $ne: null },
+    }).exec();
   }
 
   async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {

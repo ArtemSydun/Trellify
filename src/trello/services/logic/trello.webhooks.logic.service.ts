@@ -36,7 +36,7 @@ import {
 
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { DefaultResponse } from 'src/common/interfaces/responses';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { BoardMember } from 'src/trello/dto/member.dto';
 import {
@@ -84,7 +84,7 @@ export class TrelloWebhooksLogicService {
     private readonly trelloCardsApiService: TrelloCardsApiService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
-    private readonly telegramService: TelegramService,
+    private readonly notificationBotService: NotificationBotService,
     private readonly i18nService: I18nService,
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
@@ -535,7 +535,7 @@ export class TrelloWebhooksLogicService {
           subscribers: webhook.subscribers,
           notifications: updatedNotifications,
         }),
-        this.telegramService.sendMessageToUser(
+        this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
           i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
@@ -606,7 +606,7 @@ export class TrelloWebhooksLogicService {
       await Promise.all([
         this.userService.updateUser(user, updatedUserProps, i18n),
         this.trelloWebhookRepository.create(createdWebhook),
-        this.telegramService.sendMessageToUser(
+        this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
           i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
@@ -1149,7 +1149,7 @@ export class TrelloWebhooksLogicService {
     await Promise.all([
       this.userService.updateUser(userToUpdate, updatedUser, i18n),
 
-      this.telegramService.sendMessageToUser(
+      this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
           args: {

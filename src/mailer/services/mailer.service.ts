@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailerService as MailService } from '@nestjs-modules/mailer';
+import { I18nContext } from 'nestjs-i18n';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
@@ -77,6 +79,35 @@ export class MailerService {
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}: ${error.message}`);
       throw new BadRequestException(error.message);
+    }
+  }
+
+  public async sendContactForm(
+    fromEmail: string,
+    subject: string,
+    message: string,
+    i18n?: I18nContext,
+    authorized?: boolean,
+  ) {
+    try {
+      await this.mailerService.sendMail({
+        to: this.configService.get(configServiceEnum.ADMIN_MAIL),
+        from: this.configService.get(configServiceEnum.MAILER_SENDER),
+        replyTo: fromEmail,
+        subject: `Contact Us: ${subject}`,
+        text: `${authorized ? `Message from Trellify user` : `Message from website visitor`}\n Email: ${fromEmail}\n\n${message}`,
+      });
+
+      this.logger.log(`📩 Contact form submitted successfully by ${fromEmail}`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to send contact form: ${error.message}`);
+      throw new BadRequestException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FAILED_SEND_EMAIL, {
+          args: {
+            adminEmail: this.configService.get(configServiceEnum.ADMIN_MAIL),
+          },
+        }) || 'Failed to send message. Please try again later.',
+      );
     }
   }
 }

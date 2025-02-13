@@ -10,7 +10,8 @@
         "email": {
             "registrationEmailSubject": "Підтвердіть вашу пошту",
             "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
-            "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}"
+            "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}",
+            "contactUsEmailSentMessage": "Your message were sent to Trellify team. We will send you a response in 12-48 hours"
         },
         "telegram": {
             "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
@@ -139,7 +140,8 @@
         "general": {
             "invalidRequest": "Запит для поля {field} є недійсним.",
             "invalidCredentials": "Недійсні облікові дані.",
-            "forbiddenResource": "Доступ до ресурсу заборонено"
+            "forbiddenResource": "Доступ до ресурсу заборонено",
+            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
             "resetPasswordMismatch": "Пароль і повторний пароль не співпадають"
