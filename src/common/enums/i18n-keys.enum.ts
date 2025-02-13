@@ -80,6 +80,7 @@ export enum I18nKeys {
   NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_ADDED = 'common.messages.telegram.notifications.personal.checklistItemMemberAddedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED = 'common.messages.telegram.notifications.personal.checklistItemMemberRemovedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_BOARD_ADMIN_ADDED = 'common.messages.telegram.notifications.personal.boardAdminAddedSelf',
+  NOTIFICATION_TELEGRAM_PERSONAL_BOARD_NORMAL_ROLE_ADDED = 'common.messages.telegram.notifications.personal.boardNormalRoleAddedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_BOARD_MEMBER_REMOVED = 'common.messages.telegram.notifications.personal.boardMemberRemovedSelf',
 
   NOTIFICATION_TELEGRAM_BOARD_RENAMED = 'common.messages.telegram.notifications.board.boardRenamed',

@@ -60,11 +60,15 @@ export class TrelloActionsLogicService {
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
 
       const targetMemberUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username ||
-          webhookAction?.action?.memberCreator?.username,
+        webhookAction?.action?.member?.username,
       );
 
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
+      const targetedChecklistUserId =
+        webhookAction?.action?.data?.checkItem?.idMember ||
+        webhookAction?.action?.data?.old?.idMember ||
+        '';
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
 
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
@@ -148,6 +152,23 @@ export class TrelloActionsLogicService {
               lang: notificationLanguage,
               args: {
                 userInitials,
+                boardName: boardData?.name,
+                boardUrl: boardData?.url,
+                cardName: cardData?.name,
+                cardUrl: cardData?.url,
+              },
+            },
+          ) ||
+          `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
+        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
+          this.i18n?.t(
+            I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_BOARD_NORMAL_ROLE_ADDED,
+            {
+              lang: notificationLanguage,
+              args: {
+                userInitials,
+                boardName: boardData?.name,
+                boardUrl: boardData?.url,
                 cardName: cardData?.name,
                 cardUrl: cardData?.url,
               },
@@ -186,7 +207,7 @@ export class TrelloActionsLogicService {
             cardUrl: cardData?.url,
             actionAuthor,
             actionAuthorUrl,
-            actionTarget: targetMemberUsername,
+            actionTarget: targetMemberUsername || targetedChecklistUserId,
             actionTargetUrl: targetMemberProfileUrl,
           },
           this.i18n,
