@@ -4,7 +4,7 @@ import {
   TrelloActionsLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { createMock } from '@golevelup/ts-jest';
 
 import {
@@ -50,7 +50,7 @@ describe('TrelloActionsLogicService', () => {
   let trelloActionsLogicService: TrelloActionsLogicService;
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let usersService: UsersService;
-  let telegramService: TelegramService;
+  let notificationBotService: NotificationBotService;
 
   let userStubData: User;
   let usersToNotify: User[];
@@ -79,7 +79,10 @@ describe('TrelloActionsLogicService', () => {
           provide: SharedConfigService,
           useValue: createMock<SharedConfigService>(),
         },
-        { provide: TelegramService, useValue: createMock<TelegramService>() },
+        {
+          provide: NotificationBotService,
+          useValue: createMock<NotificationBotService>(),
+        },
         { provide: I18nService, useValue: createMock<I18nService>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
       ],
@@ -93,7 +96,9 @@ describe('TrelloActionsLogicService', () => {
       TrelloActionsLogicService,
     );
 
-    telegramService = moduleRef.get<TelegramService>(TelegramService);
+    notificationBotService = moduleRef.get<NotificationBotService>(
+      NotificationBotService,
+    );
     usersService = moduleRef.get<UsersService>(UsersService);
 
     userStubData = { ...userStub() };
@@ -139,7 +144,7 @@ describe('TrelloActionsLogicService', () => {
       };
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloActionsLogicService.handlePersonalAction(
@@ -159,7 +164,7 @@ describe('TrelloActionsLogicService', () => {
         trelloWebhooksLogicService.disconnectFromTrelloWebhook,
       ).not.toHaveBeenCalled();
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userToNotify.telegram,
         'message',
       );
@@ -191,7 +196,7 @@ describe('TrelloActionsLogicService', () => {
         });
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloActionsLogicService.handlePersonalAction(
@@ -206,13 +211,13 @@ describe('TrelloActionsLogicService', () => {
         userToNotify.trello.userId,
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalled();
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalled();
 
       expect(
         trelloWebhooksLogicService.disconnectFromTrelloWebhook,
       ).toHaveBeenCalledWith(userToNotify, webhookStub);
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userToNotify.telegram,
         undefined,
       );
@@ -226,7 +231,7 @@ describe('TrelloActionsLogicService', () => {
       };
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloActionsLogicService.handleCardActions(
@@ -241,7 +246,7 @@ describe('TrelloActionsLogicService', () => {
         usersToNotifyIds,
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
         usersToNotifyIds.length,
       );
     });
@@ -260,7 +265,7 @@ describe('TrelloActionsLogicService', () => {
       };
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloActionsLogicService.handleBoardActions(
@@ -274,7 +279,7 @@ describe('TrelloActionsLogicService', () => {
         usersToNotifyIds,
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
         usersToNotifyIds.length,
       );
     });
@@ -300,7 +305,7 @@ describe('TrelloActionsLogicService', () => {
         .mockResolvedValue([superAdminStub()]);
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloActionsLogicService.handleAdminActions(
@@ -314,7 +319,7 @@ describe('TrelloActionsLogicService', () => {
         adminsToNotifyIds,
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
         adminsToNotifyIds.length,
       );
     });

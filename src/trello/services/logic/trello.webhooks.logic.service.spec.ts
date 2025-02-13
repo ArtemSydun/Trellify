@@ -6,7 +6,7 @@ import {
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { createMock } from '@golevelup/ts-jest';
 import { decryptText, encryptText } from 'src/common/helpers/hashing';
 
@@ -89,7 +89,7 @@ describe('TrelloWebhooksLogicService', () => {
   let usersService: UsersService;
   let i18nService: I18nService;
 
-  let telegramService: TelegramService;
+  let notificationBotService: NotificationBotService;
 
   let userStubData: User;
   let webhookStubData: Webhook;
@@ -154,7 +154,10 @@ describe('TrelloWebhooksLogicService', () => {
           provide: TrelloCardsApiService,
           useValue: createMock<TrelloCardsApiService>(),
         },
-        { provide: TelegramService, useValue: createMock<TelegramService>() },
+        {
+          provide: NotificationBotService,
+          useValue: createMock<NotificationBotService>(),
+        },
         { provide: I18nService, useValue: createMock<I18nService>() },
       ],
     }).compile();
@@ -187,7 +190,9 @@ describe('TrelloWebhooksLogicService', () => {
       TrelloActionsLogicService,
     );
 
-    telegramService = moduleRef.get<TelegramService>(TelegramService);
+    notificationBotService = moduleRef.get<NotificationBotService>(
+      NotificationBotService,
+    );
     usersService = moduleRef.get<UsersService>(UsersService);
     i18nService = moduleRef.get<I18nService>(I18nService);
 
@@ -986,7 +991,7 @@ describe('TrelloWebhooksLogicService', () => {
         .mockResolvedValue(createdWebhook);
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       const result = await trelloWebhooksLogicService.createTrelloWebhook(
@@ -1071,7 +1076,7 @@ describe('TrelloWebhooksLogicService', () => {
         .mockResolvedValue(undefined);
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       const result = await trelloWebhooksLogicService.createTrelloWebhook(
@@ -1727,7 +1732,9 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'updateById')
         .mockResolvedValue(webhookStubData);
 
-      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue(null);
 
       const result =
         await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
@@ -1758,7 +1765,7 @@ describe('TrelloWebhooksLogicService', () => {
         }),
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userStubData.telegram,
         expect.stringContaining(webhookStubData.boardName),
       );
@@ -1807,7 +1814,9 @@ describe('TrelloWebhooksLogicService', () => {
 
       jest.spyOn(usersService, 'updateUser').mockResolvedValue(null);
 
-      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue(null);
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue(null);
 
       await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
         userStubData,
@@ -1831,7 +1840,7 @@ describe('TrelloWebhooksLogicService', () => {
         .mockResolvedValue(webhookStubData);
 
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
       await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
@@ -1839,7 +1848,7 @@ describe('TrelloWebhooksLogicService', () => {
         webhookStubData,
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userStubData.telegram,
         expect.stringContaining(webhookStubData.boardName),
       );

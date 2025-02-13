@@ -20,7 +20,7 @@ import {
   ApiQuery,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -38,6 +38,7 @@ import {
 } from 'src/common/interfaces/responses';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { ContactUsDto } from '../dto/contact-us.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQuery } from '../dto/user.query.dto';
@@ -154,6 +155,42 @@ export class UsersController {
     @Query() queryParams: UserQuery,
   ): Promise<DefaultPaginatedResponse<User>> {
     return this.usersService.findAll(queryParams);
+  }
+
+  // 1 email per minute
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
+  @ApiOperation({
+    summary: 'Contact us route for user emails',
+    description: 'This endpoint sends a contact us form message.',
+  })
+  @ApiOkResponse({
+    description: 'Contact us',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example:
+            'Your message were sent to Trellify team. We will send you a response in 12-48 hours',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @Post('contact-us')
+  async contactUs(
+    @Body() formBody: ContactUsDto,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return await this.usersService.contactUs(formBody, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard)
