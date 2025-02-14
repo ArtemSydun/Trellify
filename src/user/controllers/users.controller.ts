@@ -41,7 +41,7 @@ import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserQuery } from '../dto/user.query.dto';
+import { UserQueryDto } from '../dto/user.query.dto';
 import { UserWebhookDto } from '../dto/user.webhook.dto';
 import { User } from '../entities/user.entity';
 import { UserRoles } from '../enums/role.enum';
@@ -152,7 +152,7 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   async findAll(
-    @Query() queryParams: UserQuery,
+    @Query() queryParams: UserQueryDto,
   ): Promise<DefaultPaginatedResponse<User>> {
     return this.usersService.findAll(queryParams);
   }

@@ -27,7 +27,7 @@ import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
-import { UserQuery } from '../dto/user.query.dto';
+import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
@@ -259,7 +259,7 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return filtered users based on email', async () => {
-      const query: UserQuery = {
+      const query: UserQueryDto = {
         email: mockUsers[0].email,
         limit: 10,
         page: 1,
@@ -280,7 +280,7 @@ describe('UsersService', () => {
     });
 
     it('should return an empty array when no users match the filters', async () => {
-      const query: UserQuery = {
+      const query: UserQueryDto = {
         email: 'nonexistent@example.com',
         limit: 10,
         page: 1,
