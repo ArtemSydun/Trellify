@@ -5,7 +5,7 @@ import { CommonQueryParams } from 'src/common/dto/common.query.dto';
 import { Languages } from 'src/common/enums/languages.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 
-export class UserQuery extends CommonQueryParams {
+export class UserQueryDto extends CommonQueryParams {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
