@@ -35,7 +35,10 @@ import {
 } from 'src/common/helpers/trello-notifications';
 
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
-import { DefaultResponse } from 'src/common/interfaces/responses';
+import {
+  DefaultPaginatedResponse,
+  DefaultResponse,
+} from 'src/common/interfaces/responses';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { BoardMember } from 'src/trello/dto/member.dto';
@@ -43,6 +46,7 @@ import {
   UpdateManyNotificationsDto,
   UpdateNotificationsDto,
 } from 'src/trello/dto/notifications.dto';
+import { WebhookQueryDto } from 'src/trello/dto/webhook.query.dto';
 import {
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationCategories,
@@ -193,6 +197,12 @@ export class TrelloWebhooksLogicService {
     return webhook;
   }
 
+  async findWebhooks(
+    queryParams: WebhookQueryDto,
+  ): Promise<DefaultPaginatedResponse<Webhook>> {
+    return await this.trelloWebhookRepository.getAll(queryParams);
+  }
+
   async findAllWebhooks(): Promise<Webhook[]> {
     return await this.trelloWebhookRepository.findAll();
   }
@@ -261,6 +271,9 @@ export class TrelloWebhooksLogicService {
       );
     } catch (error) {
       if (error.message === i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_APP_KEY)) {
+        this.logger.warn(
+          `User ${existingWebhook.author.trelloUserId} has invalid trello token`,
+        );
         // await this.removeAllWebhooksCreatedByUser(webhooksAuthor, i18n);
         // throw new BadRequestException(`Please refresh page`);
       }

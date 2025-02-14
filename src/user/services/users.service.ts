@@ -38,7 +38,7 @@ import { ContactUsDto } from '../dto/contact-us.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserQuery } from '../dto/user.query.dto';
+import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
@@ -203,7 +203,7 @@ export class UsersService {
   }
 
   public async findAll(
-    filters: UserQuery = {},
+    filters: UserQueryDto = {},
   ): Promise<DefaultPaginatedResponse<User>> {
     return this.userRepository.getAll(filters);
   }
