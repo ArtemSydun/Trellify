@@ -10,12 +10,13 @@
         "email": {
             "registrationEmailSubject": "Підтвердіть вашу пошту",
             "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
-            "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}"
+            "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}",
+            "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин"
         },
         "telegram": {
             "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
             "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
-            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований",
+            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
             "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
             "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
             "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",
@@ -37,6 +38,7 @@
                     "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
                     "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
                     "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
+                    "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
                     "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
                 },
                 "board": {
@@ -80,7 +82,7 @@
                     "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
                     "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
                     "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
-                    "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було додано нову звичайну роль для користувача [{memberName}]({memberUrl}).",
+                    "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
                     "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
                     "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
                     "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
@@ -139,7 +141,8 @@
         "general": {
             "invalidRequest": "Запит для поля {field} є недійсним.",
             "invalidCredentials": "Недійсні облікові дані.",
-            "forbiddenResource": "Доступ до ресурсу заборонено"
+            "forbiddenResource": "Доступ до ресурсу заборонено",
+            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
             "resetPasswordMismatch": "Пароль і повторний пароль не співпадають"

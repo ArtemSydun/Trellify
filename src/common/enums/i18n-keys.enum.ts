@@ -10,6 +10,7 @@ export enum I18nKeys {
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE = 'common.messages.email.registrationEmailMessage',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SENT_MESSAGE = 'common.messages.email.registrationEmailSentMessage',
+  MESSAGES_EMAIL_CONTACT_US_EMAIL_SENT_MESSAGE = 'common.messages.email.contactUsEmailSentMessage',
 
   // Telegram Notifications
   MESSAGES_TELEGRAM_CONNECTION_MESSAGE = 'common.messages.telegram.connectionMessage',
@@ -68,6 +69,7 @@ export enum I18nKeys {
   ERRORS_GENERAL_INVALID_REQUEST = 'common.errors.general.invalidRequest',
   ERRORS_GENERAL_INVALID_CREDENTIALS = 'common.errors.general.invalidCredentials',
   ERRORS_GENERAL_FORBIDDEN_RESOURCE = 'common.errors.general.forbiddenResource',
+  ERRORS_GENERAL_FAILED_SEND_EMAIL = 'common.errors.general.failedSendEmail',
 
   // Auth Errors
   ERRORS_AUTH_RESET_PASSWORD_MISMATCH = 'common.errors.auth.resetPasswordMismatch',
@@ -78,6 +80,7 @@ export enum I18nKeys {
   NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_ADDED = 'common.messages.telegram.notifications.personal.checklistItemMemberAddedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED = 'common.messages.telegram.notifications.personal.checklistItemMemberRemovedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_BOARD_ADMIN_ADDED = 'common.messages.telegram.notifications.personal.boardAdminAddedSelf',
+  NOTIFICATION_TELEGRAM_PERSONAL_BOARD_NORMAL_ROLE_ADDED = 'common.messages.telegram.notifications.personal.boardNormalRoleAddedSelf',
   NOTIFICATION_TELEGRAM_PERSONAL_BOARD_MEMBER_REMOVED = 'common.messages.telegram.notifications.personal.boardMemberRemovedSelf',
 
   NOTIFICATION_TELEGRAM_BOARD_RENAMED = 'common.messages.telegram.notifications.board.boardRenamed',

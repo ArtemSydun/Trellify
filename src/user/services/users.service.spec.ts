@@ -1,13 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { UsersRepository } from '../repositories/users.repository';
-import { SharedConfigService } from 'src/config/shared.config.service';
 import {
   TrelloMembersLogicService,
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import {
   BadRequestException,
   ConflictException,
@@ -28,8 +27,12 @@ import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
-import { UserQuery } from '../dto/user.query.dto';
+import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { MailerService } from 'src/mailer/services/mailer.service';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -45,7 +48,8 @@ describe('UsersService', () => {
   let trelloMembersLogicService: TrelloMembersLogicService;
   let trelloTokensLogicService: TrelloTokensLogicService;
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
-  let telegramService: TelegramService;
+  let notificationBotService: NotificationBotService;
+  let adminBotService: AdminBotService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -63,8 +67,8 @@ describe('UsersService', () => {
         UsersService,
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         {
-          provide: SharedConfigService,
-          useValue: createMock<SharedConfigService>(),
+          provide: ConfigService,
+          useValue: createMock<ConfigService>(),
         },
         {
           provide: TrelloMembersLogicService,
@@ -78,7 +82,18 @@ describe('UsersService', () => {
           provide: TrelloWebhooksLogicService,
           useValue: createMock<TrelloWebhooksLogicService>(),
         },
-        { provide: TelegramService, useValue: createMock<TelegramService>() },
+        {
+          provide: NotificationBotService,
+          useValue: createMock<NotificationBotService>(),
+        },
+        {
+          provide: AdminBotService,
+          useValue: createMock<AdminBotService>(),
+        },
+        {
+          provide: MailerService,
+          useValue: createMock<MailerService>(),
+        },
       ],
     }).compile();
 
@@ -93,7 +108,11 @@ describe('UsersService', () => {
     trelloWebhooksLogicService = moduleRef.get<TrelloWebhooksLogicService>(
       TrelloWebhooksLogicService,
     );
-    telegramService = moduleRef.get<TelegramService>(TelegramService);
+    notificationBotService = moduleRef.get<NotificationBotService>(
+      NotificationBotService,
+    );
+
+    adminBotService = moduleRef.get<AdminBotService>(AdminBotService);
     mockUsers = [userStub(), superAdminStub()];
 
     (encryptText as jest.Mock).mockImplementation((text: string) => {
@@ -188,10 +207,15 @@ describe('UsersService', () => {
         userToDelete.id,
         undefined,
       );
+
       expect(
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        AdminBotActionsEnum.USER_DELETED,
+        userToDelete,
+      );
       expect(result).toEqual({
         message: expect.stringContaining(userToDelete.email),
         statusCode: HttpStatus.OK,
@@ -235,7 +259,7 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return filtered users based on email', async () => {
-      const query: UserQuery = {
+      const query: UserQueryDto = {
         email: mockUsers[0].email,
         limit: 10,
         page: 1,
@@ -256,7 +280,7 @@ describe('UsersService', () => {
     });
 
     it('should return an empty array when no users match the filters', async () => {
-      const query: UserQuery = {
+      const query: UserQueryDto = {
         email: 'nonexistent@example.com',
         limit: 10,
         page: 1,
@@ -698,7 +722,9 @@ describe('UsersService', () => {
       // Mocking user retrieval and repository operations
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(null); // No conflicting user found
-      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue();
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue();
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...userToUpdate,
         telegram: connectTelegramDto,
@@ -719,7 +745,7 @@ describe('UsersService', () => {
         UserSearchPathEnum.TelegramChatId,
         connectTelegramDto.chatId,
       );
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         connectTelegramDto,
         'Trellify authorized successfully',
       );
@@ -758,7 +784,7 @@ describe('UsersService', () => {
         userToUpdate.id,
         undefined,
       );
-      expect(telegramService.sendMessageToUser).not.toHaveBeenCalled();
+      expect(notificationBotService.sendMessageToUser).not.toHaveBeenCalled();
       expect(usersRepository.updateById).not.toHaveBeenCalled();
     });
 
@@ -773,7 +799,9 @@ describe('UsersService', () => {
 
       // Mocking necessary dependencies
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
-      jest.spyOn(telegramService, 'sendMessageToUser').mockResolvedValue();
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue();
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...userToUpdate,
         telegram: connectTelegramDto,
@@ -792,7 +820,7 @@ describe('UsersService', () => {
         userToUpdate.id,
         undefined,
       );
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledWith(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userToUpdate.telegram,
         'Trello notifier bot disconnected successfully',
       );
@@ -1051,7 +1079,7 @@ describe('UsersService', () => {
         .spyOn(usersService, 'updateManyUsers')
         .mockResolvedValue({ acknowledged: true, modifiedCount: 2 });
       jest
-        .spyOn(telegramService, 'sendMessageToUser')
+        .spyOn(notificationBotService, 'sendMessageToUser')
         .mockImplementation(jest.fn());
 
       await usersService.removeWebhookFromAllUsers(webhookToDelete);
@@ -1080,7 +1108,7 @@ describe('UsersService', () => {
         })),
       );
 
-      expect(telegramService.sendMessageToUser).toHaveBeenCalledTimes(
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
         connectedUsers.length,
       );
 

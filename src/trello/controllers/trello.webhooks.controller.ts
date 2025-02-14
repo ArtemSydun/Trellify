@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpStatus,
   Patch,
+  Query,
 } from '@nestjs/common';
 import {
   ApiExcludeEndpoint,
@@ -16,6 +17,7 @@ import {
   getSchemaPath,
   ApiOperation,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -36,6 +38,7 @@ import {
   UpdateManyNotificationsDto,
   UpdateNotificationsDto,
 } from '../dto/notifications.dto';
+import { WebhookQueryDto } from '../dto/webhook.query.dto';
 import { Webhook } from '../entities/webhook.entity';
 import { NotificationProfiles } from '../interfaces/notification-profiles.interface';
 import { TrelloWebhooksLogicService } from '../services/logic/trello.webhooks.logic.service';
@@ -91,11 +94,75 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
-  @Get('all')
+  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Get('')
+  @ApiOperation({ summary: 'Find webhooks with pagination & filtering' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10)',
+  })
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    type: String,
+    enum: ['asc', 'desc'],
+    description: 'Sorting order (asc/desc, default: desc)',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    type: String,
+    enum: ['createdAt', 'updatedAt', 'boardName'],
+    description: 'Sort by field (default: createdAt)',
+  })
+  @ApiQuery({
+    name: 'idModel',
+    required: false,
+    type: String,
+    description: 'Filter by Trello model ID',
+  })
+  @ApiQuery({
+    name: 'boardName',
+    required: false,
+    type: String,
+    description: 'Filter by board name (partial match)',
+  })
+  @ApiQuery({
+    name: 'trelloUserId',
+    required: false,
+    type: String,
+    description: 'Filter by webhook creator (Trello user ID)',
+  })
+  @ApiQuery({
+    name: 'subscriberId',
+    required: false,
+    type: String,
+    description: 'Filter by subscriber ID',
+  })
+  @ApiQuery({
+    name: 'fromDate',
+    required: false,
+    type: String,
+    description: 'Start date for filtering (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'toDate',
+    required: false,
+    type: String,
+    description: 'End date for filtering (YYYY-MM-DD)',
+  })
   @ApiCustomUnathorizedResponse()
-  getAllWebhooksList() {
-    return this.webhooksService.findAllWebhooks();
+  @ApiCustomForbiddenResponse()
+  findWebhooks(@Query() queryParams: WebhookQueryDto) {
+    return this.webhooksService.findWebhooks(queryParams);
   }
 
   @UseGuards(JwtAuthGuard)

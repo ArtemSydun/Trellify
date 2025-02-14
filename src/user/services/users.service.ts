@@ -7,12 +7,15 @@ import {
   Logger,
   ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   TrelloMembersLogicService,
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -24,16 +27,18 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
-import { SharedConfigService } from 'src/config/shared.config.service';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { MailerService } from 'src/mailer/services/mailer.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
+import { ContactUsDto } from '../dto/contact-us.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserQuery } from '../dto/user.query.dto';
+import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPathEnum } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
@@ -42,19 +47,18 @@ import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class UsersService {
-  private readonly encryptionKey: string;
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
     private readonly userRepository: UsersRepository,
-    private readonly sharedConfigService: SharedConfigService,
+    private readonly configService: ConfigService,
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
-    private readonly telegramService: TelegramService,
-  ) {
-    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-  }
+    private readonly notificationBotService: NotificationBotService,
+    private readonly adminBotService: AdminBotService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
     if (typeof user === 'string') {
@@ -147,7 +151,7 @@ export class UsersService {
             subscriber.trelloUserId,
           );
 
-          this.telegramService.sendMessageToUser(
+          this.notificationBotService.sendMessageToUser(
             subscriberToNotify.telegram,
             i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
               args: {
@@ -169,7 +173,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.encryptionKey,
+        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -180,6 +184,11 @@ export class UsersService {
 
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
+
+    await this.adminBotService.notifyAdmins(
+      AdminBotActionsEnum.USER_DELETED,
+      targetUser,
+    );
 
     this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
@@ -194,7 +203,7 @@ export class UsersService {
   }
 
   public async findAll(
-    filters: UserQuery = {},
+    filters: UserQueryDto = {},
   ): Promise<DefaultPaginatedResponse<User>> {
     return this.userRepository.getAll(filters);
   }
@@ -311,7 +320,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.encryptionKey,
+              this.configService.get(configServiceEnum.ENCRYPTION_KEY),
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -454,13 +463,16 @@ export class UsersService {
         );
       }
 
-      await this.telegramService.sendMessageToUser(
+      await this.notificationBotService.sendMessageToUser(
         connectTelegramDto,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE) ||
-          `Trellify authorized successfully`,
+        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE, {
+          args: {
+            workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+          },
+        }) || `Trellify authorized successfully`,
       );
     } else {
-      await this.telegramService.sendMessageToUser(
+      await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE) ||
           `Trello notifier bot disconnected successfully`,
@@ -520,7 +532,10 @@ export class UsersService {
     };
 
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
-      updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
+      updatedUserProps.trello.token = encryptText(
+        token,
+        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+      );
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
     }
@@ -593,7 +608,7 @@ export class UsersService {
     const sendTelegramNotification = usersConnectedToWebhook.map((user) => {
       const userLanguage = user.language || Languages.EN;
 
-      this.telegramService.sendMessageToUser(
+      this.notificationBotService.sendMessageToUser(
         user.telegram,
         i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
           lang: userLanguage,
@@ -618,5 +633,32 @@ export class UsersService {
         this.logger.error(`Bulk write error: ${err.writeErrors}`);
       }
     }
+  }
+
+  public async contactUs(
+    formBody: ContactUsDto,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const { email, subject, message, authorized } = formBody;
+    await this.mailerService.sendContactForm(
+      email,
+      subject,
+      message,
+      i18n,
+      authorized,
+    );
+
+    await this.adminBotService.notifyAdmins(AdminBotActionsEnum.CONTACT_US, {
+      email,
+      subject,
+      message,
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_CONTACT_US_EMAIL_SENT_MESSAGE) ||
+        `Your message were sent to Trellify team. We will send you a response in 12-48 hours`,
+      statusCode: HttpStatus.OK,
+    };
   }
 }

@@ -9,7 +9,7 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
 import { notificationMessageGenerator } from 'src/common/helpers/trello-notifications';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
 import {
@@ -36,7 +36,7 @@ export class TrelloActionsLogicService {
     private readonly userService: UsersService,
     @Inject(forwardRef(() => TrelloWebhooksLogicService))
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
-    private readonly telegramService: TelegramService,
+    private readonly notificationBotService: NotificationBotService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,
   ) {}
@@ -60,11 +60,15 @@ export class TrelloActionsLogicService {
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
 
       const targetMemberUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username ||
-          webhookAction?.action?.memberCreator?.username,
+        webhookAction?.action?.member?.username,
       );
 
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
+      const targetedChecklistUserId =
+        webhookAction?.action?.data?.checkItem?.idMember ||
+        webhookAction?.action?.data?.old?.idMember ||
+        '';
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
 
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
@@ -148,6 +152,23 @@ export class TrelloActionsLogicService {
               lang: notificationLanguage,
               args: {
                 userInitials,
+                boardName: boardData?.name,
+                boardUrl: boardData?.url,
+                cardName: cardData?.name,
+                cardUrl: cardData?.url,
+              },
+            },
+          ) ||
+          `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
+        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
+          this.i18n?.t(
+            I18nKeys.NOTIFICATION_TELEGRAM_PERSONAL_BOARD_NORMAL_ROLE_ADDED,
+            {
+              lang: notificationLanguage,
+              args: {
+                userInitials,
+                boardName: boardData?.name,
+                boardUrl: boardData?.url,
                 cardName: cardData?.name,
                 cardUrl: cardData?.url,
               },
@@ -186,13 +207,13 @@ export class TrelloActionsLogicService {
             cardUrl: cardData?.url,
             actionAuthor,
             actionAuthorUrl,
-            actionTarget: targetMemberUsername,
+            actionTarget: targetMemberUsername || targetedChecklistUserId,
             actionTargetUrl: targetMemberProfileUrl,
           },
           this.i18n,
         );
 
-        await this.telegramService.sendMessageToUser(
+        await this.notificationBotService.sendMessageToUser(
           targetUser.telegram,
           formattedMessage,
         );
@@ -646,7 +667,7 @@ export class TrelloActionsLogicService {
             this.i18n,
           );
 
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );
@@ -758,7 +779,7 @@ export class TrelloActionsLogicService {
         );
 
         if (message) {
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );
@@ -977,7 +998,7 @@ export class TrelloActionsLogicService {
         );
 
         if (message) {
-          await this.telegramService.sendMessageToUser(
+          await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
             formattedMessage,
           );

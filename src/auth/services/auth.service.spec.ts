@@ -19,7 +19,9 @@ import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
-import { TelegramService } from 'src/telegram/telegram.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -34,7 +36,8 @@ describe('AuthService', () => {
   let usersRepository: UsersRepository;
   let configService: ConfigService;
   let mailerService: MailerService;
-  let telegramService: TelegramService;
+  let notificationBotService: NotificationBotService;
+  let adminBotService: AdminBotService;
 
   const fixedDate = superAdminStub().lastLoginDate;
 
@@ -54,7 +57,14 @@ describe('AuthService', () => {
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
-        { provide: TelegramService, useValue: createMock<TelegramService>() },
+        {
+          provide: NotificationBotService,
+          useValue: createMock<NotificationBotService>(),
+        },
+        {
+          provide: AdminBotService,
+          useValue: createMock<AdminBotService>(),
+        },
       ],
     }).compile();
 
@@ -64,7 +74,10 @@ describe('AuthService', () => {
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     configService = moduleRef.get<ConfigService>(ConfigService);
     mailerService = moduleRef.get<MailerService>(MailerService);
-    telegramService = moduleRef.get<TelegramService>(TelegramService);
+    notificationBotService = moduleRef.get<NotificationBotService>(
+      NotificationBotService,
+    );
+    adminBotService = moduleRef.get<AdminBotService>(AdminBotService);
   });
 
   describe('login', () => {
@@ -86,7 +99,7 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
       jest
-        .spyOn(telegramService, 'fetchTelegramUser')
+        .spyOn(notificationBotService, 'fetchTelegramUser')
         .mockResolvedValue(mockTelegramUser);
       jest.spyOn(usersRepository, 'updateById').mockResolvedValue({
         ...user,
@@ -106,7 +119,7 @@ describe('AuthService', () => {
         loginUserDto.password,
         user.password,
       );
-      expect(telegramService.fetchTelegramUser).toHaveBeenCalledWith(
+      expect(notificationBotService.fetchTelegramUser).toHaveBeenCalledWith(
         user.telegram.chatId,
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(user.id, {
@@ -144,7 +157,9 @@ describe('AuthService', () => {
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
-      jest.spyOn(telegramService, 'fetchTelegramUser').mockResolvedValue(null);
+      jest
+        .spyOn(notificationBotService, 'fetchTelegramUser')
+        .mockResolvedValue(null);
       (verifyPassword as jest.Mock).mockResolvedValue(false); // Mock password validation to fail
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
@@ -159,7 +174,7 @@ describe('AuthService', () => {
         loginUserDto.password,
         user.password,
       );
-      expect(telegramService.fetchTelegramUser).not.toHaveBeenCalled();
+      expect(notificationBotService.fetchTelegramUser).not.toHaveBeenCalled();
     });
   });
 
@@ -168,6 +183,7 @@ describe('AuthService', () => {
       const createUserDto: CreateUserDto = {
         email: 'test@gmail.com',
         password: 'password123',
+        timezone: 0,
       };
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(false);
@@ -209,6 +225,7 @@ describe('AuthService', () => {
       const createUserDto: CreateUserDto = {
         email: 'test@gmail.com',
         password: 'password123',
+        timezone: 0,
       };
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(true);
@@ -216,6 +233,44 @@ describe('AuthService', () => {
       await expect(
         authService.initiateRegistration(createUserDto),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('confirmRegistration', () => {
+    it('should confirm registration, create user, notify admins, and return success message', async () => {
+      jest.spyOn(authService, 'verifyToken').mockReturnValue({
+        email: 'test@example.com',
+        password: 'hashedpassword',
+        username: 'testuser',
+      });
+
+      const response = await authService.confirmRegistration(
+        'mockToken',
+        undefined,
+      );
+
+      expect(usersService.createUser).toHaveBeenCalledWith(
+        {
+          email: 'test@example.com',
+          password: 'hashedpassword',
+          username: 'testuser',
+        },
+        undefined,
+      );
+
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        AdminBotActionsEnum.USER_REGISTERED,
+        {
+          email: 'test@example.com',
+          password: 'hashedpassword',
+          username: 'testuser',
+        },
+      );
+
+      expect(response).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
     });
   });
 
