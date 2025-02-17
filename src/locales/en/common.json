@@ -85,6 +85,7 @@
                     "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
                     "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
                     "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
+                    "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
                     "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
                     "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
                     "customFieldRenamed": "The custom field has been renamed from {oldCustomFieldName} to {customFieldName} on the board [{boardName}]({boardUrl}).",

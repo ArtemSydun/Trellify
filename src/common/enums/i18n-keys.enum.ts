@@ -124,6 +124,7 @@ export enum I18nKeys {
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT = 'common.messages.telegram.notifications.admin.boardMemberLeft',
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED = 'common.messages.telegram.notifications.admin.boardMemberRemoved',
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_NORMAL_ROLE_ADDED = 'common.messages.telegram.notifications.admin.boardNormalRoleAdded',
+  NOTIFICATION_TELEGRAM_BOARD_MEMBER_NORMAL_ROLE_BECAME = 'common.messages.telegram.notifications.admin.boardNormalRoleBecame',
   NOTIFICATION_TELEGRAM_BOARD_ADMIN_ADDED = 'common.messages.telegram.notifications.admin.boardAdminAdded',
   NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED = 'common.messages.telegram.notifications.admin.customFieldCreated',
   NOTIFICATION_TELEGRAM_CUSTOM_FIELD_RENAMED = 'common.messages.telegram.notifications.admin.customFieldRenamed',

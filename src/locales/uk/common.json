@@ -85,6 +85,7 @@
                     "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
                     "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
                     "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
+                    "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
                     "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
                     "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
                     "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
