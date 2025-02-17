@@ -36,6 +36,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { ChangeEmailDto } from '../dto/change-email.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
@@ -300,6 +301,76 @@ export class UsersController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email')
+  @ApiOperation({
+    summary: 'Change email.',
+    description: 'This endpoint allows users to change their email.',
+  })
+  @ApiOkResponse({
+    description: 'Email change success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Email successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  changeUserEmail(
+    @Req() req,
+    @Body() changeEmailDto: ChangeEmailDto,
+  ): Promise<DefaultResponse<null>> {
+    return this.usersService.changeUserEmail(
+      req.user.id,
+      changeEmailDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @ApiOperation({
+    summary: 'Change password.',
+    description: 'This endpoint allows users to change their password.',
+  })
+  @ApiOkResponse({
+    description: 'Password changed success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  changeUserPassword(
+    @Req() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<DefaultResponse<null>> {
+    return this.usersService.changeUserPassword(
+      req.user.id,
+      changePasswordDto,
+      req.i18nContext,
+    );
+  }
+
   @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -487,41 +558,6 @@ export class UsersController {
       updateUserDto,
       req.i18nContext,
       req.user,
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('change-password')
-  @ApiOperation({
-    summary: 'Change password.',
-    description: 'This endpoint allows users to change their password.',
-  })
-  @ApiOkResponse({
-    description: 'Password changed success',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Password successfully changed',
-        },
-        statusCode: {
-          type: 'number',
-          example: HttpStatus.OK,
-        },
-      },
-    },
-  })
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomNotFoundResponse('User', 'id')
-  changeUserPassword(
-    @Req() req,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ): Promise<DefaultResponse<null>> {
-    return this.usersService.changeUserPassword(
-      req.user.id,
-      changePasswordDto,
-      req.i18nContext,
     );
   }
 }

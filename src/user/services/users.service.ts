@@ -33,6 +33,7 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 import { Webhook } from 'src/trello/entities/webhook.entity';
+import { ChangeEmailDto } from '../dto/change-email.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
@@ -418,12 +419,39 @@ export class UsersService {
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
 
-  public async changeUserPassword(
+  public async changeUserEmail(
     user: string | User,
-    changePasswordDto: ChangePasswordDto,
+    changeEmailDto: ChangeEmailDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     const userToUpdate = await this.getUser(user);
+    const { newEmail, password } = changeEmailDto;
+
+    if (userToUpdate.email === newEmail) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
+          'New email must be different from current',
+      );
+    }
+
+    await verifyPassword(password, userToUpdate.password);
+
+    // await this.mailerService.sendChangeEmailLink(newEmail);
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY) ||
+        `Confirmation link sent on ${newEmail}`,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  public async changeUserPassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const userToUpdate = await this.userRepository.findOneById(userId);
     const { oldPassword, newPassword } = changePasswordDto;
 
     if (oldPassword === newPassword) {
