@@ -91,19 +91,21 @@ export class TrelloWebhookRepository {
       toDate,
     } = filters;
 
-    const perPage = limit; // Elements per page
-    const offset = (page - 1) * perPage; // Calculate skip amount
+    const perPage = limit;
+    const offset = (page - 1) * perPage;
 
     const query: any = {};
 
     if (idModel) query.idModel = idModel;
     if (boardName) query.boardName = { $regex: boardName, $options: 'i' };
     if (authorId) query['author.trelloUserId'] = authorId;
-    if (subscriberId) query['subscribers.trelloUserId'] = subscriberId;
+    if (subscriberId)
+      query['subscribers.trelloUserId'] = { $in: [subscriberId] };
 
     // Date filtering
     if (createdAt) query.createdAt = { $gte: new Date(createdAt) };
     if (updatedAt) query.updatedAt = { $gte: new Date(updatedAt) };
+
     if (fromDate || toDate) {
       query.createdAt = {};
       if (fromDate) query.createdAt.$gte = new Date(fromDate);

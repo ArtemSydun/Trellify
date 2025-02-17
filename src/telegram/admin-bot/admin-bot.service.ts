@@ -82,6 +82,8 @@ export class AdminBotService implements OnModuleInit {
   async notifyAdmins(action: any, payload: any) {
     const adminsToNotify = await this.userRepository.findAdmins();
 
+    const dateString = `<b>📅 Date:</b> ${new Date().toLocaleString()}`;
+
     if (adminsToNotify.length === 0) {
       this.logger.warn('No admins found to notify.');
       return;
@@ -92,23 +94,26 @@ export class AdminBotService implements OnModuleInit {
     switch (action) {
       case AdminBotActionsEnum.USER_REGISTERED: {
         const { email } = payload;
-        notification = `User ${email} registered successfully \nDate: ${new Date()}`;
+        notification =
+          `User ${email} registered in Trellify successfully \n` + dateString;
         break;
       }
 
       case AdminBotActionsEnum.USER_DELETED: {
         const { email } = payload;
-        notification = `User ${email} deleted successfully \nDate: ${new Date()}`;
+        notification =
+          `User ${email} deleted from Trellify successfully \n` + dateString;
         break;
       }
 
       case AdminBotActionsEnum.CONTACT_US: {
         const { email, subject, message, authorized } = payload;
         notification =
-          `${authorized ? 'Trellify user' : 'Website visitor'} ${email} send a message through Contact-Us form\n` +
-          `Subject: ${subject} \n` +
-          `Mail: ${message}\n` +
-          `Date: ${new Date()}`;
+          `${authorized ? '<b>Trellify User</b>' : '<b>Website Visitor</b>'} ${email} sent a message via <b>Contact Us</b> form.\n\n` +
+          `<b>📌 Subject:</b> ${subject}\n` +
+          `<b>✉️ Message:</b> ${message}\n` +
+          dateString;
+
         break;
       }
 
@@ -118,7 +123,7 @@ export class AdminBotService implements OnModuleInit {
     }
 
     const messagePromises = adminsToNotify.map((admin) =>
-      this.sendMessageToUser(admin.telegram, notification),
+      this.sendMessageToUser(admin.telegram, notification, true),
     );
 
     await Promise.all(messagePromises);

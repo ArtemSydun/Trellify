@@ -86,6 +86,7 @@ export const trelloProfileMock = {
 
 export const trelloBoardMock = {
   id: '6763dcb33e9016a37e973222',
+  idOrganization: '3555dcb33e9016a37e974123',
   name: 'test',
   desc: '',
   closed: false,

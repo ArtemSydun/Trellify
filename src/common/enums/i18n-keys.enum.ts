@@ -5,6 +5,8 @@ export enum I18nKeys {
   FIELDS_BOARD = 'common.fields.board',
   FIELDS_CARD = 'common.fields.card',
   FIELDS_DATE = 'common.fields.date',
+  FIELDS_SETTINGS = 'common.fields.settings',
+  FIELDS_DASHBOARD = 'common.fields.dashboard',
 
   // Email Messages
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',

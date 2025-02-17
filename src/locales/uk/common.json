@@ -4,7 +4,9 @@
         "target": "Адресат",
         "board": "Дошка",
         "card": "Картка",
-        "date": "Дата"
+        "date": "Дата",
+        "settings": "Налаштування",
+        "dashboard": "Панель управління"
     },
     "messages": {
         "email": {
@@ -14,7 +16,7 @@
             "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин"
         },
         "telegram": {
-            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
+            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
             "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
             "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
             "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",

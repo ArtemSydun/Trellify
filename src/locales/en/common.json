@@ -4,7 +4,9 @@
         "target": "Target",
         "board": "Board",
         "card": "Card",
-        "date": "Date"
+        "date": "Date",
+        "settings": "Settings",
+        "dashboard": "Dashboard"
     },
     "messages": {
         "email": {
@@ -14,7 +16,7 @@
             "contactUsEmailSentMessage": "Your message were sent to Trellify team. We will send you a response in 12 - 48 hours"
         },
         "telegram": {
-            "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully",
+            "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully. Please, check configuration",
             "notificationsDisconnected": "Notifications for board [{boardName}]({boardUrl}) has been disconnected. Please, check notifications status",
             "connectionMessage": "Trellify notifier bot authorized successfully. To manage your notifications setup forward [here]({workspacesLink})",
             "disconnectionMessage": "Trellify notifier bot disconnected successfully",
