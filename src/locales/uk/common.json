@@ -148,7 +148,9 @@
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
-            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають"
+            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
+            "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
+            "passwordChangedSuccessfully": "Пароль було успішно змінено"
         }
     }
 }

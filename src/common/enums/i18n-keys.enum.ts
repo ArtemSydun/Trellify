@@ -31,6 +31,7 @@ export enum I18nKeys {
   // user related messages
   MESSAGES_USER_DELETED = 'common.messages.user.deleted',
   MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
+  MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY = 'common.messages.user.passwordChangedSuccessfully',
 
   // Webhook Messages
   MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
@@ -75,6 +76,7 @@ export enum I18nKeys {
 
   // Auth Errors
   ERRORS_AUTH_RESET_PASSWORD_MISMATCH = 'common.errors.auth.resetPasswordMismatch',
+  ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS = 'common.errors.auth.changePasswordSamePass',
 
   // Telegram User Notification
   NOTIFICATION_TELEGRAM_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.telegram.notifications.personal.cardMemberAddedSelf',

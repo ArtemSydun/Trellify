@@ -36,6 +36,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
@@ -486,6 +487,41 @@ export class UsersController {
       updateUserDto,
       req.i18nContext,
       req.user,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @ApiOperation({
+    summary: 'Change password.',
+    description: 'This endpoint allows users to change their password.',
+  })
+  @ApiOkResponse({
+    description: 'Password changed success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  changeUserPassword(
+    @Req() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<DefaultResponse<null>> {
+    return this.usersService.changeUserPassword(
+      req.user.id,
+      changePasswordDto,
+      req.i18nContext,
     );
   }
 }

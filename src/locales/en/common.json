@@ -103,7 +103,8 @@
         },
         "user": {
             "deleted": "All user {targetEmail} data has been deleted.",
-            "allWebhooksDisconnected": "User {email} disconnected from all webhooks"
+            "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
+            "passwordChangedSuccessfully": "Password has been successfully changed"
         }
     },
     "errors": {
@@ -148,7 +149,8 @@
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
-            "resetPasswordMismatch": "Password and repeat password does not match"
+            "resetPasswordMismatch": "Password and repeat password does not match",
+            "changePasswordSamePass": "New password can not be the same as previous"
         }
     }
 }
