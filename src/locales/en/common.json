@@ -67,7 +67,7 @@
                     "cardStartDateChanged": "The start date on the card [{cardName}]({cardUrl}) has been updated.",
                     "cardLabelAdded": "A label has been added to the card [{cardName}]({cardUrl}).",
                     "cardLabelRemoved": "A label has been removed from the card [{cardName}]({cardUrl}).",
-                    "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) '{commentText}'",
+                    "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) \n  '{commentText}'",
                     "cardAttachmentAdded": "An attachment has been added to the card [{cardName}]({cardUrl}).",
                     "cardChecklistAdded": "A checklist has been added to the card [{cardName}]({cardUrl}).",
                     "cardChecklistRemoved": "A checklist has been removed from the card [{cardName}]({cardUrl}).",

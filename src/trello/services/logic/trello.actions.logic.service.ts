@@ -59,9 +59,7 @@ export class TrelloActionsLogicService {
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
 
-      const targetMemberUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username,
-      );
+      const targetMemberUsername = webhookAction?.action?.member?.username;
 
       const targetedChecklistUserId =
         webhookAction?.action?.data?.checkItem?.idMember ||
@@ -238,6 +236,7 @@ export class TrelloActionsLogicService {
 
       const serverDate = new Date(webhookAction?.action?.date);
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
+
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
       const listBefore = webhookAction.action?.data?.listBefore?.name;
@@ -248,12 +247,15 @@ export class TrelloActionsLogicService {
         .emojify(webhookAction?.action?.data?.text || '')
         .replace(/@/g, '＠')
         .replace(/\./g, '.\u200B');
-      const targetMemberUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username ||
-          webhookAction?.action?.memberCreator?.username,
-      );
+      const targetMemberUsername =
+        webhookAction?.action?.member?.username || '';
 
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
+      const targetedChecklistUserId =
+        webhookAction?.action?.data?.checkItem?.idMember ||
+        webhookAction?.action?.data?.old?.idMember ||
+        '';
+
+      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
 
       const cardActionMessages: Record<
         TrelloWebhookCardActions,
@@ -525,7 +527,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been added to a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetedChecklistUserId}](${targetedChecklistUserId}) has been added to a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(
@@ -541,7 +543,7 @@ export class TrelloActionsLogicService {
               },
             },
           ) ||
-          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetedChecklistUserId}](${targetMemberProfileUrl}) has been removed from a checklist item '${checklistItemName}' in the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CHECKLIST_ITEM_MEMBER_JOINED]: (args) =>
           this.i18n?.t(
@@ -624,6 +626,7 @@ export class TrelloActionsLogicService {
         const userTimeZone = new Date(
           addMinutes(serverDate, (userToNotify.timezone || 0) * -60),
         );
+
         const formattedTimeZone = format(
           userTimeZone,
           this.configService.get(configServiceEnum.DATE_FORMAT),
@@ -633,7 +636,7 @@ export class TrelloActionsLogicService {
           lang: userLanguage,
           actionAuthor,
           actionAuthorUrl,
-          memberName: targetMemberUsername,
+          memberName: targetMemberUsername || targetedChecklistUserId,
           memberUrl: targetMemberProfileUrl,
           commentText,
           customFieldName,
@@ -644,6 +647,7 @@ export class TrelloActionsLogicService {
           listBefore,
           listAfter,
         });
+
         if (message) {
           if (!message) {
             this.logger.warn(`Unsupported card action: ${actionType}`);
@@ -661,7 +665,7 @@ export class TrelloActionsLogicService {
               cardUrl: cardData.url,
               actionAuthor,
               actionAuthorUrl,
-              actionTarget: targetMemberUsername,
+              actionTarget: targetMemberUsername || targetedChecklistUserId,
               actionTargetUrl: targetMemberProfileUrl,
             },
             this.i18n,
@@ -696,10 +700,8 @@ export class TrelloActionsLogicService {
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
-      const targetMemberUsername = escapeMarkdown(
-        webhookAction?.action?.member?.username || '',
-      );
-
+      const targetMemberUsername =
+        webhookAction?.action?.member?.username || '';
       const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
 
       const boardActionMessages: Record<
@@ -804,11 +806,9 @@ export class TrelloActionsLogicService {
 
       const serverDate = new Date(webhookAction?.action?.date);
 
-      const targetMemberUsername = escapeMarkdown(
+      const targetMemberUsername =
         webhookAction?.action?.member?.username ||
-          webhookAction?.action?.memberCreator?.username,
-      );
-
+        webhookAction?.action?.memberCreator?.username;
       const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
