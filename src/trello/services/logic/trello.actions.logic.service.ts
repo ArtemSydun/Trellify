@@ -808,6 +808,7 @@ export class TrelloActionsLogicService {
         webhookAction?.action?.member?.username ||
           webhookAction?.action?.memberCreator?.username,
       );
+
       const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
