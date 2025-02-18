@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ConflictException,
   HttpStatus,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -146,7 +145,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw UnauthorizedException for invalid credentials', async () => {
+    it('should throw BadRequestException for invalid credentials', async () => {
       const user = {
         ...superAdminStub(),
         password: 'hashedpassword',
@@ -162,11 +161,11 @@ describe('AuthService', () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
 
       (verifyPassword as jest.Mock).mockRejectedValue(
-        new UnauthorizedException(),
+        new BadRequestException(),
       );
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
-        UnauthorizedException,
+        BadRequestException,
       );
 
       expect(usersService.findUserByEmail).toHaveBeenCalledWith(
