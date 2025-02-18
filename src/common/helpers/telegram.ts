@@ -45,6 +45,3 @@ export const escapeMarkdown = (text) => {
   if (!text) return;
   return text.replace(/([_*\[\]()~`>#+\-=|{}!])/g, '\\$1');
 };
-
-console.log(escapeMarkdown('viktor_vvd_rht'));
-console.log(escapeMarkdown('maria_tl'));
