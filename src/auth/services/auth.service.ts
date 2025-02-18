@@ -3,7 +3,6 @@ import {
   ConflictException,
   HttpStatus,
   Injectable,
-  UnauthorizedException,
   Logger,
 } from '@nestjs/common';
 
@@ -15,11 +14,13 @@ import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
-import { verifyPassword } from 'src/common/helpers/hashing';
+import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
+import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
+import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersRepository } from 'src/user/repositories/users.repository';
@@ -66,18 +67,7 @@ export class AuthService {
     const loginDate = new Date();
 
     // Validate password
-    const isCredentialsValid = await verifyPassword(
-      loginUserDto.password,
-      user.password,
-    );
-
-    if (!isCredentialsValid) {
-      this.logger.warn(`Invalid credentials for email: ${loginUserDto.email}`);
-      throw new UnauthorizedException(
-        i18n?.t(I18nKeys.ERRORS_GENERAL_INVALID_CREDENTIALS) ||
-          'Invalid credentials.',
-      );
-    }
+    await verifyPassword(loginUserDto.password, user.password, i18n);
 
     let updatedTelegramUsername = user.telegram.username;
 
@@ -157,25 +147,10 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload, { expiresIn: '1d' });
 
-    const confirmationLink = this.mailService.getLink(
-      this.configService.get(configServiceEnum.FRONTEND_LINK),
-      `auth/confirm/${token}`,
-      i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
-        `Confirm your email`,
-    );
-
-    await this.mailService.sendDistribution(
-      this.configService.get(configServiceEnum.MAILER_SENDER),
+    await this.mailService.sendRegistrationLink(
       createUserDto.email,
-      {
-        subject:
-          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
-          `Confirm your email`,
-        html: `<p>${
-          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE) ||
-          `Please confirm your email by clicking the following link`
-        }: ${confirmationLink}</p>`,
-      },
+      token,
+      i18n,
     );
 
     this.logger.log(`Confirmation link sent to ${createUserDto.email}`);
@@ -210,7 +185,9 @@ export class AuthService {
 
     this.logger.log(`User registered successfully: ${email}`);
     return {
-      message: 'User registered successfully',
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_CREATED) ||
+        'User registered successfully',
       statusCode: HttpStatus.OK,
     };
   }
@@ -236,7 +213,12 @@ export class AuthService {
 
     this.logger.log(`Password reset email sent to: ${user.email}`);
     return {
-      message: `Password reset email sent on ${user.email}`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_SENT_MESSAGE, {
+          args: {
+            email: forgotPasswordDto.email,
+          },
+        }) || `Password reset email sent on ${user.email}`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -263,7 +245,92 @@ export class AuthService {
     this.logger.log(`Password successfully reset for user ID: ${id}`);
 
     return {
-      message: 'Password changed successfully',
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY) ||
+        'Password has been successfully changed',
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  public async initiateChangeUserEmail(
+    user: string | User,
+    changeEmailDto: ChangeEmailDto,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const userToUpdate = await this.userService.getUser(user);
+    const { newEmail, password } = changeEmailDto;
+
+    if (userToUpdate.email === newEmail) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
+          'New email must be different from current',
+      );
+    }
+
+    await verifyPassword(password, userToUpdate.password, i18n);
+
+    const payload = {
+      id: userToUpdate.id,
+      newEmail,
+    };
+
+    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    await this.mailService.sendChangeEmailLink(newEmail, token, i18n);
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE) ||
+        `Confirmation link sent on ${newEmail}`,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  public async confirmChangeUserEmail(
+    token: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const decoded = this.verifyToken(token);
+    const { newEmail, id } = decoded;
+
+    await this.userRepository.updateById(id, {
+      email: newEmail,
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_EMAIL_CHANGED_SUCCESSFULLY) ||
+        'Email changed succesfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  public async changeUserPassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const userToUpdate = await this.userRepository.findOneById(userId);
+    const { oldPassword, newPassword } = changePasswordDto;
+
+    if (oldPassword === newPassword) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
+          'New password can not be the same as previous',
+      );
+    }
+
+    await verifyPassword(oldPassword, userToUpdate.password, i18n);
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await this.userRepository.updateById(userToUpdate.id, {
+      password: hashedPassword,
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY) ||
+        'Password changed successfully',
       statusCode: HttpStatus.OK,
     };
   }

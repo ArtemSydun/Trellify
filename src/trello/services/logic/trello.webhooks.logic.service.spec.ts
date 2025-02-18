@@ -65,6 +65,7 @@ import {
 import { UserRoles } from 'src/user/enums/role.enum';
 import { BoardMember } from 'src/trello/dto/member.dto';
 import { I18nService } from 'nestjs-i18n';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -87,6 +88,7 @@ describe('TrelloWebhooksLogicService', () => {
   let trelloWebhookApiService: TrelloWebhooksApiService;
   let trelloActionsService: TrelloActionsLogicService;
   let usersService: UsersService;
+  let configService: ConfigService;
   let i18nService: I18nService;
 
   let notificationBotService: NotificationBotService;
@@ -130,6 +132,10 @@ describe('TrelloWebhooksLogicService', () => {
         },
         { provide: UsersService, useValue: createMock<UsersService>() },
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
+        {
+          provide: ConfigService,
+          useValue: createMock<ConfigService>(),
+        },
         {
           provide: SharedConfigService,
           useValue: createMock<SharedConfigService>(),
@@ -194,6 +200,7 @@ describe('TrelloWebhooksLogicService', () => {
       NotificationBotService,
     );
     usersService = moduleRef.get<UsersService>(UsersService);
+    configService = moduleRef.get<ConfigService>(ConfigService);
     i18nService = moduleRef.get<I18nService>(I18nService);
 
     userStubData = { ...userStub() };
@@ -972,6 +979,8 @@ describe('TrelloWebhooksLogicService', () => {
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userStubData);
 
+      jest.spyOn(configService, 'get').mockReturnValue('frontendlink');
+
       jest
         .spyOn(trelloBoardsApiService, 'fetchBoardById')
         .mockResolvedValue(trelloBoardMockData);
@@ -1078,6 +1087,8 @@ describe('TrelloWebhooksLogicService', () => {
       jest
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
+
+      jest.spyOn(configService, 'get').mockReturnValue('frontendlink');
 
       const result = await trelloWebhooksLogicService.createTrelloWebhook(
         userToConnect,
@@ -1736,6 +1747,8 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(null);
 
+      jest.spyOn(configService, 'get').mockReturnValue('frontendlink');
+
       const result =
         await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
           userStubData,
@@ -1768,6 +1781,8 @@ describe('TrelloWebhooksLogicService', () => {
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userStubData.telegram,
         expect.stringContaining(webhookStubData.boardName),
+        expect.any(Boolean),
+        expect.any(Array),
       );
 
       expect(result).toEqual({
@@ -1818,6 +1833,8 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(null);
 
+      jest.spyOn(configService, 'get').mockReturnValue('frontendlink');
+
       await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
         userStubData,
         webhookStubData,
@@ -1843,6 +1860,8 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockResolvedValue(undefined);
 
+      jest.spyOn(configService, 'get').mockReturnValue('frontendlink');
+
       await trelloWebhooksLogicService.disconnectFromTrelloWebhook(
         userStubData,
         webhookStubData,
@@ -1851,6 +1870,8 @@ describe('TrelloWebhooksLogicService', () => {
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userStubData.telegram,
         expect.stringContaining(webhookStubData.boardName),
+        expect.any(Boolean),
+        expect.any(Array),
       );
     });
   });

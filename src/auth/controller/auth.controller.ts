@@ -4,8 +4,8 @@ import {
   HttpStatus,
   Body,
   Param,
-  Get,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -20,11 +20,14 @@ import {
 } from 'src/common/decorators/swagger.decorators';
 import { Errors } from 'src/common/enums/errors.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
+import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserResponseDto, LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { JwtAuthGuard } from '../guards/jwt.guard';
 import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
@@ -102,6 +105,36 @@ export class AuthController {
     );
   }
 
+  @Post('sign-up/:token')
+  @ApiOperation({
+    summary: 'Confirm user registration',
+    description:
+      'Confirms the user’s email address by verifying the confirmation token.',
+  })
+  @ApiOkResponse({
+    description: 'User registered successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User registered successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomConflictResponse('User', 'email')
+  async confirmRegistration(
+    @Param('token') token: string,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.confirmRegistration(token, req.i18nContext);
+  }
+
   @Post('forgot-password')
   @ApiOperation({
     summary: 'Request password reset',
@@ -172,20 +205,20 @@ export class AuthController {
     );
   }
 
-  @Get('confirm/:token')
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email')
   @ApiOperation({
-    summary: 'Confirm user registration',
-    description:
-      'Confirms the user’s email address by verifying the confirmation token.',
+    summary: 'Change email.',
+    description: 'This endpoint allows users to change their email.',
   })
   @ApiOkResponse({
-    description: 'User registered successfully',
+    description: 'Email change success',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'User registered successfully',
+          example: 'Email successfully changed',
         },
         statusCode: {
           type: 'number',
@@ -194,11 +227,82 @@ export class AuthController {
       },
     },
   })
-  @ApiCustomConflictResponse('User', 'email')
-  async confirmRegistration(
-    @Param('token') token: string,
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  changeUserEmail(
     @Req() req,
+    @Body() changeEmailDto: ChangeEmailDto,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.confirmRegistration(token, req.i18nContext);
+    return this.authService.initiateChangeUserEmail(
+      req.user.id,
+      changeEmailDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email/:token')
+  @ApiOperation({
+    summary: 'Change email.',
+    description: 'This endpoint allows users to change their email.',
+  })
+  @ApiOkResponse({
+    description: 'Email change success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Email successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  confirmChangeUserEmail(
+    @Req() req,
+    @Param('token') token: string,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.confirmChangeUserEmail(token, req.i18nContext);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @ApiOperation({
+    summary: 'Change password.',
+    description: 'This endpoint allows users to change their password.',
+  })
+  @ApiOkResponse({
+    description: 'Password changed success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  changeUserPassword(
+    @Req() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.changeUserPassword(
+      req.user.id,
+      changePasswordDto,
+      req.i18nContext,
+    );
   }
 }

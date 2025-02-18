@@ -900,6 +900,22 @@ export class TrelloActionsLogicService {
             },
           ) ||
           `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData?.url}).`,
+        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_BECAME]: (
+          args,
+        ) =>
+          this.i18n?.t(
+            I18nKeys.NOTIFICATION_TELEGRAM_BOARD_MEMBER_NORMAL_ROLE_BECAME,
+            {
+              lang: args.lang,
+              args: {
+                memberName: args.memberName,
+                memberUrl: args.memberUrl,
+                boardName: args.boardName,
+                boardUrl: args.boardUrl,
+              },
+            },
+          ) ||
+          `User [${targetMemberUsername}](${targetMemberProfileUrl}) lowered his role on the board [${boardData?.name}](${boardData?.url}).`,
 
         [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED, {
