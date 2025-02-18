@@ -120,6 +120,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         loginUserDto.password,
         user.password,
+        undefined,
       );
       expect(notificationBotService.fetchTelegramUser).toHaveBeenCalledWith(
         user.telegram.chatId,
@@ -159,10 +160,10 @@ describe('AuthService', () => {
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
-      jest
-        .spyOn(notificationBotService, 'fetchTelegramUser')
-        .mockResolvedValue(null);
-      (verifyPassword as jest.Mock).mockResolvedValue(false); // Mock password validation to fail
+
+      (verifyPassword as jest.Mock).mockRejectedValue(
+        new UnauthorizedException(),
+      );
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
         UnauthorizedException,
@@ -175,6 +176,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         loginUserDto.password,
         user.password,
+        undefined,
       );
       expect(notificationBotService.fetchTelegramUser).not.toHaveBeenCalled();
     });
@@ -364,6 +366,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         changeEmailDto.password,
         userStub.password,
+        undefined,
       );
       expect(jwtService.sign).toHaveBeenCalled();
       expect(mailerService.sendChangeEmailLink).toHaveBeenCalledWith(
@@ -457,6 +460,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         changePasswordDto.oldPassword,
         userStub.password,
+        undefined,
       );
       expect(hashPassword).toHaveBeenCalledWith(changePasswordDto.newPassword);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {

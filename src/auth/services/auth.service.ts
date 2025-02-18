@@ -3,7 +3,6 @@ import {
   ConflictException,
   HttpStatus,
   Injectable,
-  UnauthorizedException,
   Logger,
 } from '@nestjs/common';
 
@@ -68,18 +67,7 @@ export class AuthService {
     const loginDate = new Date();
 
     // Validate password
-    const isCredentialsValid = await verifyPassword(
-      loginUserDto.password,
-      user.password,
-    );
-
-    if (!isCredentialsValid) {
-      this.logger.warn(`Invalid credentials for email: ${loginUserDto.email}`);
-      throw new UnauthorizedException(
-        i18n?.t(I18nKeys.ERRORS_GENERAL_INVALID_CREDENTIALS) ||
-          'Invalid credentials.',
-      );
-    }
+    await verifyPassword(loginUserDto.password, user.password, i18n);
 
     let updatedTelegramUsername = user.telegram.username;
 
@@ -278,7 +266,7 @@ export class AuthService {
       );
     }
 
-    await verifyPassword(password, userToUpdate.password);
+    await verifyPassword(password, userToUpdate.password, i18n);
 
     const payload = {
       id: userToUpdate.id,
@@ -330,7 +318,7 @@ export class AuthService {
       );
     }
 
-    await verifyPassword(oldPassword, userToUpdate.password);
+    await verifyPassword(oldPassword, userToUpdate.password, i18n);
 
     const hashedPassword = await hashPassword(newPassword);
 
