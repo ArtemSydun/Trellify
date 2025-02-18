@@ -4,17 +4,25 @@
         "target": "Адресат",
         "board": "Дошка",
         "card": "Картка",
-        "date": "Дата"
+        "date": "Дата",
+        "settings": "Налаштування",
+        "dashboard": "Панель управління"
     },
     "messages": {
         "email": {
             "registrationEmailSubject": "Підтвердіть вашу пошту",
             "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
-            "registrationEmailSentMessage": "Посилання для підтвердження надіслано на вашу пошту {email}",
+            "registrationEmailSentMessage": "Посилання для підтвердження реєстрації надіслано на вашу пошту {email}",
+            "resetPasswordEmailSubject": "Запит на скидання паролю",
+            "resetPasswordEmailMessage": "Натисніть на посилання, щоб скинути ваш пароль",
+            "resetPasswordEmailSentMessage": "Посилання для пітвердження скидування паролю надіслано на вашу пошту {email}",
+            "changeMailEmailSubject": "Запит на зміну пошти",
+            "changeMailEmailMessage": "Натисніть на посилання щоб пітвердити зміну пошти",
+            "changeMailEmailSentMessage": "Посилання для пітвердження зміни пошти надіслано на вашу пошту {email}",
             "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин"
         },
         "telegram": {
-            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно",
+            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
             "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
             "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
             "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
@@ -83,6 +91,7 @@
                     "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
                     "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
                     "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
+                    "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
                     "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
                     "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
                     "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
@@ -99,8 +108,11 @@
             }
         },
         "user": {
+            "created": "Користувача було успішно створено",
             "deleted": "Усі дані про користувача {email} було видалено.",
-            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень"
+            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
+            "passwordChangedSuccessfully": "Пароль було успішно змінено",
+            "emailChangedSuccessfully": "Пошту було успішно змінено"
         }
     },
     "errors": {
@@ -145,7 +157,9 @@
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
         },
         "auth": {
-            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають"
+            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
+            "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
+            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з попередньою"
         }
     }
 }

@@ -236,12 +236,17 @@ export class NotificationBotService implements OnModuleInit {
     telegramInfo: TelegramSettings,
     message: string,
     html?: boolean,
+    replyMarkup?: any,
   ) {
     if (telegramInfo.chatId) {
       const parseMode = html ? 'HTML' : 'Markdown';
       await this.bot.telegram.sendMessage(telegramInfo.chatId, message, {
         parse_mode: parseMode,
+        reply_markup: replyMarkup?.inline_keyboard
+          ? replyMarkup
+          : { inline_keyboard: replyMarkup },
       });
+
       this.logger.log(`Telegram message sent to user ${telegramInfo.username}`);
     }
   }

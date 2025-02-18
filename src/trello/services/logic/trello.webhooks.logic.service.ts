@@ -9,6 +9,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { ConfigService } from '@nestjs/config';
 import {
   TrelloBoardsApiService,
   TrelloCardsApiService,
@@ -19,6 +20,7 @@ import {
   TrelloTokensLogicService,
 } from '@trello/logic';
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
@@ -80,6 +82,7 @@ export class TrelloWebhooksLogicService {
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly sharedConfigService: SharedConfigService,
+    private readonly configService: ConfigService,
     @Inject(forwardRef(() => TrelloActionsLogicService))
     private readonly actionsService: TrelloActionsLogicService,
     @Inject(forwardRef(() => TrelloWebhooksApiService))
@@ -121,7 +124,6 @@ export class TrelloWebhooksLogicService {
       );
     }
 
-    //update boardName in case if board was renamed
     const decryptedAuthorToken = decryptText(
       webhook.author.trelloToken,
       this.encryptionKey,
@@ -132,46 +134,64 @@ export class TrelloWebhooksLogicService {
       webhook.idModel,
     );
 
-    if (boardData.name !== webhook.boardName) {
+    const updatedWebhookProps: any = {};
+    let shouldUpdateUsers = false;
+
+    if (boardData) {
+      if (boardData.idOrganization !== webhook.idWorkspace) {
+        updatedWebhookProps.idWorkspace = boardData.idOrganization;
+      }
+
+      if (
+        boardData.name !== webhook.boardName ||
+        boardData.url !== webhook.boardUrl
+      ) {
+        updatedWebhookProps.boardName = boardData.name;
+        updatedWebhookProps.boardUrl = boardData.url;
+        shouldUpdateUsers = true;
+      }
+    }
+
+    // If there are updates, update the webhook
+    if (Object.keys(updatedWebhookProps).length > 0) {
       const updatedWebhook = await this.trelloWebhookRepository.updateById(
         webhook.id,
-        {
-          boardName: boardData.name,
-          boardUrl: boardData.url,
-        },
+        updatedWebhookProps,
       );
 
-      const usersToUpdate = await this.userService.findUsersConnectedToWebhook(
-        updatedWebhook.id,
-      );
+      // Only update users if board name or URL changed
+      if (shouldUpdateUsers) {
+        const usersToUpdate =
+          await this.userService.findUsersConnectedToWebhook(updatedWebhook.id);
 
-      const updateUserPromises = usersToUpdate.map((subscriber) => {
-        const updatedWebhooks = subscriber.trello.webhooks.map(
-          (userWebhook) => {
-            if (userWebhook.webhookId === webhook.id) {
-              return {
-                ...userWebhook,
-                idModel: updatedWebhook.idModel,
-                modelName: updatedWebhook.boardName,
-              };
-            }
-            return userWebhook;
-          },
-        );
+        const updateUserPromises = usersToUpdate.map((subscriber) => {
+          const updatedWebhooks = subscriber.trello.webhooks.map(
+            (userWebhook) => {
+              if (userWebhook.webhookId === webhook.id) {
+                return {
+                  ...userWebhook,
+                  idModel: updatedWebhook.idModel,
+                  modelName: updatedWebhook.boardName,
+                };
+              }
+              return userWebhook;
+            },
+          );
 
-        return {
-          updateOne: {
-            filter: { id: subscriber.id },
-            update: {
-              $set: {
-                [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+          return {
+            updateOne: {
+              filter: { id: subscriber.id },
+              update: {
+                $set: {
+                  [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+                },
               },
             },
-          },
-        };
-      });
+          };
+        });
 
-      await this.userService.updateManyUsers(updateUserPromises);
+        await this.userService.updateManyUsers(updateUserPromises);
+      }
 
       return updatedWebhook;
     }
@@ -322,6 +342,7 @@ export class TrelloWebhooksLogicService {
 
       const createdWebhook = {
         ...newWebhook,
+        idWorkspace: webhookBoard.idOrganization,
         boardName: webhookBoard.name,
         boardUrl: webhookBoard.url,
         author: {
@@ -558,6 +579,15 @@ export class TrelloWebhooksLogicService {
             },
           }) ||
             `Notifications for board [${webhook.boardName}](${webhook.boardUrl}) connected successfully`,
+          false,
+          [
+            [
+              {
+                text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
+                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhook.idWorkspace}/boards/${webhook.idModel}`,
+              },
+            ],
+          ],
         ),
       ]);
 
@@ -583,7 +613,10 @@ export class TrelloWebhooksLogicService {
 
     try {
       const createdWebhook = {
-        ...response,
+        id: response.id,
+        idModel: response.idModel,
+        idWorkspace: connectedBoard.idOrganization,
+        callbackURL: response.callbackURL,
         boardName: connectedBoard.name,
         boardUrl: connectedBoard.url,
         author: {
@@ -629,6 +662,15 @@ export class TrelloWebhooksLogicService {
             },
           }) ||
             `Notifications for board [${createdWebhook.boardName}](${createdWebhook.boardUrl}) connected successfully`,
+          false,
+          [
+            [
+              {
+                text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
+                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${createdWebhook.idWorkspace}/boards/${createdWebhook.idModel}`,
+              },
+            ],
+          ],
         ),
       ]);
 
@@ -1171,17 +1213,16 @@ export class TrelloWebhooksLogicService {
           },
           lang: userToUpdate.language || Languages.EN,
         }) ||
-          this.i18nService.t(
-            I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED,
-            {
-              args: {
-                boardName: webhookToUpdate?.boardName,
-                boardUrl: webhookToUpdate?.boardUrl,
-              },
-              lang: userToUpdate.language || Languages.EN,
-            },
-          ) ||
           `Notifications for board [${webhookToUpdate.boardName}](${webhookToUpdate.boardUrl}) has been disconnected.`,
+        false,
+        [
+          [
+            {
+              text: i18n?.t(I18nKeys.FIELDS_DASHBOARD) || 'Dashboard',
+              url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhookToUpdate.idWorkspace}`,
+            },
+          ],
+        ],
       ),
     ]);
 

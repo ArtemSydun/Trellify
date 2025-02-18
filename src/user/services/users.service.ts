@@ -652,6 +652,7 @@ export class UsersService {
       email,
       subject,
       message,
+      authorized,
     });
 
     return {
