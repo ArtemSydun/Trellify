@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as CryptoJS from 'crypto-js';
 import { I18nContext } from 'nestjs-i18n';
@@ -13,7 +12,7 @@ export async function verifyPassword(
   const isPasswordValid = await bcrypt.compare(plainPassword, hashedPassword);
 
   if (!isPasswordValid) {
-    throw new UnauthorizedException(
+    throw new BadRequestException(
       i18n?.t(I18nKeys.ERRORS_GENERAL_INVALID_CREDENTIALS) ||
         'Invalid credentials',
     );
