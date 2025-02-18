@@ -50,50 +50,87 @@ export class MailerService {
     }
   }
 
+  public async sendRegistrationLink(
+    email: string,
+    token: string,
+    i18n?: I18nContext,
+  ): Promise<void> {
+    try {
+      const confirmationLink = this.getLink(
+        this.configService.get(configServiceEnum.FRONTEND_LINK),
+        `auth/sign-up/${token}`,
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
+          `Confirm your email`,
+      );
+
+      await this.mailerService.sendMail({
+        to: email,
+        from: this.configService.get<string>('MAILER_SENDER'),
+        subject:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
+          `Confirm your email`,
+        text: `Click the link to reset your password: ${confirmationLink}`,
+        html: `<p>${
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE) ||
+          `Please confirm your email by clicking the following link`
+        }: ${confirmationLink}</p>`,
+      });
+
+      this.logger.verbose(`Registration mail sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${email}: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
   public async sendResetPasswordLink(
     email: string,
     token: string,
-  ): Promise<DefaultResponse<null>> {
+    i18n?: I18nContext,
+  ): Promise<void> {
     try {
       const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/reset-password/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
         from: this.configService.get<string>('MAILER_SENDER'),
-        subject: 'Password Reset Request',
-        text: `Click the link to reset your password: ${resetLink}`,
+        subject:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_SUBJECT) ||
+          'Password Reset Request',
+        text: `${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE)}: ${resetLink}`,
         html: `<p>Click the link to reset your password:</p>
               <a href="${resetLink}">RESET PASSWORD</a>
               <br>
-              <p>If you did not request this reset, please ignore this email.</p>
+              <p>If you did not request this action, please ignore this email.</p>
               <br>
               <p>This link are available only for 15 minutes.</p>`,
       });
 
       this.logger.verbose(`Forgot password mail sent to ${email}`);
-
-      return {
-        message: `Password reset link sent to ${email}`,
-        statusCode: HttpStatus.OK,
-      };
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}: ${error.message}`);
       throw new BadRequestException(error.message);
     }
   }
+
   public async sendChangeEmailLink(
     email: string,
     token: string,
-  ): Promise<DefaultResponse<null>> {
+    i18n?: I18nContext,
+  ): Promise<void> {
     try {
       const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/change-email/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
         from: this.configService.get<string>('MAILER_SENDER'),
-        subject: 'Change Email Request',
-        text: `Click the link to change your email: ${resetLink}`,
-        html: `<p>Click the link to change your email:</p>
+        subject:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SUBJECT) ||
+          'Change Email Request',
+        text:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) ||
+          `Click the link to change your email: ${resetLink}`,
+        html: `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) || 'Click the link to change your email'}:</p>
               <a href="${resetLink}">CONFIRM EMAIL</a>
               <br>
               <p>If you did not request this reset, please ignore this email.</p>
@@ -101,12 +138,7 @@ export class MailerService {
               <p>This link are available only for 15 minutes.</p>`,
       });
 
-      this.logger.verbose(`Forgot password mail sent to ${email}`);
-
-      return {
-        message: `Password reset link sent to ${email}`,
-        statusCode: HttpStatus.OK,
-      };
+      this.logger.verbose(`Change email link sent to ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}: ${error.message}`);
       throw new BadRequestException(error.message);

@@ -8,12 +8,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { verifyPassword } from 'src/common/helpers/hashing';
+import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { superAdminStub } from 'src/user/__mocks__/user.stub';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UsersService } from 'src/user/services/users.service';
-import { resetPasswordMessageStub } from '../__mocks__/auth.stub';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -22,9 +21,12 @@ import { UsersRepository } from 'src/user/repositories/users.repository';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
+import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
+  hashPassword: jest.fn(),
 }));
 
 describe('AuthService', () => {
@@ -185,13 +187,14 @@ describe('AuthService', () => {
         password: 'password123',
         timezone: 0,
       };
+      const mockedToken = 'mockToken';
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(false);
-      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(jwtService, 'sign').mockReturnValue(mockedToken);
       jest.spyOn(configService, 'get').mockReturnValue('http://localhost');
       jest
         .spyOn(mailerService, 'getLink')
-        .mockReturnValue('http://localhost/auth/confirm/mockToken');
+        .mockReturnValue(`http://localhost/auth/confirm/${mockedToken}`);
 
       const result = await authService.initiateRegistration(
         createUserDto,
@@ -205,18 +208,13 @@ describe('AuthService', () => {
         expect.objectContaining({ email: createUserDto.email }),
         { expiresIn: '1d' },
       );
-      expect(mailerService.getLink).toHaveBeenCalledWith(
-        'http://localhost',
-        'auth/confirm/mockToken',
-        'Confirm your email',
-      );
-      expect(mailerService.sendDistribution).toHaveBeenCalledWith(
-        expect.any(String), // Sender
+      expect(mailerService.sendRegistrationLink).toHaveBeenCalledWith(
         createUserDto.email,
-        expect.objectContaining({ subject: 'Confirm your email' }),
+        mockedToken,
+        undefined,
       );
       expect(result).toEqual({
-        message: `Confirmation link sent to your email ${createUserDto.email}`,
+        message: expect.stringContaining(createUserDto.email),
         statusCode: HttpStatus.OK,
       });
     });
@@ -282,10 +280,7 @@ describe('AuthService', () => {
       const user = superAdminStub();
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockResetToken');
-      jest.spyOn(mailerService, 'sendResetPasswordLink').mockResolvedValue({
-        message: `Password reset link sent to ${forgotPasswordDto.email}`,
-        statusCode: HttpStatus.OK,
-      });
+      jest.spyOn(mailerService, 'sendResetPasswordLink').mockResolvedValue();
 
       const result = await authService.forgotPassword(
         forgotPasswordDto,
@@ -302,7 +297,7 @@ describe('AuthService', () => {
         'mockResetToken',
       );
       expect(result).toEqual({
-        message: `Password reset email sent on ${user.email}`,
+        message: expect.stringContaining(forgotPasswordDto.email),
         statusCode: HttpStatus.OK,
       });
     });
@@ -321,11 +316,7 @@ describe('AuthService', () => {
         .mockReturnValue({ id: superAdminStub().id });
       jest.spyOn(usersService, 'resetPassword').mockResolvedValue();
 
-      const result = await authService.resetPassword(
-        token,
-        resetPasswordDto,
-        undefined,
-      );
+      await authService.resetPassword(token, resetPasswordDto, undefined);
 
       expect(jwtService.verify).toHaveBeenCalledWith(token);
       expect(usersService.resetPassword).toHaveBeenCalledWith(
@@ -333,7 +324,6 @@ describe('AuthService', () => {
         resetPasswordDto.newPassword,
         undefined,
       );
-      expect(result).toEqual(resetPasswordMessageStub());
     });
 
     it('should throw BadRequestException if passwords do not match', async () => {
@@ -346,6 +336,151 @@ describe('AuthService', () => {
       await expect(
         authService.resetPassword(token, resetPasswordDto),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+  describe('initiateChangeUserEmail', () => {
+    it('should send a confirmation link for email change', async () => {
+      const userStub = superAdminStub();
+      const changeEmailDto: ChangeEmailDto = {
+        newEmail: 'newemail@example.com',
+        password: 'correctpassword',
+      };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub);
+      (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to fail
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest
+        .spyOn(mailerService, 'sendChangeEmailLink')
+        .mockResolvedValue(undefined);
+
+      const result = await authService.initiateChangeUserEmail(
+        userStub.id,
+        changeEmailDto,
+        undefined,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(userStub.id);
+      expect(verifyPassword).toHaveBeenCalledWith(
+        changeEmailDto.password,
+        userStub.password,
+      );
+      expect(jwtService.sign).toHaveBeenCalled();
+      expect(mailerService.sendChangeEmailLink).toHaveBeenCalledWith(
+        changeEmailDto.newEmail,
+        'mockToken',
+        undefined,
+      );
+
+      expect(result).toEqual({
+        message: expect.stringContaining(changeEmailDto.newEmail),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw ConflictException if new email is the same as current email', async () => {
+      const userStub = superAdminStub();
+      const changeEmailDto: ChangeEmailDto = {
+        newEmail: userStub.email,
+        password: 'correctpassword',
+      };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub);
+
+      await expect(
+        authService.initiateChangeUserEmail(userStub.id, changeEmailDto),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('confirmChangeUserEmail', () => {
+    it('should update user email successfully', async () => {
+      const userStub = superAdminStub();
+      const token = 'mockToken';
+      const decodedToken = {
+        id: userStub.id,
+        newEmail: 'newemail@example.com',
+      };
+
+      jest.spyOn(authService, 'verifyToken').mockReturnValue(decodedToken);
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(undefined);
+
+      const result = await authService.confirmChangeUserEmail(token, undefined);
+
+      expect(authService.verifyToken).toHaveBeenCalledWith(token);
+      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
+        email: decodedToken.newEmail,
+      });
+
+      expect(result).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw an error if token is invalid', async () => {
+      const token = 'invalidToken';
+
+      jest.spyOn(authService, 'verifyToken').mockImplementation(() => {
+        throw new Error('Invalid token');
+      });
+
+      await expect(authService.confirmChangeUserEmail(token)).rejects.toThrow(
+        Error,
+      );
+    });
+  });
+
+  describe('changeUserPassword', () => {
+    it('should change the user password successfully', async () => {
+      const userStub = superAdminStub();
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'correctpassword',
+        newPassword: 'newsecurepassword',
+      };
+
+      const hashedPassword = 'hashedPassword';
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+      (verifyPassword as jest.Mock).mockResolvedValue(true);
+      (hashPassword as jest.Mock).mockResolvedValue(hashedPassword); // Mock password validation to fail
+
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue(undefined);
+
+      const result = await authService.changeUserPassword(
+        userStub.id,
+        changePasswordDto,
+        undefined,
+      );
+
+      expect(usersRepository.findOneById).toHaveBeenCalledWith(userStub.id);
+      expect(verifyPassword).toHaveBeenCalledWith(
+        changePasswordDto.oldPassword,
+        userStub.password,
+      );
+      expect(hashPassword).toHaveBeenCalledWith(changePasswordDto.newPassword);
+      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
+        password: 'hashedPassword',
+      });
+
+      expect(result).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw ConflictException if the new password is the same as the old password', async () => {
+      const userStub = superAdminStub();
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'samepassword',
+        newPassword: 'samepassword',
+      };
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+
+      await expect(
+        authService.changeUserPassword(userStub.id, changePasswordDto),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

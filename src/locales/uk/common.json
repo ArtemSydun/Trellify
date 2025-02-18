@@ -103,7 +103,9 @@
         },
         "user": {
             "deleted": "Усі дані про користувача {email} було видалено.",
-            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень"
+            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
+            "passwordChangedSuccessfully": "Пароль було успішно змінено",
+            "emailChangedSuccessfully": "Пошту було успішно змінено"
         }
     },
     "errors": {
@@ -150,7 +152,7 @@
         "auth": {
             "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
             "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
-            "passwordChangedSuccessfully": "Пароль було успішно змінено"
+            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з попередньою"
         }
     }
 }

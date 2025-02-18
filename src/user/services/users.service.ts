@@ -22,7 +22,6 @@ import {
   decryptText,
   encryptText,
   hashPassword,
-  verifyPassword,
 } from 'src/common/helpers/hashing';
 import {
   DefaultPaginatedResponse,
@@ -33,8 +32,6 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
 import { Webhook } from 'src/trello/entities/webhook.entity';
-import { ChangeEmailDto } from '../dto/change-email.dto';
-import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
@@ -417,64 +414,6 @@ export class UsersService {
       lastActivityDate: updateDate,
     });
     this.logger.log(`Password for user with ID ${id} reset successfully`);
-  }
-
-  public async changeUserEmail(
-    user: string | User,
-    changeEmailDto: ChangeEmailDto,
-    i18n?: I18nContext,
-  ): Promise<DefaultResponse<null>> {
-    const userToUpdate = await this.getUser(user);
-    const { newEmail, password } = changeEmailDto;
-
-    if (userToUpdate.email === newEmail) {
-      throw new ConflictException(
-        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
-          'New email must be different from current',
-      );
-    }
-
-    await verifyPassword(password, userToUpdate.password);
-
-    // await this.mailerService.sendChangeEmailLink(newEmail);
-
-    return {
-      message:
-        i18n?.t(I18nKeys.MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY) ||
-        `Confirmation link sent on ${newEmail}`,
-      statusCode: HttpStatus.OK,
-    };
-  }
-
-  public async changeUserPassword(
-    userId: string,
-    changePasswordDto: ChangePasswordDto,
-    i18n?: I18nContext,
-  ): Promise<DefaultResponse<null>> {
-    const userToUpdate = await this.userRepository.findOneById(userId);
-    const { oldPassword, newPassword } = changePasswordDto;
-
-    if (oldPassword === newPassword) {
-      throw new ConflictException(
-        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
-          'New password can not be the same as previous',
-      );
-    }
-
-    await verifyPassword(oldPassword, userToUpdate.password);
-
-    const hashedPassword = await hashPassword(newPassword);
-
-    await this.userRepository.updateById(userToUpdate.id, {
-      password: hashedPassword,
-    });
-
-    return {
-      message:
-        i18n?.t(I18nKeys.MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY) ||
-        'Password changed successfully',
-      statusCode: HttpStatus.OK,
-    };
   }
 
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
