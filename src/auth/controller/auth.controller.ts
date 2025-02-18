@@ -7,18 +7,13 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiOkResponse,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   ApiCustomNotFoundResponse,
   ApiCustomConflictResponse,
   ApiCustomUnathorizedResponse,
   ApiCustomBadRequestResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { Errors } from 'src/common/enums/errors.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
@@ -45,26 +40,7 @@ export class AuthController {
     type: LoginUserResponseDto,
   })
   @ApiCustomNotFoundResponse('User', 'email')
-  @ApiUnauthorizedResponse({
-    description: 'Invalid credentials',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Invalid credentials',
-        },
-        error: {
-          type: 'string',
-          example: Errors.UNATHORIZED,
-        },
-        statusCode: {
-          type: 'number',
-          example: HttpStatus.UNAUTHORIZED,
-        },
-      },
-    },
-  })
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
   login(
     @Body() loginCredentials: LoginUserDto,
     @Req() req,
@@ -228,6 +204,7 @@ export class AuthController {
     },
   })
   @ApiCustomUnathorizedResponse()
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
   @ApiCustomNotFoundResponse('User', 'id')
   changeUserEmail(
     @Req() req,
@@ -294,6 +271,7 @@ export class AuthController {
     },
   })
   @ApiCustomUnathorizedResponse()
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
   @ApiCustomNotFoundResponse('User', 'id')
   changeUserPassword(
     @Req() req,
