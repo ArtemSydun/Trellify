@@ -158,7 +158,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/setttings/delete-profile/${token}`;
+      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/delete-profile/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
