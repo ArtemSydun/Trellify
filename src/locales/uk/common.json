@@ -13,12 +13,15 @@
             "registrationEmailSubject": "Підтвердіть вашу пошту",
             "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
             "registrationEmailSentMessage": "Посилання для підтвердження реєстрації надіслано на вашу пошту {email}",
+            "deleteUserEmailSubject": "Запит на видалення аккаунту Trellify",
+            "deleteUserEmailMessage": "Якщо ви справді збираєтесь видалити свій аккаунт Trellify, перейдіть за посиланням",
+            "deleteUserEmailSentMessage": "Посилання для пітвердження видалення аккаунту Trellifty надіслано на вашу пошту {email}",
             "resetPasswordEmailSubject": "Запит на скидання паролю",
             "resetPasswordEmailMessage": "Натисніть на посилання, щоб скинути ваш пароль",
-            "resetPasswordEmailSentMessage": "Посилання для пітвердження скидування паролю надіслано на вашу пошту {email}",
+            "resetPasswordEmailSentMessage": "Посилання для підтвердження скидування паролю надіслано на вашу пошту {email}",
             "changeMailEmailSubject": "Запит на зміну пошти",
             "changeMailEmailMessage": "Натисніть на посилання щоб пітвердити зміну пошти",
-            "changeMailEmailSentMessage": "Посилання для пітвердження зміни пошти надіслано на вашу пошту {email}",
+            "changeMailEmailSentMessage": "Посилання для підтвердження зміни пошти надіслано на вашу пошту {email}",
             "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин"
         },
         "telegram": {

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -23,6 +24,7 @@ import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
+import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { UsersService } from 'src/user/services/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
@@ -108,7 +110,7 @@ export class AuthService {
     };
   }
 
-  public async initiateRegistration(
+  public async initiateUserRegistration(
     createUserDto: CreateUserDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -163,7 +165,7 @@ export class AuthService {
     };
   }
 
-  public async confirmRegistration(
+  public async confirmUserRegistration(
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -302,6 +304,62 @@ export class AuthService {
         'Email changed succesfully',
       statusCode: HttpStatus.OK,
     };
+  }
+
+  public async initiateUserDeletion(
+    requestedAuthor: string | User,
+    userToDelete: string | User,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const requestAuthor = await this.userService.getUser(requestedAuthor, i18n);
+
+    const targetUser = await this.userService.getUser(userToDelete, i18n);
+
+    if (
+      requestAuthor.role !== UserRoles.superadmin &&
+      requestAuthor.id !== targetUser.id
+    ) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
+    // Prevent a superadmin from deleting themselves
+    if (
+      requestAuthor.role === UserRoles.superadmin &&
+      requestAuthor.id === targetUser.id
+    ) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
+    const payload = {
+      id: targetUser.id,
+    };
+
+    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+
+    await this.mailService.sendDeleteProfileLink(targetUser.email, token, i18n);
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE) ||
+        `Confirmation link sent on ${targetUser.email}`,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  public async confirmUserDeletion(
+    token: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
+    const decoded = this.verifyToken(token);
+    const { id } = decoded;
+
+    return await this.userService.deleteUserById(id, id, i18n);
   }
 
   public async changeUserPassword(

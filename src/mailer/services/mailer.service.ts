@@ -145,6 +145,38 @@ export class MailerService {
     }
   }
 
+  public async sendDeleteProfileLink(
+    email: string,
+    token: string,
+    i18n?: I18nContext,
+  ): Promise<void> {
+    try {
+      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/delete-profile/${token}`;
+
+      await this.mailerService.sendMail({
+        to: email,
+        from: this.configService.get<string>('MAILER_SENDER'),
+        subject:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_SUBJECT) ||
+          'Delete profile request',
+        text:
+          i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) ||
+          `Click the link if you are sure that you want to delete your Trellify account: ${resetLink}`,
+        html: `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) || 'Click the link if you are sure that you want to delete your Trellify account'}:</p>
+              <a href="${resetLink}">DELETE ACCOUNT</a>
+              <br>
+              <p>If you did not request this reset, please ignore this email.</p>
+              <br>
+              <p>This link are available only for 15 minutes.</p>`,
+      });
+
+      this.logger.verbose(`Delete profile link sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${email}: ${error.message}`);
+      throw new BadRequestException(error.message);
+    }
+  }
+
   public async sendContactForm(
     fromEmail: string,
     subject: string,

@@ -11,8 +11,11 @@
     "messages": {
         "email": {
             "registrationEmailSubject": "Confirm your email",
-            "registrationEmailMessage": "Please confirm your email by clicking the following link",
-            "registrationEmailSentMessage": "Confirmation link sent to your email {email}",
+            "registrationEmailMessage": "Please, confirm your email by clicking the following link",
+            "registrationEmailSentMessage": "Registration confirmation link sent to your email {email}",
+            "deleteUserEmailSubject": "Trellify account deletion request",
+            "deleteUserEmailMessage": "Please, confirm if you really want to delete your Trellify account by clicking the following link",
+            "deleteUserEmailSentMessage": "Delete account confirmation link sent to your email {email}",
             "resetPasswordEmailSubject": "Reset password request",
             "resetPasswordEmailMessage": "Click the link to reset your password",
             "resetPasswordEmailSentMessage": "Password reset link sent to your email {email}",
@@ -112,7 +115,7 @@
             "deleted": "All user {targetEmail} data has been deleted.",
             "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
             "passwordChangedSuccessfully": "Password has been successfully changed",
-            "emailChangedSuccessfully": "Email has benn successfully changed"
+            "emailChangedSuccessfully": "Email has been successfully changed"
         }
     },
     "errors": {
