@@ -11,6 +11,7 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 import {
+  TrelloBatchApiService,
   TrelloBoardsApiService,
   TrelloCardsApiService,
   TrelloWebhooksApiService,
@@ -89,6 +90,7 @@ export class TrelloWebhooksLogicService {
     private readonly trelloWebhookApiService: TrelloWebhooksApiService,
     private readonly trelloBoardsApiService: TrelloBoardsApiService,
     private readonly trelloCardsApiService: TrelloCardsApiService,
+    private readonly trelloBatchApiService: TrelloBatchApiService,
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly notificationBotService: NotificationBotService,
@@ -232,7 +234,9 @@ export class TrelloWebhooksLogicService {
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user, i18n);
+
     validateTrelloToken(requestedUser.trello.token, i18n);
+
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksConnectedToUser(
         requestedUser.trello.userId,
@@ -977,25 +981,38 @@ export class TrelloWebhooksLogicService {
 
     let boardData = null;
     let cardData = null;
+    let boardMemberships: BoardMember[] | null;
+
+    const batchRequestObject = {
+      card: `/cards/${targetCard?.id}` || '',
+      board: `/boards/${targetBoard?.id}` || '',
+      boardMemberships: `/boards/${targetBoard?.id}/memberships` || '',
+    };
+
+    const batchResponseObject = await this.trelloBatchApiService.fetchManyUrls(
+      batchRequestObject,
+      authorizedToken,
+    );
 
     if (targetBoard) {
-      boardData = await this.trelloBoardsApiService.fetchBoardById(
-        authorizedToken,
-        targetBoard.id,
-      );
+      boardData = batchResponseObject.board || null;
+      boardMemberships = batchResponseObject.boardMemberships || null;
+      // boardData = await this.trelloBoardsApiService.fetchBoardById(
+      //   authorizedToken,
+      //   targetBoard.id,
+      // );
     }
 
     if (targetCard) {
-      cardData = await this.trelloCardsApiService.fetchCardById(
-        authorizedToken,
-        targetCard.id,
-      );
+      cardData = batchResponseObject.card || null;
+      // cardData = await this.trelloCardsApiService.fetchCardById(
+      //   authorizedToken,
+      //   targetCard.id,
+      // );
     }
 
     let notifiedTargetUser: string | null = '';
     let notifiedAuthorUser: string | null = '';
-
-    let boardMemberships: BoardMember[] | null;
 
     if (
       (targetedChecklistUserId &&
