@@ -211,7 +211,7 @@ export class AuthService {
       },
     );
 
-    await this.mailService.sendResetPasswordLink(user.email, token);
+    await this.mailService.sendResetPasswordLink(user.email, token, i18n);
 
     this.logger.log(`Password reset email sent to: ${user.email}`);
     return {
