@@ -20,6 +20,7 @@ import { UsersRepository } from 'src/user/repositories/users.repository';
 import { UsersService } from 'src/user/services/users.service';
 import { TrelloWebhookRepository } from 'src/trello/repositories/webhook.repository';
 import {
+  TrelloBatchApiService,
   TrelloBoardsApiService,
   TrelloCardsApiService,
   TrelloWebhooksApiService,
@@ -86,6 +87,7 @@ describe('TrelloWebhooksLogicService', () => {
   let trelloBoardsApiService: TrelloBoardsApiService;
   let trelloCardsApiService: TrelloCardsApiService;
   let trelloWebhookApiService: TrelloWebhooksApiService;
+  let trelloBatchApiService: TrelloBatchApiService;
   let trelloActionsService: TrelloActionsLogicService;
   let usersService: UsersService;
   let configService: ConfigService;
@@ -161,6 +163,10 @@ describe('TrelloWebhooksLogicService', () => {
           useValue: createMock<TrelloCardsApiService>(),
         },
         {
+          provide: TrelloBatchApiService,
+          useValue: createMock<TrelloBatchApiService>(),
+        },
+        {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),
         },
@@ -190,6 +196,10 @@ describe('TrelloWebhooksLogicService', () => {
 
     trelloWebhookApiService = moduleRef.get<TrelloWebhooksApiService>(
       TrelloWebhooksApiService,
+    );
+
+    trelloBatchApiService = moduleRef.get<TrelloBatchApiService>(
+      TrelloBatchApiService,
     );
 
     trelloActionsService = moduleRef.get<TrelloActionsLogicService>(
@@ -1411,6 +1421,11 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'findOneById')
         .mockResolvedValue(webhookStubData);
 
+      jest.spyOn(trelloBatchApiService, 'fetchManyUrls').mockResolvedValue({
+        card: trelloCardMock,
+        board: trelloBoardMock,
+      });
+
       jest
         .spyOn(trelloCardsApiService, 'fetchCardById')
         .mockResolvedValue(trelloCardMock);
@@ -1478,9 +1493,9 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'findOneById')
         .mockResolvedValue(webhookStubCardNotifications);
 
-      jest
-        .spyOn(trelloCardsApiService, 'fetchCardById')
-        .mockResolvedValue(trelloCardMock);
+      // jest
+      //   .spyOn(trelloCardsApiService, 'fetchCardById')
+      //   .mockResolvedValue(trelloCardMock);
 
       jest
         .spyOn(trelloActionsService, 'handleCardActions')
