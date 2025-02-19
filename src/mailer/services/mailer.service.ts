@@ -108,9 +108,9 @@ export class MailerService {
         subject:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_SUBJECT) ||
           'Password Reset Request',
-        text: `${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE)}: ${resetLink}`,
+        text: `${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE) || 'Click the link to reset your password'}: ${resetLink}`,
         html:
-          `<p>Click the link to reset your password:</p>
+          `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE) || 'Click the link to reset your password'}:</p>
               <a href="${resetLink}">RESET PASSWORD</a>
               ` + this.getBottomHtml(i18n),
       });
