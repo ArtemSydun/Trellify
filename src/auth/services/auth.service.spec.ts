@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { superAdminStub } from 'src/user/__mocks__/user.stub';
+import { superAdminStub, userStub } from 'src/user/__mocks__/user.stub';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UsersService } from 'src/user/services/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
@@ -197,7 +198,7 @@ describe('AuthService', () => {
         .spyOn(mailerService, 'getLink')
         .mockReturnValue(`http://localhost/auth/confirm/${mockedToken}`);
 
-      const result = await authService.initiateRegistration(
+      const result = await authService.initiateUserRegistration(
         createUserDto,
         undefined,
       );
@@ -230,7 +231,7 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(true);
 
       await expect(
-        authService.initiateRegistration(createUserDto),
+        authService.initiateUserRegistration(createUserDto),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -243,7 +244,7 @@ describe('AuthService', () => {
         username: 'testuser',
       });
 
-      const response = await authService.confirmRegistration(
+      const response = await authService.confirmUserRegistration(
         'mockToken',
         undefined,
       );
@@ -339,6 +340,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
   describe('initiateChangeUserEmail', () => {
     it('should send a confirmation link for email change', async () => {
       const userStub = superAdminStub();
@@ -430,6 +432,125 @@ describe('AuthService', () => {
       await expect(authService.confirmChangeUserEmail(token)).rejects.toThrow(
         Error,
       );
+    });
+  });
+
+  describe('initiateUserDeletion', () => {
+    it('should allow a superadmin to delete any user', async () => {
+      const requestAuthor = superAdminStub();
+      const targetUser = userStub();
+
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockImplementation(async (id) =>
+          id === superAdminStub().id ? requestAuthor : targetUser,
+        );
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+
+      const result = await authService.initiateUserDeletion(
+        requestAuthor.id,
+        targetUser.id,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledTimes(2);
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        { id: targetUser.id },
+        { expiresIn: '15m' },
+      );
+      expect(mailerService.sendDeleteProfileLink).toHaveBeenCalledWith(
+        targetUser.email,
+        'mockToken',
+        undefined,
+      );
+      expect(result).toEqual({
+        message: expect.stringContaining(targetUser.email),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should allow a user to delete their own account', async () => {
+      const user = userStub();
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+
+      const result = await authService.initiateUserDeletion(user.id, user.id);
+
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        { id: user.id },
+        { expiresIn: '15m' },
+      );
+      expect(mailerService.sendDeleteProfileLink).toHaveBeenCalledWith(
+        user.email,
+        'mockToken',
+        undefined,
+      );
+      expect(result).toEqual({
+        message: expect.stringContaining(user.email),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should prevent a non-superadmin from deleting another user', async () => {
+      const requestAuthor = { ...userStub() };
+      const targetUser = { ...userStub(), id: 'otherId' };
+
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockImplementation(async (id) =>
+          id === requestAuthor.id ? requestAuthor : targetUser,
+        );
+
+      await expect(
+        authService.initiateUserDeletion(requestAuthor.id, targetUser.id),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should prevent a superadmin from deleting themselves', async () => {
+      const requestAuthor = superAdminStub();
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestAuthor);
+
+      await expect(
+        authService.initiateUserDeletion(requestAuthor.id, requestAuthor.id),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('confirmUserDeletion', () => {
+    it('should delete the user when a valid token is provided', async () => {
+      const userId = '2';
+
+      jest.spyOn(authService, 'verifyToken').mockReturnValue({ id: userId });
+      jest.spyOn(usersService, 'deleteUserById').mockResolvedValue({
+        message: 'User deleted',
+        statusCode: HttpStatus.OK,
+      });
+
+      const result = await authService.confirmUserDeletion('validToken');
+
+      expect(authService.verifyToken).toHaveBeenCalledWith('validToken');
+      expect(usersService.deleteUserById).toHaveBeenCalledWith(
+        userId,
+        userId,
+        undefined,
+      );
+      expect(result).toEqual({
+        message: 'User deleted',
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw BadRequestException if the token is invalid', async () => {
+      jest.spyOn(authService, 'verifyToken').mockImplementation(() => {
+        throw new BadRequestException('Invalid token');
+      });
+
+      await expect(
+        authService.confirmUserDeletion('invalidToken'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
