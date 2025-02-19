@@ -22,6 +22,8 @@ export enum I18nKeys {
   MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE = 'common.messages.email.changeMailEmailMessage',
   MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE = 'common.messages.email.changeMailEmailSentMessage',
   MESSAGES_EMAIL_CONTACT_US_EMAIL_SENT_MESSAGE = 'common.messages.email.contactUsEmailSentMessage',
+  MESSAGES_EMAIL_IGNORE_EMAIL_DEFAULT_MESSAGE = 'common.messages.email.ignoreEmailDefaultMessage',
+  MESSAGES_EMAIL_LINK_AVAILABLE_DEFAULT_MESSAGE = 'common.messages.email.linkAvailableDefaultMessage',
 
   // Telegram Notifications
   MESSAGES_TELEGRAM_CONNECTION_MESSAGE = 'common.messages.telegram.connectionMessage',

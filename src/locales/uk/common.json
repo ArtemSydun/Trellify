@@ -22,7 +22,9 @@
             "changeMailEmailSubject": "Запит на зміну пошти",
             "changeMailEmailMessage": "Натисніть на посилання щоб пітвердити зміну пошти",
             "changeMailEmailSentMessage": "Посилання для підтвердження зміни пошти надіслано на вашу пошту {email}",
-            "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин"
+            "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин",
+            "ignoreEmailDefaultMessage": "Якщо ви не робили запит на цю подію, будь ласка, проігноруйте цей лист",
+            "linkAvailableDefaultMessage": "Це посилання дійсне 15 хвилин"
         },
         "telegram": {
             "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
@@ -162,7 +164,7 @@
         "auth": {
             "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
             "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
-            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з попередньою"
+            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з поточною"
         }
     }
 }

@@ -297,6 +297,7 @@ describe('AuthService', () => {
       expect(mailerService.sendResetPasswordLink).toHaveBeenCalledWith(
         user.email,
         'mockResetToken',
+        undefined,
       );
       expect(result).toEqual({
         message: expect.stringContaining(forgotPasswordDto.email),
@@ -343,13 +344,13 @@ describe('AuthService', () => {
 
   describe('initiateChangeUserEmail', () => {
     it('should send a confirmation link for email change', async () => {
-      const userStub = superAdminStub();
+      const userStub = { ...superAdminStub(), password: 'correctPassword' };
       const changeEmailDto: ChangeEmailDto = {
         newEmail: 'newemail@example.com',
-        password: 'correctpassword',
+        password: userStub.password,
       };
 
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub);
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
       (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to fail
 
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
@@ -363,7 +364,7 @@ describe('AuthService', () => {
         undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(userStub.id);
+      expect(usersRepository.findOneById).toHaveBeenCalledWith(userStub.id);
       expect(verifyPassword).toHaveBeenCalledWith(
         changeEmailDto.password,
         userStub.password,
@@ -389,7 +390,7 @@ describe('AuthService', () => {
         password: 'correctpassword',
       };
 
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(userStub);
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
 
       await expect(
         authService.initiateChangeUserEmail(userStub.id, changeEmailDto),

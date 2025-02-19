@@ -24,6 +24,17 @@ export class MailerService {
     return `<a href=${apiUrl}/${route}>${message}</a>`;
   }
 
+  public getBottomHtml(i18n?: I18nContext) {
+    const EMAIL_FOOTER = `
+   <br>
+   <p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_IGNORE_EMAIL_DEFAULT_MESSAGE) || 'If you did not request this action, please ignore this email.'}</p>
+   <br>
+   <p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_LINK_AVAILABLE_DEFAULT_MESSAGE) || 'This link is available only for 15 minutes'}</p>
+   `;
+
+    return EMAIL_FOOTER;
+  }
+
   public async sendDistribution(
     sender: string,
     receiver: string,
@@ -97,13 +108,11 @@ export class MailerService {
         subject:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_SUBJECT) ||
           'Password Reset Request',
-        text: `${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE)}: ${resetLink}`,
-        html: `<p>Click the link to reset your password:</p>
+        text: `${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE) || 'Click the link to reset your password'}: ${resetLink}`,
+        html:
+          `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE) || 'Click the link to reset your password'}:</p>
               <a href="${resetLink}">RESET PASSWORD</a>
-              <br>
-              <p>If you did not request this action, please ignore this email.</p>
-              <br>
-              <p>This link are available only for 15 minutes.</p>`,
+              ` + this.getBottomHtml(i18n),
       });
 
       this.logger.verbose(`Forgot password mail sent to ${email}`);
@@ -130,12 +139,10 @@ export class MailerService {
         text:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) ||
           `Click the link to change your email: ${resetLink}`,
-        html: `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) || 'Click the link to change your email'}:</p>
+        html:
+          `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) || 'Click the link to change your email'}:</p>
               <a href="${resetLink}">CONFIRM EMAIL</a>
-              <br>
-              <p>If you did not request this reset, please ignore this email.</p>
-              <br>
-              <p>This link are available only for 15 minutes.</p>`,
+              ` + this.getBottomHtml(i18n),
       });
 
       this.logger.verbose(`Change email link sent to ${email}`);
@@ -162,12 +169,10 @@ export class MailerService {
         text:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) ||
           `Click the link if you are sure that you want to delete your Trellify account: ${resetLink}`,
-        html: `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) || 'Click the link if you are sure that you want to delete your Trellify account'}:</p>
+        html:
+          `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) || 'Click the link if you are sure that you want to delete your Trellify account'}:</p>
               <a href="${resetLink}">DELETE ACCOUNT</a>
-              <br>
-              <p>If you did not request this reset, please ignore this email.</p>
-              <br>
-              <p>This link are available only for 15 minutes.</p>`,
+              ` + this.getBottomHtml(i18n),
       });
 
       this.logger.verbose(`Delete profile link sent to ${email}`);

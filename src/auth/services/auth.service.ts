@@ -211,7 +211,7 @@ export class AuthService {
       },
     );
 
-    await this.mailService.sendResetPasswordLink(user.email, token);
+    await this.mailService.sendResetPasswordLink(user.email, token, i18n);
 
     this.logger.log(`Password reset email sent to: ${user.email}`);
     return {
@@ -255,16 +255,16 @@ export class AuthService {
   }
 
   public async initiateChangeUserEmail(
-    user: string | User,
+    userId: string,
     changeEmailDto: ChangeEmailDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const userToUpdate = await this.userService.getUser(user);
+    const userToUpdate = await this.userRepository.findOneById(userId);
     const { newEmail, password } = changeEmailDto;
 
     if (userToUpdate.email === newEmail) {
       throw new ConflictException(
-        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS) ||
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_EMAIL_SAME_ADRESS) ||
           'New email must be different from current',
       );
     }
@@ -281,8 +281,9 @@ export class AuthService {
 
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE) ||
-        `Confirmation link sent on ${newEmail}`,
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE, {
+          args: { email: newEmail },
+        }) || `Confirmation link sent on ${newEmail}`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -346,8 +347,9 @@ export class AuthService {
 
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) ||
-        `Confirmation link sent on ${targetUser.email}`,
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE, {
+          args: { email: targetUser.email },
+        }) || `Confirmation link sent on ${targetUser.email}`,
       statusCode: HttpStatus.OK,
     };
   }
