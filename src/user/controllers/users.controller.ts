@@ -413,10 +413,11 @@ export class UsersController {
     return this.usersService.findUserById(id, req.i18nContext);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
   @Delete(':id')
   @ApiOperation({
-    summary: 'Delete a user by ID.',
+    summary: 'Delete a user by ID (Superadmin only)',
     description: 'This endpoint allows to delete a user by their ID.',
   })
   @ApiOkResponse({
