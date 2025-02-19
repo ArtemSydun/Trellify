@@ -297,6 +297,7 @@ describe('AuthService', () => {
       expect(mailerService.sendResetPasswordLink).toHaveBeenCalledWith(
         user.email,
         'mockResetToken',
+        undefined,
       );
       expect(result).toEqual({
         message: expect.stringContaining(forgotPasswordDto.email),
