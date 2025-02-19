@@ -346,7 +346,7 @@ export class AuthService {
 
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE) ||
+        i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) ||
         `Confirmation link sent on ${targetUser.email}`,
       statusCode: HttpStatus.OK,
     };
