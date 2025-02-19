@@ -128,7 +128,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/change-email/${token}`;
+      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/change-email/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -138,10 +138,10 @@ export class MailerService {
           'Change Email Request',
         text:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) ||
-          `Click the link to change your email: ${resetLink}`,
+          `Click the link to change your email: ${emailLink}`,
         html:
           `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE) || 'Click the link to change your email'}:</p>
-              <a href="${resetLink}">CONFIRM EMAIL</a>
+              <a href="${emailLink}">CONFIRM EMAIL</a>
               ` + this.getBottomHtml(i18n),
       });
 
@@ -158,7 +158,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/delete-profile/${token}`;
+      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/setttings/delete-profile/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -168,10 +168,10 @@ export class MailerService {
           'Delete profile request',
         text:
           i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) ||
-          `Click the link if you are sure that you want to delete your Trellify account: ${resetLink}`,
+          `Click the link if you are sure that you want to delete your Trellify account: ${emailLink}`,
         html:
           `<p>${i18n?.t(I18nKeys.MESSAGES_EMAIL_DELETE_USER_MESSAGE) || 'Click the link if you are sure that you want to delete your Trellify account'}:</p>
-              <a href="${resetLink}">DELETE ACCOUNT</a>
+              <a href="${emailLink}">DELETE ACCOUNT</a>
               ` + this.getBottomHtml(i18n),
       });
 
