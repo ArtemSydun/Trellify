@@ -5,12 +5,25 @@ export enum I18nKeys {
   FIELDS_BOARD = 'common.fields.board',
   FIELDS_CARD = 'common.fields.card',
   FIELDS_DATE = 'common.fields.date',
+  FIELDS_SETTINGS = 'common.fields.settings',
+  FIELDS_DASHBOARD = 'common.fields.dashboard',
 
   // Email Messages
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_MESSAGE = 'common.messages.email.registrationEmailMessage',
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SENT_MESSAGE = 'common.messages.email.registrationEmailSentMessage',
+  MESSAGES_EMAIL_RESET_PASSWORD_SUBJECT = 'common.messages.email.resetPasswordEmailSubject',
+  MESSAGES_EMAIL_RESET_PASSWORD_MESSAGE = 'common.messages.email.resetPasswordEmailMessage',
+  MESSAGES_EMAIL_RESET_PASSWORD_SENT_MESSAGE = 'common.messages.email.resetPasswordEmailSentMessage',
+  MESSAGES_EMAIL_DELETE_USER_SUBJECT = 'common.messages.email.deleteUserEmailSubject',
+  MESSAGES_EMAIL_DELETE_USER_MESSAGE = 'common.messages.email.deleteUserEmailMessage',
+  MESSAGES_EMAIL_DELETE_USER_SENT_MESSAGE = 'common.messages.email.deleteUserEmailSentMessage',
+  MESSAGES_EMAIL_CHANGE_MAIL_SUBJECT = 'common.messages.email.changeMailEmailSubject',
+  MESSAGES_EMAIL_CHANGE_MAIL_MESSAGE = 'common.messages.email.changeMailEmailMessage',
+  MESSAGES_EMAIL_CHANGE_MAIL_SENT_MESSAGE = 'common.messages.email.changeMailEmailSentMessage',
   MESSAGES_EMAIL_CONTACT_US_EMAIL_SENT_MESSAGE = 'common.messages.email.contactUsEmailSentMessage',
+  MESSAGES_EMAIL_IGNORE_EMAIL_DEFAULT_MESSAGE = 'common.messages.email.ignoreEmailDefaultMessage',
+  MESSAGES_EMAIL_LINK_AVAILABLE_DEFAULT_MESSAGE = 'common.messages.email.linkAvailableDefaultMessage',
 
   // Telegram Notifications
   MESSAGES_TELEGRAM_CONNECTION_MESSAGE = 'common.messages.telegram.connectionMessage',
@@ -27,8 +40,11 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_HELP_CLOSING = 'common.messages.telegram.help.closingMessage',
 
   // user related messages
+  MESSAGES_USER_CREATED = 'common.messages.user.created',
   MESSAGES_USER_DELETED = 'common.messages.user.deleted',
   MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
+  MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY = 'common.messages.user.passwordChangedSuccessfully',
+  MESSAGES_USER_EMAIL_CHANGED_SUCCESSFULLY = 'common.messages.user.emailChangedSuccessfully',
 
   // Webhook Messages
   MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
@@ -73,6 +89,8 @@ export enum I18nKeys {
 
   // Auth Errors
   ERRORS_AUTH_RESET_PASSWORD_MISMATCH = 'common.errors.auth.resetPasswordMismatch',
+  ERRORS_AUTH_CHANGE_PASSWORD_SAME_PASS = 'common.errors.auth.changePasswordSamePass',
+  ERRORS_AUTH_CHANGE_EMAIL_SAME_ADRESS = 'common.errors.auth.changeEmailSameAdress',
 
   // Telegram User Notification
   NOTIFICATION_TELEGRAM_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.telegram.notifications.personal.cardMemberAddedSelf',
@@ -122,6 +140,7 @@ export enum I18nKeys {
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_LEFT = 'common.messages.telegram.notifications.admin.boardMemberLeft',
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_REMOVED = 'common.messages.telegram.notifications.admin.boardMemberRemoved',
   NOTIFICATION_TELEGRAM_BOARD_MEMBER_NORMAL_ROLE_ADDED = 'common.messages.telegram.notifications.admin.boardNormalRoleAdded',
+  NOTIFICATION_TELEGRAM_BOARD_MEMBER_NORMAL_ROLE_BECAME = 'common.messages.telegram.notifications.admin.boardNormalRoleBecame',
   NOTIFICATION_TELEGRAM_BOARD_ADMIN_ADDED = 'common.messages.telegram.notifications.admin.boardAdminAdded',
   NOTIFICATION_TELEGRAM_CUSTOM_FIELD_CREATED = 'common.messages.telegram.notifications.admin.customFieldCreated',
   NOTIFICATION_TELEGRAM_CUSTOM_FIELD_RENAMED = 'common.messages.telegram.notifications.admin.customFieldRenamed',

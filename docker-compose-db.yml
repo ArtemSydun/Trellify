@@ -1,0 +1,21 @@
+name: 'api-trellify'
+services:
+  mongodb:
+    image: mongo:latest
+    hostname: ${MONGODB_HOSTNAME}
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db/
+      - mongodb-log:/var/log/mongodb/
+    ports:
+      - '${MONGODB_HOST_PORT}:${MONGODB_PORT}'
+
+volumes:
+  mongodb-data:
+    driver: local
+    name: trellify-mongo-data
+  mongodb-log:
+    driver: local
+    name: trellify-mongo-log

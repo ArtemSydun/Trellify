@@ -4,27 +4,25 @@ import {
   HttpStatus,
   Body,
   Param,
-  Get,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiOkResponse,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiOkResponse, ApiBearerAuth } from '@nestjs/swagger';
 import {
   ApiCustomNotFoundResponse,
   ApiCustomConflictResponse,
   ApiCustomUnathorizedResponse,
   ApiCustomBadRequestResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { Errors } from 'src/common/enums/errors.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
+import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserResponseDto, LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { JwtAuthGuard } from '../guards/jwt.guard';
 import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
@@ -42,27 +40,8 @@ export class AuthController {
     type: LoginUserResponseDto,
   })
   @ApiCustomNotFoundResponse('User', 'email')
-  @ApiUnauthorizedResponse({
-    description: 'Invalid credentials',
-    schema: {
-      type: 'object',
-      properties: {
-        message: {
-          type: 'string',
-          example: 'Invalid credentials',
-        },
-        error: {
-          type: 'string',
-          example: Errors.UNATHORIZED,
-        },
-        statusCode: {
-          type: 'number',
-          example: HttpStatus.UNAUTHORIZED,
-        },
-      },
-    },
-  })
-  login(
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
+  public login(
     @Body() loginCredentials: LoginUserDto,
     @Req() req,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
@@ -92,14 +71,44 @@ export class AuthController {
     },
   })
   @ApiCustomConflictResponse('User', 'email')
-  create(
+  public createUser(
     @Body() createUserDto: CreateUserDto,
     @Req() req,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.initiateRegistration(
+    return this.authService.initiateUserRegistration(
       createUserDto,
       req.i18nContext,
     );
+  }
+
+  @Post('sign-up/:token')
+  @ApiOperation({
+    summary: 'Confirm user registration',
+    description:
+      'Confirms the user’s email address by verifying the confirmation token.',
+  })
+  @ApiOkResponse({
+    description: 'User registered successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User registered successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomConflictResponse('User', 'email')
+  public confirmUserRegistration(
+    @Param('token') token: string,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.confirmUserRegistration(token, req.i18nContext);
   }
 
   @Post('forgot-password')
@@ -172,20 +181,21 @@ export class AuthController {
     );
   }
 
-  @Get('confirm/:token')
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email')
+  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Confirm user registration',
-    description:
-      'Confirms the user’s email address by verifying the confirmation token.',
+    summary: 'Change email.',
+    description: 'This endpoint allows users to change their email.',
   })
   @ApiOkResponse({
-    description: 'User registered successfully',
+    description: 'Email change success',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'User registered successfully',
+          example: 'Email successfully changed',
         },
         statusCode: {
           type: 'number',
@@ -194,11 +204,155 @@ export class AuthController {
       },
     },
   })
-  @ApiCustomConflictResponse('User', 'email')
-  async confirmRegistration(
-    @Param('token') token: string,
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
+  @ApiCustomNotFoundResponse('User', 'id')
+  public changeUserEmail(
     @Req() req,
+    @Body() changeEmailDto: ChangeEmailDto,
   ): Promise<DefaultResponse<null>> {
-    return this.authService.confirmRegistration(token, req.i18nContext);
+    return this.authService.initiateChangeUserEmail(
+      req.user.id,
+      changeEmailDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-email/:token')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change email.',
+    description: 'This endpoint allows users to change their email.',
+  })
+  @ApiOkResponse({
+    description: 'Email change success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Email successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  public confirmChangeUserEmail(
+    @Req() req,
+    @Param('token') token: string,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.confirmChangeUserEmail(token, req.i18nContext);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change password.',
+    description: 'This endpoint allows users to change their password.',
+  })
+  @ApiOkResponse({
+    description: 'Password changed success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
+  @ApiCustomNotFoundResponse('User', 'id')
+  public changeUserPassword(
+    @Req() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.changeUserPassword(
+      req.user.id,
+      changePasswordDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('delete-profile')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete profile.',
+    description: 'This endpoint allows users to delete their Trellify profile.',
+  })
+  @ApiOkResponse({
+    description: 'Link sent to the user email',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Link sent to your email',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  public initiateDeleteUser(
+    @Req() req,
+    @Body() userToDelete: { id: string },
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.initiateUserDeletion(
+      req.user.id,
+      userToDelete.id,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('delete-profile/:token')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Confirm user deletion.',
+    description:
+      'This endpoint allows users to confirm deleting Trellify profile.',
+  })
+  @ApiOkResponse({
+    description: 'Email change success',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Email successfully changed',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  public confirmDeleteUserProfile(
+    @Req() req,
+    @Param('token') token: string,
+  ): Promise<DefaultResponse<null>> {
+    return this.authService.confirmUserDeletion(token, req.i18nContext);
   }
 }

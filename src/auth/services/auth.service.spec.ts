@@ -2,18 +2,17 @@ import { createMock } from '@golevelup/ts-jest';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpStatus,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { verifyPassword } from 'src/common/helpers/hashing';
+import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { superAdminStub } from 'src/user/__mocks__/user.stub';
+import { superAdminStub, userStub } from 'src/user/__mocks__/user.stub';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UsersService } from 'src/user/services/users.service';
-import { resetPasswordMessageStub } from '../__mocks__/auth.stub';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginUserDto } from '../dto/login.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -22,9 +21,12 @@ import { UsersRepository } from 'src/user/repositories/users.repository';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
+import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
+  hashPassword: jest.fn(),
 }));
 
 describe('AuthService', () => {
@@ -118,6 +120,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         loginUserDto.password,
         user.password,
+        undefined,
       );
       expect(notificationBotService.fetchTelegramUser).toHaveBeenCalledWith(
         user.telegram.chatId,
@@ -143,7 +146,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw UnauthorizedException for invalid credentials', async () => {
+    it('should throw BadRequestException for invalid credentials', async () => {
       const user = {
         ...superAdminStub(),
         password: 'hashedpassword',
@@ -157,13 +160,13 @@ describe('AuthService', () => {
 
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
-      jest
-        .spyOn(notificationBotService, 'fetchTelegramUser')
-        .mockResolvedValue(null);
-      (verifyPassword as jest.Mock).mockResolvedValue(false); // Mock password validation to fail
+
+      (verifyPassword as jest.Mock).mockRejectedValue(
+        new BadRequestException(),
+      );
 
       await expect(authService.login(loginUserDto)).rejects.toThrow(
-        UnauthorizedException,
+        BadRequestException,
       );
 
       expect(usersService.findUserByEmail).toHaveBeenCalledWith(
@@ -173,6 +176,7 @@ describe('AuthService', () => {
       expect(verifyPassword).toHaveBeenCalledWith(
         loginUserDto.password,
         user.password,
+        undefined,
       );
       expect(notificationBotService.fetchTelegramUser).not.toHaveBeenCalled();
     });
@@ -185,15 +189,16 @@ describe('AuthService', () => {
         password: 'password123',
         timezone: 0,
       };
+      const mockedToken = 'mockToken';
 
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(false);
-      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(jwtService, 'sign').mockReturnValue(mockedToken);
       jest.spyOn(configService, 'get').mockReturnValue('http://localhost');
       jest
         .spyOn(mailerService, 'getLink')
-        .mockReturnValue('http://localhost/auth/confirm/mockToken');
+        .mockReturnValue(`http://localhost/auth/confirm/${mockedToken}`);
 
-      const result = await authService.initiateRegistration(
+      const result = await authService.initiateUserRegistration(
         createUserDto,
         undefined,
       );
@@ -205,18 +210,13 @@ describe('AuthService', () => {
         expect.objectContaining({ email: createUserDto.email }),
         { expiresIn: '1d' },
       );
-      expect(mailerService.getLink).toHaveBeenCalledWith(
-        'http://localhost',
-        'auth/confirm/mockToken',
-        'Confirm your email',
-      );
-      expect(mailerService.sendDistribution).toHaveBeenCalledWith(
-        expect.any(String), // Sender
+      expect(mailerService.sendRegistrationLink).toHaveBeenCalledWith(
         createUserDto.email,
-        expect.objectContaining({ subject: 'Confirm your email' }),
+        mockedToken,
+        undefined,
       );
       expect(result).toEqual({
-        message: `Confirmation link sent to your email ${createUserDto.email}`,
+        message: expect.stringContaining(createUserDto.email),
         statusCode: HttpStatus.OK,
       });
     });
@@ -231,7 +231,7 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(true);
 
       await expect(
-        authService.initiateRegistration(createUserDto),
+        authService.initiateUserRegistration(createUserDto),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -244,7 +244,7 @@ describe('AuthService', () => {
         username: 'testuser',
       });
 
-      const response = await authService.confirmRegistration(
+      const response = await authService.confirmUserRegistration(
         'mockToken',
         undefined,
       );
@@ -282,10 +282,7 @@ describe('AuthService', () => {
       const user = superAdminStub();
       jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockResetToken');
-      jest.spyOn(mailerService, 'sendResetPasswordLink').mockResolvedValue({
-        message: `Password reset link sent to ${forgotPasswordDto.email}`,
-        statusCode: HttpStatus.OK,
-      });
+      jest.spyOn(mailerService, 'sendResetPasswordLink').mockResolvedValue();
 
       const result = await authService.forgotPassword(
         forgotPasswordDto,
@@ -300,9 +297,10 @@ describe('AuthService', () => {
       expect(mailerService.sendResetPasswordLink).toHaveBeenCalledWith(
         user.email,
         'mockResetToken',
+        undefined,
       );
       expect(result).toEqual({
-        message: `Password reset email sent on ${user.email}`,
+        message: expect.stringContaining(forgotPasswordDto.email),
         statusCode: HttpStatus.OK,
       });
     });
@@ -321,11 +319,7 @@ describe('AuthService', () => {
         .mockReturnValue({ id: superAdminStub().id });
       jest.spyOn(usersService, 'resetPassword').mockResolvedValue();
 
-      const result = await authService.resetPassword(
-        token,
-        resetPasswordDto,
-        undefined,
-      );
+      await authService.resetPassword(token, resetPasswordDto, undefined);
 
       expect(jwtService.verify).toHaveBeenCalledWith(token);
       expect(usersService.resetPassword).toHaveBeenCalledWith(
@@ -333,7 +327,6 @@ describe('AuthService', () => {
         resetPasswordDto.newPassword,
         undefined,
       );
-      expect(result).toEqual(resetPasswordMessageStub());
     });
 
     it('should throw BadRequestException if passwords do not match', async () => {
@@ -346,6 +339,273 @@ describe('AuthService', () => {
       await expect(
         authService.resetPassword(token, resetPasswordDto),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('initiateChangeUserEmail', () => {
+    it('should send a confirmation link for email change', async () => {
+      const userStub = { ...superAdminStub(), password: 'correctPassword' };
+      const changeEmailDto: ChangeEmailDto = {
+        newEmail: 'newemail@example.com',
+        password: userStub.password,
+      };
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+      (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to fail
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest
+        .spyOn(mailerService, 'sendChangeEmailLink')
+        .mockResolvedValue(undefined);
+
+      const result = await authService.initiateChangeUserEmail(
+        userStub.id,
+        changeEmailDto,
+        undefined,
+      );
+
+      expect(usersRepository.findOneById).toHaveBeenCalledWith(userStub.id);
+      expect(verifyPassword).toHaveBeenCalledWith(
+        changeEmailDto.password,
+        userStub.password,
+        undefined,
+      );
+      expect(jwtService.sign).toHaveBeenCalled();
+      expect(mailerService.sendChangeEmailLink).toHaveBeenCalledWith(
+        changeEmailDto.newEmail,
+        'mockToken',
+        undefined,
+      );
+
+      expect(result).toEqual({
+        message: expect.stringContaining(changeEmailDto.newEmail),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw ConflictException if new email is the same as current email', async () => {
+      const userStub = superAdminStub();
+      const changeEmailDto: ChangeEmailDto = {
+        newEmail: userStub.email,
+        password: 'correctpassword',
+      };
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+
+      await expect(
+        authService.initiateChangeUserEmail(userStub.id, changeEmailDto),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('confirmChangeUserEmail', () => {
+    it('should update user email successfully', async () => {
+      const userStub = superAdminStub();
+      const token = 'mockToken';
+      const decodedToken = {
+        id: userStub.id,
+        newEmail: 'newemail@example.com',
+      };
+
+      jest.spyOn(authService, 'verifyToken').mockReturnValue(decodedToken);
+      jest.spyOn(usersService, 'updateUser').mockResolvedValue(undefined);
+
+      const result = await authService.confirmChangeUserEmail(token, undefined);
+
+      expect(authService.verifyToken).toHaveBeenCalledWith(token);
+      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
+        email: decodedToken.newEmail,
+      });
+
+      expect(result).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw an error if token is invalid', async () => {
+      const token = 'invalidToken';
+
+      jest.spyOn(authService, 'verifyToken').mockImplementation(() => {
+        throw new Error('Invalid token');
+      });
+
+      await expect(authService.confirmChangeUserEmail(token)).rejects.toThrow(
+        Error,
+      );
+    });
+  });
+
+  describe('initiateUserDeletion', () => {
+    it('should allow a superadmin to delete any user', async () => {
+      const requestAuthor = superAdminStub();
+      const targetUser = userStub();
+
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockImplementation(async (id) =>
+          id === superAdminStub().id ? requestAuthor : targetUser,
+        );
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+
+      const result = await authService.initiateUserDeletion(
+        requestAuthor.id,
+        targetUser.id,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledTimes(2);
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        { id: targetUser.id },
+        { expiresIn: '15m' },
+      );
+      expect(mailerService.sendDeleteProfileLink).toHaveBeenCalledWith(
+        targetUser.email,
+        'mockToken',
+        undefined,
+      );
+      expect(result).toEqual({
+        message: expect.stringContaining(targetUser.email),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should allow a user to delete their own account', async () => {
+      const user = userStub();
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+
+      const result = await authService.initiateUserDeletion(user.id, user.id);
+
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        { id: user.id },
+        { expiresIn: '15m' },
+      );
+      expect(mailerService.sendDeleteProfileLink).toHaveBeenCalledWith(
+        user.email,
+        'mockToken',
+        undefined,
+      );
+      expect(result).toEqual({
+        message: expect.stringContaining(user.email),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should prevent a non-superadmin from deleting another user', async () => {
+      const requestAuthor = { ...userStub() };
+      const targetUser = { ...userStub(), id: 'otherId' };
+
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockImplementation(async (id) =>
+          id === requestAuthor.id ? requestAuthor : targetUser,
+        );
+
+      await expect(
+        authService.initiateUserDeletion(requestAuthor.id, targetUser.id),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should prevent a superadmin from deleting themselves', async () => {
+      const requestAuthor = superAdminStub();
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestAuthor);
+
+      await expect(
+        authService.initiateUserDeletion(requestAuthor.id, requestAuthor.id),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('confirmUserDeletion', () => {
+    it('should delete the user when a valid token is provided', async () => {
+      const userId = '2';
+
+      jest.spyOn(authService, 'verifyToken').mockReturnValue({ id: userId });
+      jest.spyOn(usersService, 'deleteUserById').mockResolvedValue({
+        message: 'User deleted',
+        statusCode: HttpStatus.OK,
+      });
+
+      const result = await authService.confirmUserDeletion('validToken');
+
+      expect(authService.verifyToken).toHaveBeenCalledWith('validToken');
+      expect(usersService.deleteUserById).toHaveBeenCalledWith(
+        userId,
+        userId,
+        undefined,
+      );
+      expect(result).toEqual({
+        message: 'User deleted',
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw BadRequestException if the token is invalid', async () => {
+      jest.spyOn(authService, 'verifyToken').mockImplementation(() => {
+        throw new BadRequestException('Invalid token');
+      });
+
+      await expect(
+        authService.confirmUserDeletion('invalidToken'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('changeUserPassword', () => {
+    it('should change the user password successfully', async () => {
+      const userStub = superAdminStub();
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'correctpassword',
+        newPassword: 'newsecurepassword',
+      };
+
+      const hashedPassword = 'hashedPassword';
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+      (verifyPassword as jest.Mock).mockResolvedValue(true);
+      (hashPassword as jest.Mock).mockResolvedValue(hashedPassword); // Mock password validation to fail
+
+      jest.spyOn(usersRepository, 'updateById').mockResolvedValue(undefined);
+
+      const result = await authService.changeUserPassword(
+        userStub.id,
+        changePasswordDto,
+        undefined,
+      );
+
+      expect(usersRepository.findOneById).toHaveBeenCalledWith(userStub.id);
+      expect(verifyPassword).toHaveBeenCalledWith(
+        changePasswordDto.oldPassword,
+        userStub.password,
+        undefined,
+      );
+      expect(hashPassword).toHaveBeenCalledWith(changePasswordDto.newPassword);
+      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
+        password: 'hashedPassword',
+      });
+
+      expect(result).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
+    });
+
+    it('should throw ConflictException if the new password is the same as the old password', async () => {
+      const userStub = superAdminStub();
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'samepassword',
+        newPassword: 'samepassword',
+      };
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+
+      await expect(
+        authService.changeUserPassword(userStub.id, changePasswordDto),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

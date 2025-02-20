@@ -35,6 +35,12 @@ export class TrelloBoard implements ITrelloBoard {
   dateClosed: string | null;
 
   @ApiProperty({
+    description: 'The board workspace id',
+    example: null,
+  })
+  idOrganization: string | null;
+
+  @ApiProperty({
     description: 'Whether the board is pinned',
     example: false,
   })

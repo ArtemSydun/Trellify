@@ -96,7 +96,11 @@ export class TrelloWebhooksController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin)
   @Get('')
-  @ApiOperation({ summary: 'Find webhooks with pagination & filtering' })
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Find webhooks with pagination & filtering (Superadmin / admin only',
+  })
   @ApiQuery({
     name: 'page',
     required: false,

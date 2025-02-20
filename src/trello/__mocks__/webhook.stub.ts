@@ -6,13 +6,10 @@ import {
 
 export const webhookStub = {
   id: 'webhook1',
-  description: '',
   idModel: '6763dcb33e9016a37e973222',
+  idWorkspace: '3555dcb33e9016a37e974123',
   callbackURL:
     'https://mycallback.url/trello/webhooks/provider/6763dcb33e9016a37e973222',
-  active: true,
-  consecutiveFailures: 0,
-  firstConsecutiveFailDate: null,
   boardName: 'test',
   boardUrl: 'https://trello.com/b/EVPkihab/test',
   author: {
@@ -102,13 +99,10 @@ export const webhookStub = {
 
 export const newWebhookStub = {
   id: 'webhook2',
-  description: '',
+  idWorkspace: '3555dcb33e9016a37e974123',
   idModel: '6763dcb33e9016a37e973222',
   callbackURL:
     'https://mycallback.url/trello/webhooks/provider/6763dcb33e9016a37e973222',
-  active: true,
-  consecutiveFailures: 0,
-  firstConsecutiveFailDate: null,
   boardName: 'test',
   boardUrl: 'https://trello.com/b/EVPkihab/test',
   author: {

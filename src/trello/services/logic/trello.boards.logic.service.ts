@@ -53,6 +53,7 @@ export class TrelloBoardsLogicService {
     const transformedBoards = response.map((board) => ({
       id: board.id,
       name: board.name,
+      idOrganization: board.idOrganization,
       desc: board.desc,
       closed: board.closed,
       dateClosed: board.dateClosed,
@@ -101,6 +102,7 @@ export class TrelloBoardsLogicService {
     const transformedBoards = filteredBoards.map((board) => ({
       id: board.id,
       name: board.name,
+      idOrganization: board.idOrganization,
       desc: board.desc,
       closed: board.closed,
       dateClosed: board.dateClosed,
@@ -165,6 +167,7 @@ export class TrelloBoardsLogicService {
     const transformedBoard = {
       id: boardData.id,
       name: boardData.name,
+      idOrganization: boardData.idOrganization,
       desc: boardData.desc,
       closed: boardData.closed,
       dateClosed: boardData.dateClosed,

@@ -104,7 +104,7 @@ export class UsersService {
     requestedAuthor: string | User,
     userToDelete: string | User,
     i18n?: I18nContext,
-  ): Promise<DefaultResponse<string>> {
+  ): Promise<DefaultResponse<null>> {
     const requestAuthor = await this.getUser(requestedAuthor, i18n);
     const targetUser = await this.getUser(userToDelete, i18n);
 
@@ -652,6 +652,7 @@ export class UsersService {
       email,
       subject,
       message,
+      authorized,
     });
 
     return {

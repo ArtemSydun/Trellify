@@ -51,6 +51,7 @@ export const fullProfileActions = [
   TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED,
   TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED,
   TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED,
+  TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_BECAME,
   TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
   TrelloWebhookDetailedActions.BOARD_PERM_LEVEL_CHANGED,
   TrelloWebhookDetailedActions.BOARD_CLOSED,
