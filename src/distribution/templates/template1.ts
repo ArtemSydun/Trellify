@@ -1,4 +1,4 @@
-export const htmlTemplate1 = (userId: string) => {
+export const htmlTemplate1 = (frontendLink: string, userId: string) => {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -72,7 +72,7 @@ export const htmlTemplate1 = (userId: string) => {
         </div>
         <div class="footer">
             <p>&copy; 2025 YourCompany. All rights reserved.</p>
-            <p><a href="https://5235-185-208-231-18.ngrok-free.app/distribution/unsubscribe/${userId}">Unsubscribe</a> | <a href="https://yourwebsite.com/privacy-policy">Privacy Policy</a></p>
+            <p><a href="${frontendLink}/distribution/unsubscribe/${userId}">Unsubscribe</a> | <a href="https://yourwebsite.com/privacy-policy">Privacy Policy</a></p>
         </div>
     </div>
 </body>

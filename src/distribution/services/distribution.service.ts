@@ -130,7 +130,10 @@ export class DistributionService {
     const distributionSubscribers = await this.findAllDistributionSubscribers();
 
     const senderPromises = distributionSubscribers.map((subscriber) => {
-      const html = htmlTemplate1(subscriber.id);
+      const html = htmlTemplate1(
+        this.configService.get(configServiceEnum.BACKEND_LINK),
+        subscriber.id,
+      );
 
       this.mailerService.sendDistribution(distributor, subscriber.email, {
         html,
