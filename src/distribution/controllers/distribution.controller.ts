@@ -7,9 +7,20 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiOkResponse,
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
+import {
+  ApiCustomUnathorizedResponse,
+  ApiCustomForbiddenResponse,
+} from 'src/common/decorators/swagger.decorators';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateDistributionSubscriberDto } from '../dto/create-distribution-subscriber.dto';
@@ -24,11 +35,30 @@ export class DistributionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin)
   @Post('send')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Send distribution to subscribers',
+    description: 'Send distribution to subscibers.',
+  })
+  @ApiOkResponse({
+    description: 'Distribution send to all newsletter subscribers',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
   sendDistribution(@Body() distribution: { subject: string }) {
     return this.distributionService.sendDistribution(distribution.subject);
   }
 
   @Post('subscribe')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Subscribe to newsletter',
+    description: 'Subscribe to newsletter by email.',
+  })
+  @ApiOkResponse({
+    description: 'You will receive Trellify updates on your email',
+  })
+  @ApiConflictResponse()
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
@@ -37,28 +67,96 @@ export class DistributionController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
   @Get('subscribers/all')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get all distribution subscribers',
+    description: 'Get all distribution subscribers.',
+  })
+  @ApiOkResponse({
+    description: 'All subscribers',
+    type: [DistributionSubscriber],
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
   findAll(): Promise<DistributionSubscriber[]> {
     return this.distributionService.findAllDistributionSubscribers();
   }
 
-  @Get('subscribers/:id')
-  findOne(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Get('subscribers/:email')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get subscriber by email',
+    description: 'Get subscriber by email.',
+  })
+  @ApiOkResponse({
+    description: 'Subscriber by subscriber email',
+    type: DistributionSubscriber,
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiNotFoundResponse()
+  findOneByEmail(@Param('email') email: string) {
+    return this.distributionService.findDistributionSubscriberByEmail(email);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Get('subscribers/:userId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get subscriber by Trellify user id',
+    description: 'Get subscriber by Trellify user id.',
+  })
+  @ApiOkResponse({
+    description: 'Subscriber by Trellify user id',
+    type: DistributionSubscriber,
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiNotFoundResponse()
+  findOneByTrellifyUserId(@Param('userId') userId: string) {
     return this.distributionService.findDistributionSubscriberByTrellifyUserId(
-      id,
+      userId,
     );
   }
 
   @Patch('subscribers/:email')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update distribution subscription by email',
+    description: 'Update distribution subscription.',
+  })
+  @ApiOkResponse({
+    description:
+      'Email {email} mail subscription preferences updated successfully',
+    type: DistributionSubscriber,
+  })
+  @ApiNotFoundResponse()
   update(
     @Param('email') email: string,
     @Body() updateDistributionDto: UpdateDistributionDto,
-  ) {
+  ): Promise<DefaultResponse<DistributionSubscriber>> {
     return this.distributionService.updateByEmail(email, updateDistributionDto);
   }
 
   @Get('unsubscribe/:id')
-  remove(@Param('id') id: string) {
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Unsubscribe from Trellify distribution',
+    description: 'Unsubscribe from Trellify distribution.',
+  })
+  @ApiOkResponse({
+    description:
+      'Email ${email} removed from Trellify mail subscription successfully',
+    type: DistributionSubscriber,
+  })
+  @ApiNotFoundResponse()
+  remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
     return this.distributionService.removeDistributionSubscriber(id);
   }
 }

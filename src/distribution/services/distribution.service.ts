@@ -25,6 +25,41 @@ export class DistributionService {
     private readonly configService: ConfigService,
   ) {}
 
+  public async sendDistribution(
+    subject: string,
+  ): Promise<DefaultResponse<null>> {
+    const distributor = this.configService.get(configServiceEnum.MAILER_SENDER);
+
+    const sendDate = new Date();
+
+    const distributionSubscribers = await this.findAllDistributionSubscribers();
+
+    const senderPromises = distributionSubscribers.map((subscriber) => {
+      const html = htmlTemplate1(
+        this.configService.get(configServiceEnum.BACKEND_LINK),
+        subscriber.id,
+      );
+
+      this.mailerService.sendDistribution(distributor, subscriber.email, {
+        html,
+        subject,
+      });
+
+      this.distributionSubscriberRepository.updateById(subscriber.id, {
+        lastMessageSent: sendDate,
+      });
+    });
+
+    await Promise.all(senderPromises);
+
+    this.logger.log(`Distribution sent successfully`);
+
+    return {
+      message: `Distribution sent successfully`,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
   public async createDistributionSubscriber(
     createDistributionSubscriberDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
@@ -55,6 +90,21 @@ export class DistributionService {
     DistributionSubscriber[]
   > {
     return await this.distributionSubscriberRepository.findAllDistributionSubscribers();
+  }
+
+  public async findDistributionSubscriberByEmail(
+    email: string,
+  ): Promise<DistributionSubscriber> {
+    const subscriberByTrellifyId =
+      await this.distributionSubscriberRepository.findOneByEmail(email);
+
+    if (!subscriberByTrellifyId) {
+      throw new NotFoundException(
+        `Email ${email} is not subscribed to Trellify news letter`,
+      );
+    }
+
+    return subscriberByTrellifyId;
   }
 
   public async findDistributionSubscriberByTrellifyUserId(
@@ -116,41 +166,6 @@ export class DistributionService {
 
     return {
       message: `Email ${userToUnsubscribe.email} removed from Trellify mail subscription successfully`,
-      statusCode: HttpStatus.OK,
-    };
-  }
-
-  public async sendDistribution(
-    subject: string,
-  ): Promise<DefaultResponse<null>> {
-    const distributor = this.configService.get(configServiceEnum.MAILER_SENDER);
-
-    const sendDate = new Date();
-
-    const distributionSubscribers = await this.findAllDistributionSubscribers();
-
-    const senderPromises = distributionSubscribers.map((subscriber) => {
-      const html = htmlTemplate1(
-        this.configService.get(configServiceEnum.BACKEND_LINK),
-        subscriber.id,
-      );
-
-      this.mailerService.sendDistribution(distributor, subscriber.email, {
-        html,
-        subject,
-      });
-
-      this.distributionSubscriberRepository.updateById(subscriber.id, {
-        lastMessageSent: sendDate,
-      });
-    });
-
-    await Promise.all(senderPromises);
-
-    this.logger.log(`Distribution sent successfully`);
-
-    return {
-      message: `Distribution sent successfully`,
       statusCode: HttpStatus.OK,
     };
   }
