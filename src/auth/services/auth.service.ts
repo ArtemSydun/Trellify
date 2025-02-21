@@ -9,6 +9,8 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
@@ -18,6 +20,7 @@ import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
@@ -43,6 +46,8 @@ export class AuthService {
     private readonly mailService: MailerService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly redisService: RedisService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   public verifyToken(token: string, i18n?: I18nContext): any {
@@ -62,6 +67,8 @@ export class AuthService {
     loginUserDto: LoginUserDto,
     i18n?: I18nContext,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
+    console.log(await this.redisService.testConnection());
+
     const user = await this.userService.findUserByEmail(
       loginUserDto.email,
       i18n,
@@ -100,7 +107,25 @@ export class AuthService {
       id: updatedUser.id,
       role: updatedUser.role,
     };
+    console.log(await this.redis.flushall());
     const token: string = this.jwtService.sign(payload);
+
+    const decoded: any = this.jwtService.decode(token);
+    const tokenExpiry = decoded.exp * 1000; // JWT expiry is in seconds, so we convert to milliseconds.
+    // Calculate the remaining time to live (TTL) for the token.
+    const currentTime = Date.now();
+    const ttl = tokenExpiry - currentTime;
+    if (ttl > 0) {
+      // Store the token in Redis with the remaining TTL.
+      await this.redis.set(token, 'blacklisted', 'PX', ttl);
+    }
+
+    console.log(await this.redis.keys('*'));
+
+    const isBlacklisted = await this.redis.get(token);
+    if (isBlacklisted) {
+      console.log('blacklisted: ', token);
+    }
 
     this.logger.log(`User logged in successfully: ${updatedUser.email}`);
 
@@ -108,6 +133,18 @@ export class AuthService {
       accessToken: token,
       user: updatedUser,
     };
+  }
+
+  async logout(token: string) {
+    const decoded: any = this.jwtService.decode(token);
+    const tokenExpiry = decoded.exp * 1000; // JWT expiry is in seconds, so we convert to milliseconds.
+    // Calculate the remaining time to live (TTL) for the token.
+    const currentTime = Date.now();
+    const ttl = tokenExpiry - currentTime;
+    if (ttl > 0) {
+      // Store the token in Redis with the remaining TTL.
+      await this.redis.set(token, 'blacklisted', 'PX', ttl);
+    }
   }
 
   public async initiateUserRegistration(

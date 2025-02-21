@@ -49,6 +49,25 @@ export class AuthController {
     return this.authService.login(loginCredentials, req.i18nContext);
   }
 
+  // @Post('logout')
+  // @ApiOperation({
+  //   summary: 'Login with user credentials',
+  //   description:
+  //     'Logs in the user with their credentials and returns an access token and user data.',
+  // })
+  // @ApiOkResponse({
+  //   description: 'Successfully logged in',
+  //   type: LoginUserResponseDto,
+  // })
+  // @ApiCustomNotFoundResponse('User', 'email')
+  // @ApiCustomBadRequestResponse('Invalid credentials', 'Invalid credentials')
+  // public logout(
+  //   @Body() loginCredentials: LoginUserDto,
+  //   @Req() req,
+  // ): Promise<{ accessToken: string; user: Partial<User> }> {
+  //   return this.authService.logout(loginCredentials, req.i18nContext);
+  // }
+
   @Throttle({
     default: {
       limit: 2,

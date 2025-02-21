@@ -1,4 +1,4 @@
-name: 'api-trellify-${STAGE}'
+  name: 'api-trellify-${STAGE}'
 services:
   node:
     build:
@@ -11,6 +11,7 @@ services:
       - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
     depends_on:
       - mongodb
+      - redis
     networks:
       - backend_network
 
@@ -25,6 +26,14 @@ services:
       - mongodb-log:/var/log/mongodb/
     ports:
       - '${MONGODB_HOST_PORT}:${MONGODB_PORT}'
+    networks:
+      - backend_network
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - '6380:6379'
     networks:
       - backend_network
 
