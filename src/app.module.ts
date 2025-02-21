@@ -8,6 +8,7 @@ import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AuthModule } from './auth/auth.module';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
+import { DistributionModule } from './distribution/distribution.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TrelloModule } from './trello/trello.module';
 import { UsersModule } from './user/users.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './user/users.module';
     TelegramModule,
     ScheduleModule.forRoot(),
     CronModule,
+    DistributionModule,
   ],
   controllers: [],
   providers: [

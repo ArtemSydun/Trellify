@@ -13,7 +13,7 @@ import { DefaultResponse } from 'src/common/interfaces/responses';
 
 @Injectable()
 export class MailerService {
-  private readonly logger = new Logger('Emails');
+  private readonly logger = new Logger(MailerService.name);
 
   constructor(
     private readonly mailerService: MailService,
@@ -50,9 +50,7 @@ export class MailerService {
         html,
       });
 
-      this.logger.verbose(
-        `Email sent to ${receiver}, data: ${JSON.stringify(distribution)}`,
-      );
+      this.logger.verbose(`Email sent to ${receiver}, subject: ${subject}}`);
 
       return { message: 'Mail sent successfully', statusCode: HttpStatus.OK };
     } catch (err) {
