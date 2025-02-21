@@ -624,7 +624,7 @@ export class TrelloActionsLogicService {
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(
-          addMinutes(serverDate, (userToNotify.timezone || 0) * -60),
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
         );
 
         const formattedTimeZone = format(

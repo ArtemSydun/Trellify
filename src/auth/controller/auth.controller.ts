@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiOkResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiCustomNotFoundResponse,
   ApiCustomConflictResponse,
@@ -48,6 +49,12 @@ export class AuthController {
     return this.authService.login(loginCredentials, req.i18nContext);
   }
 
+  @Throttle({
+    default: {
+      limit: 2,
+      ttl: 60 * 1000,
+    },
+  })
   @Post('sign-up')
   @ApiOperation({
     summary: 'Sign up a new user',
@@ -111,6 +118,12 @@ export class AuthController {
     return this.authService.confirmUserRegistration(token, req.i18nContext);
   }
 
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
   @Post('forgot-password')
   @ApiOperation({
     summary: 'Request password reset',
@@ -181,6 +194,12 @@ export class AuthController {
     );
   }
 
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('change-email')
   @ApiBearerAuth()
@@ -287,6 +306,12 @@ export class AuthController {
     );
   }
 
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
   @UseGuards(JwtAuthGuard)
   @Post('delete-profile')
   @ApiBearerAuth()
