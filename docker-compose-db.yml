@@ -11,6 +11,11 @@ services:
       - mongodb-log:/var/log/mongodb/
     ports:
       - '${MONGODB_HOST_PORT}:${MONGODB_PORT}'
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - '6380:6379'
 
 volumes:
   mongodb-data:

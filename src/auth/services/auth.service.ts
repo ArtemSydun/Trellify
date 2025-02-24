@@ -18,6 +18,7 @@ import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
@@ -43,6 +44,7 @@ export class AuthService {
     private readonly mailService: MailerService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly redisService: RedisService,
   ) {}
 
   public verifyToken(token: string, i18n?: I18nContext): any {
@@ -93,13 +95,13 @@ export class AuthService {
       },
     });
 
-    delete updatedUser.password;
-
     const payload = {
       email: updatedUser.email,
       id: updatedUser.id,
       role: updatedUser.role,
+      hash: user.password.slice(-10),
     };
+
     const token: string = this.jwtService.sign(payload);
 
     this.logger.log(`User logged in successfully: ${updatedUser.email}`);
@@ -108,6 +110,10 @@ export class AuthService {
       accessToken: token,
       user: updatedUser,
     };
+  }
+
+  public async logout(token: string) {
+    return await this.redisService.makeTokenInvalid(token);
   }
 
   public async initiateUserRegistration(
@@ -169,7 +175,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { email, password, ...userData } = decoded;
 
     const newUser = {
@@ -205,9 +211,9 @@ export class AuthService {
     const token: string = this.jwtService.sign(
       { id: user.id },
       {
-        expiresIn: this.configService.get(
-          configServiceEnum.JWT_EXPIRES_PASSWORD,
-        ),
+        expiresIn:
+          this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+          '15m',
       },
     );
 
@@ -240,9 +246,13 @@ export class AuthService {
       );
     }
 
-    const { id } = this.verifyToken(token);
+    const { id } = this.verifyToken(token, i18n);
+
+    await this.redisService.ifTokenBlacklisted(token, i18n);
 
     await this.userService.resetPassword(id, newPassword, i18n);
+
+    await this.redisService.makeTokenInvalid(token);
 
     this.logger.log(`Password successfully reset for user ID: ${id}`);
 
@@ -276,7 +286,11 @@ export class AuthService {
       newEmail,
     };
 
-    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const token = this.jwtService.sign(payload, {
+      expiresIn:
+        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        '15m',
+    });
     await this.mailService.sendChangeEmailLink(newEmail, token, i18n);
 
     return {
@@ -292,7 +306,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { newEmail, id } = decoded;
 
     await this.userRepository.updateById(id, {
@@ -341,7 +355,11 @@ export class AuthService {
       id: targetUser.id,
     };
 
-    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const token = this.jwtService.sign(payload, {
+      expiresIn:
+        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        '15m',
+    });
 
     await this.mailService.sendDeleteProfileLink(targetUser.email, token, i18n);
 
@@ -358,7 +376,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { id } = decoded;
 
     return await this.userService.deleteUserById(id, id, i18n);

@@ -210,7 +210,6 @@ export class UsersService {
 
   public async findUserById(id: string, i18n?: I18nContext): Promise<User> {
     const user = await this.userRepository.findOneById(id);
-
     if (!user) {
       this.logger.warn(`User with ID ${id} not found`);
       throw new NotFoundException(

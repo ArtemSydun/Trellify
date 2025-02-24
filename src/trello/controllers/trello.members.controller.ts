@@ -32,7 +32,7 @@ export class TrelloMembersController {
   @ApiCustomNotFoundResponse('User', 'id')
   getTrelloMemberProfile(@Req() req): Promise<TrelloMember> {
     return this.trelloMembersService.findMemberProfile(
-      req.user.id,
+      req.user,
       undefined,
       req.i18nContext,
     );
@@ -52,7 +52,7 @@ export class TrelloMembersController {
   @ApiCustomNotFoundResponse('User', 'id')
   getTrelloMemberOrganizations(@Req() req): Promise<Organization[]> {
     return this.trelloMembersService.findMemberOrganizations(
-      req.user.id,
+      req.user,
       req.i18nContext,
     );
   }
