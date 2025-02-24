@@ -5,6 +5,7 @@ import { TrelloWebhooksLogicService } from '@trello/logic';
 import { differenceInDays } from 'date-fns';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { RedisService } from 'src/redis/services/redis.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 import { UsersService } from 'src/user/services/users.service';
 
@@ -16,6 +17,7 @@ export class CronService {
     private readonly trelloBoardsApiService: TrelloBoardsApiService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();

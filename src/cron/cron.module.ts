@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { RedisModule } from 'src/redis/redis.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersModule } from 'src/user/users.module';
 import { CronService } from './services/cron.service';
 
 @Module({
-  imports: [TrelloModule, UsersModule],
+  imports: [TrelloModule, UsersModule, RedisModule],
   controllers: [],
   providers: [CronService, SharedConfigService],
 })

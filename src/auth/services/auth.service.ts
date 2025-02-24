@@ -9,8 +9,6 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
@@ -47,7 +45,6 @@ export class AuthService {
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly redisService: RedisService,
-    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   public verifyToken(token: string, i18n?: I18nContext): any {
@@ -67,8 +64,6 @@ export class AuthService {
     loginUserDto: LoginUserDto,
     i18n?: I18nContext,
   ): Promise<{ accessToken: string; user: Partial<User> }> {
-    console.log(await this.redisService.testConnection());
-
     const user = await this.userService.findUserByEmail(
       loginUserDto.email,
       i18n,
@@ -100,32 +95,14 @@ export class AuthService {
       },
     });
 
-    delete updatedUser.password;
-
     const payload = {
       email: updatedUser.email,
       id: updatedUser.id,
       role: updatedUser.role,
+      hash: user.password.slice(-10),
     };
-    console.log(await this.redis.flushall());
+
     const token: string = this.jwtService.sign(payload);
-
-    const decoded: any = this.jwtService.decode(token);
-    const tokenExpiry = decoded.exp * 1000; // JWT expiry is in seconds, so we convert to milliseconds.
-    // Calculate the remaining time to live (TTL) for the token.
-    const currentTime = Date.now();
-    const ttl = tokenExpiry - currentTime;
-    if (ttl > 0) {
-      // Store the token in Redis with the remaining TTL.
-      await this.redis.set(token, 'blacklisted', 'PX', ttl);
-    }
-
-    console.log(await this.redis.keys('*'));
-
-    const isBlacklisted = await this.redis.get(token);
-    if (isBlacklisted) {
-      console.log('blacklisted: ', token);
-    }
 
     this.logger.log(`User logged in successfully: ${updatedUser.email}`);
 
@@ -135,16 +112,8 @@ export class AuthService {
     };
   }
 
-  async logout(token: string) {
-    const decoded: any = this.jwtService.decode(token);
-    const tokenExpiry = decoded.exp * 1000; // JWT expiry is in seconds, so we convert to milliseconds.
-    // Calculate the remaining time to live (TTL) for the token.
-    const currentTime = Date.now();
-    const ttl = tokenExpiry - currentTime;
-    if (ttl > 0) {
-      // Store the token in Redis with the remaining TTL.
-      await this.redis.set(token, 'blacklisted', 'PX', ttl);
-    }
+  public async logout(token: string) {
+    return await this.redisService.makeTokenInvalid(token);
   }
 
   public async initiateUserRegistration(
@@ -206,7 +175,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { email, password, ...userData } = decoded;
 
     const newUser = {
@@ -242,9 +211,9 @@ export class AuthService {
     const token: string = this.jwtService.sign(
       { id: user.id },
       {
-        expiresIn: this.configService.get(
-          configServiceEnum.JWT_EXPIRES_PASSWORD,
-        ),
+        expiresIn:
+          this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+          '15m',
       },
     );
 
@@ -277,9 +246,13 @@ export class AuthService {
       );
     }
 
-    const { id } = this.verifyToken(token);
+    const { id } = this.verifyToken(token, i18n);
+
+    await this.redisService.ifTokenBlacklisted(token, i18n);
 
     await this.userService.resetPassword(id, newPassword, i18n);
+
+    await this.redisService.makeTokenInvalid(token);
 
     this.logger.log(`Password successfully reset for user ID: ${id}`);
 
@@ -313,7 +286,11 @@ export class AuthService {
       newEmail,
     };
 
-    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const token = this.jwtService.sign(payload, {
+      expiresIn:
+        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        '15m',
+    });
     await this.mailService.sendChangeEmailLink(newEmail, token, i18n);
 
     return {
@@ -329,7 +306,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { newEmail, id } = decoded;
 
     await this.userRepository.updateById(id, {
@@ -378,7 +355,11 @@ export class AuthService {
       id: targetUser.id,
     };
 
-    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const token = this.jwtService.sign(payload, {
+      expiresIn:
+        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        '15m',
+    });
 
     await this.mailService.sendDeleteProfileLink(targetUser.email, token, i18n);
 
@@ -395,7 +376,7 @@ export class AuthService {
     token: string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
-    const decoded = this.verifyToken(token);
+    const decoded = this.verifyToken(token, i18n);
     const { id } = decoded;
 
     return await this.userService.deleteUserById(id, id, i18n);

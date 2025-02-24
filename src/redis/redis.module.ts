@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { RedisModule as NestRedisModule } from '@nestjs-modules/ioredis';
 import { RedisService } from './services/redis.service';
 
@@ -14,7 +15,7 @@ import { RedisService } from './services/redis.service';
       }),
     }),
   ],
-  providers: [RedisService],
+  providers: [RedisService, JwtService],
   exports: [RedisService],
 })
 export class RedisModule {}
