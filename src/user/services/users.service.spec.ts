@@ -187,6 +187,7 @@ describe('UsersService', () => {
   describe('deleteUserById', () => {
     it('should delete a user by ID and disconnect from all webhooks', async () => {
       const userToDelete = { ...userStub() };
+      const notificationMessage = 'notification message';
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
       jest
@@ -196,6 +197,10 @@ describe('UsersService', () => {
           statusCode: HttpStatus.OK,
         });
       jest.spyOn(usersRepository, 'delete').mockResolvedValue();
+
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue(notificationMessage);
 
       const result = await usersService.deleteUserById(
         userToDelete.id,
@@ -212,10 +217,14 @@ describe('UsersService', () => {
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
-      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
         AdminBotActionsEnum.USER_DELETED,
         userToDelete,
       );
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        notificationMessage,
+      );
+
       expect(result).toEqual({
         message: expect.stringContaining(userToDelete.email),
         statusCode: HttpStatus.OK,

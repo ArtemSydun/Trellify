@@ -2,10 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TrelloBoardsApiService } from '@trello/api';
 import { TrelloWebhooksLogicService } from '@trello/logic';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { redisKeysEnum } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 import { UsersService } from 'src/user/services/users.service';
 
@@ -18,9 +20,14 @@ export class CronService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly adminBotService: AdminBotService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+  }
+
+  async onModuleInit() {
+    await this.checkAndRecoverMissedStats();
   }
 
   @Cron(CronExpression.EVERY_WEEK)
@@ -122,6 +129,58 @@ export class CronService {
       this.logger.log(`Unactive webhooks clear cron finished`);
     } catch (error) {
       console.error('Error in clearUnactiveBoards:', error.message);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async dailyStatsUpdate() {
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+
+    const formattedDate = format(startOfToday, 'dd-MM-yyyy');
+
+    const usersLoggedInToday = await this.usersService.findAll({
+      date: 'lastLoginDate',
+      fromDate: startOfToday.toISOString(),
+    });
+
+    const dailyStats = JSON.parse(
+      await this.redisService.getValue(redisKeysEnum.DAILY_STATS),
+    );
+
+    const message = await this.adminBotService.dailyStatsNotification(
+      formattedDate,
+      { ...dailyStats, uniqueUsers: usersLoggedInToday.total },
+    );
+
+    await this.adminBotService.notifyAdmins(message);
+
+    // Store the last execution date
+    await this.redisService.setValue(
+      redisKeysEnum.LAST_DAILY_STATS_REFRESH,
+      formattedDate,
+    );
+
+    // Reset stats
+    await this.redisService.initializeDailyStats();
+  }
+
+  async checkAndRecoverMissedStats() {
+    const lastExecution = await this.redisService.getValue(
+      redisKeysEnum.LAST_DAILY_STATS_REFRESH,
+    );
+
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    yesterday.setUTCHours(0, 0, 0, 0);
+
+    const formattedYesterday = format(yesterday, 'dd-MM-yyyy');
+
+    if (!lastExecution || lastExecution !== formattedYesterday) {
+      console.warn(
+        `Missed daily stats update for ${formattedYesterday}, recovering...`,
+      );
+      await this.dailyStatsUpdate();
     }
   }
 }
