@@ -186,11 +186,15 @@ export class AuthService {
 
     await this.userService.createUser(newUser, i18n);
 
-    await this.adminBotService.notifyAdmins(
-      AdminBotActionsEnum.USER_REGISTERED,
-      newUser,
-    );
+    const notificationMessage =
+      await this.adminBotService.actionAdminNotification(
+        AdminBotActionsEnum.USER_REGISTERED,
+        newUser,
+      );
 
+    await this.adminBotService.notifyAdmins(notificationMessage);
+
+    await this.redisService.updateDailyStats('newUsers', 1);
     this.logger.log(`User registered successfully: ${email}`);
     return {
       message:

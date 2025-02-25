@@ -257,11 +257,17 @@ describe('AuthService', () => {
 
   describe('confirmRegistration', () => {
     it('should confirm registration, create user, notify admins, and return success message', async () => {
+      const notificationMessage = 'admin notification';
+
       jest.spyOn(authService, 'verifyToken').mockReturnValue({
         email: 'test@example.com',
         password: 'hashedpassword',
         username: 'testuser',
       });
+
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue(notificationMessage);
 
       const response = await authService.confirmUserRegistration(
         'mockToken',
@@ -277,13 +283,16 @@ describe('AuthService', () => {
         undefined,
       );
 
-      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
         AdminBotActionsEnum.USER_REGISTERED,
         {
           email: 'test@example.com',
           password: 'hashedpassword',
           username: 'testuser',
         },
+      );
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        notificationMessage,
       );
 
       expect(response).toEqual({

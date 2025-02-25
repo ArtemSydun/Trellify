@@ -28,6 +28,7 @@ import {
   DefaultResponse,
 } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
@@ -57,6 +58,7 @@ export class UsersService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
 
@@ -185,10 +187,13 @@ export class UsersService {
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
 
-    await this.adminBotService.notifyAdmins(
-      AdminBotActionsEnum.USER_DELETED,
-      targetUser,
-    );
+    const notificationMessage =
+      await this.adminBotService.actionAdminNotification(
+        AdminBotActionsEnum.USER_DELETED,
+        targetUser,
+      );
+
+    await this.adminBotService.notifyAdmins(notificationMessage);
 
     this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
@@ -647,12 +652,20 @@ export class UsersService {
       authorized,
     );
 
-    await this.adminBotService.notifyAdmins(AdminBotActionsEnum.CONTACT_US, {
-      email,
-      subject,
-      message,
-      authorized,
-    });
+    const notificationMessage =
+      await this.adminBotService.actionAdminNotification(
+        AdminBotActionsEnum.CONTACT_US,
+        {
+          email,
+          subject,
+          message,
+          authorized,
+        },
+      );
+
+    await this.adminBotService.notifyAdmins(notificationMessage);
+
+    await this.redisService.updateDailyStats('contactUs', 1);
 
     return {
       message:
