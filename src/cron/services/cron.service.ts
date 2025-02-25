@@ -132,7 +132,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron('55 23 * * *')
   async dailyStatsUpdate() {
     const startOfToday = new Date();
     startOfToday.setUTCHours(0, 0, 0, 0);

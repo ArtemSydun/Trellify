@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -158,5 +159,10 @@ export class DistributionController {
   @ApiNotFoundResponse()
   remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
     return this.distributionService.removeDistributionSubscriber(id);
+  }
+
+  @Get('csv')
+  getCsv(@Res() res) {
+    return this.distributionService.exportSubscribersToCsv(res);
   }
 }

@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import { format } from 'fast-csv';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
@@ -168,5 +170,33 @@ export class DistributionService {
       message: `Email ${userToUnsubscribe.email} removed from Trellify mail subscription successfully`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  public async exportSubscribersToCsv(res: Response) {
+    // Fetch all subscribers
+    const usersToExport =
+      await this.distributionSubscriberRepository.findAllDistributionSubscribers();
+
+    // Extract required fields
+    const formattedUsers = usersToExport.map(
+      ({ trellifyUserId, language, timezone }) => ({
+        trellifyUserId,
+        language,
+        timezone,
+      }),
+    );
+
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="subscribers.csv"',
+    );
+
+    // Use fast-csv to format and send data as a response
+    format({ headers: true })
+      .on('data', (chunk) => res.write(chunk)) // Stream data to response
+      .on('end', () => res.end()) // End response
+      .write(formattedUsers);
   }
 }
