@@ -33,6 +33,7 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from 'src/redis/services/redis.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -89,6 +90,10 @@ describe('UsersService', () => {
         {
           provide: AdminBotService,
           useValue: createMock<AdminBotService>(),
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
         },
         {
           provide: MailerService,

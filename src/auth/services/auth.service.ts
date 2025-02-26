@@ -17,6 +17,7 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
 import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { DistributionService } from 'src/distribution/services/distribution.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
@@ -44,6 +45,7 @@ export class AuthService {
     private readonly mailService: MailerService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly distributionService: DistributionService,
     private readonly redisService: RedisService,
   ) {}
 
@@ -184,7 +186,7 @@ export class AuthService {
       ...userData,
     };
 
-    await this.userService.createUser(newUser, i18n);
+    const createdUser = await this.userService.createUser(newUser, i18n);
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
@@ -194,7 +196,12 @@ export class AuthService {
 
     await this.adminBotService.notifyAdmins(notificationMessage);
 
-    await this.redisService.updateDailyStats('newUsers', 1);
+    await this.distributionService.createDistributionSubscriber({
+      email: createdUser.email,
+      trellifyUserId: createdUser.id,
+      language: createdUser.language,
+    });
+
     this.logger.log(`User registered successfully: ${email}`);
     return {
       message:

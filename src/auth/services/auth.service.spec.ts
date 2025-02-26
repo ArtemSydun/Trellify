@@ -24,6 +24,7 @@ import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { RedisService } from 'src/redis/services/redis.service';
+import { DistributionService } from 'src/distribution/services/distribution.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -62,6 +63,10 @@ describe('AuthService', () => {
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
+        {
+          provide: DistributionService,
+          useValue: createMock<DistributionService>(),
+        },
         {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),

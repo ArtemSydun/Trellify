@@ -11,7 +11,6 @@ import {
 import {
   ApiOperation,
   ApiOkResponse,
-  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -59,7 +58,6 @@ export class DistributionController {
   @ApiOkResponse({
     description: 'You will receive Trellify updates on your email',
   })
-  @ApiConflictResponse()
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {

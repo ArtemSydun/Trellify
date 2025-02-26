@@ -121,7 +121,7 @@ export class AdminBotService implements OnModuleInit {
   async dailyStatsNotification(date: string, dailyStats: any): Promise<string> {
     const dateString = `<b>Date:</b> ${new Date().toLocaleString()}`;
 
-    let notification = `Daily stats for <b>${date}</b> \n`;
+    let notification = `Trellify daily stats for <b>${date}</b> \n`;
 
     for (const [key, value] of Object.entries(dailyStats)) {
       notification += `\n ${key}: ${value} \n`;

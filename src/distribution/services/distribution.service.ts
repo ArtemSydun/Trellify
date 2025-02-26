@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   HttpStatus,
   Injectable,
   Logger,
@@ -65,26 +64,25 @@ export class DistributionService {
   public async createDistributionSubscriber(
     createDistributionSubscriberDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
-    const subscribedUser =
-      await this.distributionSubscriberRepository.existsByEmail(
-        createDistributionSubscriberDto.email,
-      );
+    const { email } = createDistributionSubscriberDto;
+    let subscriber: DistributionSubscriber;
 
-    if (subscribedUser) {
-      throw new ConflictException(
-        `This email is already subscribed to email distribution`,
-      );
-    }
+    const isUserSubscribed =
+      await this.distributionSubscriberRepository.existsByEmail(email);
 
-    const createdSubscriber =
-      await this.distributionSubscriberRepository.create(
+    if (isUserSubscribed) {
+      subscriber =
+        await this.distributionSubscriberRepository.findOneByEmail(email);
+    } else {
+      subscriber = await this.distributionSubscriberRepository.create(
         createDistributionSubscriberDto,
       );
+    }
 
     return {
       message: 'You will receive Trellify updates on your email',
       statusCode: HttpStatus.OK,
-      data: createdSubscriber,
+      data: subscriber,
     };
   }
 
