@@ -177,7 +177,8 @@ export class DistributionService {
 
     // Extract required fields
     const formattedUsers = usersToExport.map(
-      ({ trellifyUserId, language, timezone }) => ({
+      ({ email, trellifyUserId, language, timezone }) => ({
+        email,
         trellifyUserId,
         language,
         timezone,
@@ -192,9 +193,12 @@ export class DistributionService {
     );
 
     // Use fast-csv to format and send data as a response
-    format({ headers: true })
-      .on('data', (chunk) => res.write(chunk)) // Stream data to response
-      .on('end', () => res.end()) // End response
-      .write(formattedUsers);
+    const csvStream = format({ headers: true });
+
+    csvStream.pipe(res); // Stream data to response
+
+    formattedUsers.forEach((user) => csvStream.write(user)); // Write each row
+
+    csvStream.end(); // Finalize stream to complete response
   }
 }
