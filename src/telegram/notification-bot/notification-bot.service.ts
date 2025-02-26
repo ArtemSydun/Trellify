@@ -246,8 +246,6 @@ export class NotificationBotService implements OnModuleInit {
           ? replyMarkup
           : { inline_keyboard: replyMarkup },
       });
-
-      this.logger.log(`Telegram message sent to user ${telegramInfo.username}`);
     }
   }
 

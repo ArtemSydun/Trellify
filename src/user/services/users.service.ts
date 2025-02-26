@@ -244,7 +244,6 @@ export class UsersService {
       );
     }
 
-    this.logger.log(`User with email ${email} found`);
     return user;
   }
 
@@ -361,7 +360,6 @@ export class UsersService {
 
     delete updatedUser.password;
 
-    this.logger.log(`User with ID ${userToUpdate.id} updated successfully`);
     return {
       message: `User ${userToUpdate.id} updated successfully`,
       statusCode: HttpStatus.OK,
@@ -421,7 +419,6 @@ export class UsersService {
   }
 
   public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    this.logger.log(`Finding users connected to webhook ID: ${webhookId}`);
     return this.userRepository.findUsersConnectedToWebhook(webhookId);
   }
 
