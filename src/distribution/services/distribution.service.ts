@@ -1,11 +1,12 @@
 import {
-  ConflictException,
   HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import { format } from 'fast-csv';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
@@ -63,26 +64,25 @@ export class DistributionService {
   public async createDistributionSubscriber(
     createDistributionSubscriberDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
-    const subscribedUser =
-      await this.distributionSubscriberRepository.existsByEmail(
-        createDistributionSubscriberDto.email,
-      );
+    const { email } = createDistributionSubscriberDto;
+    let subscriber: DistributionSubscriber;
 
-    if (subscribedUser) {
-      throw new ConflictException(
-        `This email is already subscribed to email distribution`,
-      );
-    }
+    const isUserSubscribed =
+      await this.distributionSubscriberRepository.existsByEmail(email);
 
-    const createdSubscriber =
-      await this.distributionSubscriberRepository.create(
+    if (isUserSubscribed) {
+      subscriber =
+        await this.distributionSubscriberRepository.findOneByEmail(email);
+    } else {
+      subscriber = await this.distributionSubscriberRepository.create(
         createDistributionSubscriberDto,
       );
+    }
 
     return {
       message: 'You will receive Trellify updates on your email',
       statusCode: HttpStatus.OK,
-      data: createdSubscriber,
+      data: subscriber,
     };
   }
 
@@ -168,5 +168,33 @@ export class DistributionService {
       message: `Email ${userToUnsubscribe.email} removed from Trellify mail subscription successfully`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  public async exportSubscribersToCsv(res: Response) {
+    // Fetch all subscribers
+    const usersToExport =
+      await this.distributionSubscriberRepository.findAllDistributionSubscribers();
+
+    // Extract required fields
+    const formattedUsers = usersToExport.map(
+      ({ trellifyUserId, language, timezone }) => ({
+        trellifyUserId,
+        language,
+        timezone,
+      }),
+    );
+
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="subscribers.csv"',
+    );
+
+    // Use fast-csv to format and send data as a response
+    format({ headers: true })
+      .on('data', (chunk) => res.write(chunk)) // Stream data to response
+      .on('end', () => res.end()) // End response
+      .write(formattedUsers);
   }
 }

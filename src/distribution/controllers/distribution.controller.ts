@@ -6,11 +6,11 @@ import {
   Patch,
   Param,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiOkResponse,
-  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -58,7 +58,6 @@ export class DistributionController {
   @ApiOkResponse({
     description: 'You will receive Trellify updates on your email',
   })
-  @ApiConflictResponse()
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
@@ -158,5 +157,10 @@ export class DistributionController {
   @ApiNotFoundResponse()
   remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
     return this.distributionService.removeDistributionSubscriber(id);
+  }
+
+  @Get('csv')
+  getCsv(@Res() res) {
+    return this.distributionService.exportSubscribersToCsv(res);
   }
 }

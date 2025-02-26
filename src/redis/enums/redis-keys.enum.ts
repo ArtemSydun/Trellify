@@ -1,4 +1,4 @@
 export enum redisKeysEnum {
   DAILY_STATS = 'dailyStats',
-  LAST_DAILY_STATS_REFRESH = 'lastDailyStatsRefresh',
+  LAST_DAILY_NOTIFY = 'lastDailyNotify',
 }

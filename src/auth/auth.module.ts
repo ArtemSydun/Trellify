@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { DistributionModule } from 'src/distribution/distribution.module';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
@@ -39,6 +40,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         };
       },
     }),
+    DistributionModule,
     MailerModule,
     RedisModule,
     forwardRef(() => TrelloModule),

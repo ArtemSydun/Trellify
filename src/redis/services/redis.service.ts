@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import { format } from 'date-fns';
 import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -22,10 +21,6 @@ export class RedisService {
       console.log('Initializing daily stats memory data');
       await this.initializeDailyStats();
     }
-  }
-
-  async testConnection(): Promise<string> {
-    return await this.redis.ping(); // Should return 'PONG'
   }
 
   async setValue(key: string, value: string): Promise<string> {
@@ -56,16 +51,12 @@ export class RedisService {
     return await this.redis.del(key);
   }
 
+  //IMPORTANT: this function clears ALL DATA STORED IN REDIS
   async clearRedisStorage(): Promise<string> {
     return await this.redis.flushall();
   }
 
   async initializeDailyStats(): Promise<string> {
-    const startOfToday = new Date();
-    startOfToday.setUTCHours(0, 0, 0, 0);
-
-    const formattedDate = format(startOfToday, 'dd-MM-yyyy');
-
     // Convert dailyStatsEnum values into an object with all values set to 0
     const dailyStatsKeys = Object.values(dailyStatsEnum);
     const dailyStats = dailyStatsKeys.reduce(
@@ -75,8 +66,6 @@ export class RedisService {
       },
       {} as Record<string, number>,
     );
-
-    await this.setValue(redisKeysEnum.LAST_DAILY_STATS_REFRESH, formattedDate);
 
     return await this.setValue(
       redisKeysEnum.DAILY_STATS,

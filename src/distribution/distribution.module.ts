@@ -30,6 +30,6 @@ import { DistributionService } from './services/distribution.service';
     MailerService,
     JwtService,
   ],
-  exports: [],
+  exports: [DistributionService],
 })
 export class DistributionModule {}
