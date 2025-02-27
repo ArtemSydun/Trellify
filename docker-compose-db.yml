@@ -10,7 +10,7 @@ services:
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
     ports:
-      - '${MONGODB_HOST_PORT}:${MONGODB_PORT}'
+      - '${MONGODB_PORT}:${MONGODB_PORT}'
 
   redis:
     image: redis:alpine
