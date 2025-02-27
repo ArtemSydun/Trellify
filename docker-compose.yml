@@ -1,4 +1,4 @@
-  name: 'api-trellify-${STAGE}'
+name: 'api-trellify-${STAGE}'
 services:
   node:
     build:
@@ -30,10 +30,13 @@ services:
       - backend_network
 
   redis:
-    image: redis:latest
-    restart: always
+    image: redis:alpine
+    restart: unless-stopped
     ports:
-      - '6380:6379'
+      - '${REDIS_HOST_PORT}:${REDIS_PORT}'
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
     networks:
       - backend_network
 
@@ -44,6 +47,9 @@ volumes:
   mongodb-log:
     driver: local
     name: trellify-mongo-log-${STAGE}
+  redis_data:
+    driver: local
+    name: trellify-redis-data-${STAGE}
 
 networks:
   backend_network:
