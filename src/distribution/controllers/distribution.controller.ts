@@ -159,8 +159,18 @@ export class DistributionController {
     return this.distributionService.removeDistributionSubscriber(id);
   }
 
-  @Get('csv')
-  getCsv(@Res() res) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Get('subscribers-csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Export subscribers list into CSV to use on distribution website',
+    description:
+      'Export subscribers list into CSV to use on distribution website',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  getCsv(@Res() res): Promise<void> {
     return this.distributionService.exportSubscribersToCsv(res);
   }
 }

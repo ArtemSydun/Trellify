@@ -50,6 +50,11 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout from website',
+    description: 'Logout user and invalidate his authorization token',
+  })
   @Post('logout')
   public logout(@Req() req): Promise<void> {
     return this.authService.logout(req.headers.authorization.split(' ')[1]);
