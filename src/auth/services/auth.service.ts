@@ -114,7 +114,7 @@ export class AuthService {
     };
   }
 
-  public async logout(token: string) {
+  public async logout(token: string): Promise<void> {
     return await this.redisService.makeTokenInvalid(token);
   }
 
