@@ -87,7 +87,7 @@ export class TrelloWebhooksController {
     @Body() body: CreateWebhookDto,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.createTrelloWebhook(
-      req.user.id,
+      req.user,
       body,
       req.i18nContext,
     );
@@ -184,7 +184,7 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   getUserConnectedWebhooksList(@Req() req) {
     return this.webhooksService.findMemberConnectedWebhooks(
-      req.user.id,
+      req.user,
       req.i18nContext,
     );
   }
@@ -275,7 +275,7 @@ export class TrelloWebhooksController {
     @Req() req,
   ): Promise<any> {
     return this.webhooksService.updateManyTrelloWebhookNotifications(
-      req.user.id,
+      req.user,
       updateManyWebhooksDto,
       req.i18nContext,
     );
@@ -318,7 +318,7 @@ export class TrelloWebhooksController {
     @Req() req,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.updateTrelloWebhookNotifications(
-      req.user.id,
+      req.user,
       id,
       notificationBooleansDto,
       req.i18nContext,
@@ -361,7 +361,7 @@ export class TrelloWebhooksController {
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.webhookHealthCheck(
       id,
-      req.user.id,
+      req.user,
       req.i18nContext,
     );
   }
@@ -371,7 +371,7 @@ export class TrelloWebhooksController {
   @Roles(UserRoles.superadmin)
   @Delete('delete/all')
   removeAllWebhooks(@Req() req): Promise<DefaultResponse<null>> {
-    return this.webhooksService.removeAllWebhooks(req.user.id, req.i18nContext);
+    return this.webhooksService.removeAllWebhooks(req.user, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -449,7 +449,7 @@ export class TrelloWebhooksController {
     @Param('webhookId') webhookId: string,
   ): Promise<DefaultResponse<Webhook>> {
     return this.webhooksService.disconnectFromTrelloWebhook(
-      req.user.id,
+      req.user,
       webhookId,
       req.i18nContext,
     );

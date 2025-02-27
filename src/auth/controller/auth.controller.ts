@@ -49,6 +49,12 @@ export class AuthController {
     return this.authService.login(loginCredentials, req.i18nContext);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  public logout(@Req() req): Promise<void> {
+    return this.authService.logout(req.headers.authorization.split(' ')[1]);
+  }
+
   @Throttle({
     default: {
       limit: 2,
@@ -342,7 +348,7 @@ export class AuthController {
     @Body() userToDelete: { id: string },
   ): Promise<DefaultResponse<null>> {
     return this.authService.initiateUserDeletion(
-      req.user.id,
+      req.user,
       userToDelete.id,
       req.i18nContext,
     );

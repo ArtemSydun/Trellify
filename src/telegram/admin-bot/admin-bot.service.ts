@@ -79,15 +79,8 @@ export class AdminBotService implements OnModuleInit {
     }
   }
 
-  async notifyAdmins(action: any, payload: any) {
-    const adminsToNotify = await this.userRepository.findAdmins();
-
+  async actionAdminNotification(action: any, payload: any): Promise<string> {
     const dateString = `<b>📅 Date:</b> ${new Date().toLocaleString()}`;
-
-    if (adminsToNotify.length === 0) {
-      this.logger.warn('No admins found to notify.');
-      return;
-    }
 
     let notification: string;
 
@@ -122,8 +115,30 @@ export class AdminBotService implements OnModuleInit {
         return;
     }
 
+    return notification;
+  }
+
+  async dailyStatsNotification(date: string, dailyStats: any): Promise<string> {
+    const dateString = `<b>Date:</b> ${new Date().toLocaleString()}`;
+
+    let notification = `Trellify daily stats for <b>${date}</b> \n`;
+
+    for (const [key, value] of Object.entries(dailyStats)) {
+      notification += `\n ${key}: ${value} \n`;
+    }
+    return notification + '\n' + dateString;
+  }
+
+  async notifyAdmins(message: string): Promise<void> {
+    const adminsToNotify = await this.userRepository.findAdmins();
+
+    if (adminsToNotify.length === 0) {
+      this.logger.warn('No admins found to notify.');
+      return;
+    }
+
     const messagePromises = adminsToNotify.map((admin) =>
-      this.sendMessageToUser(admin.telegram, notification, true),
+      this.sendMessageToUser(admin.telegram, message, true),
     );
 
     await Promise.all(messagePromises);

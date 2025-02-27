@@ -33,6 +33,7 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from 'src/redis/services/redis.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -89,6 +90,10 @@ describe('UsersService', () => {
         {
           provide: AdminBotService,
           useValue: createMock<AdminBotService>(),
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
         },
         {
           provide: MailerService,
@@ -187,6 +192,7 @@ describe('UsersService', () => {
   describe('deleteUserById', () => {
     it('should delete a user by ID and disconnect from all webhooks', async () => {
       const userToDelete = { ...userStub() };
+      const notificationMessage = 'notification message';
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
       jest
@@ -196,6 +202,10 @@ describe('UsersService', () => {
           statusCode: HttpStatus.OK,
         });
       jest.spyOn(usersRepository, 'delete').mockResolvedValue();
+
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue(notificationMessage);
 
       const result = await usersService.deleteUserById(
         userToDelete.id,
@@ -212,10 +222,14 @@ describe('UsersService', () => {
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
-      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
         AdminBotActionsEnum.USER_DELETED,
         userToDelete,
       );
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        notificationMessage,
+      );
+
       expect(result).toEqual({
         message: expect.stringContaining(userToDelete.email),
         statusCode: HttpStatus.OK,

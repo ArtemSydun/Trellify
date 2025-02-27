@@ -252,7 +252,7 @@ export class UsersController {
     @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
     return this.usersService.manageUserTelegramConnection(
-      req.user.id,
+      req.user,
       connectTelegramDto,
       req.i18nContext,
     );
@@ -293,7 +293,7 @@ export class UsersController {
   )
   handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
     return this.usersService.manageUserTrelloConnection(
-      req.user.id,
+      req.user,
       connectTrelloDto,
       req.i18nContext,
     );
@@ -351,7 +351,7 @@ export class UsersController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('User', 'id')
   getUserProfile(@Req() req): Promise<Partial<User>> {
-    return this.usersService.findUserProfile(req.user.id, req.i18nContext);
+    return this.usersService.findUserProfile(req.user, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -443,7 +443,7 @@ export class UsersController {
     @Param('id') id: string,
     @Req() req,
   ): Promise<DefaultResponse<string>> {
-    return this.usersService.deleteUserById(req.user.id, id, req.i18nContext);
+    return this.usersService.deleteUserById(req.user, id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
