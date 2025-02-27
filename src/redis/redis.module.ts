@@ -2,16 +2,17 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RedisModule as NestRedisModule } from '@nestjs-modules/ioredis';
+import { configServiceEnum } from 'src/common/enums/config.service.enum';
 import { RedisService } from './services/redis.service';
 
 @Module({
   imports: [
     NestRedisModule.forRootAsync({
       imports: [ConfigModule],
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'single',
-        url: 'redis://localhost:6380',
+        url: `redis://${configService.get(configServiceEnum.REDIS_HOST)}:${configService.get(configServiceEnum.REDIS_PORT)}}`,
       }),
     }),
   ],
