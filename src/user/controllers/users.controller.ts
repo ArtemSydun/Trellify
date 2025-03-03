@@ -53,7 +53,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Roles(UserRoles.admin, UserRoles.superadmin, UserRoles.support)
   @Get()
   @ApiOperation({
     summary: 'Get all users (Admin / Superadmin only)',
