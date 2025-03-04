@@ -65,6 +65,10 @@ export enum I18nKeys {
   ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED = 'common.errors.telegram.botAlreadyConnected',
   ERRORS_TELEGRAM_PROFILE_NOT_FOUND = 'common.errors.telegram.profileNotFound',
 
+  // Discord Errors
+  ERRORS_DISCORD_BOT_ALREADY_CONNECTED = 'common.errors.discord.botAlreadyConnected',
+  ERRORS_DISCORD_PROFILE_NOT_FOUND = 'common.errors.discord.profileNotFound',
+
   // Trello Errors
   ERRORS_TRELLO_WEBHOOKS_BULK_FAIL = 'common.errors.trello.webhook.failedToUpdateWebhooks',
   ERRORS_TRELLO_YOU_ARE_NOT_CONNECTED_TO_WEBHOOK = 'common.errors.trello.webhook.youAreNotConnectedToWebhook',

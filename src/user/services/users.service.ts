@@ -27,6 +27,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
@@ -37,6 +38,7 @@ import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { DiscordSettings } from '../dto/discord.settings.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
@@ -58,6 +60,7 @@ export class UsersService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
@@ -490,6 +493,49 @@ export class UsersService {
     );
     return {
       message: `Telegram ${username || userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser,
+    };
+  }
+
+  public async manageUserDiscordConnection(
+    user: string | User,
+    connectDiscordDto: DiscordSettings,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user, i18n);
+    const { userId, username } = connectDiscordDto;
+    const updateDate = new Date();
+
+    if (userId && username) {
+      const connectedUser = await this.userRepository.findUserByProperty(
+        UserSearchPathEnum.DiscordUserId,
+        userId,
+      );
+
+      if (connectedUser && connectedUser.id !== userToUpdate.id) {
+        throw new ConflictException(
+          i18n?.t(I18nKeys.ERRORS_DISCORD_BOT_ALREADY_CONNECTED) ||
+            `Trellify bot is already connected for another discord user`,
+        );
+      }
+    }
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      discord: { userId, username, updatedAt: updateDate },
+      lastActivityDate: updateDate,
+    });
+
+    await this.discordService.sendDirectMessage(
+      userId,
+      `Discord ${userId ? 'connected' : 'disconnected'} successfully`,
+    );
+    this.logger.log(
+      `Discord ${username} ${userId ? 'connected' : 'disconnected'} successfully`,
+    );
+
+    return {
+      message: `Discord ${username || userToUpdate.telegram.username} ${username ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };

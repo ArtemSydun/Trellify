@@ -135,6 +135,10 @@
             "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого телеграм-користувача",
             "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
         },
+        "discord": {
+            "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого діскорд аккаунту",
+            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
+        },
         "trello": {
             "webhook": {
                 "youAreNotConnectedToWebhook": "Ви не підключені до цього вебхука",

@@ -135,6 +135,10 @@
             "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user",
             "profileNotFound": "Your profile was not found. Please check if you are registered"
         },
+        "discord": {
+            "botAlreadyConnected": "Trellify notifier bot is already connected for another discord user",
+            "profileNotFound": "Your profile was not found. Please check if you are registered"
+        },
         "trello": {
             "webhook": {
                 "youAreNotConnectedToWebhook": "You are not connected to this webhook",

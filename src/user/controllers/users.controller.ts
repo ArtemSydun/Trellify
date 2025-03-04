@@ -39,6 +39,7 @@ import {
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
+import { DiscordSettings } from '../dto/discord.settings.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
@@ -254,6 +255,67 @@ export class UsersController {
     return this.usersService.manageUserTelegramConnection(
       req.user,
       connectTelegramDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('discord')
+  @ApiOperation({
+    summary: 'Connect / Disconnect Discord',
+    description:
+      'This endpoint handles connecting or disconnecting a Discord account to the current user. It does not require special roles, but the user must be authenticated.',
+  })
+  @ApiOkResponse({
+    description: 'Discord connected / disconnected successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Discord {{username}} connected / disconnected successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  @ApiCustomBadRequestResponse(
+    'Invalid discord info',
+    'This discord user has not interacted with bot yet',
+  )
+  @ApiConflictResponse({
+    description: 'Discord is already connected',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Discord notifier bot is already connected',
+        },
+        error: {
+          type: 'string',
+          example: Errors.CONFLICT,
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.CONFLICT,
+        },
+      },
+    },
+  })
+  handleDiscordQuery(@Req() req, @Body() connectDiscordDto: DiscordSettings) {
+    return this.usersService.manageUserDiscordConnection(
+      req.user,
+      connectDiscordDto,
       req.i18nContext,
     );
   }

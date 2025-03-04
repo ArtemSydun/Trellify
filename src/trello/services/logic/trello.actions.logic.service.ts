@@ -9,6 +9,7 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
 import { notificationMessageGenerator } from 'src/common/helpers/trello-notifications';
+import { DiscordService } from 'src/discord/discord.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -37,6 +38,7 @@ export class TrelloActionsLogicService {
     @Inject(forwardRef(() => TrelloWebhooksLogicService))
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
+    private readonly discordService: DiscordService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,
   ) {}
@@ -57,7 +59,7 @@ export class TrelloActionsLogicService {
       const serverDate = new Date(webhookAction?.action?.date);
       const notificationLanguage = targetUser.language || Languages.EN;
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
-      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
 
       const targetMemberUsername = webhookAction?.action?.member?.username;
 
@@ -66,7 +68,7 @@ export class TrelloActionsLogicService {
         webhookAction?.action?.data?.old?.idMember ||
         '';
 
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
+      const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
 
       const userInitials = escapeMarkdown(
         `${targetUser.telegram.username || ''}`,
@@ -194,27 +196,53 @@ export class TrelloActionsLogicService {
           this.configService.get(configServiceEnum.DATE_FORMAT),
         );
 
-        const formattedMessage = notificationMessageGenerator(
-          targetUser,
-          {
-            boardName: boardData?.name,
-            boardUrl: boardData?.url,
-            actionDate: formattedTimeZone,
-            translatedMessage: message,
-            cardName: cardData?.name,
-            cardUrl: cardData?.url,
-            actionAuthor,
-            actionAuthorUrl,
-            actionTarget: targetMemberUsername || targetedChecklistUserId,
-            actionTargetUrl: targetMemberProfileUrl,
-          },
-          this.i18n,
-        );
+        if (targetUser.telegram.chatId) {
+          const formattedMessage = notificationMessageGenerator(
+            targetUser,
+            {
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              cardName: cardData?.name,
+              cardUrl: cardData?.url,
+              actionAuthor,
+              actionAuthorUrl,
+              actionTarget: targetMemberUsername || targetedChecklistUserId,
+              actionTargetUrl: targetMemberProfileUrl,
+            },
+            this.i18n,
+          );
 
-        await this.notificationBotService.sendMessageToUser(
-          targetUser.telegram,
-          formattedMessage,
-        );
+          await this.notificationBotService.sendMessageToUser(
+            targetUser.telegram,
+            formattedMessage,
+          );
+        }
+
+        if (targetUser.discord.userId) {
+          const formattedDiscordMessage = notificationMessageGenerator(
+            targetUser,
+            {
+              boardName: boardData?.name,
+              boardUrl: `<${boardData?.url}>`,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              cardName: cardData?.name,
+              cardUrl: `<${cardData?.url}>`,
+              actionAuthor,
+              actionAuthorUrl: `<${actionAuthorUrl}>`,
+              actionTarget: targetMemberUsername || targetedChecklistUserId,
+              actionTargetUrl: `<${targetMemberProfileUrl}>`,
+            },
+            this.i18n,
+          );
+
+          await this.discordService.sendDirectMessage(
+            targetUser.discord.userId,
+            formattedDiscordMessage,
+          );
+        }
       } else {
         this.logger.warn(`Unsupported target action: ${actionType}`);
       }
@@ -238,7 +266,7 @@ export class TrelloActionsLogicService {
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
-      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
       const listBefore = webhookAction.action?.data?.listBefore?.name;
       const listAfter = webhookAction.action?.data?.listAfter?.name;
       const customFieldName = webhookAction.action?.data?.customField?.name;
@@ -255,7 +283,7 @@ export class TrelloActionsLogicService {
         webhookAction?.action?.data?.old?.idMember ||
         '';
 
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
+      const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername || targetedChecklistUserId}`;
 
       const cardActionMessages: Record<
         TrelloWebhookCardActions,
@@ -464,7 +492,7 @@ export class TrelloActionsLogicService {
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member [[${targetMemberUsername}](${targetMemberProfileUrl})](${targetMemberProfileUrl}) has been added to the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_REMOVED, {
@@ -476,7 +504,7 @@ export class TrelloActionsLogicService {
               cardUrl: args.cardUrl,
             },
           }) ||
-          `A member [[${targetMemberUsername}](${targetMemberProfileUrl})](${targetMemberProfileUrl}) has been removed from the card [${cardData?.name}](${cardData?.url}).`,
+          `A member [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the card [${cardData?.name}](${cardData?.url}).`,
 
         [TrelloWebhookCardActions.CARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_TELEGRAM_CARD_MEMBER_JOINED, {
@@ -654,27 +682,54 @@ export class TrelloActionsLogicService {
             return;
           }
 
-          const formattedMessage = notificationMessageGenerator(
-            userToNotify,
-            {
-              boardName: boardData?.name,
-              boardUrl: boardData?.url,
-              actionDate: formattedTimeZone,
-              translatedMessage: message,
-              cardName: cardData.name,
-              cardUrl: cardData.url,
-              actionAuthor,
-              actionAuthorUrl,
-              actionTarget: targetMemberUsername || targetedChecklistUserId,
-              actionTargetUrl: targetMemberProfileUrl,
-            },
-            this.i18n,
-          );
+          if (userToNotify.telegram.chatId) {
+            const formattedTelegramMessage = notificationMessageGenerator(
+              userToNotify,
+              {
+                boardName: boardData?.name,
+                boardUrl: boardData?.url,
+                actionDate: formattedTimeZone,
+                translatedMessage: message,
+                cardName: cardData.name,
+                cardUrl: cardData.url,
+                actionAuthor,
+                actionAuthorUrl,
+                actionTarget: targetMemberUsername || targetedChecklistUserId,
+                actionTargetUrl: targetMemberProfileUrl,
+              },
+              this.i18n,
+            );
 
-          await this.notificationBotService.sendMessageToUser(
-            userToNotify.telegram,
-            formattedMessage,
-          );
+            await this.notificationBotService.sendMessageToUser(
+              userToNotify.telegram,
+              formattedTelegramMessage,
+            );
+          }
+
+          if (userToNotify.discord.userId) {
+            // < and > added to URLS to avoid discord links preview
+            const formattedDiscordMessage = notificationMessageGenerator(
+              userToNotify,
+              {
+                boardName: boardData?.name,
+                boardUrl: `<${boardData?.url}>`,
+                actionDate: formattedTimeZone,
+                translatedMessage: message,
+                cardName: cardData.name,
+                cardUrl: `<${cardData.url}>`,
+                actionAuthor,
+                actionAuthorUrl: `<${actionAuthorUrl}>`,
+                actionTarget: targetMemberUsername || targetedChecklistUserId,
+                actionTargetUrl: `<${targetMemberProfileUrl}>`,
+              },
+              this.i18n,
+            );
+
+            await this.discordService.sendDirectMessage(
+              userToNotify.discord.userId,
+              formattedDiscordMessage,
+            );
+          }
         }
       });
 
@@ -699,10 +754,10 @@ export class TrelloActionsLogicService {
       const serverDate = new Date(webhookAction?.action?.date);
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
-      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
       const targetMemberUsername =
         webhookAction?.action?.member?.username || '';
-      const targetMemberProfileUrl = `trello.com/u/${targetMemberUsername}`;
+      const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername}`;
 
       const boardActionMessages: Record<
         TrelloWebhookBoardActions,
@@ -809,10 +864,10 @@ export class TrelloActionsLogicService {
       const targetMemberUsername =
         webhookAction?.action?.member?.username ||
         webhookAction?.action?.memberCreator?.username;
-      const targetMemberProfileUrl = `trello.com/u/${webhookAction?.action?.member?.username}`;
+      const targetMemberProfileUrl = `https://trello.com/u/${webhookAction?.action?.member?.username}`;
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
-      const actionAuthorUrl = `trello.com/u/${actionAuthor}`;
+      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
 
       const oldCustomFieldName = webhookAction.action?.data?.old?.name;
       const customFieldName = webhookAction.action?.data?.customField?.name;
@@ -999,25 +1054,47 @@ export class TrelloActionsLogicService {
           this.configService.get(configServiceEnum.DATE_FORMAT),
         );
 
-        const formattedMessage = notificationMessageGenerator(
-          userToNotify,
-          {
-            boardName: boardData?.name,
-            boardUrl: boardData?.url,
-            actionDate: formattedTimeZone,
-            translatedMessage: message,
-            actionAuthor,
-            actionAuthorUrl,
-            actionTarget: targetMemberUsername,
-            actionTargetUrl: targetMemberProfileUrl,
-          },
-          this.i18n,
-        );
+        if (userToNotify.telegram.chatId) {
+          const formattedTelegramMessage = notificationMessageGenerator(
+            userToNotify,
+            {
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              actionAuthor,
+              actionAuthorUrl,
+              actionTarget: targetMemberUsername,
+              actionTargetUrl: targetMemberProfileUrl,
+            },
+            this.i18n,
+          );
 
-        if (message) {
           await this.notificationBotService.sendMessageToUser(
             userToNotify.telegram,
-            formattedMessage,
+            formattedTelegramMessage,
+          );
+        }
+
+        if (userToNotify.discord.userId) {
+          const formattedDiscordMessage = notificationMessageGenerator(
+            userToNotify,
+            {
+              boardName: boardData?.name,
+              boardUrl: `<${boardData?.url}>`,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              actionAuthor,
+              actionAuthorUrl: `<${actionAuthorUrl}>`,
+              actionTarget: targetMemberUsername,
+              actionTargetUrl: `<${targetMemberProfileUrl}>`,
+            },
+            this.i18n,
+          );
+
+          await this.discordService.sendDirectMessage(
+            userToNotify.discord.userId,
+            formattedDiscordMessage,
           );
         }
       });
