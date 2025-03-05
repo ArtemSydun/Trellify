@@ -525,6 +525,8 @@ export class TrelloWebhooksLogicService {
 
       if (!webhookSubscribers.includes(userToUpdate.trello.userId)) {
         webhook.subscribers.push({
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloUserId: userToUpdate.trello.userId,
           trelloToken: userToUpdate.trello.token,
           notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
@@ -624,13 +626,17 @@ export class TrelloWebhooksLogicService {
         boardName: connectedBoard.name,
         boardUrl: connectedBoard.url,
         author: {
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
         subscribers: [
           {
-            trelloUserId: userToUpdate.trello.userId,
+            userId: userToUpdate.id,
+            email: userToUpdate.email,
             trelloToken: userToUpdate.trello.token,
+            trelloUserId: userToUpdate.trello.userId,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
           },
         ],
