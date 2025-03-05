@@ -13,18 +13,8 @@ export class DiscordCommands {
     private readonly configService: ConfigService,
   ) {}
   @SlashCommand({
-    name: 'ping',
-    description: 'Responds with pong!',
-  })
-  public async onPing(@Context() [interaction]: SlashCommandContext) {
-    console.log(interaction.user.id);
-    return interaction.reply({ content: 'Pong!' });
-  }
-
-  @SlashCommand({
     name: 'start',
     description: 'Trellify discord start',
-    guilds: [],
   })
   public async onStart(@Context() [interaction]: SlashCommandContext) {
     console.log(interaction.user);

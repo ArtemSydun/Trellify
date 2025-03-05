@@ -9,6 +9,25 @@
         "dashboard": "Панель управління"
     },
     "messages": {
+        "general": {
+            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
+            "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
+            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
+            "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
+            "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
+            "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",
+            "profileFound": "Ваш аккаунт вже авторизовано. Щоб налаштувати сповіщення слідуйте [інструкції]({infoUrl})",
+            "help": {
+                "introMessage": "Привіт! Це Trellify — бот для сповіщень про події з Trello. \nЩоб користуватись нашим сервісом, будь ласка, виконайте декілька кроків",
+                "steps": [
+                    "**Зареєструйтесь на сайті Trellify**: Відвідайте наш [вебсайт]({websiteUrl}) і створіть обліковий запис.",
+                    "**Підключіть ваш Trello профіль**: Авторизуйтесь у Trello та зв'яжіть свій обліковий запис із Trellify.",
+                    "**Підключіть ваш Telegram акаунт**: Використовуйте цього бота, щоб підключити ваш Telegram для отримання сповіщень.",
+                    "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
+                ],
+                "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
+            }
+        },
         "email": {
             "registrationEmailSubject": "Підтвердіть вашу пошту",
             "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
@@ -26,84 +45,20 @@
             "ignoreEmailDefaultMessage": "Якщо ви не робили запит на цю подію, будь ласка, проігноруйте цей лист",
             "linkAvailableDefaultMessage": "Це посилання дійсне 15 хвилин"
         },
+        "user": {
+            "created": "Користувача було успішно створено",
+            "deleted": "Усі дані про користувача {email} було видалено.",
+            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
+            "passwordChangedSuccessfully": "Пароль було успішно змінено",
+            "emailChangedSuccessfully": "Пошту було успішно змінено"
+        },
         "telegram": {
-            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
-            "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
-            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
-            "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
-            "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
-            "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",
-            "profileFound": "Ваш телеграм аккаунт вже авторизовано. Щоб налаштувати сповіщення слідуйте [інструкції]({infoUrl})",
-            "help": {
-                "introMessage": "Привіт! Це Trellify — бот для сповіщень про події з Trello. \nЩоб користуватись нашим сервісом, будь ласка, виконайте декілька кроків",
-                "steps": [
-                    "**Зареєструйтесь на сайті Trellify**: Відвідайте наш [вебсайт]({websiteUrl}) і створіть обліковий запис.",
-                    "**Підключіть ваш Trello профіль**: Авторизуйтесь у Trello та зв'яжіть свій обліковий запис із Trellify.",
-                    "**Підключіть ваш Telegram акаунт**: Використовуйте цього бота, щоб підключити ваш Telegram для отримання сповіщень.",
-                    "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
-                ],
-                "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
-            },
-            "notifications": {
-                "personal": {
-                    "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
-                    "cardMemberRemovedSelf": "{userInitials}, вас було видалено з картки [{cardName}]({cardUrl}).",
-                    "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
-                    "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
-                    "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
-                    "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
-                    "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
-                },
-                "board": {
-                    "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
-                    "boardClosed": "Дошку {boardName} було закрито.",
-                    "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито."
-                },
-                "card": {
-                    "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
-                    "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
-                    "cardMemberAdded": "Додано нового учасника [{memberName}]({memberUrl}) до картки [{cardName}]({cardUrl}).",
-                    "cardMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з картки [{cardName}]({cardUrl}).",
-                    "cardMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до картки [{cardName}]({cardUrl}).",
-                    "cardMemberLeft": "Учасник [{memberName}]({memberUrl}) вийшов з картки [{cardName}]({cardUrl}).",
-                    "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
-                    "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
-                    "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
-                    "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
-                    "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
-                    "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
-                    "cardCommentAdded": "До картки [{cardName}]({cardUrl}) додано коментар від користувача [{actionAuthor}]({actionAuthorUrl}): \n  '{commentText}'",
-                    "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
-                    "cardChecklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
-                    "cardChecklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
-                    "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
-                    "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
-                    "checklistItemMemberAdded": "Додано учасника [{memberName}]({memberUrl}) до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemMemberLeft": "Учасник [{memberName}]({memberUrl}) залишив елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                    "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
-                    "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
-                    "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку.",
-                    "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
-                    "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
-                },
-                "admin": {
-                    "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
-                    "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
-                    "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
-                    "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
-                    "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
-                    "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
-                    "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
-                    "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
-                    "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
-                    "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}.",
-                    "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}."
-                }
-            }
+            "connectedSuccessfully": "Телеграм аккаунт підключено успішно",
+            "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно"
+        },
+        "discord": {
+            "connectedSuccessfully": "Діскорд аккаунт підключено успішно",
+            "disconnectedSuccessfully": "Діскорд аккаунт відключено успішно"
         },
         "trello": {
             "webhook": {
@@ -112,17 +67,82 @@
                 "webhooksWasUpdated": "Вебхуки було оновлено успішно"
             }
         },
-        "user": {
-            "created": "Користувача було успішно створено",
-            "deleted": "Усі дані про користувача {email} було видалено.",
-            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
-            "passwordChangedSuccessfully": "Пароль було успішно змінено",
-            "emailChangedSuccessfully": "Пошту було успішно змінено"
+        "notifications": {
+            "personal": {
+                "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
+                "cardMemberRemovedSelf": "{userInitials}, вас було видалено з картки [{cardName}]({cardUrl}).",
+                "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
+                "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
+                "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
+                "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
+                "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
+            },
+            "board": {
+                "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
+                "boardClosed": "Дошку {boardName} було закрито.",
+                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито."
+            },
+            "card": {
+                "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
+                "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
+                "cardMemberAdded": "Додано нового учасника [{memberName}]({memberUrl}) до картки [{cardName}]({cardUrl}).",
+                "cardMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з картки [{cardName}]({cardUrl}).",
+                "cardMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до картки [{cardName}]({cardUrl}).",
+                "cardMemberLeft": "Учасник [{memberName}]({memberUrl}) вийшов з картки [{cardName}]({cardUrl}).",
+                "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
+                "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
+                "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
+                "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
+                "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
+                "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
+                "cardCommentAdded": "До картки [{cardName}]({cardUrl}) додано коментар від користувача [{actionAuthor}]({actionAuthorUrl}): \n  '{commentText}'",
+                "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
+                "cardChecklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
+                "cardChecklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+                "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
+                "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
+                "checklistItemMemberAdded": "Додано учасника [{memberName}]({memberUrl}) до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemMemberLeft": "Учасник [{memberName}]({memberUrl}) залишив елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
+                "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
+                "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку.",
+                "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
+                "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
+            },
+            "admin": {
+                "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
+                "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
+                "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
+                "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
+                "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
+                "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
+                "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
+                "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
+                "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
+                "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}.",
+                "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}."
+            }
         }
     },
     "errors": {
+        "general": {
+            "invalidRequest": "Запит для поля {field} є недійсним.",
+            "invalidCredentials": "Недійсні облікові дані.",
+            "forbiddenResource": "Доступ до ресурсу заборонено",
+            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
+            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
+        },
         "jwt": {
             "invalidToken": "Ваш токен не є дійсним або закінчився термін дії"
+        },
+        "auth": {
+            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
+            "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
+            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з поточною"
         },
         "user": {
             "notFoundByEmail": "Користувача з поштою {email} не знайдено",
@@ -132,12 +152,10 @@
             "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
         },
         "telegram": {
-            "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого телеграм-користувача",
-            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
+            "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify"
         },
         "discord": {
-            "botAlreadyConnected": "Бот-сповіщувач Trellify вже підключений до іншого діскорд аккаунту",
-            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
+            "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify"
         },
         "trello": {
             "webhook": {
@@ -158,17 +176,6 @@
                 "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
             },
             "invalidEntityId": "Сутність не знайдено або вона була видалена"
-        },
-        "general": {
-            "invalidRequest": "Запит для поля {field} є недійсним.",
-            "invalidCredentials": "Недійсні облікові дані.",
-            "forbiddenResource": "Доступ до ресурсу заборонено",
-            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
-        },
-        "auth": {
-            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
-            "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
-            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з поточною"
         }
     }
 }

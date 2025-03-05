@@ -575,7 +575,7 @@ export class TrelloWebhooksLogicService {
         }),
         this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
-          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+          i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
             args: {
               boardName: webhook.boardName,
@@ -658,7 +658,7 @@ export class TrelloWebhooksLogicService {
         this.trelloWebhookRepository.create(createdWebhook),
         this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
-          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+          i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
             args: {
               boardName: createdWebhook.boardName,
@@ -1223,7 +1223,7 @@ export class TrelloWebhooksLogicService {
 
       this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
           args: {
             boardName: webhookToUpdate?.boardName,
             boardUrl: webhookToUpdate?.boardUrl,

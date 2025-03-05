@@ -17,7 +17,7 @@ import { DiscordService } from './discord.service';
           IntentsBitField.Flags.DirectMessages,
           IntentsBitField.Flags.MessageContent,
         ],
-        development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
+        // development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
       }),
     }),
   ],

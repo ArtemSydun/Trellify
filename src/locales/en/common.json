@@ -9,6 +9,25 @@
         "dashboard": "Dashboard"
     },
     "messages": {
+        "general": {
+            "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully. Please, check configuration",
+            "notificationsDisconnected": "Notifications for board [{boardName}]({boardUrl}) has been disconnected. Please, check notifications status",
+            "connectionMessage": "Trellify notifier bot authorized successfully. To manage your notifications setup forward [here]({workspacesLink})",
+            "disconnectionMessage": "Trellify notifier bot disconnected successfully",
+            "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
+            "authorizeThroughWebsite": "Authorize through website",
+            "profileFound": "Your account have already been authorized. To setup configuration for notifications, follow steps [here]({infoUrl})",
+            "help": {
+                "introMessage": "Hello! This is Trellify — a bot for notifications about events from Trello. To be able to use our app, please, follow these steps",
+                "steps": [
+                    "**Register on the Trellify website**: Visit our [website]({websiteUrl}) and create an account.",
+                    "**Connect your Trello profile**: Log in to Trello and link your account with Trellify.",
+                    "**Connect your Telegram account**: Use this bot to link your Telegram account for receiving notifications.",
+                    "**Set up notifications**: Enable notifications for the boards you want to monitor in the Trellify settings."
+                ],
+                "closingMessage": "If you have any questions, reach out to support."
+            }
+        },
         "email": {
             "registrationEmailSubject": "Confirm your email",
             "registrationEmailMessage": "Please, confirm your email by clicking the following link",
@@ -26,84 +45,20 @@
             "ignoreEmailDefaultMessage": "If you did not request this action, please ignore this email",
             "linkAvailableDefaultMessage": "This link is available only for 15 minutes"
         },
+        "user": {
+            "created": "User has been created successfully",
+            "deleted": "All user {targetEmail} data has been deleted.",
+            "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
+            "passwordChangedSuccessfully": "Password has been successfully changed",
+            "emailChangedSuccessfully": "Email has been successfully changed"
+        },
         "telegram": {
-            "notificationsConnected": "Notifications for board [{boardName}]({boardUrl}) has been connected successfully. Please, check configuration",
-            "notificationsDisconnected": "Notifications for board [{boardName}]({boardUrl}) has been disconnected. Please, check notifications status",
-            "connectionMessage": "Trellify notifier bot authorized successfully. To manage your notifications setup forward [here]({workspacesLink})",
-            "disconnectionMessage": "Trellify notifier bot disconnected successfully",
-            "greetingsMessage": "Hello {name}, authorize to start Trellify integration",
-            "authorizeThroughWebsite": "Authorize through website",
-            "profileFound": "Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here]({infoUrl})",
-            "help": {
-                "introMessage": "Hello! This is Trellify — a bot for notifications about events from Trello. To be able to use our app, please, follow these steps",
-                "steps": [
-                    "**Register on the Trellify website**: Visit our [website]({websiteUrl}) and create an account.",
-                    "**Connect your Trello profile**: Log in to Trello and link your account with Trellify.",
-                    "**Connect your Telegram account**: Use this bot to link your Telegram account for receiving notifications.",
-                    "**Set up notifications**: Enable notifications for the boards you want to monitor in the Trellify settings."
-                ],
-                "closingMessage": "If you have any questions, reach out to support."
-            },
-            "notifications": {
-                "personal": {
-                    "cardMemberAddedSelf": "{userInitials}, you've been added to the card [{cardName}]({cardUrl}).",
-                    "cardMemberRemovedSelf": "{userInitials}, you've been removed from the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberAddedSelf": "{userInitials}, you've been added to a checklist in the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberRemovedSelf": "{userInitials}, you've been removed from a checklist in the card [{cardName}]({cardUrl}).",
-                    "boardAdminAddedSelf": "{userInitials}, you've been promoted to admin on the board [{boardName}]({boardUrl}).",
-                    "boardNormalRoleAddedSelf": "{userInitials}, you've been promoted to user role on the board [{boardName}]({boardUrl}).",
-                    "boardMemberRemovedSelf": "{userInitials}, you've been removed from the board {boardName}."
-                },
-                "board": {
-                    "boardRenamed": "The board {oldBoardName} has been renamed to [{boardName}]({boardUrl}).",
-                    "boardClosed": "The board {boardName} has been closed.",
-                    "boardReopened": "The board [{boardName}]({boardUrl}) has been reopened."
-                },
-                "card": {
-                    "cardRenamed": "The card has been renamed from {oldCardName} to [{cardName}]({cardUrl}).",
-                    "cardArchived": "The card [{cardName}]({cardUrl}) has been archived.",
-                    "cardMemberAdded": "A member [{memberName}]({memberUrl}) has been added to the card [{cardName}]({cardUrl}).",
-                    "cardMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from the card [{cardName}]({cardUrl}).",
-                    "cardMemberJoined": "A member [{memberName}]({memberUrl}) has joined the card [{cardName}]({cardUrl}).",
-                    "cardMemberLeft": "A member [{memberName}]({memberUrl}) has left the card [{cardName}]({cardUrl}).",
-                    "cardDueDateAdded": "A due date has been added to the card [{cardName}]({cardUrl}).",
-                    "cardDueDateChanged": "The due date on the card [{cardName}]({cardUrl}) has been updated.",
-                    "cardStartDateAdded": "A start date has been added to the card [{cardName}]({cardUrl}).",
-                    "cardStartDateChanged": "The start date on the card [{cardName}]({cardUrl}) has been updated.",
-                    "cardLabelAdded": "A label has been added to the card [{cardName}]({cardUrl}).",
-                    "cardLabelRemoved": "A label has been removed from the card [{cardName}]({cardUrl}).",
-                    "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) \n  '{commentText}'",
-                    "cardAttachmentAdded": "An attachment has been added to the card [{cardName}]({cardUrl}).",
-                    "cardChecklistAdded": "A checklist has been added to the card [{cardName}]({cardUrl}).",
-                    "cardChecklistRemoved": "A checklist has been removed from the card [{cardName}]({cardUrl}).",
-                    "checklistItemAdded": "A checklist item, '{checklistItemName}', has been added to the card [{cardName}]({cardUrl}).",
-                    "checklistItemDeleted": "A checklist item, '{checklistItemName}', has been deleted from the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberAdded": "A member [{memberName}]({memberUrl}) has been added to a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberJoined": "A member [{memberName}]({memberUrl}) has joined a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
-                    "checklistItemMemberLeft": "A member [{memberName}]({memberUrl}) has left a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
-                    "checklistItemDueDateUpdated": "The due date for a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been updated.",
-                    "checklistItemDueDateDeleted": "The due date has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
-                    "checklistItemCompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as completed.",
-                    "checklistItemIncompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as incompleted.",
-                    "checklistItemConvertedToCard": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been converted to a new card.",
-                    "customFieldItemUpdated": "The status of {customFieldName} in the card [{cardName}]({cardUrl}) has been updated.",
-                    "cardMovedToList": "The card [{cardName}]({cardUrl}) has been moved from {listBefore} to {listAfter} list."
-                },
-                "admin": {
-                    "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
-                    "boardMemberJoined": "A new member [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}).",
-                    "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
-                    "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
-                    "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
-                    "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
-                    "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
-                    "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
-                    "customFieldRenamed": "The custom field has been renamed from {oldCustomFieldName} to {customFieldName} on the board [{boardName}]({boardUrl}).",
-                    "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl}).",
-                    "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}"
-                }
-            }
+            "connectedSuccessfully": "Telegram account connected successfully",
+            "disconnectedSuccessfully": "Telegram account disconnected successfully"
+        },
+        "discord": {
+            "connectedSuccessfully": "Discord account connected successfully",
+            "disconnectedSuccessfully": "Discord account disconnected successfully"
         },
         "trello": {
             "webhook": {
@@ -112,17 +67,82 @@
                 "webhooksWasUpdated": "Webhooks has been updated successfully"
             }
         },
-        "user": {
-            "created": "User has been created successfully",
-            "deleted": "All user {targetEmail} data has been deleted.",
-            "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
-            "passwordChangedSuccessfully": "Password has been successfully changed",
-            "emailChangedSuccessfully": "Email has been successfully changed"
+        "notifications": {
+            "personal": {
+                "cardMemberAddedSelf": "{userInitials}, you've been added to the card [{cardName}]({cardUrl}).",
+                "cardMemberRemovedSelf": "{userInitials}, you've been removed from the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberAddedSelf": "{userInitials}, you've been added to a checklist in the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberRemovedSelf": "{userInitials}, you've been removed from a checklist in the card [{cardName}]({cardUrl}).",
+                "boardAdminAddedSelf": "{userInitials}, you've been promoted to admin on the board [{boardName}]({boardUrl}).",
+                "boardNormalRoleAddedSelf": "{userInitials}, you've been promoted to user role on the board [{boardName}]({boardUrl}).",
+                "boardMemberRemovedSelf": "{userInitials}, you've been removed from the board {boardName}."
+            },
+            "board": {
+                "boardRenamed": "The board {oldBoardName} has been renamed to [{boardName}]({boardUrl}).",
+                "boardClosed": "The board {boardName} has been closed.",
+                "boardReopened": "The board [{boardName}]({boardUrl}) has been reopened."
+            },
+            "card": {
+                "cardRenamed": "The card has been renamed from {oldCardName} to [{cardName}]({cardUrl}).",
+                "cardArchived": "The card [{cardName}]({cardUrl}) has been archived.",
+                "cardMemberAdded": "A member [{memberName}]({memberUrl}) has been added to the card [{cardName}]({cardUrl}).",
+                "cardMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from the card [{cardName}]({cardUrl}).",
+                "cardMemberJoined": "A member [{memberName}]({memberUrl}) has joined the card [{cardName}]({cardUrl}).",
+                "cardMemberLeft": "A member [{memberName}]({memberUrl}) has left the card [{cardName}]({cardUrl}).",
+                "cardDueDateAdded": "A due date has been added to the card [{cardName}]({cardUrl}).",
+                "cardDueDateChanged": "The due date on the card [{cardName}]({cardUrl}) has been updated.",
+                "cardStartDateAdded": "A start date has been added to the card [{cardName}]({cardUrl}).",
+                "cardStartDateChanged": "The start date on the card [{cardName}]({cardUrl}) has been updated.",
+                "cardLabelAdded": "A label has been added to the card [{cardName}]({cardUrl}).",
+                "cardLabelRemoved": "A label has been removed from the card [{cardName}]({cardUrl}).",
+                "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) \n  '{commentText}'",
+                "cardAttachmentAdded": "An attachment has been added to the card [{cardName}]({cardUrl}).",
+                "cardChecklistAdded": "A checklist has been added to the card [{cardName}]({cardUrl}).",
+                "cardChecklistRemoved": "A checklist has been removed from the card [{cardName}]({cardUrl}).",
+                "checklistItemAdded": "A checklist item, '{checklistItemName}', has been added to the card [{cardName}]({cardUrl}).",
+                "checklistItemDeleted": "A checklist item, '{checklistItemName}', has been deleted from the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberAdded": "A member [{memberName}]({memberUrl}) has been added to a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberJoined": "A member [{memberName}]({memberUrl}) has joined a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemMemberLeft": "A member [{memberName}]({memberUrl}) has left a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemDueDateUpdated": "The due date for a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been updated.",
+                "checklistItemDueDateDeleted": "The due date has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemCompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as completed.",
+                "checklistItemIncompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as incompleted.",
+                "checklistItemConvertedToCard": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been converted to a new card.",
+                "customFieldItemUpdated": "The status of {customFieldName} in the card [{cardName}]({cardUrl}) has been updated.",
+                "cardMovedToList": "The card [{cardName}]({cardUrl}) has been moved from {listBefore} to {listAfter} list."
+            },
+            "admin": {
+                "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
+                "boardMemberJoined": "A new member [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}).",
+                "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
+                "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
+                "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
+                "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
+                "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
+                "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
+                "customFieldRenamed": "The custom field has been renamed from {oldCustomFieldName} to {customFieldName} on the board [{boardName}]({boardUrl}).",
+                "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl}).",
+                "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}"
+            }
         }
     },
     "errors": {
+        "general": {
+            "invalidRequest": "The request for the {field} field is invalid.",
+            "invalidCredentials": "Invalid credentials",
+            "forbiddenResource": "Forbidden resource",
+            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
+            "profileNotFound": "Your Trellify profile was not found. Please check if you are registered"
+        },
         "jwt": {
             "invalidToken": "Your authorization token is not valid or expired"
+        },
+        "auth": {
+            "resetPasswordMismatch": "Password and repeat password does not match",
+            "changePasswordSamePass": "New password can not be the same as previous",
+            "changeEmailSameAdress": "New email can not be the same as current"
         },
         "user": {
             "notFoundByEmail": "User with email {email} not found",
@@ -132,12 +152,10 @@
             "notFoundByProperty": "User with property {path}: {value} not found"
         },
         "telegram": {
-            "botAlreadyConnected": "Trellify notifier bot is already connected for another telegram user",
-            "profileNotFound": "Your profile was not found. Please check if you are registered"
+            "botAlreadyConnected": "This telegram account is already connected to Trellify"
         },
         "discord": {
-            "botAlreadyConnected": "Trellify notifier bot is already connected for another discord user",
-            "profileNotFound": "Your profile was not found. Please check if you are registered"
+            "botAlreadyConnected": "This discord account is already connected to Trellify"
         },
         "trello": {
             "webhook": {
@@ -158,17 +176,6 @@
                 "alreadyConnected": "This trello profile is already binded to other user"
             },
             "invalidEntityId": "This entity was not found or was deleted"
-        },
-        "general": {
-            "invalidRequest": "The request for the {field} field is invalid.",
-            "invalidCredentials": "Invalid credentials",
-            "forbiddenResource": "Forbidden resource",
-            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}"
-        },
-        "auth": {
-            "resetPasswordMismatch": "Password and repeat password does not match",
-            "changePasswordSamePass": "New password can not be the same as previous",
-            "changeEmailSameAdress": "New email can not be the same as current"
         }
     }
 }
