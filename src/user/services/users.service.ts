@@ -145,7 +145,7 @@ export class UsersService {
       );
 
       const authorWebhooks =
-        await this.trelloWebhooksLogicService.findMemberCreatedWebhooks(
+        await this.trelloWebhooksLogicService.findMyCreatedWebhooks(
           targetUser,
           i18n,
         );
@@ -296,6 +296,21 @@ export class UsersService {
       await this.userRepository.findManyByTrelloIds(trelloUserIds);
 
     return usersByTrelloId;
+  }
+
+  public async findWebhooksUserIsSubscribedOn(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const subscriber = await this.getUser(user);
+
+    const webhooks =
+      await this.trelloWebhooksLogicService.findUserSubscribedWebhooks(
+        subscriber,
+        i18n,
+      );
+
+    return webhooks;
   }
 
   public async doesUserExist(email: string): Promise<boolean> {
@@ -460,7 +475,7 @@ export class UsersService {
         chatId,
       );
 
-      if (connectedUser.telegram.chatId) {
+      if (connectedUser?.telegram.chatId) {
         throw new ConflictException(
           i18n?.t(I18nKeys.ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED) ||
             `This telegram account is already connected to Trellify`,

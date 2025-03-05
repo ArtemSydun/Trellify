@@ -26,6 +26,7 @@ import {
 import { I18nService } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { HttpStatus } from '@nestjs/common';
+import { DiscordService } from 'src/discord/discord.service';
 
 jest.mock('src/common/helpers/trello-notifications', () => ({
   notificationMessageGenerator: jest.fn().mockImplementation(() => 'message'),
@@ -82,6 +83,10 @@ describe('TrelloActionsLogicService', () => {
         {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),
+        },
+        {
+          provide: DiscordService,
+          useValue: createMock<DiscordService>(),
         },
         { provide: I18nService, useValue: createMock<I18nService>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },

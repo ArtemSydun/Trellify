@@ -229,7 +229,7 @@ export class TrelloWebhooksLogicService {
     return await this.trelloWebhookRepository.findAll();
   }
 
-  async findMemberConnectedWebhooks(
+  async findMyConnectedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -245,7 +245,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findMemberCreatedWebhooks(
+  async findMyCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -257,6 +257,38 @@ export class TrelloWebhooksLogicService {
       );
 
     return webhooks;
+  }
+
+  async findUserSubscribedWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const userToFind = await this.userService.getUser(user, i18n);
+
+    return await this.trelloWebhookRepository.findWebhooksConnectedToUser(
+      userToFind.trello.userId,
+    );
+  }
+
+  async findUserCreatedWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const requestedUser = await this.userService.getUser(user, i18n);
+
+    const webhooks =
+      await this.trelloWebhookRepository.findWebhooksCreatedByUser(
+        requestedUser.trello.userId,
+      );
+
+    return webhooks;
+  }
+
+  async findWebhookSubscribers(webhookId: string): Promise<User[]> {
+    const subscribers =
+      await this.userService.findUsersConnectedToWebhook(webhookId);
+
+    return subscribers;
   }
 
   async recreateWebhookIfUnavailable(
@@ -350,6 +382,8 @@ export class TrelloWebhooksLogicService {
         boardName: webhookBoard.name,
         boardUrl: webhookBoard.url,
         author: {
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },

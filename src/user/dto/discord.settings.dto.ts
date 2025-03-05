@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { Prop } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -10,6 +11,7 @@ export class DiscordSettings {
     type: String,
   })
   @Prop({ required: false })
+  @Optional()
   userId?: string | null;
 
   @ApiProperty({
@@ -19,16 +21,13 @@ export class DiscordSettings {
     nullable: true,
   })
   @Prop({ required: false })
+  @Optional()
   username?: string | null;
 
-  @ApiProperty({
-    description: 'Timestamp of the last update to the Discord settings',
-    example: '2025-01-02T15:46:09.123Z',
-    required: false,
-  })
   @Prop({
     default: () => new Date(),
     required: false,
   })
+  @Optional()
   updatedAt?: Date;
 }
