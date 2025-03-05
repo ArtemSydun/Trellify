@@ -36,6 +36,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
@@ -452,6 +453,30 @@ export class UsersController {
     return this.usersService.updateUserPreferences(
       req.user,
       updateUserPreferencesDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Get(':id/webhooks')
+  @ApiOperation({
+    summary: 'Get webhooks user is subscribed on',
+    description: 'This endpoint retrieves the webhooks user is subscribed on.',
+  })
+  @ApiOkResponse({
+    description: 'Subscribed webhooks',
+    type: [Webhook],
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  findSubscribedWebhooks(
+    @Param('id') id: string,
+    @Req() req,
+  ): Promise<Webhook[]> {
+    return this.usersService.findWebhooksUserIsSubscribedOn(
+      id,
       req.i18nContext,
     );
   }

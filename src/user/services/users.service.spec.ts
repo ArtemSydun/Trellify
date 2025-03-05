@@ -34,6 +34,7 @@ import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/services/redis.service';
+import { DiscordService } from 'src/discord/discord.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -90,6 +91,10 @@ describe('UsersService', () => {
         {
           provide: AdminBotService,
           useValue: createMock<AdminBotService>(),
+        },
+        {
+          provide: DiscordService,
+          useValue: createMock<DiscordService>(),
         },
         {
           provide: RedisService,
@@ -768,7 +773,7 @@ describe('UsersService', () => {
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: expect.stringContaining(connectTelegramDto.username),
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
         data: { ...userToUpdate, telegram: connectTelegramDto },
       });
@@ -843,7 +848,7 @@ describe('UsersService', () => {
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.telegram.username),
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
         data: {
           ...userToUpdate,

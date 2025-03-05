@@ -23,14 +23,10 @@ export class TelegramSettings {
   @Prop({ required: false })
   chatId?: number;
 
-  @ApiProperty({
-    description: 'Timestamp of the last update to the Telegram settings',
-    example: '2025-01-02T15:46:09.123Z',
-    required: false,
-  })
   @Prop({
     default: () => new Date(),
     required: false,
   })
+  @Optional()
   updatedAt?: Date;
 }
