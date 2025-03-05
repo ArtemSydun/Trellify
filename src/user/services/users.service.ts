@@ -27,6 +27,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
@@ -37,6 +38,7 @@ import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { DiscordSettings } from '../dto/discord.settings.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
@@ -58,6 +60,7 @@ export class UsersService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
+    private readonly discordService: DiscordService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
@@ -155,7 +158,7 @@ export class UsersService {
 
           this.notificationBotService.sendMessageToUser(
             subscriberToNotify.telegram,
-            i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+            i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
               args: {
                 boardName: webhook.boardName,
                 boardUrl: webhook.boardUrl,
@@ -457,25 +460,16 @@ export class UsersService {
         chatId,
       );
 
-      if (connectedUser && connectedUser.id !== userToUpdate.id) {
+      if (connectedUser.telegram.chatId) {
         throw new ConflictException(
           i18n?.t(I18nKeys.ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED) ||
-            `Trellify bot is already connected for another telegram user`,
+            `This telegram account is already connected to Trellify`,
         );
       }
-
-      await this.notificationBotService.sendMessageToUser(
-        connectTelegramDto,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_CONNECTION_MESSAGE, {
-          args: {
-            workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
-          },
-        }) || `Trellify authorized successfully`,
-      );
     } else {
       await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_DISCONNECTION_MESSAGE) ||
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
           `Trello notifier bot disconnected successfully`,
       );
     }
@@ -485,11 +479,74 @@ export class UsersService {
       lastActivityDate: updateDate,
     });
 
+    await this.notificationBotService.sendMessageToUser(
+      connectTelegramDto,
+      i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
+        args: {
+          workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+        },
+      }) || `Trellify authorized successfully`,
+    );
+
     this.logger.log(
       `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
     );
     return {
-      message: `Telegram ${username || userToUpdate.telegram.username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      message:
+        i18n?.t(
+          chatId
+            ? I18nKeys.MESSAGES_TELEGRAM_CONNECTED_SUCCESSFULLY
+            : I18nKeys.MESSAGES_TELEGRAM_DISCONNECTED_SUCCESSFULLY,
+        ) || `Telegram ${chatId ? 'connected' : 'disconnected'} successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser,
+    };
+  }
+
+  public async manageUserDiscordConnection(
+    user: string | User,
+    connectDiscordDto: DiscordSettings,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user, i18n);
+    const { userId, username } = connectDiscordDto;
+    const updateDate = new Date();
+
+    if (userId && username) {
+      const connectedUser = await this.userRepository.findUserByProperty(
+        UserSearchPathEnum.DiscordUserId,
+        userId,
+      );
+
+      if (connectedUser.discord?.userId) {
+        throw new ConflictException(
+          i18n?.t(I18nKeys.ERRORS_DISCORD_BOT_ALREADY_CONNECTED) ||
+            `Trellify bot is already connected for another discord user`,
+        );
+      }
+    }
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      discord: { userId, username, updatedAt: updateDate },
+      lastActivityDate: updateDate,
+    });
+
+    await this.discordService.sendDirectMessage(
+      userId,
+      i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE) ||
+        'Discord connected successfully',
+    );
+    this.logger.log(
+      `Discord ${username} ${userId ? 'connected' : 'disconnected'} successfully`,
+    );
+
+    return {
+      message:
+        i18n?.t(
+          userId
+            ? I18nKeys.MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY
+            : I18nKeys.MESSAGES_DISCORD_DISCONNECTED_SUCCESSFULLY,
+        ) || `Discord ${userId ? 'connected' : 'disconnected '} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -611,7 +668,7 @@ export class UsersService {
 
       this.notificationBotService.sendMessageToUser(
         user.telegram,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
           lang: userLanguage,
           args: {
             boardName: webhookToRemove.boardName,

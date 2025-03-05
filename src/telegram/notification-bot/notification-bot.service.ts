@@ -72,7 +72,7 @@ export class NotificationBotService implements OnModuleInit {
 
       if (user) {
         await ctx.reply(
-          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_PROFILE_FOUND, {
+          this.i18n?.t(I18nKeys.MESSAGES_GENERAL_PROFILE_FOUND, {
             lang: user.language,
             args: {
               infoUrl: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help`,
@@ -84,7 +84,7 @@ export class NotificationBotService implements OnModuleInit {
         );
       } else {
         await ctx.reply(
-          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_GREETINGS_MESSAGE, {
+          this.i18n?.t(I18nKeys.MESSAGES_GENERAL_GREETINGS_MESSAGE, {
             lang: userLanguage,
             args: {
               name: userTelegramName,
@@ -95,7 +95,7 @@ export class NotificationBotService implements OnModuleInit {
         );
 
         await ctx.reply(
-          this.i18n?.t(I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE, {
+          this.i18n?.t(I18nKeys.MESSAGES_GENERAL_AUTHORIZE_THROUGH_WEBSITE, {
             lang: userLanguage,
           }) || 'Authorize through website',
           {
@@ -129,13 +129,13 @@ export class NotificationBotService implements OnModuleInit {
       }
 
       const introMessage = this.i18n.t(
-        I18nKeys.MESSAGES_TELEGRAM_HELP_INTRO_MESSAGE,
+        I18nKeys.MESSAGES_GENERAL_HELP_INTRO_MESSAGE,
         {
           lang: userLanguage,
         },
       );
 
-      const steps = this.i18n.t(I18nKeys.MESSAGES_TELEGRAM_HELP_STEPS, {
+      const steps = this.i18n.t(I18nKeys.MESSAGES_GENERAL_HELP_STEPS, {
         lang: userLanguage,
         args: {
           websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
@@ -143,7 +143,7 @@ export class NotificationBotService implements OnModuleInit {
       });
 
       const closingMessage = this.i18n.t(
-        I18nKeys.MESSAGES_TELEGRAM_HELP_CLOSING,
+        I18nKeys.MESSAGES_GENERAL_HELP_CLOSING,
         {
           lang: userLanguage,
         },
@@ -190,7 +190,7 @@ export class NotificationBotService implements OnModuleInit {
         });
       } catch (error) {
         await ctx.reply(
-          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_PROFILE_NOT_FOUND, {
+          this.i18n?.t(I18nKeys.ERRORS_GENERAL_PROFILE_NOT_FOUND, {
             lang: userLanguage,
           }),
           {
@@ -200,7 +200,7 @@ export class NotificationBotService implements OnModuleInit {
                   {
                     text:
                       this.i18n?.t(
-                        I18nKeys.MESSAGES_TELEGRAM_AUTHORIZE_THROUGH_WEBSITE,
+                        I18nKeys.MESSAGES_GENERAL_AUTHORIZE_THROUGH_WEBSITE,
                         { lang: userLanguage },
                       ) || 'Authorize through website',
                     url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatID}&username=${username}`,
