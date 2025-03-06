@@ -104,7 +104,7 @@ export class NotificationBotService implements OnModuleInit {
                 [
                   {
                     text: 'Trellify',
-                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatId}&username=${username}`,
+                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings/telegram?chatId=${chatId}&username=${username}`,
                   },
                 ],
               ],
