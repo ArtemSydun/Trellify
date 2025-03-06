@@ -32,6 +32,7 @@ import {
 } from 'src/common/decorators/swagger.decorators';
 import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateWebhookDto } from '../dto/create-webhook.dto';
 import {
@@ -94,8 +95,8 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin)
-  @Get('')
+  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
+  @Get()
   @ApiBearerAuth()
   @ApiOperation({
     summary:
@@ -170,10 +171,10 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('list')
+  @Get('my')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Get list of connected webhooks',
+    summary: 'Get list of my connected webhooks',
     description:
       'This endpoint retrieves a list of Trello webhooks that the authenticated user is connected to.',
   })
@@ -182,8 +183,8 @@ export class TrelloWebhooksController {
     type: [Webhook],
   })
   @ApiCustomUnathorizedResponse()
-  getUserConnectedWebhooksList(@Req() req) {
-    return this.webhooksService.findMemberConnectedWebhooks(
+  getMyConnectedWebhooksList(@Req() req) {
+    return this.webhooksService.findUserSubscribedWebhooks(
       req.user,
       req.i18nContext,
     );
@@ -203,6 +204,25 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   getWebhookById(@Param('id') id: string, @Req() req): Promise<Webhook> {
     return this.webhooksService.findWebhookById(id, req.i18nContext);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
+  @Get(':id/subscribers')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get list of webhook subscribers',
+    description:
+      'This endpoint retrieves a list of Trello webhooks that the authenticated user is connected to.',
+  })
+  @ApiOkResponse({
+    description: 'Webhook subscribers list',
+    type: [User],
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  getUserConnectedWebhooksList(@Param('id') id: string): Promise<User[]> {
+    return this.webhooksService.findWebhookSubscribers(id);
   }
 
   //Typically, when you're configuring a webhook with services like Trello or other similar platforms,

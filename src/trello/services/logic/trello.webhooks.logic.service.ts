@@ -229,7 +229,7 @@ export class TrelloWebhooksLogicService {
     return await this.trelloWebhookRepository.findAll();
   }
 
-  async findMemberConnectedWebhooks(
+  async findMyConnectedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -245,7 +245,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findMemberCreatedWebhooks(
+  async findMyCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -257,6 +257,38 @@ export class TrelloWebhooksLogicService {
       );
 
     return webhooks;
+  }
+
+  async findUserSubscribedWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const userToFind = await this.userService.getUser(user, i18n);
+
+    return await this.trelloWebhookRepository.findWebhooksConnectedToUser(
+      userToFind.trello.userId,
+    );
+  }
+
+  async findUserCreatedWebhooks(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<Webhook[]> {
+    const requestedUser = await this.userService.getUser(user, i18n);
+
+    const webhooks =
+      await this.trelloWebhookRepository.findWebhooksCreatedByUser(
+        requestedUser.trello.userId,
+      );
+
+    return webhooks;
+  }
+
+  async findWebhookSubscribers(webhookId: string): Promise<User[]> {
+    const subscribers =
+      await this.userService.findUsersConnectedToWebhook(webhookId);
+
+    return subscribers;
   }
 
   async recreateWebhookIfUnavailable(
@@ -350,6 +382,8 @@ export class TrelloWebhooksLogicService {
         boardName: webhookBoard.name,
         boardUrl: webhookBoard.url,
         author: {
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
@@ -525,6 +559,8 @@ export class TrelloWebhooksLogicService {
 
       if (!webhookSubscribers.includes(userToUpdate.trello.userId)) {
         webhook.subscribers.push({
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloUserId: userToUpdate.trello.userId,
           trelloToken: userToUpdate.trello.token,
           notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
@@ -575,7 +611,7 @@ export class TrelloWebhooksLogicService {
         }),
         this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
-          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+          i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
             args: {
               boardName: webhook.boardName,
@@ -624,13 +660,17 @@ export class TrelloWebhooksLogicService {
         boardName: connectedBoard.name,
         boardUrl: connectedBoard.url,
         author: {
+          userId: userToUpdate.id,
+          email: userToUpdate.email,
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
         subscribers: [
           {
-            trelloUserId: userToUpdate.trello.userId,
+            userId: userToUpdate.id,
+            email: userToUpdate.email,
             trelloToken: userToUpdate.trello.token,
+            trelloUserId: userToUpdate.trello.userId,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
           },
         ],
@@ -658,7 +698,7 @@ export class TrelloWebhooksLogicService {
         this.trelloWebhookRepository.create(createdWebhook),
         this.notificationBotService.sendMessageToUser(
           userToUpdate.telegram,
-          i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_CONNECTED, {
+          i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_CONNECTED, {
             lang: userToUpdate.language,
             args: {
               boardName: createdWebhook.boardName,
@@ -1223,7 +1263,7 @@ export class TrelloWebhooksLogicService {
 
       this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
-        i18n?.t(I18nKeys.MESSAGES_TELEGRAM_NOTIFICATIONS_DISCONNECTED, {
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
           args: {
             boardName: webhookToUpdate?.boardName,
             boardUrl: webhookToUpdate?.boardUrl,

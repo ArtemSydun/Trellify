@@ -36,9 +36,11 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { Webhook } from 'src/trello/entities/webhook.entity';
 import { ConnectTelegramDto } from '../dto/connect-telegram.dto';
 import { ConnectTrelloDto } from '../dto/connect-trello.dto';
 import { ContactUsDto } from '../dto/contact-us.dto';
+import { DiscordSettings } from '../dto/discord.settings.dto';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
@@ -53,7 +55,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Roles(UserRoles.admin, UserRoles.superadmin, UserRoles.support)
   @Get()
   @ApiOperation({
     summary: 'Get all users (Admin / Superadmin only)',
@@ -259,6 +261,67 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('discord')
+  @ApiOperation({
+    summary: 'Connect / Disconnect Discord',
+    description:
+      'This endpoint handles connecting or disconnecting a Discord account to the current user. It does not require special roles, but the user must be authenticated.',
+  })
+  @ApiOkResponse({
+    description: 'Discord connected / disconnected successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Discord {{username}} connected / disconnected successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  @ApiCustomBadRequestResponse(
+    'Invalid discord info',
+    'This discord user has not interacted with bot yet',
+  )
+  @ApiConflictResponse({
+    description: 'Discord is already connected',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Discord notifier bot is already connected',
+        },
+        error: {
+          type: 'string',
+          example: Errors.CONFLICT,
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.CONFLICT,
+        },
+      },
+    },
+  })
+  handleDiscordQuery(@Req() req, @Body() connectDiscordDto: DiscordSettings) {
+    return this.usersService.manageUserDiscordConnection(
+      req.user,
+      connectDiscordDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('trello')
   @ApiOperation({
     summary: 'Connect / Disconnect Trello',
@@ -390,6 +453,30 @@ export class UsersController {
     return this.usersService.updateUserPreferences(
       req.user,
       updateUserPreferencesDto,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Get(':id/webhooks')
+  @ApiOperation({
+    summary: 'Get webhooks user is subscribed on',
+    description: 'This endpoint retrieves the webhooks user is subscribed on.',
+  })
+  @ApiOkResponse({
+    description: 'Subscribed webhooks',
+    type: [Webhook],
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  findSubscribedWebhooks(
+    @Param('id') id: string,
+    @Req() req,
+  ): Promise<Webhook[]> {
+    return this.usersService.findWebhooksUserIsSubscribedOn(
+      id,
       req.i18nContext,
     );
   }

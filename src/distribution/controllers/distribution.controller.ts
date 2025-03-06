@@ -67,7 +67,7 @@ export class DistributionController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get('subscribers/all')
   @ApiBearerAuth()
   @ApiOperation({

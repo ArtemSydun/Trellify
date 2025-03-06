@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Languages } from 'src/common/enums/languages.enum';
+import { DiscordSettings } from '../dto/discord.settings.dto';
 import { TelegramSettings } from '../dto/telegram.settings.dto';
 import { TrelloSettings } from '../dto/trello.settings.dto';
 import { UserRoles } from '../enums/role.enum';
@@ -42,6 +43,14 @@ export class User {
   })
   @Prop({ type: TrelloSettings, required: false })
   trello: TrelloSettings;
+
+  @ApiProperty({
+    description: 'Discord settings associated with the user (optional)',
+    type: DiscordSettings,
+    required: false,
+  })
+  @Prop({ type: DiscordSettings, required: false })
+  discord: DiscordSettings;
 
   @ApiProperty({
     description: 'Telegram settings associated with the user (optional)',

@@ -460,7 +460,7 @@ describe('TrelloWebhooksLogicService', () => {
     });
   });
 
-  describe('findMemberConnectedWebhooks', () => {
+  describe('findMyConnectedWebhooks', () => {
     it('should return member subscribed webhooks', async () => {
       const requestedUser = userStub();
 
@@ -480,10 +480,9 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'findWebhooksConnectedToUser')
         .mockResolvedValue(webhooks);
 
-      const result =
-        await trelloWebhooksLogicService.findMemberConnectedWebhooks(
-          requestedUser.id,
-        );
+      const result = await trelloWebhooksLogicService.findMyConnectedWebhooks(
+        requestedUser.id,
+      );
 
       expect(usersService.getUser).toHaveBeenCalledWith(
         requestedUser.id,
@@ -510,9 +509,7 @@ describe('TrelloWebhooksLogicService', () => {
       });
 
       await expect(
-        trelloWebhooksLogicService.findMemberConnectedWebhooks(
-          requestedUser.id,
-        ),
+        trelloWebhooksLogicService.findMyConnectedWebhooks(requestedUser.id),
       ).rejects.toThrow(BadRequestException);
 
       expect(validateTrelloToken).toHaveBeenCalledWith(
@@ -526,7 +523,7 @@ describe('TrelloWebhooksLogicService', () => {
     });
   });
 
-  describe('findMemberCreatedWebhooks', () => {
+  describe('findMyCreatedWebhooks', () => {
     it('should return member created webhooks', async () => {
       const requestedUser = userStub();
 
@@ -540,7 +537,7 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
         .mockResolvedValue(webhooks);
 
-      const result = await trelloWebhooksLogicService.findMemberCreatedWebhooks(
+      const result = await trelloWebhooksLogicService.findMyCreatedWebhooks(
         requestedUser.id,
       );
 
@@ -575,7 +572,7 @@ describe('TrelloWebhooksLogicService', () => {
       });
 
       await expect(
-        trelloWebhooksLogicService.findMemberCreatedWebhooks(requestedUser.id),
+        trelloWebhooksLogicService.findMyCreatedWebhooks(requestedUser.id),
       ).rejects.toThrow(BadRequestException);
 
       expect(validateTrelloToken).toHaveBeenCalledWith(
@@ -606,6 +603,8 @@ describe('TrelloWebhooksLogicService', () => {
         ...createFilteredWebhookCopy(existingWebhook),
         id: 'newWebhookId',
         author: {
+          userId: requestedUser.id,
+          email: requestedUser.email,
           trelloUserId: requestedUser.trello.userId,
           trelloToken: requestedUser.trello.token,
         },
@@ -934,11 +933,15 @@ describe('TrelloWebhooksLogicService', () => {
         boardName: trelloBoardMockData.name,
         boardUrl: trelloBoardMockData.url,
         author: {
+          userId: userStubData.id,
+          email: userStubData.email,
           trelloToken: userStubData.trello.token,
           trelloUserId: userStubData.trello.userId,
         },
         subscribers: [
           {
+            userId: userStubData.id,
+            email: userStubData.email,
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
@@ -1728,6 +1731,8 @@ describe('TrelloWebhooksLogicService', () => {
         ...webhookStub,
         subscribers: [
           {
+            userId: userStubData.trello.userId,
+            email: userStubData.email,
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
@@ -2107,6 +2112,8 @@ describe('TrelloWebhooksLogicService', () => {
         {
           ...webhookStub,
           author: {
+            userId: userStubData.trello.userId,
+            email: userStubData.email,
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
           },
@@ -2114,6 +2121,8 @@ describe('TrelloWebhooksLogicService', () => {
         {
           ...newWebhookStub,
           author: {
+            userId: userStubData.trello.userId,
+            email: userStubData.email,
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
           },

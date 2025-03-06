@@ -8,6 +8,7 @@ import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AuthModule } from './auth/auth.module';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
+import { DiscordModule } from './discord/discord.module';
 import { DistributionModule } from './distribution/distribution.module';
 import { RedisModule } from './redis/redis.module';
 import { TelegramModule } from './telegram/telegram.module';
@@ -44,6 +45,7 @@ import { UsersModule } from './user/users.module';
     ScheduleModule.forRoot(),
     CronModule,
     DistributionModule,
+    DiscordModule,
   ],
   controllers: [],
   providers: [

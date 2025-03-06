@@ -45,11 +45,13 @@ export class CronService {
       const currentDate = new Date();
 
       const unactiveWebhooks = [];
+
       for (const webhook of webhooks) {
         const decryptedAuthorToken = decryptText(
           webhook.author.trelloToken,
           this.encryptionKey,
         );
+
         const dateLastActivity =
           await this.trelloBoardsApiService.fetchBoardField(
             decryptedAuthorToken,
@@ -254,7 +256,7 @@ export class CronService {
       // Update Redis to mark the recovered date as processed
       await this.redisService.setValue(
         redisKeysEnum.LAST_DAILY_NOTIFY,
-        dayToRecover.toISOString(),
+        yesterday.toISOString(),
       );
     } else {
       this.logger.log(

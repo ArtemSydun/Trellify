@@ -32,6 +32,11 @@ export const superAdminStub = () => {
       username: 'tgusername',
       updatedAt: fixedDate,
     },
+    discord: {
+      userId: 'discorduserid',
+      username: 'discordusername',
+      updatedAt: fixedDate,
+    },
     language: Languages.EN,
     timezone: 2,
     createdAt: fixedDate,
@@ -70,6 +75,11 @@ export const userStub = () => {
     telegram: {
       chatId: 1234,
       username: 'tgusername1',
+      updatedAt: fixedDate,
+    },
+    discord: {
+      userId: null,
+      username: null,
       updatedAt: fixedDate,
     },
     language: Languages.EN,

@@ -12,6 +12,10 @@ export enum UserSearchPathEnum {
   TelegramUsername = 'telegram.username',
   TelegramChatId = 'telegram.chatId',
 
+  // Nested paths for 'discord' object
+  DiscordUsername = 'discord.username',
+  DiscordUserId = 'discord.userId',
+
   // Simple properties
   Email = 'email',
   Role = 'role',

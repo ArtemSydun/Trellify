@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'src/auth/auth.module';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { DiscordModule } from 'src/discord/discord.module';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
@@ -19,6 +20,7 @@ import { UsersService } from './services/users.service';
     forwardRef(() => AuthModule),
     forwardRef(() => TrelloModule),
     forwardRef(() => TelegramModule),
+    DiscordModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, SharedConfigService],
