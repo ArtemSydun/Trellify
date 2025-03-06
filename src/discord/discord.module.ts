@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IntentsBitField } from 'discord.js';
 import { NecordModule } from 'necord';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { UsersModule } from 'src/user/users.module';
 import { DiscordCommands } from './discord.commands';
 import { DiscordService } from './discord.service';
 
@@ -20,6 +21,7 @@ import { DiscordService } from './discord.service';
         // development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
       }),
     }),
+    forwardRef(() => UsersModule),
   ],
   controllers: [],
   providers: [DiscordService, DiscordCommands],

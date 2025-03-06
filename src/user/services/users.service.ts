@@ -533,7 +533,7 @@ export class UsersService {
         userId,
       );
 
-      if (connectedUser.discord?.userId) {
+      if (connectedUser) {
         throw new ConflictException(
           i18n?.t(I18nKeys.ERRORS_DISCORD_BOT_ALREADY_CONNECTED) ||
             `Trellify bot is already connected for another discord user`,
