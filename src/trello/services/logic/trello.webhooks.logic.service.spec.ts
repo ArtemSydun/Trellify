@@ -38,7 +38,6 @@ import {
 } from 'src/trello/__mocks__/trello.stub';
 import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
-import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { Webhook } from 'src/trello/entities/webhook.entity';
 import { User } from 'src/user/entities/user.entity';
@@ -65,8 +64,9 @@ import {
 } from 'src/trello/dto/notifications.dto';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { BoardMember } from 'src/trello/dto/member.dto';
-import { I18nService } from 'nestjs-i18n';
+
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -585,6 +585,194 @@ describe('TrelloWebhooksLogicService', () => {
       ).not.toHaveBeenCalled();
     });
   });
+  describe('findMyConnectedWebhooks', () => {
+    it('should return member subscribed webhooks', async () => {
+      const requestedUser = userStub();
+
+      const webhooks = [
+        {
+          ...webhookStub,
+        },
+        {
+          ...webhookStub,
+          id: requestedUser.trello.webhooks[1].webhookId,
+          boardName: requestedUser.trello.webhooks[1].modelName,
+          idModel: requestedUser.trello.webhooks[1].idModel,
+        },
+      ];
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksConnectedToUser')
+        .mockResolvedValue(webhooks);
+
+      const result = await trelloWebhooksLogicService.findMyConnectedWebhooks(
+        requestedUser.id,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        requestedUser.id,
+        undefined,
+      );
+
+      expect(validateTrelloToken).toHaveBeenCalledWith(
+        requestedUser.trello.token,
+        undefined,
+      );
+
+      expect(result).toHaveLength(webhooks.length);
+      expect(result).toEqual(webhooks);
+    });
+
+    it('should throw an error if Trello token is invalid', async () => {
+      const requestedUser = userStub();
+      requestedUser.trello.token = null;
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestedUser);
+
+      (validateTrelloToken as jest.Mock).mockImplementation(() => {
+        throw new BadRequestException();
+      });
+
+      await expect(
+        trelloWebhooksLogicService.findMyConnectedWebhooks(requestedUser.id),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(validateTrelloToken).toHaveBeenCalledWith(
+        requestedUser.trello.token,
+        undefined,
+      );
+
+      expect(
+        trelloWebhookRepository.findWebhooksConnectedToUser,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findUserCreatedWebhooks', () => {
+    it('should return member created webhooks', async () => {
+      const requestedUser = userStub();
+
+      const webhooks = [
+        {
+          ...webhookStub,
+        },
+      ];
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
+        .mockResolvedValue(webhooks);
+
+      const result = await trelloWebhooksLogicService.findUserCreatedWebhooks(
+        requestedUser.id,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        requestedUser.id,
+        undefined,
+      );
+
+      expect(result).toHaveLength(webhooks.length);
+      expect(result).toEqual(webhooks);
+    });
+  });
+
+  describe('findUserConnectedWebhooks', () => {
+    it('should return member subscribed webhooks', async () => {
+      const requestedUser = userStub();
+
+      const webhooks = [
+        {
+          ...webhookStub,
+        },
+        {
+          ...webhookStub,
+          id: requestedUser.trello.webhooks[1].webhookId,
+          boardName: requestedUser.trello.webhooks[1].modelName,
+          idModel: requestedUser.trello.webhooks[1].idModel,
+        },
+      ];
+
+      jest
+        .spyOn(trelloWebhookRepository, 'findWebhooksCreatedByUser')
+        .mockResolvedValue(webhooks);
+
+      const result = await trelloWebhooksLogicService.findUserCreatedWebhooks(
+        requestedUser.id,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        requestedUser.id,
+        undefined,
+      );
+
+      expect(result).toHaveLength(webhooks.length);
+      expect(result).toEqual(webhooks);
+    });
+  });
+
+  describe('findWebhookSubscribers', () => {
+    it('should return webhooks user is subscribed to', async () => {
+      const mockUsers = [userStub()];
+      const mockWebhook = webhookStub;
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockResolvedValue(mockWebhook);
+      jest
+        .spyOn(usersService, 'findUsersConnectedToWebhook')
+        .mockResolvedValue(mockUsers);
+
+      const result = await trelloWebhooksLogicService.findWebhookSubscribers(
+        mockWebhook.id,
+      );
+
+      expect(trelloWebhooksLogicService.getWebhook).toHaveBeenCalledWith(
+        mockWebhook.id,
+        undefined,
+      );
+      expect(usersService.findUsersConnectedToWebhook).toHaveBeenCalledWith(
+        mockWebhook.id,
+      );
+      expect(result).toEqual(mockUsers);
+    });
+
+    it('should throw an error if webhook is not found', async () => {
+      const webhookId = 'invalid-webhook';
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockRejectedValue(new NotFoundException('Webhook not found'));
+
+      await expect(
+        trelloWebhooksLogicService.findWebhookSubscribers(webhookId, undefined),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return an empty array when no subscribers are found', async () => {
+      const webhookId = 'webhook-2';
+      const mockWebhook = { id: webhookId } as Webhook;
+
+      jest
+        .spyOn(trelloWebhooksLogicService, 'getWebhook')
+        .mockResolvedValue(mockWebhook);
+      jest
+        .spyOn(usersService, 'findUsersConnectedToWebhook')
+        .mockResolvedValue([]);
+
+      const result = await trelloWebhooksLogicService.findWebhookSubscribers(
+        webhookId,
+        undefined,
+      );
+
+      expect(trelloWebhooksLogicService.getWebhook).toHaveBeenCalledWith(
+        webhookId,
+        undefined,
+      );
+      expect(usersService.findUsersConnectedToWebhook).toHaveBeenCalledWith(
+        webhookId,
+      );
+      expect(result).toEqual([]);
+    });
+  });
 
   describe('recreateWebhookIfUnavailable', () => {
     let requestedUser: User;
@@ -680,7 +868,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
-        .mockRejectedValue(new Error(I18nKeys.ERRORS_TRELLO_INVALID_APP_KEY));
+        .mockRejectedValue(new Error());
 
       jest
         .spyOn(trelloWebhookApiService, 'createWebhook')

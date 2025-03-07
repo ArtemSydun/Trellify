@@ -44,7 +44,6 @@ jest.mock('src/common/helpers/hashing', () => ({
 
 describe('UsersService', () => {
   let originalDate = Date;
-
   let usersService: UsersService;
   let usersRepository: UsersRepository;
   let trelloMembersLogicService: TrelloMembersLogicService;
@@ -52,6 +51,8 @@ describe('UsersService', () => {
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let notificationBotService: NotificationBotService;
   let adminBotService: AdminBotService;
+  let mailerService: MailerService;
+  let redisService: RedisService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -123,6 +124,11 @@ describe('UsersService', () => {
     );
 
     adminBotService = moduleRef.get<AdminBotService>(AdminBotService);
+
+    mailerService = moduleRef.get<MailerService>(MailerService);
+
+    redisService = moduleRef.get<RedisService>(RedisService);
+
     mockUsers = [userStub(), superAdminStub()];
 
     (encryptText as jest.Mock).mockImplementation((text: string) => {
@@ -435,6 +441,39 @@ describe('UsersService', () => {
         'trellouserid1',
       ]);
       expect(result).toEqual([superAdminStub(), userStub()]);
+    });
+  });
+
+  describe('findWebhooksUserIsSubscribedOn', () => {
+    it('should return webhooks user is subscribed to', async () => {
+      const mockUser = userStub();
+      const mockWebhooks = [webhookStub];
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(mockUser);
+      jest
+        .spyOn(trelloWebhooksLogicService, 'findUserSubscribedWebhooks')
+        .mockResolvedValue(mockWebhooks);
+
+      const result = await usersService.findWebhooksUserIsSubscribedOn(
+        mockUser,
+        undefined,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(mockUser);
+      expect(
+        trelloWebhooksLogicService.findUserSubscribedWebhooks,
+      ).toHaveBeenCalledWith(mockUser, undefined);
+      expect(result).toEqual(mockWebhooks);
+    });
+
+    it('should throw an error if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException('User not found'));
+
+      await expect(
+        usersService.findWebhooksUserIsSubscribedOn('123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -1144,6 +1183,51 @@ describe('UsersService', () => {
       await expect(
         trelloWebhooksLogicService.getWebhook('non-existent-id'),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('contactUs', () => {
+    it('should send contact form email, notify admins, update stats, and return success response', async () => {
+      const formBody = {
+        email: 'test@example.com',
+        subject: 'Test Subject',
+        message: 'Test message',
+        authorized: true,
+      };
+
+      jest.spyOn(mailerService, 'sendContactForm').mockResolvedValue(undefined);
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue('Admin Notification');
+      jest.spyOn(adminBotService, 'notifyAdmins').mockResolvedValue(undefined);
+      jest.spyOn(redisService, 'updateDailyStats').mockResolvedValue(undefined);
+
+      const response = await usersService.contactUs(formBody, undefined);
+
+      expect(mailerService.sendContactForm).toHaveBeenCalledWith(
+        formBody.email,
+        formBody.subject,
+        formBody.message,
+        undefined,
+        formBody.authorized,
+      );
+
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
+        AdminBotActionsEnum.CONTACT_US,
+        formBody,
+      );
+
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        'Admin Notification',
+      );
+      expect(redisService.updateDailyStats).toHaveBeenCalledWith(
+        'contactUs',
+        1,
+      );
+      expect(response).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
     });
   });
 });
