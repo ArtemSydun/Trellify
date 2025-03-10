@@ -5,6 +5,9 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { I18nService } from 'nestjs-i18n';
 import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
+import { UserSearchPathEnum } from 'src/user/enums/query.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { DiscordService } from './discord.service';
 
@@ -20,11 +23,11 @@ export class DiscordCommands {
 
   @SlashCommand({
     name: 'start',
-    description: 'Trellify discord start',
+    description: 'Trellify start',
   })
   public async onStart(@Context() [interaction]: SlashCommandContext) {
     // console.log(interaction);
-    const frontendUrl = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/discord?userId=${interaction.user.id}&username=${interaction.user.username}`;
+    const frontendUrl = `https://admin.trellify.com/settings/discord?userId=username&username=userid`;
 
     const button = new ButtonBuilder()
       .setLabel('Authorize Trellify')
@@ -36,6 +39,54 @@ export class DiscordCommands {
     return interaction.reply({
       content: 'Click the button below to authorize Trellify bot:',
       components: [row],
+    });
+  }
+
+  @SlashCommand({
+    name: 'help',
+    description: 'Trellify FAQ',
+  })
+  public async onHelp(@Context() [interaction]: SlashCommandContext) {
+    // console.log(interaction);
+    const userId: string = interaction.user.id;
+    let userLanguage = supportedLanguages.includes(
+      interaction.locale.split('-')[0] as Languages,
+    )
+      ? interaction.locale.split('-')[0]
+      : Languages.EN;
+
+    const user = await this.userRepository.findUserByProperty(
+      UserSearchPathEnum.DiscordUserId,
+      userId,
+    );
+
+    if (user) {
+      userLanguage = user.language;
+    }
+
+    const introMessage = this.i18n.t(
+      I18nKeys.MESSAGES_GENERAL_HELP_INTRO_MESSAGE,
+      {
+        lang: userLanguage,
+      },
+    );
+
+    const steps = this.i18n.t(I18nKeys.MESSAGES_GENERAL_HELP_STEPS, {
+      lang: userLanguage,
+      args: {
+        websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
+      },
+    });
+
+    const closingMessage = this.i18n.t(I18nKeys.MESSAGES_GENERAL_HELP_CLOSING, {
+      lang: userLanguage,
+    });
+
+    const helpMessage =
+      `${introMessage}\n\n1️⃣ ${steps[0]}\n2️⃣ ${steps[1]}\n3️⃣ ${steps[2]}\n4️⃣ ${steps[3]}\n\n${closingMessage}`.trim();
+
+    return interaction.reply({
+      content: helpMessage,
     });
   }
 }

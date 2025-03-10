@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Client } from 'discord.js';
-import { Context, ContextOf, On, Once } from 'necord';
+import { Context, ContextOf, Once } from 'necord';
 // import { configServiceEnum } from 'src/common/enums/config.service.enum';
 
 @SkipThrottle()
@@ -52,18 +52,5 @@ export class DiscordService {
   public async onReady(@Context() [client]: ContextOf<'ready'>) {
     this.logger.log(`Bot logged in as ${client.user.username}`);
     console.log(`Bot logged in as ${client.user.username}`);
-  }
-
-  // Listen for message creation
-  @On('messageCreate')
-  public onMessage(@Context() [message]: ContextOf<'messageCreate'>) {
-    console.log('Received message:', message.content); // Logs all incoming messages
-    // Ensure it's a direct message
-    if (message.guild === null) {
-      console.log(`Direct message received: ${message.content}`);
-      this.logger.log(`Direct message received: ${message.content}`);
-    } else {
-      console.log(`Message from ${message.guild.name}: ${message.content}`);
-    }
   }
 }
