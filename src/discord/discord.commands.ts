@@ -27,8 +27,7 @@ export class DiscordCommands {
   })
   public async onStart(@Context() [interaction]: SlashCommandContext) {
     // console.log(interaction);
-    const frontendUrl = `https://admin.trellify.com/settings/discord?userId=username&username=userid`;
-
+    const frontendUrl = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/discord?userId=${interaction.user.id}&username=${interaction.user.username}`;
     const button = new ButtonBuilder()
       .setLabel('Authorize Trellify')
       .setStyle(ButtonStyle.Link)
