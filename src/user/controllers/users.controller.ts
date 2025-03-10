@@ -482,7 +482,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.admin, UserRoles.superadmin)
+  @Roles(UserRoles.admin, UserRoles.superadmin, UserRoles.support)
   @Get(':id')
   @ApiOperation({
     summary: 'Get a user by ID (Admin / Superadmin only)',
@@ -534,7 +534,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
   @Patch(':id')
   @ApiOperation({
     summary: 'Update a user by ID (Superadmin only)',
