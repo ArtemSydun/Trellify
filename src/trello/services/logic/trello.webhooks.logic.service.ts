@@ -284,9 +284,15 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findWebhookSubscribers(webhookId: string): Promise<User[]> {
-    const subscribers =
-      await this.userService.findUsersConnectedToWebhook(webhookId);
+  async findWebhookSubscribers(
+    webhookId: string,
+    i18n?: I18nContext,
+  ): Promise<User[]> {
+    const webhook = await this.getWebhook(webhookId, i18n);
+
+    const subscribers = await this.userService.findUsersConnectedToWebhook(
+      webhook.id,
+    );
 
     return subscribers;
   }
