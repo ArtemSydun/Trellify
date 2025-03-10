@@ -29,7 +29,7 @@ mkdir -p "${ARCHIVES_DIR}"
 echo "1️⃣ Uploading encrypted archive from remote cloud using RCLONE"
 for dest in "${RCLONE_DESTS[@]}"; do
     if ${RCLONE} copy "${dest}/${ENCRYPTED_ARCHIVE_FILENAME}" "${ARCHIVES_DIR}"; then
-        (( success++ ))
+        success=$((success + 1))
         echo "✅ Uploading is successful"
     else
         echo "❌ Uploading is unsuccessful"
