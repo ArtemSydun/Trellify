@@ -533,12 +533,27 @@ export class UsersService {
         userId,
       );
 
+      await this.discordService.sendDirectMessage(
+        userId,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
+          args: {
+            workspacesLink: `<${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/workspaces?`,
+          },
+        }) || 'Discord connected successfully',
+      );
+
       if (connectedUser) {
         throw new ConflictException(
           i18n?.t(I18nKeys.ERRORS_DISCORD_BOT_ALREADY_CONNECTED) ||
             `Trellify bot is already connected for another discord user`,
         );
       }
+    } else {
+      await this.discordService.sendDirectMessage(
+        userToUpdate.discord.userId,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
+          'Discord connected successfully',
+      );
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
@@ -546,13 +561,8 @@ export class UsersService {
       lastActivityDate: updateDate,
     });
 
-    await this.discordService.sendDirectMessage(
-      userId,
-      i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE) ||
-        'Discord connected successfully',
-    );
     this.logger.log(
-      `Discord ${username} ${userId ? 'connected' : 'disconnected'} successfully`,
+      `Discord ${username ? username : userToUpdate.discord.username} ${userId ? 'connected' : 'disconnected'} successfully`,
     );
 
     return {
