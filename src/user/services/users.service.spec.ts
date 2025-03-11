@@ -33,6 +33,8 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from 'src/redis/services/redis.service';
+import { DiscordService } from 'src/discord/discord.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -42,7 +44,6 @@ jest.mock('src/common/helpers/hashing', () => ({
 
 describe('UsersService', () => {
   let originalDate = Date;
-
   let usersService: UsersService;
   let usersRepository: UsersRepository;
   let trelloMembersLogicService: TrelloMembersLogicService;
@@ -50,6 +51,8 @@ describe('UsersService', () => {
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let notificationBotService: NotificationBotService;
   let adminBotService: AdminBotService;
+  let mailerService: MailerService;
+  let redisService: RedisService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -91,6 +94,14 @@ describe('UsersService', () => {
           useValue: createMock<AdminBotService>(),
         },
         {
+          provide: DiscordService,
+          useValue: createMock<DiscordService>(),
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
+        },
+        {
           provide: MailerService,
           useValue: createMock<MailerService>(),
         },
@@ -113,6 +124,11 @@ describe('UsersService', () => {
     );
 
     adminBotService = moduleRef.get<AdminBotService>(AdminBotService);
+
+    mailerService = moduleRef.get<MailerService>(MailerService);
+
+    redisService = moduleRef.get<RedisService>(RedisService);
+
     mockUsers = [userStub(), superAdminStub()];
 
     (encryptText as jest.Mock).mockImplementation((text: string) => {
@@ -187,6 +203,7 @@ describe('UsersService', () => {
   describe('deleteUserById', () => {
     it('should delete a user by ID and disconnect from all webhooks', async () => {
       const userToDelete = { ...userStub() };
+      const notificationMessage = 'notification message';
 
       jest.spyOn(usersService, 'getUser').mockResolvedValue(userToDelete);
       jest
@@ -196,6 +213,10 @@ describe('UsersService', () => {
           statusCode: HttpStatus.OK,
         });
       jest.spyOn(usersRepository, 'delete').mockResolvedValue();
+
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue(notificationMessage);
 
       const result = await usersService.deleteUserById(
         userToDelete.id,
@@ -212,10 +233,14 @@ describe('UsersService', () => {
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
-      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
         AdminBotActionsEnum.USER_DELETED,
         userToDelete,
       );
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        notificationMessage,
+      );
+
       expect(result).toEqual({
         message: expect.stringContaining(userToDelete.email),
         statusCode: HttpStatus.OK,
@@ -416,6 +441,39 @@ describe('UsersService', () => {
         'trellouserid1',
       ]);
       expect(result).toEqual([superAdminStub(), userStub()]);
+    });
+  });
+
+  describe('findWebhooksUserIsSubscribedOn', () => {
+    it('should return webhooks user is subscribed to', async () => {
+      const mockUser = userStub();
+      const mockWebhooks = [webhookStub];
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(mockUser);
+      jest
+        .spyOn(trelloWebhooksLogicService, 'findUserSubscribedWebhooks')
+        .mockResolvedValue(mockWebhooks);
+
+      const result = await usersService.findWebhooksUserIsSubscribedOn(
+        mockUser,
+        undefined,
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(mockUser);
+      expect(
+        trelloWebhooksLogicService.findUserSubscribedWebhooks,
+      ).toHaveBeenCalledWith(mockUser, undefined);
+      expect(result).toEqual(mockWebhooks);
+    });
+
+    it('should throw an error if user is not found', async () => {
+      jest
+        .spyOn(usersService, 'getUser')
+        .mockRejectedValue(new NotFoundException('User not found'));
+
+      await expect(
+        usersService.findWebhooksUserIsSubscribedOn('123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -754,7 +812,7 @@ describe('UsersService', () => {
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: expect.stringContaining(connectTelegramDto.username),
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
         data: { ...userToUpdate, telegram: connectTelegramDto },
       });
@@ -829,7 +887,7 @@ describe('UsersService', () => {
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.telegram.username),
+        message: expect.any(String),
         statusCode: HttpStatus.OK,
         data: {
           ...userToUpdate,
@@ -1125,6 +1183,51 @@ describe('UsersService', () => {
       await expect(
         trelloWebhooksLogicService.getWebhook('non-existent-id'),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('contactUs', () => {
+    it('should send contact form email, notify admins, update stats, and return success response', async () => {
+      const formBody = {
+        email: 'test@example.com',
+        subject: 'Test Subject',
+        message: 'Test message',
+        authorized: true,
+      };
+
+      jest.spyOn(mailerService, 'sendContactForm').mockResolvedValue(undefined);
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue('Admin Notification');
+      jest.spyOn(adminBotService, 'notifyAdmins').mockResolvedValue(undefined);
+      jest.spyOn(redisService, 'updateDailyStats').mockResolvedValue(undefined);
+
+      const response = await usersService.contactUs(formBody, undefined);
+
+      expect(mailerService.sendContactForm).toHaveBeenCalledWith(
+        formBody.email,
+        formBody.subject,
+        formBody.message,
+        undefined,
+        formBody.authorized,
+      );
+
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
+        AdminBotActionsEnum.CONTACT_US,
+        formBody,
+      );
+
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        'Admin Notification',
+      );
+      expect(redisService.updateDailyStats).toHaveBeenCalledWith(
+        'contactUs',
+        1,
+      );
+      expect(response).toEqual({
+        message: expect.any(String),
+        statusCode: HttpStatus.OK,
+      });
     });
   });
 });

@@ -52,7 +52,7 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | **JWT settings:**               |                                                                               |
 | JWT_EXPIRES_IN                  | Token expiration duration (e.g., "7d" for 7 days).                            |
 | JWT_SECRET                      | Secret key used for signing JWT tokens.                                       |
-| JWT_EXPIRES_PASSWORD            | The expiration time for password reset JWT tokens.                            |
+| JWT_EXPIRES_CONFIRMATIONS       | The expiration time for password reset JWT tokens.                            |
 | **Encryption settings:**        |                                                                               |
 | ENCRYPTION_KEY                  | Secret key used for signing JWT tokens.                                       |
 | **Mailer settings:**            |                                                                               |
@@ -66,3 +66,6 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | **Telegram settings:**          |                                                                               |
 | TELEGRAM_NOTIFICATION_BOT_TOKEN | Telegram bot token for user notifications                                     |
 | TELEGRAM_ADMIN_BOT_TOKEN        | Telegram bot token for admin notifications                                    |
+| **Discord settings:**           |                                                                               |
+| DISCORD_BOT_TOKEN               | Discord bot token for user notifications                                      |
+| DISCORD_DEVELOPMENT_GUILD_ID    | Discord server for bot authorizing ID                                         |

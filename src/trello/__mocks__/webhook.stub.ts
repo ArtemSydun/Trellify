@@ -13,18 +13,24 @@ export const webhookStub = {
   boardName: 'test',
   boardUrl: 'https://trello.com/b/EVPkihab/test',
   author: {
+    email: 'email1@mail.com',
+    userId: 'userid1',
     trelloToken:
       'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
     trelloUserId: '674ec752cba1224342f87c20',
   },
   subscribers: [
     {
+      email: 'email1@mail.com',
+      userId: 'userid1',
       trelloUserId: '674ec752cba1224342f87c20',
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
       notificationProfile: TrelloWebhookNotificationProfiles.CUSTOM,
     },
     {
+      email: 'email2@mail.com',
+      userId: 'userid2',
       trelloUserId: '674ec752cba1224342f87c21',
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
@@ -106,18 +112,24 @@ export const newWebhookStub = {
   boardName: 'test',
   boardUrl: 'https://trello.com/b/EVPkihab/test',
   author: {
+    email: 'email1@mail.com',
+    userId: 'userid1',
     trelloToken:
       'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
     trelloUserId: '674ec752cba1224342f87c20',
   },
   subscribers: [
     {
+      email: 'email1@mail.com',
+      userId: 'userid1',
       trelloUserId: '674ec752cba1224342f87c20',
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
       notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
     },
     {
+      email: 'email2@mail.com',
+      userId: 'userid2',
       trelloUserId: '674ec752cba1224342f87c21',
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM83/',

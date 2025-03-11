@@ -17,10 +17,23 @@ if (process.env.NODE_ENV === 'development') {
     ConfigModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>(configServiceEnum.MONGODB_URI),
-      }),
       inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const username = configService.get<string>(
+          configServiceEnum.MONGODB_USERNAME,
+        );
+        const password = configService.get<string>(
+          configServiceEnum.MONGODB_PASSWORD,
+        );
+        const host = configService.get<string>(
+          configServiceEnum.MONGODB_HOSTNAME,
+        );
+        const port = configService.get<string>(configServiceEnum.MONGODB_PORT);
+
+        return {
+          uri: `mongodb://${username}:${password}@${host}:${port}/`,
+        };
+      },
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],

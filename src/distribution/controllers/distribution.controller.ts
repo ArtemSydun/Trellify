@@ -6,11 +6,11 @@ import {
   Patch,
   Param,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiOkResponse,
-  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -58,7 +58,6 @@ export class DistributionController {
   @ApiOkResponse({
     description: 'You will receive Trellify updates on your email',
   })
-  @ApiConflictResponse()
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
@@ -68,7 +67,7 @@ export class DistributionController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get('subscribers/all')
   @ApiBearerAuth()
   @ApiOperation({
@@ -158,5 +157,20 @@ export class DistributionController {
   @ApiNotFoundResponse()
   remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
     return this.distributionService.removeDistributionSubscriber(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin)
+  @Get('subscribers-csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Export subscribers list into CSV to use on distribution website',
+    description:
+      'Export subscribers list into CSV to use on distribution website',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  getCsv(@Res() res): Promise<void> {
+    return this.distributionService.exportSubscribersToCsv(res);
   }
 }

@@ -23,6 +23,8 @@ import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
+import { RedisService } from 'src/redis/services/redis.service';
+import { DistributionService } from 'src/distribution/services/distribution.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   verifyPassword: jest.fn(),
@@ -40,6 +42,7 @@ describe('AuthService', () => {
   let mailerService: MailerService;
   let notificationBotService: NotificationBotService;
   let adminBotService: AdminBotService;
+  let redisService: RedisService;
 
   const fixedDate = superAdminStub().lastLoginDate;
 
@@ -55,10 +58,15 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: JwtService, useValue: createMock<JwtService>() },
+        { provide: RedisService, useValue: createMock<RedisService>() },
         { provide: UsersService, useValue: createMock<UsersService>() },
         { provide: UsersRepository, useValue: createMock<UsersRepository>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
         { provide: MailerService, useValue: createMock<MailerService>() },
+        {
+          provide: DistributionService,
+          useValue: createMock<DistributionService>(),
+        },
         {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),
@@ -72,6 +80,7 @@ describe('AuthService', () => {
 
     authService = moduleRef.get<AuthService>(AuthService);
     jwtService = moduleRef.get<JwtService>(JwtService);
+    redisService = moduleRef.get<RedisService>(RedisService);
     usersService = moduleRef.get<UsersService>(UsersService);
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     configService = moduleRef.get<ConfigService>(ConfigService);
@@ -89,7 +98,7 @@ describe('AuthService', () => {
         telegram: { ...superAdminStub().telegram, username: 'old_username' },
       };
 
-      delete user.password;
+      // delete user.password;
 
       const loginUserDto: LoginUserDto = {
         email: user.email,
@@ -134,6 +143,7 @@ describe('AuthService', () => {
         email: user.email,
         id: user.id,
         role: user.role,
+        hash: user.password.slice(-10),
       });
       expect(result).toEqual({
         accessToken: 'mockToken',
@@ -179,6 +189,20 @@ describe('AuthService', () => {
         undefined,
       );
       expect(notificationBotService.fetchTelegramUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('logout', () => {
+    it('should make authorized token invalid', async () => {
+      const requestToken = 'bearertoken';
+
+      jest
+        .spyOn(jwtService, 'decode')
+        .mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 60 }); // Expiring in 60s
+
+      await redisService.makeTokenInvalid(requestToken);
+
+      expect(redisService.makeTokenInvalid).toHaveBeenCalledWith(requestToken);
     });
   });
 
@@ -238,11 +262,17 @@ describe('AuthService', () => {
 
   describe('confirmRegistration', () => {
     it('should confirm registration, create user, notify admins, and return success message', async () => {
+      const notificationMessage = 'admin notification';
+
       jest.spyOn(authService, 'verifyToken').mockReturnValue({
         email: 'test@example.com',
         password: 'hashedpassword',
         username: 'testuser',
       });
+
+      jest
+        .spyOn(adminBotService, 'actionAdminNotification')
+        .mockResolvedValue(notificationMessage);
 
       const response = await authService.confirmUserRegistration(
         'mockToken',
@@ -258,13 +288,16 @@ describe('AuthService', () => {
         undefined,
       );
 
-      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+      expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
         AdminBotActionsEnum.USER_REGISTERED,
         {
           email: 'test@example.com',
           password: 'hashedpassword',
           username: 'testuser',
         },
+      );
+      expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
+        notificationMessage,
       );
 
       expect(response).toEqual({
@@ -412,7 +445,7 @@ describe('AuthService', () => {
 
       const result = await authService.confirmChangeUserEmail(token, undefined);
 
-      expect(authService.verifyToken).toHaveBeenCalledWith(token);
+      expect(authService.verifyToken).toHaveBeenCalledWith(token, undefined);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
         email: decodedToken.newEmail,
       });
@@ -448,6 +481,7 @@ describe('AuthService', () => {
         );
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
       jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+      jest.spyOn(configService, 'get').mockReturnValue('15m');
 
       const result = await authService.initiateUserDeletion(
         requestAuthor.id,
@@ -476,6 +510,7 @@ describe('AuthService', () => {
       jest.spyOn(usersService, 'getUser').mockResolvedValue(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
       jest.spyOn(mailerService, 'sendDeleteProfileLink').mockResolvedValue();
+      jest.spyOn(configService, 'get').mockReturnValue('15m');
 
       const result = await authService.initiateUserDeletion(user.id, user.id);
 
@@ -530,9 +565,15 @@ describe('AuthService', () => {
         statusCode: HttpStatus.OK,
       });
 
-      const result = await authService.confirmUserDeletion('validToken');
+      const result = await authService.confirmUserDeletion(
+        'validToken',
+        undefined,
+      );
 
-      expect(authService.verifyToken).toHaveBeenCalledWith('validToken');
+      expect(authService.verifyToken).toHaveBeenCalledWith(
+        'validToken',
+        undefined,
+      );
       expect(usersService.deleteUserById).toHaveBeenCalledWith(
         userId,
         userId,

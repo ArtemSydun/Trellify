@@ -2,9 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TrelloBoardsApiService } from '@trello/api';
 import { TrelloWebhooksLogicService } from '@trello/logic';
-import { differenceInDays } from 'date-fns';
+import {
+  addDays,
+  differenceInDays,
+  format,
+  isBefore,
+  parseISO,
+} from 'date-fns';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { redisKeysEnum } from 'src/redis/enums/redis-keys.enum';
+import { RedisService } from 'src/redis/services/redis.service';
+import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
 import { UsersService } from 'src/user/services/users.service';
 
@@ -16,9 +25,15 @@ export class CronService {
     private readonly trelloBoardsApiService: TrelloBoardsApiService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
+    private readonly adminBotService: AdminBotService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+  }
+
+  async onModuleInit() {
+    await this.checkAndRecoverMissedStats();
   }
 
   @Cron(CronExpression.EVERY_WEEK)
@@ -30,11 +45,13 @@ export class CronService {
       const currentDate = new Date();
 
       const unactiveWebhooks = [];
+
       for (const webhook of webhooks) {
         const decryptedAuthorToken = decryptText(
           webhook.author.trelloToken,
           this.encryptionKey,
         );
+
         const dateLastActivity =
           await this.trelloBoardsApiService.fetchBoardField(
             decryptedAuthorToken,
@@ -120,6 +137,131 @@ export class CronService {
       this.logger.log(`Unactive webhooks clear cron finished`);
     } catch (error) {
       console.error('Error in clearUnactiveBoards:', error.message);
+    }
+  }
+
+  //if server is down at this moment, it will send daily stats when the server will up
+  //but if server was down more then one day, we do not guarantee
+  //data accuracy, because uniqueUsers based on lastLoginDate of user object,
+  @Cron('55 23 * * *')
+  async dailyStatsClosing(formattedYesterday?: string) {
+    let statsDate: Date;
+
+    if (formattedYesterday) {
+      // If a specific date is provided (for recovery), parse it correctly
+      statsDate = parseISO(formattedYesterday);
+    } else {
+      // Use today's date
+      statsDate = new Date();
+      statsDate.setUTCDate(statsDate.getUTCDate());
+      statsDate.setUTCHours(0, 0, 0, 0); // Midnight UTC
+    }
+
+    console.log('Processing daily stats for:', statsDate.toISOString());
+
+    // Set start and end of the day
+    const startOfDay = new Date(statsDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(statsDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    console.log('Start of day:', startOfDay.toISOString());
+    console.log('End of day:', endOfDay.toISOString());
+
+    // Format date for messages (but not for storage!)
+    const formattedDateForMessage = format(startOfDay, 'dd-MM-yyyy');
+
+    // Fetch users and stats
+    const usersLoggedIn = await this.usersService.findAll({
+      date: 'lastLoginDate',
+      fromDate: startOfDay.toISOString(),
+      toDate: endOfDay.toISOString(),
+    });
+
+    const newUsers = await this.usersService.findAll({
+      date: 'createdAt',
+      fromDate: startOfDay.toISOString(),
+      toDate: endOfDay.toISOString(),
+    });
+
+    // Get stored daily stats
+    const dailyStats = JSON.parse(
+      await this.redisService.getValue(redisKeysEnum.DAILY_STATS),
+    );
+
+    // Generate notification message
+    const message = await this.adminBotService.dailyStatsNotification(
+      formattedDateForMessage,
+      {
+        ...dailyStats,
+        newUsers: newUsers.total,
+        uniqueUsers: usersLoggedIn.total,
+      },
+    );
+
+    // Notify admins
+    await this.adminBotService.notifyAdmins(message);
+
+    // Store last execution date in ISO format (for consistency)
+    await this.redisService.setValue(
+      redisKeysEnum.LAST_DAILY_NOTIFY,
+      statsDate.toISOString(),
+    );
+
+    // Reset stats for the new day
+    await this.redisService.initializeDailyStats();
+  }
+
+  async checkAndRecoverMissedStats() {
+    const lastExecutionISO = await this.redisService.getValue(
+      redisKeysEnum.LAST_DAILY_NOTIFY,
+    );
+
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    yesterday.setUTCHours(0, 0, 0, 0); // Ensure it's exactly midnight UTC
+
+    if (!lastExecutionISO) {
+      console.warn(
+        `No previous execution found, setting to ${yesterday.toISOString()}`,
+      );
+      await this.redisService.setValue(
+        redisKeysEnum.LAST_DAILY_NOTIFY,
+        yesterday.toISOString(),
+      );
+      return; // No need to recover anything yet
+    }
+
+    const lastExecutionDate = parseISO(lastExecutionISO);
+    lastExecutionDate.setUTCHours(0, 0, 0, 0); // Normalize time
+
+    // Determine the day that needs to be processed (day after lastExecutionDate)
+    const dayToRecover = addDays(lastExecutionDate, 1);
+
+    console.log('Last Execution:', lastExecutionISO);
+    console.log('Day to Recover:', dayToRecover);
+    console.log('Yesterday:', yesterday);
+
+    // If the missing day is before or equal to yesterday, process it
+    if (
+      isBefore(dayToRecover, yesterday) ||
+      dayToRecover.getTime() === yesterday.getTime()
+    ) {
+      console.warn(
+        `Missed daily stats update for ${dayToRecover.toISOString()}, recovering...`,
+      );
+      await this.dailyStatsClosing(dayToRecover.toISOString());
+
+      // Update Redis to mark the recovered date as processed
+      await this.redisService.setValue(
+        redisKeysEnum.LAST_DAILY_NOTIFY,
+        yesterday.toISOString(),
+      );
+    } else {
+      this.logger.log(
+        `Daily stats for ${yesterday.toISOString()} have already been processed.`,
+      );
     }
   }
 }

@@ -11,6 +11,7 @@ services:
       - '${BACKEND_HOST_PORT}:${BACKEND_PORT}'
     depends_on:
       - mongodb
+      - redis
     networks:
       - backend_network
 
@@ -28,6 +29,17 @@ services:
     networks:
       - backend_network
 
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - '${REDIS_HOST_PORT}:${REDIS_PORT}'
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend_network
+
 volumes:
   mongodb-data:
     driver: local
@@ -35,6 +47,9 @@ volumes:
   mongodb-log:
     driver: local
     name: trellify-mongo-log-${STAGE}
+  redis_data:
+    driver: local
+    name: trellify-redis-data-${STAGE}
 
 networks:
   backend_network:

@@ -5,6 +5,7 @@ import * as ApiServices from '@trello/api';
 import * as Controllers from '@trello/controllers';
 import * as LogicServices from '@trello/logic';
 import { AuthModule } from 'src/auth/auth.module';
+import { DiscordModule } from 'src/discord/discord.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
 import { UsersModule } from 'src/user/users.module';
 import { SharedConfigService } from '../config/shared.config.service';
@@ -17,6 +18,7 @@ import { TrelloWebhookRepository } from './repositories/webhook.repository';
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([{ name: Webhook.name, schema: WebhookSchema }]),
     forwardRef(() => TelegramModule),
+    DiscordModule,
   ],
   controllers: [
     Controllers.TrelloWebhooksController,
