@@ -14,8 +14,8 @@ import {
   TrelloWebhooksLogicService,
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -43,7 +43,7 @@ import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 
 import { UsersRepository } from '../repositories/users.repository';
@@ -178,7 +178,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -192,7 +192,7 @@ export class UsersService {
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         targetUser,
       );
 
@@ -341,7 +341,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+              this.configService.get(configServiceKeys.ENCRYPTION_KEY),
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -441,7 +441,7 @@ export class UsersService {
   }
 
   public async findUserByProperty(
-    path: UserSearchPathEnum,
+    path: UserSearchPath,
     value: any,
     i18n?: I18nContext,
   ): Promise<User> {
@@ -471,7 +471,7 @@ export class UsersService {
 
     if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
 
@@ -498,7 +498,7 @@ export class UsersService {
       connectTelegramDto,
       i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
         args: {
-          workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+          workspacesLink: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces`,
         },
       }) || `Trellify authorized successfully`,
     );
@@ -529,7 +529,7 @@ export class UsersService {
 
     if (userId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.DiscordUserId,
+        UserSearchPath.DiscordUserId,
         userId,
       );
 
@@ -537,7 +537,7 @@ export class UsersService {
         userId,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
           args: {
-            workspacesLink: `<${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/workspaces?`,
+            workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
           },
         }) || 'Discord connected successfully',
       );
@@ -617,7 +617,7 @@ export class UsersService {
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
       updatedUserProps.trello.token = encryptText(
         token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
       );
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -634,7 +634,7 @@ export class UsersService {
       );
 
     const connectedUser = await this.userRepository.findUserByProperty(
-      UserSearchPathEnum.TrelloUserId,
+      UserSearchPath.TrelloUserId,
       trelloProfile.id,
     );
 
@@ -680,7 +680,7 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPathEnum.TrelloWebhooks]: {
+            [UserSearchPath.TrelloWebhooks]: {
               webhookId: webhookToRemove.id,
             },
           },
@@ -733,7 +733,7 @@ export class UsersService {
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         {
           email,
           subject,

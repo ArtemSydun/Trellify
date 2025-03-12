@@ -2,7 +2,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 
 describe('Database Connection Test', () => {
   let testingModule: TestingModule;
@@ -20,16 +20,16 @@ describe('Database Connection Test', () => {
             inject: [ConfigService],
             useFactory: async (configService: ConfigService) => {
               const username = configService.get<string>(
-                configServiceEnum.MONGODB_USERNAME,
+                configServiceKeys.MONGODB_USERNAME,
               );
               const password = configService.get<string>(
-                configServiceEnum.MONGODB_PASSWORD,
+                configServiceKeys.MONGODB_PASSWORD,
               );
               const host = configService.get<string>(
-                configServiceEnum.MONGODB_HOSTNAME,
+                configServiceKeys.MONGODB_HOSTNAME,
               );
               const port = configService.get<string>(
-                configServiceEnum.MONGODB_PORT,
+                configServiceKeys.MONGODB_PORT,
               );
 
               return {

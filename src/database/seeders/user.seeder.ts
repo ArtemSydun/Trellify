@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { hashPassword } from 'src/common/helpers/hashing';
 import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
@@ -23,10 +23,10 @@ export class SeederService implements OnModuleInit {
       console.log('Seeding database...');
 
       const adminEmail = this.configService.get<string>(
-        configServiceEnum.MONGODB_SUPERADMIN_EMAIL,
+        configServiceKeys.MONGODB_SUPERADMIN_EMAIL,
       );
       const adminPassword = this.configService.get<string>(
-        configServiceEnum.MONGODB_SUPERADMIN_PASSWORD,
+        configServiceKeys.MONGODB_SUPERADMIN_PASSWORD,
       );
       const otherProps = {
         telegram: {

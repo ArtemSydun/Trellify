@@ -36,7 +36,7 @@ import {
   trelloBoardMock,
   trelloCardMock,
 } from 'src/trello/__mocks__/trello.stub';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { Webhook } from 'src/trello/entities/webhook.entity';
@@ -388,7 +388,7 @@ describe('TrelloWebhooksLogicService', () => {
             filter: { id: userMock.id },
             update: {
               $set: {
-                [UserSearchPathEnum.TrelloWebhooks]: expect.arrayContaining([
+                [UserSearchPath.TrelloWebhooks]: expect.arrayContaining([
                   expect.objectContaining({
                     webhookId: webhook.id,
                     idModel: boardMock.id,
@@ -952,7 +952,7 @@ describe('TrelloWebhooksLogicService', () => {
             filter: { id: subscriber.id },
             update: {
               $set: {
-                [UserSearchPathEnum.TrelloWebhooks]: subscriber.trello.webhooks,
+                [UserSearchPath.TrelloWebhooks]: subscriber.trello.webhooks,
               },
             },
           },

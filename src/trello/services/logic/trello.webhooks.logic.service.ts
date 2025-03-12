@@ -21,7 +21,8 @@ import {
   TrelloTokensLogicService,
 } from '@trello/logic';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { toCamelCase } from 'src/common/helpers/camelCase';
@@ -57,7 +58,7 @@ import {
 } from 'src/trello/enums/trello.actions.enum';
 import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { User } from 'src/user/entities/user.entity';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersService } from 'src/user/services/users.service';
 import { SharedConfigService } from '../../../config/shared.config.service';
@@ -185,7 +186,7 @@ export class TrelloWebhooksLogicService {
               filter: { id: subscriber.id },
               update: {
                 $set: {
-                  [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+                  [UserSearchPath.TrelloWebhooks]: updatedWebhooks,
                 },
               },
             },
@@ -426,7 +427,7 @@ export class TrelloWebhooksLogicService {
               filter: { id: connectedUser.id },
               update: {
                 $set: {
-                  [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+                  [UserSearchPath.TrelloWebhooks]: updatedWebhooks,
                 },
               },
             },
@@ -630,7 +631,7 @@ export class TrelloWebhooksLogicService {
             [
               {
                 text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
-                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhook.idWorkspace}/boards/${webhook.idModel}`,
+                url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhook.idWorkspace}/boards/${webhook.idModel}`,
               },
             ],
           ],
@@ -717,7 +718,7 @@ export class TrelloWebhooksLogicService {
             [
               {
                 text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
-                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${createdWebhook.idWorkspace}/boards/${createdWebhook.idModel}`,
+                url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${createdWebhook.idWorkspace}/boards/${createdWebhook.idModel}`,
               },
             ],
           ],
@@ -939,9 +940,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // delete webhookAction.model?.prefs;
-    // delete webhookAction.model?.labelNames;
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    delete webhookAction.model?.prefs;
+    delete webhookAction.model?.labelNames;
+    console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
@@ -1282,7 +1283,7 @@ export class TrelloWebhooksLogicService {
           [
             {
               text: i18n?.t(I18nKeys.FIELDS_DASHBOARD) || 'Dashboard',
-              url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhookToUpdate.idWorkspace}`,
+              url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhookToUpdate.idWorkspace}`,
             },
           ],
         ],

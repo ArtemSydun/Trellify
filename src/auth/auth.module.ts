@@ -2,7 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { DistributionModule } from 'src/distribution/distribution.module';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { RedisModule } from 'src/redis/redis.module';
@@ -29,24 +29,23 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         configService: ConfigService,
       ): Promise<JwtModuleOptions> => {
         const secret =
-          configService.get<string>(configServiceEnum.JWT_SECRET) || '';
+          configService.get<string>(configServiceKeys.JWT_SECRET) || '';
         return {
           secret,
           signOptions: {
             expiresIn:
-              configService.get<string>(configServiceEnum.JWT_EXPIRES_IN) ||
+              configService.get<string>(configServiceKeys.JWT_EXPIRES_IN) ||
               '12h',
           },
         };
       },
     }),
-    DistributionModule,
     MailerModule,
-    RedisModule,
+    forwardRef(() => RedisModule),
     forwardRef(() => TrelloModule),
-
     forwardRef(() => UsersModule),
     forwardRef(() => TelegramModule),
+    forwardRef(() => DistributionModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

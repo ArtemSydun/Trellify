@@ -22,12 +22,14 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log(process.env.JWT_SECRET);
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization?.split(' ')[1];
 
     const requestLanguage = request.headers['accept-language'] || 'en';
     const i18nContext = request.i18nContext;
 
+    console.log(token);
     if (!token) {
       throw new UnauthorizedException(
         this.i18n.t(I18nKeys.ERRORS_JWT_INVALID_TOKEN, {
@@ -51,8 +53,10 @@ export class JwtAuthGuard implements CanActivate {
     // Validate the JWT and get the payload
     try {
       userPayload = this.jwtService.verify(token); // Verify and decode the token
+      console.log(userPayload);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
+      console.log(err);
       throw new UnauthorizedException(
         this.i18n.t(I18nKeys.ERRORS_JWT_INVALID_TOKEN, {
           lang: requestLanguage,

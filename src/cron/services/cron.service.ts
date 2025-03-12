@@ -11,7 +11,7 @@ import {
 } from 'date-fns';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
-import { redisKeysEnum } from 'src/redis/enums/redis-keys.enum';
+import { redisKeys } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
@@ -187,7 +187,7 @@ export class CronService {
 
     // Get stored daily stats
     const dailyStats = JSON.parse(
-      await this.redisService.getValue(redisKeysEnum.DAILY_STATS),
+      await this.redisService.getValue(redisKeys.DAILY_STATS),
     );
 
     // Generate notification message
@@ -205,7 +205,7 @@ export class CronService {
 
     // Store last execution date in ISO format (for consistency)
     await this.redisService.setValue(
-      redisKeysEnum.LAST_DAILY_NOTIFY,
+      redisKeys.LAST_DAILY_NOTIFY,
       statsDate.toISOString(),
     );
 
@@ -215,7 +215,7 @@ export class CronService {
 
   async checkAndRecoverMissedStats() {
     const lastExecutionISO = await this.redisService.getValue(
-      redisKeysEnum.LAST_DAILY_NOTIFY,
+      redisKeys.LAST_DAILY_NOTIFY,
     );
 
     const yesterday = new Date();
@@ -227,7 +227,7 @@ export class CronService {
         `No previous execution found, setting to ${yesterday.toISOString()}`,
       );
       await this.redisService.setValue(
-        redisKeysEnum.LAST_DAILY_NOTIFY,
+        redisKeys.LAST_DAILY_NOTIFY,
         yesterday.toISOString(),
       );
       return; // No need to recover anything yet
@@ -255,7 +255,7 @@ export class CronService {
 
       // Update Redis to mark the recovered date as processed
       await this.redisService.setValue(
-        redisKeysEnum.LAST_DAILY_NOTIFY,
+        redisKeys.LAST_DAILY_NOTIFY,
         yesterday.toISOString(),
       );
     } else {

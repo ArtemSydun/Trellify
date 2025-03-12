@@ -4,7 +4,7 @@ import { TrelloWebhooksLogicService } from '@trello/logic';
 import { addMinutes, format } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import * as emoji from 'node-emoji';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
@@ -178,7 +178,7 @@ export class TrelloActionsLogicService {
 
         const formattedTimeZone = format(
           userTimeZone,
-          this.configService.get(configServiceEnum.DATE_FORMAT),
+          this.configService.get(configServiceKeys.DATE_FORMAT),
         );
 
         if (targetUser.telegram.chatId) {
@@ -618,7 +618,7 @@ export class TrelloActionsLogicService {
 
         const formattedTimeZone = format(
           userTimeZone,
-          this.configService.get(configServiceEnum.DATE_FORMAT),
+          this.configService.get(configServiceKeys.DATE_FORMAT),
         );
 
         const message = cardActionMessages[actionType]({
@@ -778,7 +778,7 @@ export class TrelloActionsLogicService {
 
         const formattedTimeZone = format(
           userTimeZone,
-          this.configService.get(configServiceEnum.DATE_FORMAT),
+          this.configService.get(configServiceKeys.DATE_FORMAT),
         );
 
         const formattedMessage = notificationMessageGenerator(
@@ -1000,7 +1000,7 @@ export class TrelloActionsLogicService {
 
         const formattedTimeZone = format(
           userTimeZone,
-          this.configService.get(configServiceEnum.DATE_FORMAT),
+          this.configService.get(configServiceKeys.DATE_FORMAT),
         );
 
         if (userToNotify.telegram.chatId) {

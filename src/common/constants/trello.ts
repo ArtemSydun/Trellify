@@ -64,7 +64,7 @@ export const fullProfileActions = [
 
 export const categoryKeysMap: Record<string, string[]> = {
   personal: Object.keys(TrelloWebhookPersonalActions),
-  board: Object.keys(TrelloWebhookBoardActions),
   card: Object.keys(TrelloWebhookCardActions),
+  board: Object.keys(TrelloWebhookBoardActions),
   admin: Object.keys(TrelloWebhookAdminActions),
 };

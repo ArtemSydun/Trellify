@@ -23,7 +23,7 @@ import {
 } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
@@ -31,7 +31,7 @@ import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/services/redis.service';
 import { DiscordService } from 'src/discord/discord.service';
@@ -234,7 +234,7 @@ describe('UsersService', () => {
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         userToDelete,
       );
       expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
@@ -738,13 +738,13 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(user);
 
       const result = await usersService.findUserByProperty(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
 
       expect(result).toEqual(user);
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
     });
@@ -754,7 +754,7 @@ describe('UsersService', () => {
 
       await expect(
         usersService.findUserByProperty(
-          UserSearchPathEnum.Email,
+          UserSearchPath.Email,
           'nonexistent@example.com',
         ),
       ).rejects.toThrow(
@@ -800,7 +800,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         connectTelegramDto.chatId,
       );
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
@@ -1102,7 +1102,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TrelloUserId,
+        UserSearchPath.TrelloUserId,
         connectedUser.trello.userId,
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();
@@ -1157,7 +1157,7 @@ describe('UsersService', () => {
             filter: { id: user.id },
             update: {
               $pull: {
-                [UserSearchPathEnum.TrelloWebhooks]: {
+                [UserSearchPath.TrelloWebhooks]: {
                   webhookId: webhookToDelete.id,
                 },
               },
@@ -1213,7 +1213,7 @@ describe('UsersService', () => {
       );
 
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         formBody,
       );
 

@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { AppModule } from './app.module';
-import { configServiceEnum } from './common/enums/config.service.enum';
+import { configServiceKeys } from './common/enums/config-service-keys.enum';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,15 +16,15 @@ async function bootstrap() {
 
   app.enableCors({
     origin:
-      configService.get(configServiceEnum.NODE_ENV) === 'production'
+      configService.get(configServiceKeys.NODE_ENV) === 'production'
         ? [
-            configService.get(configServiceEnum.FRONTEND_LINK),
-            configService.get(configServiceEnum.LANDING_LINK),
+            configService.get(configServiceKeys.FRONTEND_LINK),
+            configService.get(configServiceKeys.LANDING_LINK),
           ]
         : '*',
   });
 
-  if (configService.get(configServiceEnum.NODE_ENV) !== 'production') {
+  if (configService.get(configServiceKeys.NODE_ENV) !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Trello notification bot')
       .setDescription('Trello bot description')
@@ -39,17 +39,17 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, documentFactory);
 
     logger.log(
-      `Application docs is running on ${configService.get(configServiceEnum.BACKEND_LINK)}/docs`,
+      `Application docs is running on ${configService.get(configServiceKeys.BACKEND_LINK)}/docs`,
     );
   }
 
   const BACKEND_PORT =
-    configService.get(configServiceEnum.BACKEND_PORT) || 3005;
+    configService.get(configServiceKeys.BACKEND_PORT) || 3005;
 
   await app.listen(BACKEND_PORT);
 
   logger.log(
-    `Application is running on ${configService.get(configServiceEnum.BACKEND_LINK)}`,
+    `Application is running on ${configService.get(configServiceKeys.BACKEND_LINK)}`,
   );
 }
 bootstrap();

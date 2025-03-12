@@ -22,18 +22,18 @@ export class NotificationCategoriesDto {
   personal: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to board events with user IDs.',
-    type: Object,
-    example: initializeNotificationArrays('userId1').board,
-  })
-  board: Record<string, string[]>;
-
-  @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
     example: initializeNotificationArrays('userId1').card,
   })
   card: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to board events with user IDs.',
+    type: Object,
+    example: initializeNotificationArrays('userId1').board,
+  })
+  board: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to admin events with user IDs.',

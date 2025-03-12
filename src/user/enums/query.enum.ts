@@ -1,4 +1,4 @@
-export enum UserSearchPathEnum {
+export enum UserSearchPath {
   // Nested paths for 'trello' object
   TrelloUserId = 'trello.userId',
   TrelloUsername = 'trello.username',
