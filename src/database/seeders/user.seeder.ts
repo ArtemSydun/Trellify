@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { hashPassword } from 'src/common/helpers/hashing';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
 
@@ -32,11 +33,17 @@ export class SeederService implements OnModuleInit {
         telegram: {
           username: null,
           chatId: null,
+          updatedAt: new Date(),
         },
         trello: {
           userId: null,
           token: null,
           webhooks: [],
+        },
+        discord: {
+          userId: null,
+          username: null,
+          updatedAt: new Date(),
         },
       };
 
@@ -45,6 +52,13 @@ export class SeederService implements OnModuleInit {
           email: adminEmail,
           password: adminPassword,
           role: UserRoles.superadmin,
+          subscription: {
+            id: '',
+            plan: SubscriptionPlans.LIFETIME,
+            amount: 0,
+            lastPaymentDate: null,
+            nextPaymentDate: null,
+          },
           ...otherProps,
         },
       ];

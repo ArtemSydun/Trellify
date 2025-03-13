@@ -16,6 +16,9 @@ export enum UserSearchPath {
   DiscordUsername = 'discord.username',
   DiscordUserId = 'discord.userId',
 
+  //Subscription
+  SubscriptionPlan = 'subscription.plan',
+
   // Simple properties
   Email = 'email',
   Role = 'role',

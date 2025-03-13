@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsOptional, IsString, IsNumber } from 'class-validator';
 import { CommonQueryParams } from 'src/common/dto/common.query.dto';
 import { Languages } from 'src/common/enums/languages.enum';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 
 export class UserQueryDto extends CommonQueryParams {
@@ -56,4 +57,9 @@ export class UserQueryDto extends CommonQueryParams {
   @IsOptional()
   @IsString()
   language?: Languages;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  subscriptionPlan?: SubscriptionPlans;
 }

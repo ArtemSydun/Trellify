@@ -104,6 +104,7 @@ export class UsersRepository {
       telegramChatId,
       telegramUserName,
       language,
+      subscriptionPlan,
     } = filters;
     const perPage = limit; // Elements per page
     const offset = (page - 1) * perPage; // Calculate skip amount
@@ -130,6 +131,9 @@ export class UsersRepository {
         $options: 'i',
       };
     if (language) query.language = language;
+
+    if (subscriptionPlan)
+      query[UserSearchPath.SubscriptionPlan] = subscriptionPlan;
 
     // Define sorting
     const sortOrder = order === 'asc' ? 1 : -1;
