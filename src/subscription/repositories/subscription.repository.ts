@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
 import { Subscription } from '../entities/subscription.entity';
+import { SubscriptionPlans } from '../enum/subscription-plan.enum';
 
 @Injectable()
 export class SubscriptionRepository {
@@ -17,6 +18,10 @@ export class SubscriptionRepository {
 
   async findOneById(id: string): Promise<Subscription> {
     return this.SubscriptionModel.findOne({ id }).lean().exec();
+  }
+
+  async findOneByName(name: SubscriptionPlans): Promise<Subscription> {
+    return this.SubscriptionModel.findOne({ name }).lean().exec();
   }
 
   async findAllSubscriptions(): Promise<Subscription[]> {

@@ -1,8 +1,14 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from '../dto/update-subscription.dto';
 import { Subscription } from '../entities/subscription.entity';
+import { SubscriptionPlans } from '../enum/subscription-plan.enum';
 import { SubscriptionRepository } from '../repositories/subscription.repository';
 
 @Injectable()
@@ -14,6 +20,16 @@ export class SubscriptionService {
   async createSubscription(
     createSubscriptionDto: CreateSubscriptionDto,
   ): Promise<DefaultResponse<Subscription>> {
+    const isSubscriptionExists = await this.subscriptionRepository.existsByName(
+      createSubscriptionDto.name,
+    );
+
+    if (isSubscriptionExists) {
+      throw new ConflictException(
+        `Subscription plan '${createSubscriptionDto.name}' already exist`,
+      );
+    }
+
     const newSubscription = await this.subscriptionRepository.create(
       createSubscriptionDto,
     );
@@ -34,6 +50,16 @@ export class SubscriptionService {
 
     if (!subscription) {
       throw new NotFoundException(`Subscription ${id} does not exist`);
+    }
+
+    return subscription;
+  }
+
+  async findSubscriptionByName(name: SubscriptionPlans): Promise<Subscription> {
+    const subscription = await this.subscriptionRepository.findOneByName(name);
+
+    if (!subscription) {
+      throw new NotFoundException(`Subscription ${name} does not exist`);
     }
 
     return subscription;

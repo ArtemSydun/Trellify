@@ -5,6 +5,7 @@ import { SharedConfigService } from 'src/config/shared.config.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
@@ -20,6 +21,7 @@ import { UsersService } from './services/users.service';
     forwardRef(() => AuthModule),
     forwardRef(() => TrelloModule),
     forwardRef(() => TelegramModule),
+    forwardRef(() => SubscriptionModule),
     DiscordModule,
   ],
   controllers: [UsersController],

@@ -30,6 +30,8 @@ import {
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
@@ -61,6 +63,7 @@ export class UsersService {
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly discordService: DiscordService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
@@ -92,13 +95,38 @@ export class UsersService {
       );
     }
 
+    const trialSubscriptionPlan =
+      await this.subscriptionService.findSubscriptionByName(
+        SubscriptionPlans.TRIAL,
+      );
+
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
       password: await hashPassword(createUserDto.password),
+      subscription: {
+        id: trialSubscriptionPlan.id,
+        plan: trialSubscriptionPlan.name,
+        amount: trialSubscriptionPlan.price,
+        lastPaymentDate: null,
+        nextPaymentDate: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() + 14);
+          return date;
+        })(),
+      },
     };
 
     const createdUser = await this.userRepository.create(newUser);
+
+    if (createdUser) {
+      await this.subscriptionService.updateSubscriptionById(
+        trialSubscriptionPlan.id,
+        {
+          subscribers: [...trialSubscriptionPlan.subscribers, newUser.id],
+        },
+      );
+    }
     this.logger.log(
       `User with email ${createUserDto.email} created successfully`,
     );

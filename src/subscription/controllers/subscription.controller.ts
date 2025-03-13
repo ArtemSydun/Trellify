@@ -25,28 +25,30 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Post()
-  create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
+  createSubscription(
+    @Body() createSubscriptionDto: CreateSubscriptionDto,
+  ): Promise<DefaultResponse<Subscription>> {
     return this.subscriptionService.createSubscription(createSubscriptionDto);
   }
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get()
-  findAll() {
+  findAllSubscriptions(): Promise<Subscription[]> {
     return this.subscriptionService.findAll();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Subscription> {
+  findOneSubscription(@Param('id') id: string): Promise<Subscription> {
     return this.subscriptionService.findSubscriptionById(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Patch(':id')
-  update(
+  updateSubscription(
     @Param('id') id: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ): Promise<DefaultResponse<Subscription>> {
@@ -59,7 +61,7 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  removeSubscription(@Param('id') id: string) {
     return this.subscriptionService.deleteSubscriptionById(id);
   }
 }

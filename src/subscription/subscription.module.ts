@@ -18,7 +18,7 @@ import { SubscriptionService } from './services/subscription.service';
         schema: SubscriptionSchema,
       },
     ]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
   ],
   controllers: [SubscriptionController],

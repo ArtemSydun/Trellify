@@ -9,7 +9,7 @@ export class DistributionSubscriber {
     description: 'Unique identifier for the distribution subscriber',
     example: '6748311e20b49e848f710448',
   })
-  @Prop({ default: randomUUID() })
+  @Prop({ default: () => randomUUID() })
   id: string;
 
   @ApiProperty({
