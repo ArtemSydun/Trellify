@@ -35,6 +35,8 @@ import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/services/redis.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -53,6 +55,7 @@ describe('UsersService', () => {
   let adminBotService: AdminBotService;
   let mailerService: MailerService;
   let redisService: RedisService;
+  let subscriptionService: SubscriptionService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -102,6 +105,10 @@ describe('UsersService', () => {
           useValue: createMock<RedisService>(),
         },
         {
+          provide: SubscriptionService,
+          useValue: createMock<SubscriptionService>(),
+        },
+        {
           provide: MailerService,
           useValue: createMock<MailerService>(),
         },
@@ -128,6 +135,9 @@ describe('UsersService', () => {
     mailerService = moduleRef.get<MailerService>(MailerService);
 
     redisService = moduleRef.get<RedisService>(RedisService);
+
+    subscriptionService =
+      moduleRef.get<SubscriptionService>(SubscriptionService);
 
     mockUsers = [userStub(), superAdminStub()];
 
@@ -162,13 +172,41 @@ describe('UsersService', () => {
 
   describe('createUser', () => {
     it('should create a new user successfully', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          personal: {},
+          card: {},
+          board: {},
+          admin: {},
+        },
+      };
+
       const createUserDto = {
         email: superAdminStub().email,
         password: 'password123',
         timezone: 0,
+        subscription: {
+          id: 'id1',
+          plan: SubscriptionPlans.TRIAL,
+          amount: 0,
+          lastPaymentDate: null,
+          nextPaymentDate: (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 14);
+            return date;
+          })(),
+        },
       };
+
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
       jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest
+        .spyOn(subscriptionService, 'findSubscriptionByName')
+        .mockResolvedValue(trialSubscriptionPlan);
 
       const result = await usersService.createUser(createUserDto);
 

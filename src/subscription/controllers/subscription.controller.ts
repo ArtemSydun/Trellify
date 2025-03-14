@@ -7,7 +7,14 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpStatus,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -18,6 +25,7 @@ import { UpdateSubscriptionDto } from '../dto/update-subscription.dto';
 import { Subscription } from '../entities/subscription.entity';
 import { SubscriptionService } from '../services/subscription.service';
 
+@ApiBearerAuth()
 @Controller('subscription')
 export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
@@ -25,6 +33,14 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Post()
+  @ApiOperation({
+    summary: 'Create new subscription plan, (Superadmin / admin / support)',
+    description: 'Create new subscription plan.',
+  })
+  @ApiOkResponse({
+    description: 'Create new subscription plan',
+    type: Subscription,
+  })
   createSubscription(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
   ): Promise<DefaultResponse<Subscription>> {
@@ -34,6 +50,14 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get()
+  @ApiOperation({
+    summary: 'Get all subscription plans, (Superadmin / admin / support)',
+    description: 'Get all subscription plans.',
+  })
+  @ApiOkResponse({
+    description: 'All subscription plans',
+    type: [Subscription],
+  })
   findAllSubscriptions(): Promise<Subscription[]> {
     return this.subscriptionService.findAll();
   }
@@ -41,6 +65,14 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get subscription plan by id (Superadmin / admin / support)',
+    description: 'Get subscription plan by id',
+  })
+  @ApiOkResponse({
+    description: 'Subscription plan by id',
+    type: Subscription,
+  })
   findOneSubscription(@Param('id') id: string): Promise<Subscription> {
     return this.subscriptionService.findSubscriptionById(id);
   }
@@ -48,6 +80,30 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update subscription plan by id (Superadmin only)',
+    description: 'Update subscription plan by id',
+  })
+  @ApiOkResponse({
+    description: 'Subscription plan {{id}} updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Subscription plan {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(Subscription),
+        },
+      },
+    },
+  })
   updateSubscription(
     @Param('id') id: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
@@ -61,6 +117,14 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete subscription plan by id (Superadmin only)',
+    description: 'Delete subscription plan by id',
+  })
+  @ApiOkResponse({
+    description: 'Delete subscription plan by id',
+    type: Subscription,
+  })
   removeSubscription(@Param('id') id: string) {
     return this.subscriptionService.deleteSubscriptionById(id);
   }

@@ -1,11 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsUUID } from 'class-validator';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 
 export class SubscriptionSettings {
   @ApiProperty({
-    description: 'Telegram username of the user',
-    example: 'trial',
+    description: 'Id of subscription plan',
+    example: 'id1',
+    nullable: false,
+  })
+  @IsUUID()
+  id: string;
+
+  @ApiProperty({
+    description: 'Subscription plan name',
+    example: SubscriptionPlans.TRIAL,
     nullable: false,
     enum: SubscriptionPlans,
   })

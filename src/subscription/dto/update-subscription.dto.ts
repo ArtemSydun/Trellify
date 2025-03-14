@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
-import { Subscription } from '../entities/subscription.entity';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, Min } from 'class-validator';
 
-export class UpdateSubscriptionDto extends PartialType(Subscription) {}
+export class UpdateSubscriptionDto {
+  @ApiProperty({ description: 'Price of the subscription in USD', example: 3 })
+  @IsNumber()
+  @Min(0)
+  price: number;
+}

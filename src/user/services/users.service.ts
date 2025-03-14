@@ -6,6 +6,8 @@ import {
   NotFoundException,
   Logger,
   ForbiddenException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -30,6 +32,7 @@ import {
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
+import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
@@ -63,6 +66,7 @@ export class UsersService {
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
@@ -120,11 +124,9 @@ export class UsersService {
     const createdUser = await this.userRepository.create(newUser);
 
     if (createdUser) {
-      await this.subscriptionService.updateSubscriptionById(
-        trialSubscriptionPlan.id,
-        {
-          subscribers: [...trialSubscriptionPlan.subscribers, newUser.id],
-        },
+      await this.subscriptionService.addSubscriberToPlan(
+        trialSubscriptionPlan,
+        createdUser,
       );
     }
     this.logger.log(
@@ -217,6 +219,11 @@ export class UsersService {
 
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      targetUser.subscription.id,
+      targetUser,
+    );
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
@@ -326,6 +333,10 @@ export class UsersService {
     return usersByTrelloId;
   }
 
+  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
+    return this.userRepository.findUsersConnectedToWebhook(webhookId);
+  }
+
   public async findWebhooksUserIsSubscribedOn(
     user: string | User,
     i18n?: I18nContext,
@@ -339,6 +350,26 @@ export class UsersService {
       );
 
     return webhooks;
+  }
+
+  public async findUserByProperty(
+    path: UserSearchPath,
+    value: any,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const user = await this.userRepository.findUserByProperty(path, value);
+    if (!user) {
+      this.logger.warn(`User with property ${path}: ${value} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
+          args: { path, value },
+        }) || `User with property ${path}: ${value} not found`,
+      );
+    }
+
+    this.logger.log(`User with property ${path}: ${value} found`);
+    delete user.password;
+    return user;
   }
 
   public async doesUserExist(email: string): Promise<boolean> {
@@ -462,30 +493,6 @@ export class UsersService {
       lastActivityDate: updateDate,
     });
     this.logger.log(`Password for user with ID ${id} reset successfully`);
-  }
-
-  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.userRepository.findUsersConnectedToWebhook(webhookId);
-  }
-
-  public async findUserByProperty(
-    path: UserSearchPath,
-    value: any,
-    i18n?: I18nContext,
-  ): Promise<User> {
-    const user = await this.userRepository.findUserByProperty(path, value);
-    if (!user) {
-      this.logger.warn(`User with property ${path}: ${value} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
-          args: { path, value },
-        }) || `User with property ${path}: ${value} not found`,
-      );
-    }
-
-    this.logger.log(`User with property ${path}: ${value} found`);
-    delete user.password;
-    return user;
   }
 
   public async manageUserTelegramConnection(
@@ -744,6 +751,44 @@ export class UsersService {
         this.logger.error(`Bulk write error: ${err.writeErrors}`);
       }
     }
+  }
+
+  public async changeSubscriptionPlan(
+    user: string | User,
+    targetSubscription: string | Subscription,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user);
+
+    const oldSubscription = await this.subscriptionService.getSubscription(
+      userToUpdate.subscription.id,
+    );
+
+    const newSubscription =
+      await this.subscriptionService.getSubscription(targetSubscription);
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      oldSubscription,
+      userToUpdate,
+    );
+
+    await this.subscriptionService.addSubscriberToPlan(
+      newSubscription,
+      userToUpdate,
+    );
+
+    const updatedUser = await this.updateUser(userToUpdate, {
+      subscription: {
+        ...userToUpdate.subscription,
+        id: newSubscription.id,
+        plan: newSubscription.name as SubscriptionPlans,
+      },
+    });
+
+    return {
+      message: `User ${userToUpdate.email} successfully successfully changed plan to ${newSubscription.name}`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
   }
 
   public async contactUs(

@@ -11,7 +11,10 @@ export const superAdminStub = () => {
     password: '$2b$10$lGGZKO1AHqLPDEfwP6u5leQZVU0vA9cfqctkibaAZbyfCbkSUqqlG',
     role: UserRoles.superadmin,
     subscription: {
+      id: 'id1',
       plan: SubscriptionPlans.FULL,
+      lastAmount: 0,
+      totalAmount: 0,
       lastPaymentDate: fixedDate,
       nextPaymentDate: fixedDate,
     },
@@ -62,7 +65,10 @@ export const userStub = () => {
     password: '$2b$10$lGGZKO1AHqLPDEfwP6u5leQZVU0vA9cfqctkibaAZbyfCbkSUqqlG',
     role: UserRoles.user,
     subscription: {
+      id: 'id1',
       plan: SubscriptionPlans.FULL,
+      lastAmount: 0,
+      totalAmount: 0,
       lastPaymentDate: fixedDate,
       nextPaymentDate: fixedDate,
     },
