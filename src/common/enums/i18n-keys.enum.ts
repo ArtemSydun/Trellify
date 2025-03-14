@@ -59,6 +59,9 @@ export enum I18nKeys {
   MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED = 'common.messages.trello.webhook.webhookWasRecreated',
   MESSAGES_TRELLO_WEBHOOKS_WAS_UPDATED = 'common.messages.trello.webhook.webhooksWasUpdated',
 
+  //Subscriptions messages
+  MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
+
   // Trello Notification Messages
   NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.notifications.personal.cardMemberAddedSelf',
   NOTIFICATION_PERSONAL_CARD_MEMBER_REMOVED = 'common.messages.notifications.personal.cardMemberRemovedSelf',

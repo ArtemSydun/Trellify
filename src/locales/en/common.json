@@ -67,6 +67,9 @@
                 "webhooksWasUpdated": "Webhooks has been updated successfully"
             }
         },
+        "subscription": {
+            "expiring": "Hello. Friendly reminder that your {subscription} plan expires in 24 hours"
+        },
         "notifications": {
             "personal": {
                 "cardMemberAddedSelf": "{userInitials}, you've been added to the card [{cardName}]({cardUrl}).",

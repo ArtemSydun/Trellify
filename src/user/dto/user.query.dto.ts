@@ -62,4 +62,9 @@ export class UserQueryDto extends CommonQueryParams {
   @IsOptional()
   @IsString()
   subscriptionPlan?: SubscriptionPlans;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nextPaymentDate?: string;
 }

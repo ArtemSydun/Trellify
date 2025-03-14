@@ -18,6 +18,7 @@ export enum UserSearchPath {
 
   //Subscription
   SubscriptionPlan = 'subscription.plan',
+  SubscriptionNextPayment = 'subscription.nextPaymentDate',
 
   // Simple properties
   Email = 'email',

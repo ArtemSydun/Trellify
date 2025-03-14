@@ -9,12 +9,18 @@ import {
   isBefore,
   parseISO,
 } from 'date-fns';
+import { I18nService } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
+import { DiscordService } from 'src/discord/discord.service';
 import { redisKeys } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
 
 @Injectable()
@@ -27,6 +33,9 @@ export class CronService {
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly adminBotService: AdminBotService,
+    private readonly notificationBotService: NotificationBotService,
+    private readonly discordService: DiscordService,
+    private readonly i18nService: I18nService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -263,5 +272,70 @@ export class CronService {
         `Daily stats for ${yesterday.toISOString()} have already been processed.`,
       );
     }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyAboutSubscriptionPayment() {
+    const now = new Date();
+
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    ).toISOString();
+    const todayEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).toISOString();
+
+    const usersToNotify = await this.usersService.findAll({
+      date: UserSearchPath.SubscriptionNextPayment,
+      fromDate: todayStart,
+      toDate: todayEnd,
+      limit: 10000,
+    });
+
+    // Create an array of promises for sending notifications
+    const notificationPromises = usersToNotify.data.map(async (user) => {
+      const promises = [];
+      const userLanguage = user.language || Languages.EN;
+      const message = this.i18nService.t(
+        I18nKeys.MESSAGES_SUBSCRIPTION_EXPIRING,
+        {
+          lang: userLanguage,
+          args: {
+            subscription: user.subscription.plan,
+          },
+        },
+      );
+
+      if (user.telegram?.chatId) {
+        promises.push(
+          this.notificationBotService.sendMessageToUser(user.telegram, message),
+        );
+      }
+
+      if (user.discord?.userId) {
+        promises.push(
+          this.discordService.sendDirectMessage(user.discord.userId, message),
+        );
+      }
+
+      return Promise.all(promises); // Ensure all messages for this user are sent in parallel
+    });
+
+    // Wait for all notifications to be sent
+    await Promise.all(notificationPromises);
+
+    console.log('All notifications sent.');
   }
 }

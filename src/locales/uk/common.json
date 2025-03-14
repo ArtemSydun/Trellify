@@ -67,6 +67,9 @@
                 "webhooksWasUpdated": "Вебхуки було оновлено успішно"
             }
         },
+        "subscription": {
+            "expiring": "Привіт. Дружнє нагадування, що твоя {subscription} підписка закінчується протягом 24 годин."
+        },
         "notifications": {
             "personal": {
                 "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",

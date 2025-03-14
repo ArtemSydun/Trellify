@@ -170,7 +170,7 @@ export class SubscriptionService {
 
     if (subscriptionToDelete.subscribers) {
       throw new BadRequestException(
-        `Subscriptio plan ${subscriptionToDelete.name} has subscribers`,
+        `Subscription plan ${subscriptionToDelete.name} has subscribers`,
       );
     }
 
