@@ -68,7 +68,11 @@
             }
         },
         "subscription": {
-            "expiring": "Hello. Friendly reminder that your {subscription} plan expires in 24 hours"
+            "expiring": "Hello. Friendly reminder that your {subscription} plan expires in 24 hours",
+            "createdSuccessfully": "Subscription plan {subscription} created successfully",
+            "updatedSuccessfully": "Subscription plan {subscription} updated successfully",
+            "deletedSuccessfully": "Subscription plan {subscription} deleted successfully",
+            "userChangedSuccessfully": "User {email} successfully changed plan to {subscription} plan"
         },
         "notifications": {
             "personal": {
@@ -179,6 +183,13 @@
                 "alreadyConnected": "This trello profile is already binded to other user"
             },
             "invalidEntityId": "This entity was not found or was deleted"
+        },
+        "subscription": {
+            "hasSubscribers": "Subscription plan {subscription} has subscribers",
+            "userNotSubscribed": "User {userId} is not subscribed on {subscription} plan",
+            "userAlreadySubscribed": "User {userId} is already subscribed on {subscription} plan",
+            "alreadyExist": "Subscription plan {subscription} already exist",
+            "doesNotExist": "Subscription plan {subscription} does not exist"
         }
     }
 }

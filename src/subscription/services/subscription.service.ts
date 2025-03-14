@@ -8,6 +8,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
+import { I18nContext } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
@@ -27,15 +29,17 @@ export class SubscriptionService {
 
   public async getSubscription(
     subscription: string | Subscription,
+    i18n?: I18nContext,
   ): Promise<Subscription> {
     if (typeof subscription === 'string') {
       if (isUUID(subscription)) {
         // If it's a valid UUID string, fetch the subscription by ID
-        return await this.findSubscriptionById(subscription);
+        return await this.findSubscriptionById(subscription, i18n);
       } else {
         // If it's a named subscription plan, fetch it by name
         return await this.findSubscriptionByName(
           subscription as SubscriptionPlans,
+          i18n,
         );
       }
     }
@@ -44,6 +48,7 @@ export class SubscriptionService {
 
   async createSubscription(
     createSubscriptionDto: CreateSubscriptionDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<Subscription>> {
     const isSubscriptionExists = await this.subscriptionRepository.existsByName(
       createSubscriptionDto.name,
@@ -60,7 +65,10 @@ export class SubscriptionService {
     );
 
     return {
-      message: `Subscription ${newSubscription.name} created successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY, {
+          args: { subscription: newSubscription.name },
+        }) || `Subscription plan ${newSubscription.name} created successfully`,
       statusCode: HttpStatus.OK,
       data: newSubscription,
     };
@@ -70,21 +78,35 @@ export class SubscriptionService {
     return await this.subscriptionRepository.findAllSubscriptions();
   }
 
-  async findSubscriptionById(id: string): Promise<Subscription> {
+  async findSubscriptionById(
+    id: string,
+    i18n?: I18nContext,
+  ): Promise<Subscription> {
     const subscription = await this.subscriptionRepository.findOneById(id);
 
     if (!subscription) {
-      throw new NotFoundException(`Subscription plan ${id} does not exist`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
+          args: { subscription: id },
+        }) || `Subscription plan ${id} does not exist`,
+      );
     }
 
     return subscription;
   }
 
-  async findSubscriptionByName(name: SubscriptionPlans): Promise<Subscription> {
+  async findSubscriptionByName(
+    name: SubscriptionPlans,
+    i18n?: I18nContext,
+  ): Promise<Subscription> {
     const subscription = await this.subscriptionRepository.findOneByName(name);
 
     if (!subscription) {
-      throw new NotFoundException(`Subscription plan ${name} does not exist`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
+          args: { subscription: name },
+        }) || `Subscription plan ${name} does not exist`,
+      );
     }
 
     return subscription;
@@ -93,6 +115,7 @@ export class SubscriptionService {
   async updateSubscriptionById(
     subscription: string | Subscription,
     updateSubscriptionDto: UpdateSubscriptionDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<Subscription>> {
     const subscriptionToUpdate = await this.getSubscription(subscription);
 
@@ -102,7 +125,11 @@ export class SubscriptionService {
     );
 
     return {
-      message: `Subscription ${subscriptionToUpdate.name} updated successfully`,
+      message:
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
+          args: { subscription: subscriptionToUpdate.name },
+        }) ||
+        `Subscription plan ${subscriptionToUpdate.name} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedSubscription,
     };
@@ -111,6 +138,7 @@ export class SubscriptionService {
   async addSubscriberToPlan(
     subscription: string | Subscription,
     subscriber: string | User,
+    i18n?: I18nContext,
   ): Promise<Subscription> {
     const subscriptionToUpdate = await this.getSubscription(subscription);
 
@@ -118,7 +146,13 @@ export class SubscriptionService {
 
     if (subscriptionToUpdate.subscribers.includes(subscriberToUpdate.id)) {
       throw new ConflictException(
-        `User ${subscriberToUpdate.email} is already subscribed on ${subscriptionToUpdate.name} plan`,
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED, {
+          args: {
+            user: subscriberToUpdate.email,
+            subscription: subscriptionToUpdate.name,
+          },
+        }) ||
+          `User ${subscriberToUpdate.email} is already subscribed on ${subscriptionToUpdate.name} plan`,
       );
     }
 
@@ -138,14 +172,21 @@ export class SubscriptionService {
   async removeSubscriberFromPlan(
     subscription: string | Subscription,
     subscriber: string | User,
-  ): Promise<DefaultResponse<User>> {
+    i18n?: I18nContext,
+  ): Promise<Subscription> {
     const subscriptionToUpdate = await this.getSubscription(subscription);
 
     const subscriberToUpdate = await this.userService.getUser(subscriber);
 
     if (!subscriptionToUpdate.subscribers.includes(subscriberToUpdate.id)) {
       throw new BadRequestException(
-        `User ${subscriberToUpdate.id} is not subscribed on ${subscriptionToUpdate.name} plan`,
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_USER_NOT_SUBSCRIBED, {
+          args: {
+            user: subscriberToUpdate.email,
+            subscription: subscriptionToUpdate.name,
+          },
+        }) ||
+          `User ${subscriberToUpdate.email} is not subscribed on ${subscriptionToUpdate.name} plan`,
       );
     }
 
@@ -153,31 +194,38 @@ export class SubscriptionService {
       (subscriberId) => subscriberId !== subscriberToUpdate.id,
     );
 
-    await this.subscriptionRepository.updateById(subscriptionToUpdate.id, {
-      subscribers: updatedSubscribers,
-    });
+    const updatedSubscription = await this.subscriptionRepository.updateById(
+      subscriptionToUpdate.id,
+      {
+        subscribers: updatedSubscribers,
+      },
+    );
 
-    return {
-      message: `User ${subscriberToUpdate.email} successfully unsubscribed from ${subscriptionToUpdate.name} plan`,
-      statusCode: HttpStatus.OK,
-      data: subscriberToUpdate,
-    };
+    return updatedSubscription;
   }
 
-  async deleteSubscriptionById(id: string): Promise<DefaultResponse<null>> {
+  async deleteSubscriptionById(
+    id: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
     const subscriptionToDelete =
       await this.subscriptionRepository.findOneById(id);
 
     if (subscriptionToDelete.subscribers) {
       throw new BadRequestException(
-        `Subscription plan ${subscriptionToDelete.name} has subscribers`,
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_HAS_SUBSCRIBERS, {
+          args: { subscription: subscriptionToDelete.name },
+        }) || `Subscription plan ${subscriptionToDelete.name} has subscribers`,
       );
     }
 
     await this.subscriptionRepository.deleteById(id);
 
     return {
-      message: `Subscription ${subscriptionToDelete.name} deleted successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY, {
+          args: { subscription: subscriptionToDelete.name },
+        }) || `Subscription ${subscriptionToDelete.name} deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }

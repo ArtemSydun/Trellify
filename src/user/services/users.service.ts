@@ -102,6 +102,7 @@ export class UsersService {
     const trialSubscriptionPlan =
       await this.subscriptionService.findSubscriptionByName(
         SubscriptionPlans.TRIAL,
+        i18n,
       );
 
     const newUser = {
@@ -127,6 +128,7 @@ export class UsersService {
       await this.subscriptionService.addSubscriberToPlan(
         trialSubscriptionPlan,
         createdUser,
+        i18n,
       );
     }
     this.logger.log(
@@ -756,24 +758,30 @@ export class UsersService {
   public async changeSubscriptionPlan(
     user: string | User,
     targetSubscription: string | Subscription,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user);
 
     const oldSubscription = await this.subscriptionService.getSubscription(
       userToUpdate.subscription.id,
+      i18n,
     );
 
-    const newSubscription =
-      await this.subscriptionService.getSubscription(targetSubscription);
+    const newSubscription = await this.subscriptionService.getSubscription(
+      targetSubscription,
+      i18n,
+    );
 
     await this.subscriptionService.removeSubscriberFromPlan(
       oldSubscription,
       userToUpdate,
+      i18n,
     );
 
     await this.subscriptionService.addSubscriberToPlan(
       newSubscription,
       userToUpdate,
+      i18n,
     );
 
     const updatedUser = await this.updateUser(userToUpdate, {
@@ -785,7 +793,14 @@ export class UsersService {
     });
 
     return {
-      message: `User ${userToUpdate.email} successfully successfully changed plan to ${newSubscription.name}`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+          args: {
+            user: userToUpdate.email,
+            subscription: newSubscription.name,
+          },
+        }) ||
+        `User ${userToUpdate.email} successfully successfully changed plan to ${newSubscription.name}`,
       statusCode: HttpStatus.OK,
       data: updatedUser.data,
     };

@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -43,8 +44,12 @@ export class SubscriptionController {
   })
   createSubscription(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
+    @Req() req,
   ): Promise<DefaultResponse<Subscription>> {
-    return this.subscriptionService.createSubscription(createSubscriptionDto);
+    return this.subscriptionService.createSubscription(
+      createSubscriptionDto,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -73,8 +78,11 @@ export class SubscriptionController {
     description: 'Subscription plan by id',
     type: Subscription,
   })
-  findOneSubscription(@Param('id') id: string): Promise<Subscription> {
-    return this.subscriptionService.findSubscriptionById(id);
+  findOneSubscription(
+    @Param('id') id: string,
+    @Req() req,
+  ): Promise<Subscription> {
+    return this.subscriptionService.findSubscriptionById(id, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -107,10 +115,12 @@ export class SubscriptionController {
   updateSubscription(
     @Param('id') id: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
+    @Req() req,
   ): Promise<DefaultResponse<Subscription>> {
     return this.subscriptionService.updateSubscriptionById(
       id,
       updateSubscriptionDto,
+      req.i18nContext,
     );
   }
 
@@ -125,7 +135,7 @@ export class SubscriptionController {
     description: 'Delete subscription plan by id',
     type: Subscription,
   })
-  removeSubscription(@Param('id') id: string) {
-    return this.subscriptionService.deleteSubscriptionById(id);
+  removeSubscription(@Param('id') id: string, @Req() req) {
+    return this.subscriptionService.deleteSubscriptionById(id, req.i18nContext);
   }
 }

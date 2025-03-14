@@ -61,6 +61,10 @@ export enum I18nKeys {
 
   //Subscriptions messages
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
+  MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY = 'common.messages.subscription.createdSuccessfully',
+  MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY = 'common.messages.subscription.updatedSuccessfully',
+  MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
+  MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY = 'common.messages.subscription.userChangedSuccessfully',
 
   // Trello Notification Messages
   NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.notifications.personal.cardMemberAddedSelf',
@@ -160,4 +164,11 @@ export enum I18nKeys {
   ERRORS_TRELLO_CHECK_CONNECTION = 'common.errors.trello.profile.checkConnection',
   ERRORS_TRELLO_EXPIRED_TOKEN = 'common.errors.trello.profile.expiredToken',
   ERRORS_TRELLO_ALREADY_CONNECTED = 'common.errors.trello.profile.alreadyConnected',
+
+  // Subscription errors
+  ERRORS_SUBSCRIPTION_HAS_SUBSCRIBERS = 'common.errors.subscription.hasSubscribers',
+  ERRORS_SUBSCRIPTION_USER_NOT_SUBSCRIBED = 'common.errors.subscription.userNotSubscribed',
+  ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
+  ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
+  ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.doesNotExist',
 }
