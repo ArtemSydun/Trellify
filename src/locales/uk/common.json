@@ -72,7 +72,7 @@
             "createdSuccessfully": "План підписки {subscription} створено усіпшно",
             "updatedSuccessfully": "План підписки {subscription} оновлено успішно",
             "deletedSuccessfully": "План підписки {subscription} видалено успішно",
-            "userChangedSuccessfully": "Користувач {email} успішно змінив свою підписку на {subscription}"
+            "userChangedSuccessfully": "Користувач {user} успішно змінив свою підписку на {subscription}"
         },
         "notifications": {
             "personal": {
@@ -186,8 +186,8 @@
         },
         "subscription": {
             "hasSubscribers": "План підписки {subscription} досі має підписників",
-            "userNotSubscribed": "Користувач {userId} не є підписником {subscription} плану",
-            "userAlreadySubscribed": "Користувач {userId} уже підписник {subscription} плану",
+            "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
+            "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
             "alreadyExist": "План підписки {subscription} вже існує",
             "doesNotExist": "Плану підписки {subscription} не існує"
         }
