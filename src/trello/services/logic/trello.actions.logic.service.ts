@@ -14,10 +14,9 @@ import { NotificationBotService } from 'src/telegram/notification-bot/notificati
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
 import {
-  TrelloWebhookAdminActions,
   TrelloWebhookBoardActions,
   TrelloWebhookCardActions,
-  TrelloWebhookDetailedActions,
+  // TrelloWebhookListActions,
   TrelloWebhookPersonalActions,
 } from 'src/trello/enums/trello.actions.enum';
 import { UsersService } from 'src/user/services/users.service';
@@ -77,9 +76,9 @@ export class TrelloActionsLogicService {
         .replace(/\./g, '.\u200B');
 
       const targetActionMessages: Partial<
-        Record<TrelloWebhookDetailedActions, string | null>
+        Record<TrelloWebhookPersonalActions, string | null>
       > = {
-        [TrelloWebhookDetailedActions.CARD_MEMBER_ADDED]:
+        [TrelloWebhookPersonalActions.CARD_MEMBER_ADDED]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -89,7 +88,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
-        [TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.CARD_MEMBER_REMOVED]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_CARD_MEMBER_REMOVED, {
             lang: notificationLanguage,
             args: {
@@ -99,7 +98,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_MEMBER_REMOVED, {
             lang: notificationLanguage,
             args: {
@@ -108,7 +107,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been removed from board ${boardData?.name}`,
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED]:
+        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_ADDED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_PERSONAL_CHECKLIST_ITEM_MEMBER_ADDED,
             {
@@ -122,7 +121,7 @@ export class TrelloActionsLogicService {
             },
           ) ||
           `${userInitials} you has been added to checklist item '${checklistItemName}' in card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED,
             {
@@ -136,7 +135,7 @@ export class TrelloActionsLogicService {
             },
           ) ||
           `${userInitials} you has been removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]:
+        [TrelloWebhookPersonalActions.BOARD_ADMIN_ADDED]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_ADMIN_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -148,7 +147,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
+        [TrelloWebhookPersonalActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_NORMAL_ROLE_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -716,9 +715,15 @@ export class TrelloActionsLogicService {
 
       const actionAuthor = webhookAction?.action?.memberCreator?.username;
       const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
+
       const targetMemberUsername =
         webhookAction?.action?.member?.username || '';
       const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername}`;
+
+      const oldCustomFieldName = webhookAction.action?.data?.old?.name;
+      const customFieldName = webhookAction.action?.data?.customField?.name;
+      const permissionLevel =
+        webhookAction.action?.data?.board?.prefs?.permissionLevel;
 
       const boardActionMessages: Record<
         TrelloWebhookBoardActions,
@@ -752,95 +757,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `Board [${boardData?.name}](${boardData?.url}) has been reopened.`,
-
-        // [TrelloWebhookBoardActions.BOARD_DELETED]: 'Board was deleted'
-      };
-
-      const message = boardActionMessages[actionType];
-
-      if (!message) {
-        this.logger.warn(`Unsupported card action: ${actionType}`);
-        return;
-      }
-
-      const userPromises = usersToNotify.map(async (userToNotify) => {
-        const userLanguage = userToNotify.language || Languages.EN;
-
-        const message = boardActionMessages[actionType]({
-          lang: userLanguage,
-          boardName: boardData?.name,
-          boardUrl: boardData?.url,
-        });
-
-        const userTimeZone = new Date(
-          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
-        );
-
-        const formattedTimeZone = format(
-          userTimeZone,
-          this.configService.get(configServiceKeys.DATE_FORMAT),
-        );
-
-        const formattedMessage = notificationMessageGenerator(
-          userToNotify,
-          {
-            boardName: boardData?.name,
-            boardUrl: boardData?.url,
-            actionDate: formattedTimeZone,
-            translatedMessage: message,
-            actionAuthor,
-            actionAuthorUrl,
-            actionTarget: targetMemberUsername,
-            actionTargetUrl: targetMemberProfileUrl,
-          },
-          this.i18n,
-        );
-
-        if (message) {
-          await this.notificationBotService.sendMessageToUser(
-            userToNotify.telegram,
-            formattedMessage,
-          );
-        }
-      });
-
-      await Promise.all(userPromises);
-    } catch (error) {
-      this.logger.error('Error handling board action:', error);
-    }
-  }
-
-  async handleAdminActions(
-    adminTrelloIds: string[],
-    boardData: TrelloBoard,
-    actionType: TrelloWebhookAdminActions,
-    webhookAction?: any,
-  ) {
-    try {
-      const adminsToNotify =
-        await this.userService.findUsersByTrelloIds(adminTrelloIds);
-
-      const serverDate = new Date(webhookAction?.action?.date);
-
-      const targetMemberUsername =
-        webhookAction?.action?.member?.username ||
-        webhookAction?.action?.memberCreator?.username;
-      const targetMemberProfileUrl = `https://trello.com/u/${webhookAction?.action?.member?.username}`;
-
-      const actionAuthor = webhookAction?.action?.memberCreator?.username;
-      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
-
-      const oldCustomFieldName = webhookAction.action?.data?.old?.name;
-      const customFieldName = webhookAction.action?.data?.customField?.name;
-      const oldBoardName = webhookAction?.action?.data?.old?.name;
-      const permissionLevel =
-        webhookAction.action?.data?.board?.prefs?.permissionLevel;
-
-      const adminActionMessages: Record<
-        TrelloWebhookAdminActions,
-        (args: any) => string
-      > = {
-        [TrelloWebhookDetailedActions.BOARD_ADMIN_ADDED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_ADMIN_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_ADMIN_ADDED, {
             lang: args.lang,
             args: {
@@ -852,7 +769,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A new admin [${targetMemberUsername}](${targetMemberProfileUrl}) has been added on the board [${boardData?.name}](${boardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_REMOVED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_REMOVED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_REMOVED, {
             lang: args.lang,
             args: {
@@ -864,7 +781,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has been removed from the board  [${boardData?.name}](${boardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_INVITATION_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_INVITATION_JOINED, {
             lang: args.lang,
             args: {
@@ -876,7 +793,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}) via invitation.`,
 
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_LEFT]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_LEFT]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_LEFT, {
             lang: args.lang,
             args: {
@@ -888,7 +805,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The user [${targetMemberUsername}](${targetMemberProfileUrl}) has left the board [${boardData?.name}](${boardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_JOINED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_JOINED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_JOINED, {
             lang: args.lang,
             args: {
@@ -900,7 +817,7 @@ export class TrelloActionsLogicService {
           }) ||
           `A new member [${targetMemberUsername}](${targetMemberProfileUrl}) has joined the board [${boardData?.name}](${boardData?.url}).`,
 
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_ADDED, {
             lang: args.lang,
             args: {
@@ -911,9 +828,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `A new normal role has been added to a user [${targetMemberUsername}](${targetMemberProfileUrl}) on the board [${boardData?.name}](${boardData?.url}).`,
-        [TrelloWebhookDetailedActions.BOARD_MEMBER_NORMAL_ROLE_BECAME]: (
-          args,
-        ) =>
+        [TrelloWebhookBoardActions.BOARD_MEMBER_NORMAL_ROLE_BECAME]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_BECAME, {
             lang: args.lang,
             args: {
@@ -925,7 +840,7 @@ export class TrelloActionsLogicService {
           }) ||
           `User [${targetMemberUsername}](${targetMemberProfileUrl}) lowered his role on the board [${boardData?.name}](${boardData?.url}).`,
 
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_CREATED]: (args) =>
+        [TrelloWebhookBoardActions.CUSTOM_FIELD_CREATED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_CUSTOM_FIELD_CREATED, {
             lang: args.lang,
             args: {
@@ -936,7 +851,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The custom field ${customFieldName} has been created on the board [${boardData?.name}](${boardData?.url})`,
 
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_RENAMED]: (args) =>
+        [TrelloWebhookBoardActions.CUSTOM_FIELD_RENAMED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_CUSTOM_FIELD_RENAMED, {
             lang: args.lang,
             args: {
@@ -948,7 +863,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The custom field has been renamed from ${oldCustomFieldName} to ${customFieldName} on the board [${boardData?.name}](${boardData?.url})`,
 
-        [TrelloWebhookAdminActions.CUSTOM_FIELD_DELETED]: (args) =>
+        [TrelloWebhookBoardActions.CUSTOM_FIELD_DELETED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_CUSTOM_FIELD_DELETED, {
             lang: args.lang,
             args: {
@@ -961,7 +876,7 @@ export class TrelloActionsLogicService {
           }) ||
           `The custom field ${customFieldName} has been deleted on the board [${boardData?.name}](${boardData?.url})`,
 
-        [TrelloWebhookAdminActions.BOARD_PERM_LEVEL_CHANGED]: (args) =>
+        [TrelloWebhookBoardActions.BOARD_PERM_LEVEL_CHANGED]: (args) =>
           this.i18n?.t(I18nKeys.NOTIFICATION_BOARD_PERM_LEVEL_CHANGED, {
             lang: args.lang,
             args: {
@@ -973,26 +888,8 @@ export class TrelloActionsLogicService {
           `Board [${boardData?.name}](${boardData?.url}) permission level has been changed to ${permissionLevel}`,
       };
 
-      const message = adminActionMessages[actionType];
-
-      if (!message) {
-        this.logger.warn(`Unsupported card action: ${actionType}`);
-        return;
-      }
-
-      const userPromises = adminsToNotify.map(async (userToNotify) => {
+      const userPromises = usersToNotify.map(async (userToNotify) => {
         const userLanguage = userToNotify.language || Languages.EN;
-
-        const message = adminActionMessages[actionType]({
-          lang: userLanguage,
-          memberName: targetMemberUsername,
-          memberUrl: targetMemberProfileUrl,
-          oldCustomFieldName,
-          customFieldName,
-          oldBoardName,
-          boardName: boardData?.name,
-          boardUrl: boardData?.url,
-        });
 
         const userTimeZone = new Date(
           addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
@@ -1003,7 +900,26 @@ export class TrelloActionsLogicService {
           this.configService.get(configServiceKeys.DATE_FORMAT),
         );
 
-        if (userToNotify.telegram.chatId) {
+        const message = boardActionMessages[actionType]({
+          lang: userLanguage,
+          boardName: boardData?.name,
+          boardUrl: boardData?.url,
+          actionDate: formattedTimeZone,
+          actionAuthor,
+          actionAuthorUrl,
+          memberName: targetMemberUsername,
+          memberUrl: targetMemberProfileUrl,
+          actionTarget: targetMemberUsername,
+          actionTargetUrl: targetMemberProfileUrl,
+          customFieldName,
+        });
+
+        if (!message) {
+          this.logger.warn(`Unsupported card action: ${actionType}`);
+          return;
+        }
+
+        if (userToNotify.telegram?.chatId) {
           const formattedTelegramMessage = notificationMessageGenerator(
             userToNotify,
             {
@@ -1025,8 +941,8 @@ export class TrelloActionsLogicService {
           );
         }
 
-        if (userToNotify.discord.userId) {
-          const formattedDiscordMessage = notificationMessageGenerator(
+        if (userToNotify.discord?.userId) {
+          const formattedTelegramMessage = notificationMessageGenerator(
             userToNotify,
             {
               boardName: boardData?.name,
@@ -1042,8 +958,8 @@ export class TrelloActionsLogicService {
           );
 
           await this.discordService.sendDirectMessage(
-            userToNotify.discord.userId,
-            formattedDiscordMessage,
+            userToNotify.discord?.userId,
+            formattedTelegramMessage,
           );
         }
       });
@@ -1053,4 +969,133 @@ export class TrelloActionsLogicService {
       this.logger.error('Error handling board action:', error);
     }
   }
+
+  // async handleListActions(
+  //   userTrelloIds: string[],
+  //   boardData: TrelloBoard,
+  //   actionType: TrelloWebhookListActions,
+  //   webhookAction: any,
+  // ) {
+  //   try {
+  //     const usersToNotify =
+  //       await this.userService.findUsersByTrelloIds(userTrelloIds);
+
+  //     const listName = webhookAction?.action?.data?.list?.name;
+  //     const oldListName = webhookAction?.action?.data?.old?.name;
+
+  //     const serverDate = new Date(webhookAction?.action?.date);
+
+  //     const actionAuthor = webhookAction?.action?.memberCreator?.username;
+  //     const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
+
+  //     const targetMemberUsername =
+  //       webhookAction?.action?.member?.username || '';
+  //     const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername}`;
+
+  //     const customFieldName = webhookAction.action?.data?.customField?.name;
+
+  //     const boardActionMessages: Record<
+  //       TrelloWebhookListActions,
+  //       (args: any) => string
+  //     > = {
+  //       [TrelloWebhookListActions.LIST_CREATED]: function (args: any): string {
+  //         throw new Error('Function not implemented.');
+  //       },
+  //       [TrelloWebhookListActions.LIST_ARCHIVED]: function (args: any): string {
+  //         throw new Error('Function not implemented.');
+  //       },
+  //       [TrelloWebhookListActions.LIST_UNARCHIVED]: function (
+  //         args: any,
+  //       ): string {
+  //         throw new Error('Function not implemented.');
+  //       },
+  //       [TrelloWebhookListActions.LIST_RENAMED]: function (args: any): string {
+  //         throw new Error('Function not implemented.');
+  //       },
+  //       [TrelloWebhookListActions.LIST_DELETED]: function (args: any): string {
+  //         throw new Error('Function not implemented.');
+  //       },
+  //     };
+
+  //     // const userPromises = usersToNotify.map(async (userToNotify) => {
+  //     //   const userLanguage = userToNotify.language || Languages.EN;
+
+  //     //   const userTimeZone = new Date(
+  //     //     addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
+  //     //   );
+
+  //     //   const formattedTimeZone = format(
+  //     //     userTimeZone,
+  //     //     this.configService.get(configServiceKeys.DATE_FORMAT),
+  //     //   );
+
+  //     //   const message = boardActionMessages[actionType]({
+  //     //     lang: userLanguage,
+  //     //     boardName: boardData?.name,
+  //     //     boardUrl: boardData?.url,
+  //     //     actionDate: formattedTimeZone,
+  //     //     actionAuthor,
+  //     //     actionAuthorUrl,
+  //     //     memberName: targetMemberUsername,
+  //     //     memberUrl: targetMemberProfileUrl,
+  //     //     actionTarget: targetMemberUsername,
+  //     //     actionTargetUrl: targetMemberProfileUrl,
+  //     //     customFieldName,
+  //     //   });
+
+  //     //   if (!message) {
+  //     //     this.logger.warn(`Unsupported card action: ${actionType}`);
+  //     //     return;
+  //     //   }
+
+  //     //   if (userToNotify.telegram?.chatId) {
+  //     //     const formattedTelegramMessage = notificationMessageGenerator(
+  //     //       userToNotify,
+  //     //       {
+  //     //         boardName: boardData?.name,
+  //     //         boardUrl: boardData?.url,
+  //     //         actionDate: formattedTimeZone,
+  //     //         translatedMessage: message,
+  //     //         actionAuthor,
+  //     //         actionAuthorUrl,
+  //     //         actionTarget: targetMemberUsername,
+  //     //         actionTargetUrl: targetMemberProfileUrl,
+  //     //       },
+  //     //       this.i18n,
+  //     //     );
+
+  //     //     await this.notificationBotService.sendMessageToUser(
+  //     //       userToNotify.telegram,
+  //     //       formattedTelegramMessage,
+  //     //     );
+  //     //   }
+
+  //     //   if (userToNotify.discord?.userId) {
+  //     //     const formattedTelegramMessage = notificationMessageGenerator(
+  //     //       userToNotify,
+  //     //       {
+  //     //         boardName: boardData?.name,
+  //     //         boardUrl: `<${boardData?.url}>`,
+  //     //         actionDate: formattedTimeZone,
+  //     //         translatedMessage: message,
+  //     //         actionAuthor,
+  //     //         actionAuthorUrl: `<${actionAuthorUrl}>`,
+  //     //         actionTarget: targetMemberUsername,
+  //     //         actionTargetUrl: `<${targetMemberProfileUrl}>`,
+  //     //       },
+  //     //       this.i18n,
+  //     //     );
+
+  //     //     await this.discordService.sendDirectMessage(
+  //     //       userToNotify.discord?.userId,
+  //     //       formattedTelegramMessage,
+  //     //     );
+  //     //   }
+  //     // });
+
+  //     // await Promise.all(userPromises);
+  //   } catch (error) {
+  //     this.logger.error('Error handling board action:', error);
+  //   }
+  // }
 }

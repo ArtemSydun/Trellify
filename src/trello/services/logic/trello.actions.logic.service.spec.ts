@@ -19,7 +19,6 @@ import {
 } from 'src/trello/__mocks__/trello.stub';
 import { User } from 'src/user/entities/user.entity';
 import {
-  TrelloWebhookAdminActions,
   TrelloWebhookBoardActions,
   TrelloWebhookPersonalActions,
 } from 'src/trello/enums/trello.actions.enum';
@@ -34,14 +33,12 @@ jest.mock('src/common/helpers/trello-notifications', () => ({
     personal: {},
     board: {},
     card: {},
-    admin: {},
   }),
   getUpdatedWebhookNotifications: jest.fn().mockReturnValue({}),
   mapNotificationsToBoolean: jest.fn().mockReturnValue({
     personal: {},
     board: {},
     card: {},
-    admin: {},
   }),
 }));
 
@@ -290,43 +287,43 @@ describe('TrelloActionsLogicService', () => {
     });
   });
 
-  describe('handleAdminAction', () => {
-    it('should send messages to all subscribed board admins', async () => {
-      const adminsToNotifyIds = [superAdminStub().trello.userId];
+  // describe('handleAdminAction', () => {
+  //   it('should send messages to all subscribed board admins', async () => {
+  //     const adminsToNotifyIds = [superAdminStub().trello.userId];
 
-      const webhookAction = {
-        ...webhookActionMock,
-        action: {
-          ...webhookActionMock.action,
-          display: {
-            translationKey:
-              TrelloWebhookAdminActions.BOARD_MEMBER_INVITATION_JOINED,
-          },
-        },
-      };
+  //     const webhookAction = {
+  //       ...webhookActionMock,
+  //       action: {
+  //         ...webhookActionMock.action,
+  //         display: {
+  //           translationKey:
+  //             TrelloWebhookBoardActions.BOARD_MEMBER_INVITATION_JOINED,
+  //         },
+  //       },
+  //     };
 
-      jest
-        .spyOn(usersService, 'findUsersByTrelloIds')
-        .mockResolvedValue([superAdminStub()]);
+  //     jest
+  //       .spyOn(usersService, 'findUsersByTrelloIds')
+  //       .mockResolvedValue([superAdminStub()]);
 
-      jest
-        .spyOn(notificationBotService, 'sendMessageToUser')
-        .mockResolvedValue(undefined);
+  //     jest
+  //       .spyOn(notificationBotService, 'sendMessageToUser')
+  //       .mockResolvedValue(undefined);
 
-      await trelloActionsLogicService.handleAdminActions(
-        adminsToNotifyIds,
-        trelloBoardMock,
-        webhookAction.action?.display?.translationKey,
-        webhookAction,
-      );
+  //     await trelloActionsLogicService.handleAdminActions(
+  //       adminsToNotifyIds,
+  //       trelloBoardMock,
+  //       webhookAction.action?.display?.translationKey,
+  //       webhookAction,
+  //     );
 
-      expect(usersService.findUsersByTrelloIds).toHaveBeenCalledWith(
-        adminsToNotifyIds,
-      );
+  //     expect(usersService.findUsersByTrelloIds).toHaveBeenCalledWith(
+  //       adminsToNotifyIds,
+  //     );
 
-      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
-        adminsToNotifyIds.length,
-      );
-    });
-  });
+  //     expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
+  //       adminsToNotifyIds.length,
+  //     );
+  //   });
+  // });
 });

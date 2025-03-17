@@ -50,7 +50,7 @@ import {
 import { CreateWebhookDto } from 'src/trello/dto/create-webhook.dto';
 import {
   TrelloWebhookActions,
-  TrelloWebhookAdminActions,
+  TrelloWebhookBoardActions,
   TrelloWebhookBoardActions,
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationProfiles,
@@ -1743,7 +1743,7 @@ describe('TrelloWebhooksLogicService', () => {
         ...webhookStubData,
         notifications: {
           ...webhookStubData.notifications,
-          admin: { boardMemberInvitationJoined: [userStubData.trello.userId] },
+          board: { boardMemberInvitationJoined: [userStubData.trello.userId] },
         },
       };
 
@@ -1752,7 +1752,7 @@ describe('TrelloWebhooksLogicService', () => {
         .mockResolvedValue(webhookStubAdminNotifications);
 
       jest
-        .spyOn(trelloActionsService, 'handleAdminActions')
+        .spyOn(trelloActionsService, 'handleBoardActions')
         .mockResolvedValue(undefined);
 
       const webhookAdminAction = {
@@ -1761,11 +1761,11 @@ describe('TrelloWebhooksLogicService', () => {
 
       webhookAdminAction.action.type = TrelloWebhookActions.BOARD_MEMBER_ADDED;
       webhookAdminAction.action.display.translationKey =
-        TrelloWebhookAdminActions.BOARD_MEMBER_INVITATION_JOINED;
+        TrelloWebhookBoardActions.BOARD_MEMBER_INVITATION_JOINED;
 
       await trelloWebhooksLogicService.handleTrelloWebhook(webhookAdminAction);
 
-      expect(trelloActionsService.handleAdminActions).toHaveBeenCalledWith(
+      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
         [userStubData.trello.userId],
         trelloBoardMock,
         TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
@@ -1871,7 +1871,7 @@ describe('TrelloWebhooksLogicService', () => {
         ...webhookStubData,
         notifications: {
           ...webhookStubData.notifications,
-          admin: { boardAdminAdded: [userStubData.trello.userId] },
+          board: { boardAdminAdded: [userStubData.trello.userId] },
         },
       };
 
@@ -1884,7 +1884,7 @@ describe('TrelloWebhooksLogicService', () => {
         .mockResolvedValue(webhookStubMultipleNotifications);
 
       jest
-        .spyOn(trelloActionsService, 'handleAdminActions')
+        .spyOn(trelloActionsService, 'handleBoardActions')
         .mockResolvedValue(undefined);
 
       jest
@@ -1897,14 +1897,14 @@ describe('TrelloWebhooksLogicService', () => {
 
       webhookAdminAction.action.type = TrelloWebhookActions.BOARD_ADMIN_ADDED;
       webhookAdminAction.action.display.translationKey =
-        TrelloWebhookAdminActions.BOARD_ADMIN_ADDED;
+        TrelloWebhookBoardActions.BOARD_ADMIN_ADDED;
 
       await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
 
-      expect(trelloActionsService.handleAdminActions).toHaveBeenCalledWith(
+      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
         adminMemberIds,
         trelloBoardMock,
-        TrelloWebhookAdminActions.BOARD_ADMIN_ADDED,
+        TrelloWebhookBoardActions.BOARD_ADMIN_ADDED,
         webhookAdminAction,
       );
     });

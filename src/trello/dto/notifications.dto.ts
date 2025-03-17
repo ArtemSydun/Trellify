@@ -36,11 +36,11 @@ export class NotificationCategoriesDto {
   board: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to list events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').admin,
+    example: initializeNotificationArrays('userId1').list,
   })
-  admin: Record<string, string[]>;
+  list: Record<string, string[]>;
 }
 
 export class NotificationBooleansDto {
@@ -73,13 +73,13 @@ export class NotificationBooleansDto {
   board: Record<string, boolean>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to list events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .admin,
+      .list,
   })
   @IsNotEmptyObject()
-  admin: Record<string, boolean>;
+  list: Record<string, boolean>;
 }
 
 export class UpdateNotificationsDto {

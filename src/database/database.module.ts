@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import * as mongoose from 'mongoose';
+// import * as mongoose from 'mongoose';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 
 import { User, UserSchema } from 'src/user/entities/user.entity';
 import { SeederService } from './seeders/user.seeder';
 
 //do not enable db debugging on prod
-if (process.env.NODE_ENV === 'development') {
-  mongoose.set('debug', true);
-}
+// if (process.env.NODE_ENV === 'development') {
+//   mongoose.set('debug', true);
+// }
 
 @Module({
   imports: [

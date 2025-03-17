@@ -181,7 +181,7 @@ describe('UsersService', () => {
           personal: {},
           card: {},
           board: {},
-          admin: {},
+          list: {},
         },
       };
 

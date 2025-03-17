@@ -1,5 +1,5 @@
 import {
-  TrelloWebhookAdminActions,
+  TrelloWebhookListActions,
   TrelloWebhookBoardActions,
   TrelloWebhookCardActions,
   TrelloWebhookDetailedActions,
@@ -60,11 +60,16 @@ export const fullProfileActions = [
   TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_RENAMED,
   TrelloWebhookDetailedActions.CUSTOM_FIELD_DELETED,
+  TrelloWebhookDetailedActions.LIST_CREATED,
+  TrelloWebhookDetailedActions.LIST_RENAMED,
+  TrelloWebhookDetailedActions.LIST_DELETED,
+  TrelloWebhookDetailedActions.LIST_ARCHIVED,
+  TrelloWebhookDetailedActions.LIST_UNARCHIVED,
 ];
 
 export const categoryKeysMap: Record<string, string[]> = {
   personal: Object.keys(TrelloWebhookPersonalActions),
   card: Object.keys(TrelloWebhookCardActions),
   board: Object.keys(TrelloWebhookBoardActions),
-  admin: Object.keys(TrelloWebhookAdminActions),
+  list: Object.keys(TrelloWebhookListActions),
 };

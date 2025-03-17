@@ -1086,26 +1086,6 @@ export class TrelloWebhooksLogicService {
       }
 
       switch (category) {
-        case TrelloWebhookNotificationCategories.CARD:
-          if (cardData) {
-            const cardMembers = cardData.idMembers || [];
-            const membersToNotify = cardMembers.filter(
-              (memberId) =>
-                actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser &&
-                memberId !== notifiedAuthorUser,
-            );
-
-            await this.actionsService.handleCardActions(
-              membersToNotify,
-              boardData,
-              cardData,
-              detailedActionType,
-              webhookAction,
-            );
-          }
-          break;
-
         case TrelloWebhookNotificationCategories.PERSONAL:
           //separate handler because checklist memeber actions does not have
           // webhookAction?.action?.member even though it is targeted action
@@ -1150,27 +1130,20 @@ export class TrelloWebhooksLogicService {
           }
           break;
 
-        case TrelloWebhookNotificationCategories.ADMIN:
-          if (boardData) {
-            boardMemberships =
-              boardMemberships ??
-              (await this.trelloBoardsApiService.fetchBoardMemberships(
-                authorizedToken,
-                boardData.id,
-              ));
+        case TrelloWebhookNotificationCategories.CARD:
+          if (cardData) {
+            const cardMembers = cardData.idMembers || [];
+            const membersToNotify = cardMembers.filter(
+              (memberId) =>
+                actionSubscribers.includes(memberId) &&
+                memberId !== notifiedTargetUser &&
+                memberId !== notifiedAuthorUser,
+            );
 
-            const membersToNotify = boardMemberships
-              .filter(
-                (member) =>
-                  actionSubscribers.includes(member.idMember) &&
-                  member.idMember !== notifiedTargetUser &&
-                  member.idMember !== notifiedAuthorUser,
-              )
-              .map((member) => member.idMember);
-
-            await this.actionsService.handleAdminActions(
+            await this.actionsService.handleCardActions(
               membersToNotify,
               boardData,
+              cardData,
               detailedActionType,
               webhookAction,
             );
@@ -1203,6 +1176,33 @@ export class TrelloWebhooksLogicService {
             );
           }
           break;
+
+        // case TrelloWebhookNotificationCategories.LIST:
+        //   if (boardData) {
+        //     boardMemberships =
+        //       boardMemberships ??
+        //       (await this.trelloBoardsApiService.fetchBoardMemberships(
+        //         authorizedToken,
+        //         boardData.id,
+        //       ));
+
+        //     const membersToNotify = boardMemberships
+        //       .filter(
+        //         (member) =>
+        //           actionSubscribers.includes(member.idMember) &&
+        //           member.idMember !== notifiedTargetUser &&
+        //           member.idMember !== notifiedAuthorUser,
+        //       )
+        //       .map((member) => member.idMember);
+
+        //     await this.actionsService.handleListActions(
+        //       membersToNotify,
+        //       boardData,
+        //       detailedActionType,
+        //       webhookAction,
+        //     );
+        //   }
+        //   break;
 
         default:
           this.logger.warn(`Unsupported category: ${category}`);
