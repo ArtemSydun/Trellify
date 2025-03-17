@@ -30,8 +30,8 @@ export const advancedProfileActions = [
   ...basicProfileActions,
   TrelloWebhookDetailedActions.CARD_LABEL_ADDED,
   TrelloWebhookDetailedActions.CARD_LABEL_REMOVED,
-  TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED,
-  TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED,
+  TrelloWebhookDetailedActions.CHECKLIST_ADDED,
+  TrelloWebhookDetailedActions.CHECKLIST_REMOVED,
   TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
   TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
@@ -77,7 +77,7 @@ export const fullProfileActions = [
 
   // new actions
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_RENAMED,
-  TrelloWebhookDetailedActions.CARD_CHECKLIST_RENAMED,
+  TrelloWebhookDetailedActions.CHECKLIST_RENAMED,
   TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_COMPLETE,
   TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_INCOMPLETE,
   TrelloWebhookDetailedActions.CARD_MOVED_FROM_BOARD,
