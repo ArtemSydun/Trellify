@@ -151,7 +151,7 @@ export class CronService {
 
   //if server is down at this moment, it will send daily stats when the server will up
   //but if server was down more then one day, we do not guarantee
-  //data accuracy, because uniqueUsers based on lastLoginDate of user object,
+  //data accuracy, because loginnedUsers based on lastLoginDate of user object,
   @Cron('55 23 * * *')
   async dailyStatsClosing(formattedYesterday?: string) {
     let statsDate: Date;
@@ -205,7 +205,7 @@ export class CronService {
       {
         ...dailyStats,
         newUsers: newUsers.total,
-        uniqueUsers: usersLoggedIn.total,
+        loginnedUsers: usersLoggedIn.total,
       },
     );
 

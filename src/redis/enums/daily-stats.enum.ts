@@ -1,5 +1,5 @@
 export enum dailyStatsKeys {
   NEW_USERS = 'newUsers',
-  UNIQUE_USERS = 'uniqueUsers',
+  UNIQUE_USERS = 'loginnedUsers',
   CONTACT_US = 'contactUs',
 }
