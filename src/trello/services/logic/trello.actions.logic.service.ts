@@ -16,7 +16,7 @@ import { TrelloCard } from 'src/trello/dto/card.dto';
 import {
   TrelloWebhookBoardActions,
   TrelloWebhookCardActions,
-  // TrelloWebhookListActions,
+  TrelloWebhookListActions,
   TrelloWebhookPersonalActions,
 } from 'src/trello/enums/trello.actions.enum';
 import { UsersService } from 'src/user/services/users.service';
@@ -970,132 +970,150 @@ export class TrelloActionsLogicService {
     }
   }
 
-  // async handleListActions(
-  //   userTrelloIds: string[],
-  //   boardData: TrelloBoard,
-  //   actionType: TrelloWebhookListActions,
-  //   webhookAction: any,
-  // ) {
-  //   try {
-  //     const usersToNotify =
-  //       await this.userService.findUsersByTrelloIds(userTrelloIds);
+  async handleListActions(
+    userTrelloIds: string[],
+    boardData: TrelloBoard,
+    actionType: TrelloWebhookListActions,
+    webhookAction: any,
+  ) {
+    try {
+      const usersToNotify =
+        await this.userService.findUsersByTrelloIds(userTrelloIds);
 
-  //     const listName = webhookAction?.action?.data?.list?.name;
-  //     const oldListName = webhookAction?.action?.data?.old?.name;
+      const listName = webhookAction?.action?.data?.list?.name;
+      const oldListName = webhookAction?.action?.data?.old?.name;
 
-  //     const serverDate = new Date(webhookAction?.action?.date);
+      const serverDate = new Date(webhookAction?.action?.date);
 
-  //     const actionAuthor = webhookAction?.action?.memberCreator?.username;
-  //     const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
+      const actionAuthor = webhookAction?.action?.memberCreator?.username;
+      const actionAuthorUrl = `https://trello.com/u/${actionAuthor}`;
 
-  //     const targetMemberUsername =
-  //       webhookAction?.action?.member?.username || '';
-  //     const targetMemberProfileUrl = `https://trello.com/u/${targetMemberUsername}`;
+      const listActionMessages: Partial<
+        Record<TrelloWebhookListActions, (args: any) => string>
+      > = {
+        [TrelloWebhookListActions.LIST_CREATED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_LIST_CREATED, {
+            lang: args.lang,
+            args: {
+              listName,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+            },
+          }) ||
+          `The list ${listName} has been created on board [${boardData?.name}](${boardData?.url}).`,
+        [TrelloWebhookListActions.LIST_RENAMED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_LIST_RENAMED, {
+            lang: args.lang,
+            args: {
+              listName,
+              oldListName,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+            },
+          }) ||
+          `The list ${oldListName} has been renamed into ${listName} on board [${boardData?.name}](${boardData?.url}).`,
+        [TrelloWebhookListActions.LIST_ARCHIVED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_LIST_ARCHIVED, {
+            lang: args.lang,
+            args: {
+              listName,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+            },
+          }) ||
+          `The list ${listName} has been archived on board [${boardData?.name}](${boardData?.url}).`,
+        [TrelloWebhookListActions.LIST_UNARCHIVED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_LIST_UNARCHIVED, {
+            lang: args.lang,
+            args: {
+              listName,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+            },
+          }) ||
+          `The list ${listName} has been unarchived on board [${boardData?.name}](${boardData?.url}).`,
+        [TrelloWebhookListActions.LIST_DELETED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_LIST_DELETED, {
+            lang: args.lang,
+            args: {
+              listName,
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+            },
+          }) ||
+          `The list ${listName} has been deleted from the board [${boardData?.name}](${boardData?.url}).`,
+      };
 
-  //     const customFieldName = webhookAction.action?.data?.customField?.name;
+      const userPromises = usersToNotify.map(async (userToNotify) => {
+        const userLanguage = userToNotify.language || Languages.EN;
 
-  //     const boardActionMessages: Record<
-  //       TrelloWebhookListActions,
-  //       (args: any) => string
-  //     > = {
-  //       [TrelloWebhookListActions.LIST_CREATED]: function (args: any): string {
-  //         throw new Error('Function not implemented.');
-  //       },
-  //       [TrelloWebhookListActions.LIST_ARCHIVED]: function (args: any): string {
-  //         throw new Error('Function not implemented.');
-  //       },
-  //       [TrelloWebhookListActions.LIST_UNARCHIVED]: function (
-  //         args: any,
-  //       ): string {
-  //         throw new Error('Function not implemented.');
-  //       },
-  //       [TrelloWebhookListActions.LIST_RENAMED]: function (args: any): string {
-  //         throw new Error('Function not implemented.');
-  //       },
-  //       [TrelloWebhookListActions.LIST_DELETED]: function (args: any): string {
-  //         throw new Error('Function not implemented.');
-  //       },
-  //     };
+        const userTimeZone = new Date(
+          addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
+        );
 
-  //     // const userPromises = usersToNotify.map(async (userToNotify) => {
-  //     //   const userLanguage = userToNotify.language || Languages.EN;
+        const formattedTimeZone = format(
+          userTimeZone,
+          this.configService.get(configServiceKeys.DATE_FORMAT),
+        );
 
-  //     //   const userTimeZone = new Date(
-  //     //     addMinutes(serverDate, (userToNotify.timezone || 0) * 60),
-  //     //   );
+        const message = listActionMessages[actionType]({
+          lang: userLanguage,
+          boardName: boardData?.name,
+          boardUrl: boardData?.url,
+          actionDate: formattedTimeZone,
+          actionAuthor,
+          actionAuthorUrl,
+        });
 
-  //     //   const formattedTimeZone = format(
-  //     //     userTimeZone,
-  //     //     this.configService.get(configServiceKeys.DATE_FORMAT),
-  //     //   );
+        if (!message) {
+          this.logger.warn(`Unsupported card action: ${actionType}`);
+          return;
+        }
 
-  //     //   const message = boardActionMessages[actionType]({
-  //     //     lang: userLanguage,
-  //     //     boardName: boardData?.name,
-  //     //     boardUrl: boardData?.url,
-  //     //     actionDate: formattedTimeZone,
-  //     //     actionAuthor,
-  //     //     actionAuthorUrl,
-  //     //     memberName: targetMemberUsername,
-  //     //     memberUrl: targetMemberProfileUrl,
-  //     //     actionTarget: targetMemberUsername,
-  //     //     actionTargetUrl: targetMemberProfileUrl,
-  //     //     customFieldName,
-  //     //   });
+        if (userToNotify.telegram?.chatId) {
+          const formattedTelegramMessage = notificationMessageGenerator(
+            userToNotify,
+            {
+              boardName: boardData?.name,
+              boardUrl: boardData?.url,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              actionAuthor,
+              actionAuthorUrl,
+            },
+            this.i18n,
+          );
 
-  //     //   if (!message) {
-  //     //     this.logger.warn(`Unsupported card action: ${actionType}`);
-  //     //     return;
-  //     //   }
+          await this.notificationBotService.sendMessageToUser(
+            userToNotify.telegram,
+            formattedTelegramMessage,
+          );
+        }
 
-  //     //   if (userToNotify.telegram?.chatId) {
-  //     //     const formattedTelegramMessage = notificationMessageGenerator(
-  //     //       userToNotify,
-  //     //       {
-  //     //         boardName: boardData?.name,
-  //     //         boardUrl: boardData?.url,
-  //     //         actionDate: formattedTimeZone,
-  //     //         translatedMessage: message,
-  //     //         actionAuthor,
-  //     //         actionAuthorUrl,
-  //     //         actionTarget: targetMemberUsername,
-  //     //         actionTargetUrl: targetMemberProfileUrl,
-  //     //       },
-  //     //       this.i18n,
-  //     //     );
+        if (userToNotify.discord?.userId) {
+          const formattedTelegramMessage = notificationMessageGenerator(
+            userToNotify,
+            {
+              boardName: boardData?.name,
+              boardUrl: `<${boardData?.url}>`,
+              actionDate: formattedTimeZone,
+              translatedMessage: message,
+              actionAuthor,
+              actionAuthorUrl: `<${actionAuthorUrl}>`,
+            },
+            this.i18n,
+          );
 
-  //     //     await this.notificationBotService.sendMessageToUser(
-  //     //       userToNotify.telegram,
-  //     //       formattedTelegramMessage,
-  //     //     );
-  //     //   }
+          await this.discordService.sendDirectMessage(
+            userToNotify.discord?.userId,
+            formattedTelegramMessage,
+          );
+        }
+      });
 
-  //     //   if (userToNotify.discord?.userId) {
-  //     //     const formattedTelegramMessage = notificationMessageGenerator(
-  //     //       userToNotify,
-  //     //       {
-  //     //         boardName: boardData?.name,
-  //     //         boardUrl: `<${boardData?.url}>`,
-  //     //         actionDate: formattedTimeZone,
-  //     //         translatedMessage: message,
-  //     //         actionAuthor,
-  //     //         actionAuthorUrl: `<${actionAuthorUrl}>`,
-  //     //         actionTarget: targetMemberUsername,
-  //     //         actionTargetUrl: `<${targetMemberProfileUrl}>`,
-  //     //       },
-  //     //       this.i18n,
-  //     //     );
-
-  //     //     await this.discordService.sendDirectMessage(
-  //     //       userToNotify.discord?.userId,
-  //     //       formattedTelegramMessage,
-  //     //     );
-  //     //   }
-  //     // });
-
-  //     // await Promise.all(userPromises);
-  //   } catch (error) {
-  //     this.logger.error('Error handling board action:', error);
-  //   }
-  // }
+      await Promise.all(userPromises);
+    } catch (error) {
+      this.logger.error('Error handling board action:', error);
+    }
+  }
 }

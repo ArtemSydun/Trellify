@@ -84,11 +84,6 @@
                 "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
                 "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
             },
-            "board": {
-                "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
-                "boardClosed": "Дошку {boardName} було закрито.",
-                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито."
-            },
             "card": {
                 "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
                 "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
@@ -120,7 +115,10 @@
                 "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
                 "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
             },
-            "admin": {
+            "board": {
+                "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
+                "boardClosed": "Дошку {boardName} було закрито.",
+                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито.",
                 "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
                 "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
                 "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
@@ -132,6 +130,13 @@
                 "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
                 "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}.",
                 "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}."
+            },
+            "list": {
+                "listCreated": "Список {listName} було створено на дошці [{boardName}]({boardUrl})",
+                "listRenamed": "Список {oldListName} було перейменовано на {listName} на дошці [{boardName}]({boardUrl})",
+                "listArchived": "Список {listname} було заархівовано на дошці [{boardName}]({boardUrl})",
+                "listUnarchived": "Список {listname} було розархівовано на дошці [{boardName}]({boardUrl})",
+                "listDeleted": "Список {listname} було видалено з дошки [{boardName}]({boardUrl})"
             }
         }
     },

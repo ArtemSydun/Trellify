@@ -51,7 +51,6 @@ import { CreateWebhookDto } from 'src/trello/dto/create-webhook.dto';
 import {
   TrelloWebhookActions,
   TrelloWebhookBoardActions,
-  TrelloWebhookBoardActions,
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationProfiles,
   TrelloWebhookPersonalActions,

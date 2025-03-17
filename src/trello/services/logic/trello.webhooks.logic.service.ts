@@ -1177,32 +1177,32 @@ export class TrelloWebhooksLogicService {
           }
           break;
 
-        // case TrelloWebhookNotificationCategories.LIST:
-        //   if (boardData) {
-        //     boardMemberships =
-        //       boardMemberships ??
-        //       (await this.trelloBoardsApiService.fetchBoardMemberships(
-        //         authorizedToken,
-        //         boardData.id,
-        //       ));
+        case TrelloWebhookNotificationCategories.LIST:
+          if (boardData) {
+            boardMemberships =
+              boardMemberships ??
+              (await this.trelloBoardsApiService.fetchBoardMemberships(
+                authorizedToken,
+                boardData.id,
+              ));
 
-        //     const membersToNotify = boardMemberships
-        //       .filter(
-        //         (member) =>
-        //           actionSubscribers.includes(member.idMember) &&
-        //           member.idMember !== notifiedTargetUser &&
-        //           member.idMember !== notifiedAuthorUser,
-        //       )
-        //       .map((member) => member.idMember);
+            const membersToNotify = boardMemberships
+              .filter(
+                (member) =>
+                  actionSubscribers.includes(member.idMember) &&
+                  member.idMember !== notifiedTargetUser &&
+                  member.idMember !== notifiedAuthorUser,
+              )
+              .map((member) => member.idMember);
 
-        //     await this.actionsService.handleListActions(
-        //       membersToNotify,
-        //       boardData,
-        //       detailedActionType,
-        //       webhookAction,
-        //     );
-        //   }
-        //   break;
+            await this.actionsService.handleListActions(
+              membersToNotify,
+              boardData,
+              detailedActionType,
+              webhookAction,
+            );
+          }
+          break;
 
         default:
           this.logger.warn(`Unsupported category: ${category}`);

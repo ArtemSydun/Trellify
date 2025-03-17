@@ -87,7 +87,18 @@
             "board": {
                 "boardRenamed": "The board {oldBoardName} has been renamed to [{boardName}]({boardUrl}).",
                 "boardClosed": "The board {boardName} has been closed.",
-                "boardReopened": "The board [{boardName}]({boardUrl}) has been reopened."
+                "boardReopened": "The board [{boardName}]({boardUrl}) has been reopened.",
+                "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
+                "boardMemberJoined": "A new member [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}).",
+                "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
+                "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
+                "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
+                "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
+                "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
+                "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
+                "customFieldRenamed": "The custom field has been renamed from {oldCustomFieldName} to {customFieldName} on the board [{boardName}]({boardUrl}).",
+                "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl}).",
+                "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}"
             },
             "card": {
                 "cardRenamed": "The card has been renamed from {oldCardName} to [{cardName}]({cardUrl}).",
@@ -120,18 +131,12 @@
                 "customFieldItemUpdated": "The status of {customFieldName} in the card [{cardName}]({cardUrl}) has been updated.",
                 "cardMovedToList": "The card [{cardName}]({cardUrl}) has been moved from {listBefore} to {listAfter} list."
             },
-            "admin": {
-                "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
-                "boardMemberJoined": "A new member [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}).",
-                "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
-                "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
-                "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
-                "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
-                "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
-                "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
-                "customFieldRenamed": "The custom field has been renamed from {oldCustomFieldName} to {customFieldName} on the board [{boardName}]({boardUrl}).",
-                "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl}).",
-                "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}"
+            "list": {
+                "listCreated": "The list {listName} has been created on the board [{boardName}]({boardUrl})",
+                "listRenamed": "The list {oldListName} has been renamed to {listName} on the board [{boardName}]({boardUrl})",
+                "listArchived": "The list {listname} has been archived on the board [{boardName}]({boardUrl})",
+                "listUnarchived": "The list {listname} has been unarchived on the board [{boardName}]({boardUrl})",
+                "listDeleted": "The list {listname} has been deleted from the board [{boardName}]({boardUrl})"
             }
         }
     },
