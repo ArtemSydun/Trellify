@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from 'src/auth/auth.module';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { UsersModule } from 'src/user/users.module';
 import { DistributionController } from './controllers/distribution.controller';
@@ -21,14 +21,14 @@ import { DistributionService } from './services/distribution.service';
       },
     ]),
     ConfigModule,
-    UsersModule,
+    forwardRef(() => AuthModule),
+    forwardRef(() => UsersModule),
   ],
   controllers: [DistributionController],
   providers: [
     DistributionService,
     DistributionSubscribersRepository,
     MailerService,
-    JwtService,
   ],
   exports: [DistributionService],
 })
