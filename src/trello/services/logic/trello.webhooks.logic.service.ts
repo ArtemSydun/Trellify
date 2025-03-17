@@ -1131,27 +1131,9 @@ export class TrelloWebhooksLogicService {
           break;
 
         case TrelloWebhookNotificationCategories.CARD:
-          if (cardData) {
-            const cardMembers = cardData.idMembers || [];
-            const membersToNotify = cardMembers.filter(
-              (memberId) =>
-                actionSubscribers.includes(memberId) &&
-                memberId !== notifiedTargetUser &&
-                memberId !== notifiedAuthorUser,
-            );
-
-            await this.actionsService.handleCardActions(
-              membersToNotify,
-              boardData,
-              cardData,
-              detailedActionType,
-              webhookAction,
-            );
-          }
-          break;
-
-        case TrelloWebhookNotificationCategories.BOARD:
-          if (boardData) {
+          if (
+            detailedActionType === TrelloWebhookDetailedActions.CARD_CREATED
+          ) {
             boardMemberships =
               boardMemberships ??
               (await this.trelloBoardsApiService.fetchBoardMemberships(
@@ -1168,9 +1150,53 @@ export class TrelloWebhooksLogicService {
               )
               .map((member) => member.idMember);
 
-            await this.actionsService.handleBoardActions(
+            await this.actionsService.handleCardActions(
               membersToNotify,
               boardData,
+              cardData
+                ? await this.trelloCardsApiService.fetchCardById(
+                    authorizedToken,
+                    targetCard.id,
+                  )
+                : null,
+              detailedActionType,
+              webhookAction,
+            );
+          } else {
+            if (cardData) {
+              const cardMembers = cardData.idMembers || [];
+              const membersToNotify = cardMembers.filter(
+                (memberId) =>
+                  actionSubscribers.includes(memberId) &&
+                  memberId !== notifiedTargetUser &&
+                  memberId !== notifiedAuthorUser,
+              );
+
+              await this.actionsService.handleCardActions(
+                membersToNotify,
+                boardData,
+                cardData,
+                detailedActionType,
+                webhookAction,
+              );
+            }
+          }
+          break;
+
+        case TrelloWebhookNotificationCategories.CHECKLIST:
+          if (cardData) {
+            const cardMembers = cardData.idMembers || [];
+            const membersToNotify = cardMembers.filter(
+              (memberId) =>
+                actionSubscribers.includes(memberId) &&
+                memberId !== notifiedTargetUser &&
+                memberId !== notifiedAuthorUser,
+            );
+
+            await this.actionsService.handleChecklistActions(
+              membersToNotify,
+              boardData,
+              cardData,
               detailedActionType,
               webhookAction,
             );
@@ -1196,6 +1222,33 @@ export class TrelloWebhooksLogicService {
               .map((member) => member.idMember);
 
             await this.actionsService.handleListActions(
+              membersToNotify,
+              boardData,
+              detailedActionType,
+              webhookAction,
+            );
+          }
+          break;
+
+        case TrelloWebhookNotificationCategories.BOARD:
+          if (boardData) {
+            boardMemberships =
+              boardMemberships ??
+              (await this.trelloBoardsApiService.fetchBoardMemberships(
+                authorizedToken,
+                boardData.id,
+              ));
+
+            const membersToNotify = boardMemberships
+              .filter(
+                (member) =>
+                  actionSubscribers.includes(member.idMember) &&
+                  member.idMember !== notifiedTargetUser &&
+                  member.idMember !== notifiedAuthorUser,
+              )
+              .map((member) => member.idMember);
+
+            await this.actionsService.handleBoardActions(
               membersToNotify,
               boardData,
               detailedActionType,

@@ -4,20 +4,25 @@ import {
   TrelloWebhookCardActions,
   TrelloWebhookDetailedActions,
   TrelloWebhookPersonalActions,
+  TrelloWebhookChecklistActions,
 } from '../../trello/enums/trello.actions.enum';
 
 export const trelloApiLink = 'https://api.trello.com/1';
 
 export const basicProfileActions = [
+  TrelloWebhookDetailedActions.CARD_CREATED,
   TrelloWebhookDetailedActions.CARD_RENAMED,
   TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
   TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED,
   TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
+  TrelloWebhookDetailedActions.CARD_DESCRIPTION_CHANGED,
   TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED,
+  TrelloWebhookDetailedActions.CARD_ATTACHMENT_REMOVED,
   TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED,
-  TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
+  TrelloWebhookDetailedActions.CARD_DUE_DATE_REMOVED,
   TrelloWebhookDetailedActions.CARD_START_DATE_ADDED,
-  TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
+  TrelloWebhookDetailedActions.CARD_START_DATE_REMOVED,
+
   TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST,
 ];
 
@@ -27,6 +32,8 @@ export const advancedProfileActions = [
   TrelloWebhookDetailedActions.CARD_LABEL_REMOVED,
   TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED,
   TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED,
+  TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
+  TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_DELETED,
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED,
@@ -37,6 +44,8 @@ export const advancedProfileActions = [
 export const fullProfileActions = [
   ...advancedProfileActions,
   TrelloWebhookDetailedActions.CARD_ARCHIVED,
+  TrelloWebhookDetailedActions.CARD_UNARCHIVED,
+
   TrelloWebhookDetailedActions.CARD_MEMBER_JOINED,
   TrelloWebhookDetailedActions.CARD_MEMBER_LEFT,
   TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED,
@@ -65,11 +74,20 @@ export const fullProfileActions = [
   TrelloWebhookDetailedActions.LIST_DELETED,
   TrelloWebhookDetailedActions.LIST_ARCHIVED,
   TrelloWebhookDetailedActions.LIST_UNARCHIVED,
+
+  // new actions
+  TrelloWebhookDetailedActions.CHECKLIST_ITEM_RENAMED,
+  TrelloWebhookDetailedActions.CARD_CHECKLIST_RENAMED,
+  TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_COMPLETE,
+  TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_INCOMPLETE,
+  TrelloWebhookDetailedActions.CARD_MOVED_FROM_BOARD,
+  TrelloWebhookDetailedActions.CARD_MOVED_TO_BOARD,
 ];
 
 export const categoryKeysMap: Record<string, string[]> = {
   personal: Object.keys(TrelloWebhookPersonalActions),
   card: Object.keys(TrelloWebhookCardActions),
-  board: Object.keys(TrelloWebhookBoardActions),
+  checklist: Object.keys(TrelloWebhookChecklistActions),
   list: Object.keys(TrelloWebhookListActions),
+  board: Object.keys(TrelloWebhookBoardActions),
 };

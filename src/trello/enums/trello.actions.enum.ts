@@ -48,11 +48,12 @@ export enum TrelloWebhookActions {
 }
 
 export enum TrelloWebhookDetailedActions {
-  // CARD_CREATED = 'action_create_card',
+  CARD_CREATED = 'action_create_card',
   CARD_RENAMED = 'action_renamed_card',
   CARD_ARCHIVED = 'action_archived_card',
+  CARD_UNARCHIVED = 'action_sent_card_to_board',
   // CARD_DELETED = 'action_delete_card',
-  // CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
+  CARD_DESCRIPTION_CHANGED = 'action_changed_description_of_card',
   CARD_MEMBER_ADDED = 'action_added_member_to_card',
   CARD_MEMBER_REMOVED = 'action_removed_member_from_card',
   CARD_MEMBER_JOINED = 'action_member_joined_card',
@@ -60,14 +61,20 @@ export enum TrelloWebhookDetailedActions {
 
   CARD_COMMENT_ADDED = 'action_comment_on_card',
   CARD_ATTACHMENT_ADDED = 'action_add_attachment_to_card',
-  CARD_DUE_DATE_ADDED = 'action_added_a_due_date',
-  CARD_DUE_DATE_CHANGED = 'action_changed_a_due_date',
-  CARD_DUE_DATE_REMOVED = 'action_removed_a_due_date',
+  CARD_ATTACHMENT_REMOVED = 'action_delete_attachment_from_card',
 
   CARD_START_DATE_ADDED = 'action_added_a_start_date',
   CARD_START_DATE_CHANGED = 'action_changed_a_start_date',
   CARD_START_DATE_REMOVED = 'action_removed_a_start_date',
 
+  CARD_DUE_DATE_ADDED = 'action_added_a_due_date',
+  CARD_DUE_DATE_CHANGED = 'action_changed_a_due_date',
+  CARD_DUE_DATE_REMOVED = 'action_removed_a_due_date',
+  CARD_DUE_DATE_MARKED_COMPLETE = 'action_marked_the_due_date_complete',
+  CARD_DUE_DATE_MARKED_INCOMPLETE = 'action_marked_the_due_date_incomplete',
+
+  CARD_MOVED_FROM_BOARD = 'action_move_card_from_board',
+  CARD_MOVED_TO_BOARD = 'action_move_card_to_board',
   CARD_MOVED_TO_LIST = 'action_move_card_from_list_to_list',
 
   // CARD_MOVED_LOWER = 'action_moved_card_lower',
@@ -78,10 +85,13 @@ export enum TrelloWebhookDetailedActions {
 
   CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
   CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
-  CHECKLIST_ITEM_DELETED = 'action_deleted_checkitem',
+  CARD_CHECKLIST_RENAMED = 'action_renamed_checklist',
 
   // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
   CHECKLIST_ITEM_ADDED = TrelloWebhookActions.CHECKLIST_ITEM_CREATED,
+
+  CHECKLIST_ITEM_RENAMED = 'action_renamed_checkitem',
+  CHECKLIST_ITEM_DELETED = 'action_deleted_checkitem',
 
   //this 4 actions does not have target member even though it is related to certain user
   CHECKLIST_ITEM_MEMBER_ADDED = 'action_added_member_to_checkitem',
@@ -137,47 +147,71 @@ export enum TrelloWebhookPersonalActions {
 }
 
 export enum TrelloWebhookCardActions {
+  CARD_CREATED = TrelloWebhookDetailedActions.CARD_CREATED,
   CARD_RENAMED = TrelloWebhookDetailedActions.CARD_RENAMED,
   CARD_ARCHIVED = TrelloWebhookDetailedActions.CARD_ARCHIVED,
+  CARD_UNARCHIVED = TrelloWebhookDetailedActions.CARD_UNARCHIVED,
 
-  //we receive only id of deleted card on this action
-  // CARD_DELETED = TrelloWebhookDetailedActions.CARD_DELETED,
+  CARD_DESCRIPTION_CHANGED = TrelloWebhookDetailedActions.CARD_DESCRIPTION_CHANGED,
 
   CARD_MEMBER_ADDED = TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
   CARD_MEMBER_REMOVED = TrelloWebhookDetailedActions.CARD_MEMBER_REMOVED,
   CARD_MEMBER_JOINED = TrelloWebhookDetailedActions.CARD_MEMBER_JOINED,
   CARD_MEMBER_LEFT = TrelloWebhookDetailedActions.CARD_MEMBER_LEFT,
 
-  CARD_DUE_DATE_ADDED = TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED,
-  CARD_DUE_DATE_CHANGED = TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
   CARD_START_DATE_ADDED = TrelloWebhookDetailedActions.CARD_START_DATE_ADDED,
   CARD_START_DATE_CHANGED = TrelloWebhookDetailedActions.CARD_START_DATE_CHANGED,
+  CARD_START_DATE_REMOVED = TrelloWebhookDetailedActions.CARD_START_DATE_REMOVED,
+
+  CARD_DUE_DATE_ADDED = TrelloWebhookDetailedActions.CARD_DUE_DATE_ADDED,
+  CARD_DUE_DATE_CHANGED = TrelloWebhookDetailedActions.CARD_DUE_DATE_CHANGED,
+  CARD_DUE_DATE_REMOVED = TrelloWebhookDetailedActions.CARD_DUE_DATE_REMOVED,
+  CARD_DUE_DATE_MARKED_COMPLETE = TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_COMPLETE,
+  CARD_DUE_DATE_MARKED_INCOMPLETE = TrelloWebhookDetailedActions.CARD_DUE_DATE_MARKED_INCOMPLETE,
+
+  CARD_MOVED_FROM_BOARD = TrelloWebhookDetailedActions.CARD_MOVED_FROM_BOARD,
+  CARD_MOVED_TO_BOARD = TrelloWebhookDetailedActions.CARD_MOVED_TO_BOARD,
+  CARD_MOVED_TO_LIST = TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST,
 
   CARD_LABEL_ADDED = TrelloWebhookDetailedActions.CARD_LABEL_ADDED,
   CARD_LABEL_REMOVED = TrelloWebhookDetailedActions.CARD_LABEL_REMOVED,
 
   CARD_COMMENT_ADDED = TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
   CARD_ATTACHMENT_ADDED = TrelloWebhookDetailedActions.CARD_ATTACHMENT_ADDED,
+  CARD_ATTACHMENT_REMOVED = TrelloWebhookDetailedActions.CARD_ATTACHMENT_REMOVED,
 
+  CUSTOM_FIELD_ITEM_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
+}
+
+export enum TrelloWebhookChecklistActions {
   CARD_CHECKLIST_ADDED = TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED,
   CARD_CHECKLIST_REMOVED = TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED,
+  CARD_CHECKLIST_RENAMED = TrelloWebhookDetailedActions.CARD_CHECKLIST_RENAMED,
 
   CHECKLIST_ITEM_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
   CHECKLIST_ITEM_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DELETED,
+  CHECKLIST_ITEM_RENAMED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_RENAMED,
   CHECKLIST_ITEM_MEMBER_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED,
   CHECKLIST_ITEM_MEMBER_REMOVED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED,
   CHECKLIST_ITEM_MEMBER_JOINED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_JOINED,
   CHECKLIST_ITEM_MEMBER_LEFT = TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_LEFT,
-  CHECKLIST_ITEM_DUE_DATE_UPDATED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_UPDATED,
-  CHECKLIST_ITEM_DUE_DATE_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_DELETED,
   CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_COMPLETED,
   CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED,
 
   CHECKLIST_ITEM_CONVERTED_TO_CARD = TrelloWebhookDetailedActions.CHECKLIST_ITEM_CONVERTED_TO_CARD,
 
-  CUSTOM_FIELD_ITEM_UPDATED = TrelloWebhookDetailedActions.CUSTOM_FIELD_ITEM_UPDATED,
+  CHECKLIST_ITEM_DUE_DATE_UPDATED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_UPDATED,
+  CHECKLIST_ITEM_DUE_DATE_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DUE_DATE_DELETED,
+}
 
-  CARD_MOVED_TO_LIST = TrelloWebhookDetailedActions.CARD_MOVED_TO_LIST,
+export enum TrelloWebhookListActions {
+  LIST_CREATED = TrelloWebhookDetailedActions.LIST_CREATED,
+  // LIST_MOVED_LEFT = 'action_moved_list_left',
+  // LIST_MOVED_RIGHT = 'action_moved_list_right',
+  LIST_ARCHIVED = TrelloWebhookDetailedActions.LIST_ARCHIVED,
+  LIST_UNARCHIVED = TrelloWebhookDetailedActions.LIST_UNARCHIVED,
+  LIST_RENAMED = TrelloWebhookDetailedActions.LIST_RENAMED,
+  LIST_DELETED = TrelloWebhookDetailedActions.LIST_DELETED,
 }
 
 export enum TrelloWebhookBoardActions {
@@ -202,21 +236,12 @@ export enum TrelloWebhookBoardActions {
   CUSTOM_FIELD_DELETED = TrelloWebhookDetailedActions.CUSTOM_FIELD_DELETED,
 }
 
-export enum TrelloWebhookListActions {
-  LIST_CREATED = TrelloWebhookDetailedActions.LIST_CREATED,
-  // LIST_MOVED_LEFT = 'action_moved_list_left',
-  // LIST_MOVED_RIGHT = 'action_moved_list_right',
-  LIST_ARCHIVED = TrelloWebhookDetailedActions.LIST_ARCHIVED,
-  LIST_UNARCHIVED = TrelloWebhookDetailedActions.LIST_UNARCHIVED,
-  LIST_RENAMED = TrelloWebhookDetailedActions.LIST_RENAMED,
-  LIST_DELETED = TrelloWebhookDetailedActions.LIST_DELETED,
-}
-
 export enum TrelloWebhookNotificationCategories {
+  PERSONAL = 'personal',
   CARD = 'card',
+  CHECKLIST = 'checklist',
   LIST = 'list',
   BOARD = 'board',
-  PERSONAL = 'personal',
 }
 
 export enum TrelloWebhookNotificationProfiles {
