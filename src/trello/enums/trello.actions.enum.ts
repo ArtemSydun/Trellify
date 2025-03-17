@@ -83,9 +83,9 @@ export enum TrelloWebhookDetailedActions {
   CARD_LABEL_ADDED = 'action_add_label_to_card',
   CARD_LABEL_REMOVED = 'action_remove_label_from_card',
 
-  CARD_CHECKLIST_ADDED = 'action_add_checklist_to_card',
-  CARD_CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
-  CARD_CHECKLIST_RENAMED = 'action_renamed_checklist',
+  CHECKLIST_ADDED = 'action_add_checklist_to_card',
+  CHECKLIST_REMOVED = 'action_remove_checklist_from_card',
+  CHECKLIST_RENAMED = 'action_renamed_checklist',
 
   // there is no translationKey (detailed action type) for this action, it is hardcoded from generalType
   CHECKLIST_ITEM_ADDED = TrelloWebhookActions.CHECKLIST_ITEM_CREATED,
@@ -184,9 +184,9 @@ export enum TrelloWebhookCardActions {
 }
 
 export enum TrelloWebhookChecklistActions {
-  CARD_CHECKLIST_ADDED = TrelloWebhookDetailedActions.CARD_CHECKLIST_ADDED,
-  CARD_CHECKLIST_REMOVED = TrelloWebhookDetailedActions.CARD_CHECKLIST_REMOVED,
-  CARD_CHECKLIST_RENAMED = TrelloWebhookDetailedActions.CARD_CHECKLIST_RENAMED,
+  CHECKLIST_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ADDED,
+  CHECKLIST_REMOVED = TrelloWebhookDetailedActions.CHECKLIST_REMOVED,
+  CHECKLIST_RENAMED = TrelloWebhookDetailedActions.CHECKLIST_RENAMED,
 
   CHECKLIST_ITEM_ADDED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_ADDED,
   CHECKLIST_ITEM_DELETED = TrelloWebhookDetailedActions.CHECKLIST_ITEM_DELETED,

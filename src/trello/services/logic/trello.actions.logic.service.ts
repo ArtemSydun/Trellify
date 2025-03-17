@@ -677,8 +677,8 @@ export class TrelloActionsLogicService {
         TrelloWebhookChecklistActions,
         (args: any) => string
       > = {
-        [TrelloWebhookChecklistActions.CARD_CHECKLIST_ADDED]: (args) =>
-          this.i18n?.t(I18nKeys.NOTIFICATION_CARD_CHECKLIST_ADDED, {
+        [TrelloWebhookChecklistActions.CHECKLIST_ADDED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_CHECKLIST_ADDED, {
             lang: args.lang,
             args: {
               cardName: args.cardName,
@@ -687,8 +687,8 @@ export class TrelloActionsLogicService {
           }) ||
           `A checklist has been added to the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookChecklistActions.CARD_CHECKLIST_REMOVED]: (args) =>
-          this.i18n?.t(I18nKeys.NOTIFICATION_CARD_CHECKLIST_REMOVED, {
+        [TrelloWebhookChecklistActions.CHECKLIST_REMOVED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_CHECKLIST_REMOVED, {
             lang: args.lang,
             args: {
               cardName: args.cardName,
@@ -697,8 +697,8 @@ export class TrelloActionsLogicService {
           }) ||
           `A checklist has been removed from the card [${cardData?.name}](${cardData?.url}).`,
 
-        [TrelloWebhookChecklistActions.CARD_CHECKLIST_RENAMED]: (args) =>
-          this.i18n?.t(I18nKeys.NOTIFICATION_CARD_CHECKLIST_RENAMED, {
+        [TrelloWebhookChecklistActions.CHECKLIST_RENAMED]: (args) =>
+          this.i18n?.t(I18nKeys.NOTIFICATION_CHECKLIST_RENAMED, {
             lang: args.lang,
             args: {
               oldChecklistName: args.oldChecklistName,
