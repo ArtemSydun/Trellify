@@ -17,6 +17,8 @@ export class RedisService {
   async onModuleInit() {
     const exists = await this.getValue(redisKeys.DAILY_STATS);
 
+    await this.deleteValue('uniqueUsers');
+
     if (!exists) {
       console.log('Initializing daily stats memory data');
       await this.initializeDailyStats();
