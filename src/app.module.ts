@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from './discord/discord.module';
 import { DistributionModule } from './distribution/distribution.module';
 import { RedisModule } from './redis/redis.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TrelloModule } from './trello/trello.module';
 import { UsersModule } from './user/users.module';
@@ -46,6 +47,7 @@ import { UsersModule } from './user/users.module';
     CronModule,
     DistributionModule,
     DiscordModule,
+    SubscriptionModule,
   ],
   controllers: [],
   providers: [

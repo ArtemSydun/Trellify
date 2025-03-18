@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Client } from 'discord.js';
 import { Context, ContextOf, Once } from 'necord';
-// import { configServiceEnum } from 'src/common/enums/config.service.enum';
+// import { configService } from 'src/common/enums/config.service.enum';
 
 @SkipThrottle()
 @Injectable()
@@ -18,7 +18,7 @@ export class DiscordService {
     // this.client.once('ready', async () => {
     //   if (!this.client.user || !this.client.application) return;
     //   const guildId = this.configService.get(
-    //     configServiceEnum.DISCORD_DEVELOPMENT_GUILD_ID,
+    //     configService.DISCORD_DEVELOPMENT_GUILD_ID,
     //   ); // Replace with your actual guild ID
     //   const guild = this.client.guilds.cache.get(guildId);
     //   if (!guild) {

@@ -1,10 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectBot } from 'nestjs-telegraf';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { Telegraf, Context } from 'telegraf';
@@ -39,7 +39,7 @@ export class AdminBotService implements OnModuleInit {
       }
 
       const user: User = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
       if (user) {
@@ -85,21 +85,21 @@ export class AdminBotService implements OnModuleInit {
     let notification: string;
 
     switch (action) {
-      case AdminBotActionsEnum.USER_REGISTERED: {
+      case AdminBotActions.USER_REGISTERED: {
         const { email } = payload;
         notification =
           `User ${email} registered in Trellify successfully \n` + dateString;
         break;
       }
 
-      case AdminBotActionsEnum.USER_DELETED: {
+      case AdminBotActions.USER_DELETED: {
         const { email } = payload;
         notification =
           `User ${email} deleted from Trellify successfully \n` + dateString;
         break;
       }
 
-      case AdminBotActionsEnum.CONTACT_US: {
+      case AdminBotActions.CONTACT_US: {
         const { email, subject, message, authorized } = payload;
         notification =
           `${authorized ? '<b>Trellify User</b>' : '<b>Website Visitor</b>'} ${email} sent a message via <b>Contact Us</b> form.\n\n` +

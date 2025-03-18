@@ -20,7 +20,7 @@ import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { RedisService } from 'src/redis/services/redis.service';
@@ -289,7 +289,7 @@ describe('AuthService', () => {
       );
 
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.USER_REGISTERED,
+        AdminBotActions.USER_REGISTERED,
         {
           email: 'test@example.com',
           password: 'hashedpassword',

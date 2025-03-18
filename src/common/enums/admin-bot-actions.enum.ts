@@ -1,4 +1,4 @@
-export enum AdminBotActionsEnum {
+export enum AdminBotActions {
   USER_REGISTERED = 'USER_REGISTERED',
   USER_DELETED = 'USER_DELETED',
   CONTACT_US = 'CONTACT_US',

@@ -6,6 +6,8 @@ import {
   NotFoundException,
   Logger,
   ForbiddenException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -14,8 +16,8 @@ import {
   TrelloWebhooksLogicService,
 } from '@trello/logic';
 import { I18nContext } from 'nestjs-i18n';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -30,6 +32,9 @@ import {
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { RedisService } from 'src/redis/services/redis.service';
+import { Subscription } from 'src/subscription/entities/subscription.entity';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
@@ -43,7 +48,7 @@ import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 
 import { UsersRepository } from '../repositories/users.repository';
@@ -61,6 +66,8 @@ export class UsersService {
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
@@ -92,13 +99,38 @@ export class UsersService {
       );
     }
 
+    const trialSubscriptionPlan =
+      await this.subscriptionService.findSubscriptionByName(
+        SubscriptionPlans.TRIAL,
+        i18n,
+      );
+
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
       password: await hashPassword(createUserDto.password),
+      subscription: {
+        id: trialSubscriptionPlan.id,
+        plan: trialSubscriptionPlan.name,
+        amount: trialSubscriptionPlan.price,
+        lastPaymentDate: null,
+        nextPaymentDate: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() + 14);
+          return date;
+        })(),
+      },
     };
 
     const createdUser = await this.userRepository.create(newUser);
+
+    if (createdUser) {
+      await this.subscriptionService.addSubscriberToPlan(
+        trialSubscriptionPlan,
+        createdUser,
+        i18n,
+      );
+    }
     this.logger.log(
       `User with email ${createUserDto.email} created successfully`,
     );
@@ -178,7 +210,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -190,9 +222,14 @@ export class UsersService {
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
 
+    await this.subscriptionService.removeSubscriberFromPlan(
+      targetUser.subscription.id,
+      targetUser,
+    );
+
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         targetUser,
       );
 
@@ -298,6 +335,10 @@ export class UsersService {
     return usersByTrelloId;
   }
 
+  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
+    return this.userRepository.findUsersConnectedToWebhook(webhookId);
+  }
+
   public async findWebhooksUserIsSubscribedOn(
     user: string | User,
     i18n?: I18nContext,
@@ -311,6 +352,26 @@ export class UsersService {
       );
 
     return webhooks;
+  }
+
+  public async findUserByProperty(
+    path: UserSearchPath,
+    value: any,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const user = await this.userRepository.findUserByProperty(path, value);
+    if (!user) {
+      this.logger.warn(`User with property ${path}: ${value} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
+          args: { path, value },
+        }) || `User with property ${path}: ${value} not found`,
+      );
+    }
+
+    this.logger.log(`User with property ${path}: ${value} found`);
+    delete user.password;
+    return user;
   }
 
   public async doesUserExist(email: string): Promise<boolean> {
@@ -341,7 +402,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+              this.configService.get(configServiceKeys.ENCRYPTION_KEY),
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -436,30 +497,6 @@ export class UsersService {
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
 
-  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.userRepository.findUsersConnectedToWebhook(webhookId);
-  }
-
-  public async findUserByProperty(
-    path: UserSearchPathEnum,
-    value: any,
-    i18n?: I18nContext,
-  ): Promise<User> {
-    const user = await this.userRepository.findUserByProperty(path, value);
-    if (!user) {
-      this.logger.warn(`User with property ${path}: ${value} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
-          args: { path, value },
-        }) || `User with property ${path}: ${value} not found`,
-      );
-    }
-
-    this.logger.log(`User with property ${path}: ${value} found`);
-    delete user.password;
-    return user;
-  }
-
   public async manageUserTelegramConnection(
     user: string | User,
     connectTelegramDto: ConnectTelegramDto,
@@ -471,7 +508,7 @@ export class UsersService {
 
     if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
 
@@ -498,7 +535,7 @@ export class UsersService {
       connectTelegramDto,
       i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
         args: {
-          workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+          workspacesLink: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces`,
         },
       }) || `Trellify authorized successfully`,
     );
@@ -529,7 +566,7 @@ export class UsersService {
 
     if (userId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.DiscordUserId,
+        UserSearchPath.DiscordUserId,
         userId,
       );
 
@@ -537,7 +574,7 @@ export class UsersService {
         userId,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
           args: {
-            workspacesLink: `<${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/workspaces?`,
+            workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
           },
         }) || 'Discord connected successfully',
       );
@@ -617,7 +654,7 @@ export class UsersService {
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
       updatedUserProps.trello.token = encryptText(
         token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
       );
     } else {
       updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -634,7 +671,7 @@ export class UsersService {
       );
 
     const connectedUser = await this.userRepository.findUserByProperty(
-      UserSearchPathEnum.TrelloUserId,
+      UserSearchPath.TrelloUserId,
       trelloProfile.id,
     );
 
@@ -680,7 +717,7 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPathEnum.TrelloWebhooks]: {
+            [UserSearchPath.TrelloWebhooks]: {
               webhookId: webhookToRemove.id,
             },
           },
@@ -718,6 +755,57 @@ export class UsersService {
     }
   }
 
+  public async changeSubscriptionPlan(
+    user: string | User,
+    targetSubscription: string | Subscription,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user);
+
+    const oldSubscription = await this.subscriptionService.getSubscription(
+      userToUpdate.subscription.id,
+      i18n,
+    );
+
+    const newSubscription = await this.subscriptionService.getSubscription(
+      targetSubscription,
+      i18n,
+    );
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      oldSubscription,
+      userToUpdate,
+      i18n,
+    );
+
+    await this.subscriptionService.addSubscriberToPlan(
+      newSubscription,
+      userToUpdate,
+      i18n,
+    );
+
+    const updatedUser = await this.updateUser(userToUpdate, {
+      subscription: {
+        ...userToUpdate.subscription,
+        id: newSubscription.id,
+        plan: newSubscription.name as SubscriptionPlans,
+      },
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+          args: {
+            user: userToUpdate.email,
+            subscription: newSubscription.name,
+          },
+        }) ||
+        `User ${userToUpdate.email} successfully successfully changed plan to ${newSubscription.name}`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
   public async contactUs(
     formBody: ContactUsDto,
     i18n?: I18nContext,
@@ -733,7 +821,7 @@ export class UsersService {
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         {
           email,
           subject,

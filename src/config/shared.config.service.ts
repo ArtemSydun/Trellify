@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { configServiceEnum } from '../common/enums/config.service.enum';
+import { configServiceKeys } from '../common/enums/config-service-keys.enum';
 
 @Injectable()
 export class SharedConfigService {
@@ -10,11 +10,11 @@ export class SharedConfigService {
 
   constructor(private readonly configService: ConfigService) {
     this.encryptionKey =
-      this.configService.get<string>(configServiceEnum.ENCRYPTION_KEY) || '';
+      this.configService.get<string>(configServiceKeys.ENCRYPTION_KEY) || '';
     this.trelloApiKey =
-      this.configService.get<string>(configServiceEnum.TRELLO_API_KEY) || '';
+      this.configService.get<string>(configServiceKeys.TRELLO_API_KEY) || '';
     this.webhookCallbackURL =
-      this.configService.get<string>(configServiceEnum.BACKEND_LINK) +
+      this.configService.get<string>(configServiceKeys.BACKEND_LINK) +
       `/trello/webhooks/provider`;
   }
 

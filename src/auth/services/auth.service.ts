@@ -10,8 +10,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { I18nContext } from 'nestjs-i18n';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
@@ -190,7 +190,7 @@ export class AuthService {
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.USER_REGISTERED,
+        AdminBotActions.USER_REGISTERED,
         newUser,
       );
 
@@ -223,7 +223,7 @@ export class AuthService {
       { id: user.id },
       {
         expiresIn:
-          this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+          this.configService.get(configServiceKeys.JWT_EXPIRES_CONFIRMATIONS) ||
           '15m',
       },
     );
@@ -299,7 +299,7 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload, {
       expiresIn:
-        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        this.configService.get(configServiceKeys.JWT_EXPIRES_CONFIRMATIONS) ||
         '15m',
     });
     await this.mailService.sendChangeEmailLink(newEmail, token, i18n);
@@ -368,7 +368,7 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload, {
       expiresIn:
-        this.configService.get(configServiceEnum.JWT_EXPIRES_CONFIRMATIONS) ||
+        this.configService.get(configServiceKeys.JWT_EXPIRES_CONFIRMATIONS) ||
         '15m',
     });
 

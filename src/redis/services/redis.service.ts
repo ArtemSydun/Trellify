@@ -4,8 +4,8 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
-import { dailyStatsEnum } from '../enums/daily-stats.enum';
-import { redisKeysEnum } from '../enums/redis-keys.enum';
+import { dailyStatsKeys } from '../enums/daily-stats.enum';
+import { redisKeys } from '../enums/redis-keys.enum';
 
 @Injectable()
 export class RedisService {
@@ -15,7 +15,9 @@ export class RedisService {
   ) {}
 
   async onModuleInit() {
-    const exists = await this.getValue(redisKeysEnum.DAILY_STATS);
+    const exists = await this.getValue(redisKeys.DAILY_STATS);
+
+    await this.deleteValue('uniqueUsers');
 
     if (!exists) {
       console.log('Initializing daily stats memory data');
@@ -58,8 +60,8 @@ export class RedisService {
 
   async initializeDailyStats(): Promise<string> {
     // Convert dailyStatsEnum values into an object with all values set to 0
-    const dailyStatsKeys = Object.values(dailyStatsEnum);
-    const dailyStats = dailyStatsKeys.reduce(
+    const dailyStatsVars = Object.values(dailyStatsKeys);
+    const dailyStats = dailyStatsVars.reduce(
       (acc, key) => {
         acc[key] = 0;
         return acc;
@@ -68,13 +70,13 @@ export class RedisService {
     );
 
     return await this.setValue(
-      redisKeysEnum.DAILY_STATS,
+      redisKeys.DAILY_STATS,
       JSON.stringify(dailyStats),
     );
   }
 
   async updateDailyStats(key: string, value: number): Promise<string> {
-    const dailyStats = await this.getValue(redisKeysEnum.DAILY_STATS);
+    const dailyStats = await this.getValue(redisKeys.DAILY_STATS);
 
     const keyValue = JSON.parse(dailyStats)[key];
 
@@ -84,7 +86,7 @@ export class RedisService {
     };
 
     return await this.setValue(
-      redisKeysEnum.DAILY_STATS,
+      redisKeys.DAILY_STATS,
       JSON.stringify(updatedDailyStats),
     );
   }

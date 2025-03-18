@@ -2,7 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersModule } from 'src/user/users.module';
 import { session } from 'telegraf';
@@ -16,7 +16,7 @@ import { NotificationBotService } from './notification-bot/notification-bot.serv
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         token: configService.get<string>(
-          configServiceEnum.TELEGRAM_NOTIFICATION_BOT_TOKEN,
+          configServiceKeys.TELEGRAM_NOTIFICATION_BOT_TOKEN,
         ),
         middlewares: [session()],
       }),
@@ -27,7 +27,7 @@ import { NotificationBotService } from './notification-bot/notification-bot.serv
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         token: configService.get<string>(
-          configServiceEnum.TELEGRAM_ADMIN_BOT_TOKEN,
+          configServiceKeys.TELEGRAM_ADMIN_BOT_TOKEN,
         ),
 
         middlewares: [session()],

@@ -1,4 +1,4 @@
-export const enum configServiceEnum {
+export const enum configServiceKeys {
   NODE_ENV = 'NODE_ENV',
 
   BACKEND_PORT = 'BACKEND_PORT',
