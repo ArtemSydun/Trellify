@@ -9,12 +9,18 @@ import {
   isBefore,
   parseISO,
 } from 'date-fns';
+import { I18nService } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { Languages } from 'src/common/enums/languages.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
-import { redisKeysEnum } from 'src/redis/enums/redis-keys.enum';
+import { DiscordService } from 'src/discord/discord.service';
+import { redisKeys } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
+import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
 
 @Injectable()
@@ -27,6 +33,9 @@ export class CronService {
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly adminBotService: AdminBotService,
+    private readonly notificationBotService: NotificationBotService,
+    private readonly discordService: DiscordService,
+    private readonly i18nService: I18nService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -142,7 +151,7 @@ export class CronService {
 
   //if server is down at this moment, it will send daily stats when the server will up
   //but if server was down more then one day, we do not guarantee
-  //data accuracy, because uniqueUsers based on lastLoginDate of user object,
+  //data accuracy, because loginnedUsers based on lastLoginDate of user object,
   @Cron('55 23 * * *')
   async dailyStatsClosing(formattedYesterday?: string) {
     let statsDate: Date;
@@ -187,7 +196,7 @@ export class CronService {
 
     // Get stored daily stats
     const dailyStats = JSON.parse(
-      await this.redisService.getValue(redisKeysEnum.DAILY_STATS),
+      await this.redisService.getValue(redisKeys.DAILY_STATS),
     );
 
     // Generate notification message
@@ -196,7 +205,7 @@ export class CronService {
       {
         ...dailyStats,
         newUsers: newUsers.total,
-        uniqueUsers: usersLoggedIn.total,
+        loginnedUsers: usersLoggedIn.total,
       },
     );
 
@@ -205,7 +214,7 @@ export class CronService {
 
     // Store last execution date in ISO format (for consistency)
     await this.redisService.setValue(
-      redisKeysEnum.LAST_DAILY_NOTIFY,
+      redisKeys.LAST_DAILY_NOTIFY,
       statsDate.toISOString(),
     );
 
@@ -215,7 +224,7 @@ export class CronService {
 
   async checkAndRecoverMissedStats() {
     const lastExecutionISO = await this.redisService.getValue(
-      redisKeysEnum.LAST_DAILY_NOTIFY,
+      redisKeys.LAST_DAILY_NOTIFY,
     );
 
     const yesterday = new Date();
@@ -227,7 +236,7 @@ export class CronService {
         `No previous execution found, setting to ${yesterday.toISOString()}`,
       );
       await this.redisService.setValue(
-        redisKeysEnum.LAST_DAILY_NOTIFY,
+        redisKeys.LAST_DAILY_NOTIFY,
         yesterday.toISOString(),
       );
       return; // No need to recover anything yet
@@ -255,7 +264,7 @@ export class CronService {
 
       // Update Redis to mark the recovered date as processed
       await this.redisService.setValue(
-        redisKeysEnum.LAST_DAILY_NOTIFY,
+        redisKeys.LAST_DAILY_NOTIFY,
         yesterday.toISOString(),
       );
     } else {
@@ -263,5 +272,70 @@ export class CronService {
         `Daily stats for ${yesterday.toISOString()} have already been processed.`,
       );
     }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyAboutSubscriptionPayment() {
+    const now = new Date();
+
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    ).toISOString();
+    const todayEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).toISOString();
+
+    const usersToNotify = await this.usersService.findAll({
+      date: UserSearchPath.SubscriptionNextPayment,
+      fromDate: todayStart,
+      toDate: todayEnd,
+      limit: 10000,
+    });
+
+    // Create an array of promises for sending notifications
+    const notificationPromises = usersToNotify.data.map(async (user) => {
+      const promises = [];
+      const userLanguage = user.language || Languages.EN;
+      const message = this.i18nService.t(
+        I18nKeys.MESSAGES_SUBSCRIPTION_EXPIRING,
+        {
+          lang: userLanguage,
+          args: {
+            subscription: user.subscription.plan,
+          },
+        },
+      );
+
+      if (user.telegram?.chatId) {
+        promises.push(
+          this.notificationBotService.sendMessageToUser(user.telegram, message),
+        );
+      }
+
+      if (user.discord?.userId) {
+        promises.push(
+          this.discordService.sendDirectMessage(user.discord.userId, message),
+        );
+      }
+
+      return Promise.all(promises); // Ensure all messages for this user are sent in parallel
+    });
+
+    // Wait for all notifications to be sent
+    await Promise.all(notificationPromises);
+
+    console.log('All notifications sent.');
   }
 }

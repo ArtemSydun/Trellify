@@ -1,5 +1,4 @@
 import { Optional } from '@nestjs/common';
-import { Prop } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TelegramSettings {
@@ -10,7 +9,6 @@ export class TelegramSettings {
     nullable: true,
   })
   @Optional()
-  @Prop({ required: false })
   username?: string;
 
   @ApiProperty({
@@ -20,13 +18,8 @@ export class TelegramSettings {
     nullable: true,
   })
   @Optional()
-  @Prop({ required: false })
   chatId?: number;
 
-  @Prop({
-    default: () => new Date(),
-    required: false,
-  })
   @Optional()
   updatedAt?: Date;
 }

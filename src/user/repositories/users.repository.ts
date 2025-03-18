@@ -5,7 +5,7 @@ import { DefaultPaginatedResponse } from 'src/common/interfaces/responses';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class UsersRepository {
 
   async findOneByTrelloId(trelloUserId: string): Promise<User> {
     return this.UserModel.findOne({
-      [UserSearchPathEnum.TrelloUserId]: trelloUserId,
+      [UserSearchPath.TrelloUserId]: trelloUserId,
     })
       .lean()
       .exec();
@@ -38,22 +38,19 @@ export class UsersRepository {
   async findAdmins(): Promise<User[]> {
     return this.UserModel.find({
       role: { $in: [UserRoles.admin, UserRoles.superadmin] },
-      // [UserSearchPathEnum.TelegramChatId]: { $exists: true, $ne: null },
+      // [UserSearchPath.TelegramChatId]: { $exists: true, $ne: null },
     }).exec();
   }
 
   async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {
     return this.UserModel.find({
-      [UserSearchPathEnum.TrelloUserId]: { $in: trelloUserIds },
+      [UserSearchPath.TrelloUserId]: { $in: trelloUserIds },
     })
       .lean()
       .exec();
   }
 
-  async findUserByProperty(
-    path: UserSearchPathEnum,
-    value: any,
-  ): Promise<User> {
+  async findUserByProperty(path: UserSearchPath, value: any): Promise<User> {
     const query = {};
 
     if (Array.isArray(value)) {
@@ -107,6 +104,7 @@ export class UsersRepository {
       telegramChatId,
       telegramUserName,
       language,
+      subscriptionPlan,
     } = filters;
     const perPage = limit; // Elements per page
     const offset = (page - 1) * perPage; // Calculate skip amount
@@ -120,20 +118,22 @@ export class UsersRepository {
       if (fromDate) query[date].$gte = new Date(fromDate);
       if (toDate) query[date].$lte = new Date(toDate);
     }
-    if (trelloUserId) query[UserSearchPathEnum.TrelloUserId] = trelloUserId;
+    if (trelloUserId) query[UserSearchPath.TrelloUserId] = trelloUserId;
     if (trelloUserName)
-      query[UserSearchPathEnum.TrelloUsername] = {
+      query[UserSearchPath.TrelloUsername] = {
         $regex: trelloUserName,
         $options: 'i',
       };
-    if (telegramChatId)
-      query[UserSearchPathEnum.TelegramChatId] = +telegramChatId;
+    if (telegramChatId) query[UserSearchPath.TelegramChatId] = +telegramChatId;
     if (telegramUserName)
-      query[UserSearchPathEnum.TelegramUsername] = {
+      query[UserSearchPath.TelegramUsername] = {
         $regex: telegramUserName,
         $options: 'i',
       };
     if (language) query.language = language;
+
+    if (subscriptionPlan)
+      query[UserSearchPath.SubscriptionPlan] = subscriptionPlan;
 
     // Define sorting
     const sortOrder = order === 'asc' ? 1 : -1;
@@ -158,7 +158,7 @@ export class UsersRepository {
 
   async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
     return this.UserModel.find({
-      [UserSearchPathEnum.TrelloWebhooksIds]: webhookId,
+      [UserSearchPath.TrelloWebhooksIds]: webhookId,
     }).exec();
   }
 }

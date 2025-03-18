@@ -1,5 +1,4 @@
 import { Optional } from '@nestjs/common';
-import { Prop } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DiscordSettings {
@@ -10,7 +9,6 @@ export class DiscordSettings {
     nullable: true,
     type: String,
   })
-  @Prop({ required: false })
   @Optional()
   userId?: string | null;
 
@@ -20,14 +18,9 @@ export class DiscordSettings {
     required: false,
     nullable: true,
   })
-  @Prop({ required: false })
   @Optional()
   username?: string | null;
 
-  @Prop({
-    default: () => new Date(),
-    required: false,
-  })
   @Optional()
   updatedAt?: Date;
 }

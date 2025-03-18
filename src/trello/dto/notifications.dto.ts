@@ -22,13 +22,6 @@ export class NotificationCategoriesDto {
   personal: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to board events with user IDs.',
-    type: Object,
-    example: initializeNotificationArrays('userId1').board,
-  })
-  board: Record<string, string[]>;
-
-  @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
     example: initializeNotificationArrays('userId1').card,
@@ -36,11 +29,18 @@ export class NotificationCategoriesDto {
   card: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to board events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').admin,
+    example: initializeNotificationArrays('userId1').board,
   })
-  admin: Record<string, string[]>;
+  board: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to list events with user IDs.',
+    type: Object,
+    example: initializeNotificationArrays('userId1').list,
+  })
+  list: Record<string, string[]>;
 }
 
 export class NotificationBooleansDto {
@@ -55,15 +55,6 @@ export class NotificationBooleansDto {
   personal: Record<string, boolean>;
 
   @ApiProperty({
-    description: 'Notifications related to board events with user IDs.',
-    type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .board,
-  })
-  @IsNotEmptyObject()
-  board: Record<string, boolean>;
-
-  @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
@@ -73,13 +64,22 @@ export class NotificationBooleansDto {
   card: Record<string, boolean>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to board events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .admin,
+      .board,
   })
   @IsNotEmptyObject()
-  admin: Record<string, boolean>;
+  board: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to list events with user IDs.',
+    type: Object,
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
+      .list,
+  })
+  @IsNotEmptyObject()
+  list: Record<string, boolean>;
 }
 
 export class UpdateNotificationsDto {

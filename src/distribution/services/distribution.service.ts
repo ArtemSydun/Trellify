@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { format } from 'fast-csv';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { CreateDistributionSubscriberDto } from '../dto/create-distribution-subscriber.dto';
@@ -29,7 +29,7 @@ export class DistributionService {
   public async sendDistribution(
     subject: string,
   ): Promise<DefaultResponse<null>> {
-    const distributor = this.configService.get(configServiceEnum.MAILER_SENDER);
+    const distributor = this.configService.get(configServiceKeys.MAILER_SENDER);
 
     const sendDate = new Date();
 
@@ -37,7 +37,7 @@ export class DistributionService {
 
     const senderPromises = distributionSubscribers.map((subscriber) => {
       const html = htmlTemplate1(
-        this.configService.get(configServiceEnum.BACKEND_LINK),
+        this.configService.get(configServiceKeys.BACKEND_LINK),
         subscriber.id,
       );
 

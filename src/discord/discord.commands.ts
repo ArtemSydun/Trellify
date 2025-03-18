@@ -4,10 +4,10 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { I18nService } from 'nestjs-i18n';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages, supportedLanguages } from 'src/common/enums/languages.enum';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { DiscordService } from './discord.service';
 
@@ -27,7 +27,7 @@ export class DiscordCommands {
   })
   public async onStart(@Context() [interaction]: SlashCommandContext) {
     // console.log(interaction);
-    const frontendUrl = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/discord?userId=${interaction.user.id}&username=${interaction.user.username}`;
+    const frontendUrl = `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/settings/discord?userId=${interaction.user.id}&username=${interaction.user.username}`;
     const button = new ButtonBuilder()
       .setLabel('Authorize Trellify')
       .setStyle(ButtonStyle.Link)
@@ -55,7 +55,7 @@ export class DiscordCommands {
       : Languages.EN;
 
     const user = await this.userRepository.findUserByProperty(
-      UserSearchPathEnum.DiscordUserId,
+      UserSearchPath.DiscordUserId,
       userId,
     );
 
@@ -73,7 +73,7 @@ export class DiscordCommands {
     const steps = this.i18n.t(I18nKeys.MESSAGES_GENERAL_HELP_STEPS, {
       lang: userLanguage,
       args: {
-        websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
+        websiteUrl: this.configService.get(configServiceKeys.FRONTEND_LINK),
       },
     });
 
