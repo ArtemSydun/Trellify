@@ -118,9 +118,9 @@ export enum I18nKeys {
 
   NOTIFICATION_CUSTOM_FIELD_ITEM_UPDATED = 'common.messages.notifications.card.customFieldItemUpdated',
 
-  NOTIFICATION_CHECKLIST_ADDED = 'common.messages.notifications.checklist.cardChecklistAdded',
-  NOTIFICATION_CHECKLIST_REMOVED = 'common.messages.notifications.checklist.cardChecklistRemoved',
-  NOTIFICATION_CHECKLIST_RENAMED = 'common.messages.notifications.checklist.cardChecklistRenamed',
+  NOTIFICATION_CHECKLIST_ADDED = 'common.messages.notifications.checklist.checklistAdded',
+  NOTIFICATION_CHECKLIST_REMOVED = 'common.messages.notifications.checklist.checklistRemoved',
+  NOTIFICATION_CHECKLIST_RENAMED = 'common.messages.notifications.checklist.checklistRenamed',
   NOTIFICATION_CHECKLIST_ITEM_ADDED = 'common.messages.notifications.checklist.checklistItemAdded',
   NOTIFICATION_CHECKLIST_ITEM_DELETED = 'common.messages.notifications.checklist.checklistItemDeleted',
   NOTIFICATION_CHECKLIST_ITEM_RENAMED = 'common.messages.notifications.checklist.checklistItemRenamed',

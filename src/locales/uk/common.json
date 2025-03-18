@@ -120,9 +120,9 @@
                 "listDeleted": "Список {listname} було видалено з дошки [{boardName}]({boardUrl})"
             },
             "checklist": {
-                "cardChecklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
-                "cardChecklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
-                "cardChecklistRenamed": "Чек-лист '{oldChecklistName}' було перейменовано на '{checklistName}' в картці [{cardName}]({cardUrl}).",
+                "checklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
+                "checklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+                "checklistRenamed": "Чек-лист '{oldChecklistName}' було перейменовано на '{checklistName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
                 "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
                 "checklistItemRenamed": "Елемент чеклиста, '{oldChecklistItemName}', було перейменовано в '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
