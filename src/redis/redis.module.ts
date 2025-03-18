@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule as NestRedisModule } from '@nestjs-modules/ioredis';
 import { AuthModule } from 'src/auth/auth.module';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
+import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { RedisService } from './services/redis.service';
 
 @Module({
@@ -16,6 +17,7 @@ import { RedisService } from './services/redis.service';
       }),
     }),
     forwardRef(() => AuthModule),
+    forwardRef(() => SubscriptionModule),
   ],
   providers: [RedisService],
   exports: [RedisService],

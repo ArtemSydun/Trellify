@@ -60,6 +60,19 @@ export const defaultActionsKeys = getKeysFromProfileActions(
   TrelloWebhookDetailedActions,
 );
 
+export const getActionEnumKey = (actionType) => {
+  if (Object.values(TrelloWebhookDetailedActions).includes(actionType)) {
+    return toCamelCase(
+      Object.keys(TrelloWebhookDetailedActions).find(
+        (key) => TrelloWebhookDetailedActions[key] === actionType,
+      ),
+      '_',
+    );
+  }
+
+  return null;
+};
+
 // Initialize notification arrays for a specific category
 export const initializeCategoryNotifications = (
   trelloUserId: string,

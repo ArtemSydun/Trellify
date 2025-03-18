@@ -10,6 +10,7 @@ import { Languages } from 'src/common/enums/languages.enum';
 import { escapeMarkdown } from 'src/common/helpers/telegram';
 import { notificationMessageGenerator } from 'src/common/helpers/trello-notifications';
 import { DiscordService } from 'src/discord/discord.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { TrelloCard } from 'src/trello/dto/card.dto';
@@ -39,6 +40,7 @@ export class TrelloActionsLogicService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly discordService: DiscordService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,
   ) {}
@@ -54,6 +56,9 @@ export class TrelloActionsLogicService {
     try {
       const targetUser =
         await this.userService.findUserByTrelloId(userTrelloId);
+
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const serverDate = new Date(webhookAction?.action?.date);
@@ -172,6 +177,13 @@ export class TrelloActionsLogicService {
           );
         }
 
+        if (!availablePlans.includes(targetUser.subscription.plan)) {
+          this.logger.warn(
+            `User ${targetUser.email} does not have subscription`,
+          );
+          return;
+        }
+
         const userTimeZone = new Date(
           addMinutes(serverDate, (targetUser.timezone || 0) * 60),
         );
@@ -246,6 +258,9 @@ export class TrelloActionsLogicService {
     try {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
+
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const serverDate = new Date(webhookAction?.action?.date);
 
@@ -551,6 +566,13 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
+        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
+
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(
@@ -652,6 +674,9 @@ export class TrelloActionsLogicService {
     try {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
+
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const serverDate = new Date(webhookAction?.action?.date);
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
@@ -865,6 +890,13 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
+        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
+
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(
@@ -966,6 +998,9 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(userTrelloIds);
 
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
+
       const listName = webhookAction?.action?.data?.list?.name;
       const oldListName = webhookAction?.action?.data?.old?.name;
 
@@ -1031,6 +1066,13 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
+        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
+
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(
@@ -1112,6 +1154,9 @@ export class TrelloActionsLogicService {
     try {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(userTrelloIds);
+
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const oldBoardName = webhookAction?.action?.data?.old?.name;
 
@@ -1293,6 +1338,12 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
+        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(

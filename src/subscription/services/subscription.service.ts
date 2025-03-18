@@ -10,7 +10,9 @@ import {
 import { isUUID } from 'class-validator';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
+import { getActionEnumKey } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { RedisService } from 'src/redis/services/redis.service';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
@@ -25,6 +27,8 @@ export class SubscriptionService {
     private readonly subscriptionRepository: SubscriptionRepository,
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
+    @Inject(forwardRef(() => RedisService))
+    private readonly redisService: RedisService,
   ) {}
 
   public async getSubscription(
@@ -124,9 +128,11 @@ export class SubscriptionService {
       updateSubscriptionDto,
     );
 
+    await this.redisService.initializeSubscriptionPlans();
+
     return {
       message:
-        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY, {
           args: { subscription: subscriptionToUpdate.name },
         }) ||
         `Subscription plan ${subscriptionToUpdate.name} updated successfully`,
@@ -228,5 +234,25 @@ export class SubscriptionService {
         }) || `Subscription ${subscriptionToDelete.name} deleted successfully`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  async actionAvailablePlans(actionType: any): Promise<string[]> {
+    const allPlans = JSON.parse(await this.redisService.getSubscriptionPlans());
+    const enumKey = getActionEnumKey(actionType);
+
+    const availablePlans: string[] = [];
+
+    // Iterate over the plans (Object.entries gives [planName, planData])
+    for (const [planName, planData] of Object.entries(allPlans)) {
+      for (const notifications of Object.values(planData)) {
+        // Ensure the category exists and contains the action type before accessing it
+        if (notifications && notifications[enumKey] === true) {
+          availablePlans.push(planName);
+          break; // No need to check other categories for this plan, move to next plan
+        }
+      }
+    }
+
+    return availablePlans;
   }
 }

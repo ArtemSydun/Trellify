@@ -1,16 +1,24 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
-import { dailyStatsKeys } from '../enums/daily-stats.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { dailyStatsKeys } from '../enums/daily-stats-keys.enum';
 import { redisKeys } from '../enums/redis-keys.enum';
 
 @Injectable()
 export class RedisService {
   constructor(
     @InjectRedis() private readonly redis: Redis,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -18,6 +26,8 @@ export class RedisService {
     const exists = await this.getValue(redisKeys.DAILY_STATS);
 
     await this.deleteValue('uniqueUsers');
+
+    await this.initializeSubscriptionPlans();
 
     if (!exists) {
       console.log('Initializing daily stats memory data');
@@ -73,6 +83,30 @@ export class RedisService {
       redisKeys.DAILY_STATS,
       JSON.stringify(dailyStats),
     );
+  }
+
+  async initializeSubscriptionPlans(): Promise<string> {
+    // Fetch all subscription plans
+    const subscriptionPlans = await this.subscriptionService.findAll();
+
+    // Transform array into an object with plan names as keys and notifications as values
+    const subscriptionPlansObject = subscriptionPlans.reduce(
+      (acc, plan) => {
+        acc[plan.name] = plan.notifications;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+
+    // Store the transformed object in Redis
+    return await this.setValue(
+      redisKeys.SUBSCRIPTION_PLANS,
+      JSON.stringify(subscriptionPlansObject),
+    );
+  }
+
+  async getSubscriptionPlans(): Promise<string> {
+    return await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
   }
 
   async updateDailyStats(key: string, value: number): Promise<string> {
