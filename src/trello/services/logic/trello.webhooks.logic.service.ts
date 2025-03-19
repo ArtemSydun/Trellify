@@ -132,10 +132,19 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    const boardData = await this.trelloBoardsApiService.fetchBoardById(
-      decryptedAuthorToken,
-      webhook.idModel,
-    );
+    let boardData;
+
+    try {
+      boardData = await this.trelloBoardsApiService.fetchBoardById(
+        decryptedAuthorToken,
+        webhook.idModel,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error find board ${webhook.boardName}: `,
+        error.message || error.response.message,
+      );
+    }
 
     const updatedWebhookProps: any = {};
     let shouldUpdateUsers = false;
