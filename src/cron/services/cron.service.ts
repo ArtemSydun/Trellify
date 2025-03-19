@@ -60,13 +60,21 @@ export class CronService {
           webhook.author.trelloToken,
           this.encryptionKey,
         );
+        let dateLastActivity;
 
-        const dateLastActivity =
-          await this.trelloBoardsApiService.fetchBoardField(
+        try {
+          dateLastActivity = await this.trelloBoardsApiService.fetchBoardField(
             decryptedAuthorToken,
             webhook.idModel,
             TrelloBoardField.DATE_LAST_ACTIVITY,
           );
+        } catch (error) {
+          this.logger.error(
+            `Webhook for board ${webhook.idModel} check fails: `,
+            error.response.message,
+          );
+          unactiveWebhooks.push(webhook);
+        }
 
         if (!dateLastActivity) {
           console.log(
@@ -95,7 +103,7 @@ export class CronService {
           continue;
         }
 
-        //if webhook has 1 subscriber and disconnected telegram
+        //if webhook has 1 subscriber and disconnected telegram and discord
         if (webhook.subscribers.length === 1) {
           const connectedUser = await this.usersService.findUserByTrelloId(
             webhook.subscribers[0].trelloUserId,
@@ -106,9 +114,16 @@ export class CronService {
             connectedUser.telegram.updatedAt,
           );
 
+          const daysSinceDiscordConnected = differenceInDays(
+            currentDate,
+            connectedUser.discord.updatedAt,
+          );
+
           if (
             daysSinceTelegramConnected >= 30 &&
-            !connectedUser.telegram.chatId
+            daysSinceDiscordConnected >= 30 &&
+            !connectedUser.telegram.chatId &&
+            !connectedUser.discord.userId
           ) {
             unactiveWebhooks.push(webhook);
             continue;
@@ -137,7 +152,7 @@ export class CronService {
             `Error removing webhook for board ${webhook.boardName}:`,
             error.message,
           );
-          this.logger.error(`Error clearing webhook ${webhook}`);
+          this.logger.error(`Error clearing webhook ${webhook.id}`);
         }
       });
 
