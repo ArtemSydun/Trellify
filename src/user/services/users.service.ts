@@ -833,6 +833,7 @@ export class UsersService {
     await this.adminBotService.notifyAdmins(notificationMessage);
 
     await this.redisService.updateDailyStats('contactUs', 1);
+    await this.redisService.updateWeeklyStats('contactUs', 1);
 
     return {
       message:

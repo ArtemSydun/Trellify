@@ -121,11 +121,26 @@ export class AdminBotService implements OnModuleInit {
   async dailyStatsNotification(date: string, dailyStats: any): Promise<string> {
     const dateString = `<b>Date:</b> ${new Date().toLocaleString()}`;
 
-    let notification = `Trellify daily stats for <b>${date}</b> \n`;
+    let notification = `📊 <b>Trellify Daily Stats</b> for <b>${date}</b>\n`;
 
     for (const [key, value] of Object.entries(dailyStats)) {
       notification += `\n ${key}: ${value} \n`;
     }
+    return notification + '\n' + dateString;
+  }
+
+  async weeklyStatsNotification(
+    dateRange: string,
+    weeklyStats: any,
+  ): Promise<string> {
+    const dateString = `<b>Date Range:</b> ${dateRange}`;
+
+    let notification = `📊 <b>Trellify Weekly Stats</b> for <b>${dateRange}</b>\n`;
+
+    for (const [key, value] of Object.entries(weeklyStats)) {
+      notification += `\n ${key}: ${value} \n`;
+    }
+
     return notification + '\n' + dateString;
   }
 

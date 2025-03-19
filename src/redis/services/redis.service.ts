@@ -23,16 +23,72 @@ export class RedisService {
   ) {}
 
   async onModuleInit() {
-    const exists = await this.getValue(redisKeys.DAILY_STATS);
+    // UNIQUE USERS DELETION CODE BLOCK WILL BE USELESS AFTER ONE EXECUTION ON PROD.
+    // REMOVE IT BEFORE NEXT PROD UPDATE
 
-    await this.deleteValue('uniqueUsers');
+    // Fetch data from Redis
+    const dailyStatsString = await this.getValue(redisKeys.DAILY_STATS);
+    const weeklyStatsString = await this.getValue(redisKeys.WEEKLY_STATS);
+    const subscriptionPlans = await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
 
-    await this.initializeSubscriptionPlans();
+    // Initialize only if missing
+    if (!subscriptionPlans) {
+      console.log('Initializing subscription plans...');
+      await this.initializeSubscriptionPlans();
+    }
 
-    if (!exists) {
-      console.log('Initializing daily stats memory data');
+    if (!dailyStatsString) {
+      console.log('Initializing daily stats...');
       await this.initializeDailyStats();
     }
+
+    if (!weeklyStatsString) {
+      console.log('Initializing weekly stats...');
+      await this.initializeWeeklyStats();
+    }
+
+    if (dailyStatsString) {
+      const dailyStats = JSON.parse(dailyStatsString);
+
+      if ('uniqueUsers' in dailyStats) {
+        console.log('Renaming uniqueUsers to loginnedUsers in dailyStats');
+
+        // If loginnedUsers does not exist, move the data
+        if (!('loginnedUsers' in dailyStats)) {
+          dailyStats.loginnedUsers = dailyStats.uniqueUsers;
+        }
+
+        // Delete the old property
+        delete dailyStats.uniqueUsers;
+
+        // Save the updated data back to Redis
+        await this.setValue(redisKeys.DAILY_STATS, JSON.stringify(dailyStats));
+      }
+    }
+
+    if (weeklyStatsString) {
+      const weeklyStats = JSON.parse(weeklyStatsString);
+
+      if ('uniqueUsers' in weeklyStats) {
+        console.log('Renaming uniqueUsers to loginnedUsers in weeklyStats');
+
+        // If loginnedUsers does not exist, move the data
+        if (!('loginnedUsers' in weeklyStats)) {
+          weeklyStats.loginnedUsers = weeklyStats.uniqueUsers;
+        }
+
+        // Delete the old property
+        delete weeklyStats.uniqueUsers;
+
+        // Save the updated data back to Redis
+        await this.setValue(
+          redisKeys.WEEKLY_STATS,
+          JSON.stringify(weeklyStats),
+        );
+      }
+    }
+
+    console.log('Cleanup completed successfully!');
   }
 
   async setValue(key: string, value: string): Promise<string> {
@@ -85,6 +141,23 @@ export class RedisService {
     );
   }
 
+  async initializeWeeklyStats(): Promise<string> {
+    // Convert dailyStatsEnum values into an object with all values set to 0
+    const weeklyStatsVars = Object.values(dailyStatsKeys);
+    const weeklyStats = weeklyStatsVars.reduce(
+      (acc, key) => {
+        acc[key] = 0;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return await this.setValue(
+      redisKeys.WEEKLY_STATS,
+      JSON.stringify(weeklyStats),
+    );
+  }
+
   async initializeSubscriptionPlans(): Promise<string> {
     // Fetch all subscription plans
     const subscriptionPlans = await this.subscriptionService.findAll();
@@ -105,10 +178,6 @@ export class RedisService {
     );
   }
 
-  async getSubscriptionPlans(): Promise<string> {
-    return await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
-  }
-
   async updateDailyStats(key: string, value: number): Promise<string> {
     const dailyStats = await this.getValue(redisKeys.DAILY_STATS);
 
@@ -123,6 +192,26 @@ export class RedisService {
       redisKeys.DAILY_STATS,
       JSON.stringify(updatedDailyStats),
     );
+  }
+
+  async updateWeeklyStats(key: string, value: number): Promise<string> {
+    const weeklyStats = await this.getValue(redisKeys.WEEKLY_STATS);
+
+    const keyValue = JSON.parse(weeklyStats)[key];
+
+    const updatedWeeklyStats = {
+      ...JSON.parse(weeklyStats),
+      [key]: keyValue + value,
+    };
+
+    return await this.setValue(
+      redisKeys.WEEKLY_STATS,
+      JSON.stringify(updatedWeeklyStats),
+    );
+  }
+
+  async getSubscriptionPlans(): Promise<string> {
+    return await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
   }
 
   async makeTokenInvalid(token: string): Promise<void> {
