@@ -25,11 +25,11 @@ import { I18nContext, I18nService } from 'nestjs-i18n';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
-import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
   createFilteredWebhookCopy,
   filterUserFromWebhook,
+  getActionEnumKey,
   getCategoriesForAction,
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
@@ -132,10 +132,19 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    const boardData = await this.trelloBoardsApiService.fetchBoardById(
-      decryptedAuthorToken,
-      webhook.idModel,
-    );
+    let boardData;
+
+    try {
+      boardData = await this.trelloBoardsApiService.fetchBoardById(
+        decryptedAuthorToken,
+        webhook.idModel,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error find board ${webhook.boardName}: `,
+        error.message || error.response.message,
+      );
+    }
 
     const updatedWebhookProps: any = {};
     let shouldUpdateUsers = false;
@@ -940,9 +949,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    delete webhookAction.model?.prefs;
-    delete webhookAction.model?.labelNames;
-    console.log(JSON.stringify(webhookAction, null, 2));
+    // delete webhookAction.model?.prefs;
+    // delete webhookAction.model?.labelNames;
+    // console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
@@ -999,19 +1008,8 @@ export class TrelloWebhooksLogicService {
 
     this.logger.log(`Handling webhook ${detailedActionType} action...`);
 
-    let enumKey = null;
-
     // Check if enum value includes action we got from webhook and transform enum key (CARD_CREATED -> cardCreated)
-    if (
-      Object.values(TrelloWebhookDetailedActions).includes(detailedActionType)
-    ) {
-      enumKey = toCamelCase(
-        Object.keys(TrelloWebhookDetailedActions).find(
-          (key) => TrelloWebhookDetailedActions[key] === detailedActionType,
-        ),
-        '_',
-      );
-    }
+    const enumKey = getActionEnumKey(detailedActionType);
 
     // Get the category dynamically
     const matchingCategories = getCategoriesForAction(enumKey);
