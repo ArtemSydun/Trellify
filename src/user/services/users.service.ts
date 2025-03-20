@@ -31,6 +31,7 @@ import {
 } from 'src/common/interfaces/responses';
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
@@ -123,6 +124,15 @@ export class UsersService {
     };
 
     const createdUser = await this.userRepository.create(newUser);
+
+    await this.redisService.updateDailyStats(
+      periodStatsKeys.NEW_USERS,
+      newUser.email,
+    );
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.NEW_USERS,
+      newUser.email,
+    );
 
     if (createdUser) {
       await this.subscriptionService.addSubscriberToPlan(
@@ -234,6 +244,15 @@ export class UsersService {
       );
 
     await this.adminBotService.notifyAdmins(notificationMessage);
+
+    await this.redisService.updateDailyStats(
+      periodStatsKeys.DELETED_USERS,
+      targetUser.email,
+    );
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.DELETED_USERS,
+      targetUser.email,
+    );
 
     this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
@@ -832,8 +851,11 @@ export class UsersService {
 
     await this.adminBotService.notifyAdmins(notificationMessage);
 
-    await this.redisService.updateDailyStats('contactUs', 1);
-    await this.redisService.updateWeeklyStats('contactUs', 1);
+    await this.redisService.updateDailyStats(periodStatsKeys.CONTACT_US, email);
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.CONTACT_US,
+      email,
+    );
 
     return {
       message:
