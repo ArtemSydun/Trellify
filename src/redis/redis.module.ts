@@ -13,7 +13,7 @@ import { RedisService } from './services/redis.service';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'single',
-        url: `redis://${configService.get(configServiceKeys.REDIS_HOST)}:${configService.get(configServiceKeys.REDIS_PORT)}}`,
+        url: `redis://${configService.get(configServiceKeys.REDIS_HOST)}:${configService.get(configServiceKeys.REDIS_PORT)}`,
       }),
     }),
     forwardRef(() => AuthModule),
