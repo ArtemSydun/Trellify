@@ -73,7 +73,7 @@ export class AdminBotService implements OnModuleInit {
         );
       } catch (err) {
         this.logger.warn(
-          `Failed sending Telegram message to ${telegramInfo.username}. Error: ${err.response.description || err.response.message || err.message}`,
+          `Failed sending Telegram message to ${telegramInfo.username}. Error: ${err.response.message || err.message || err.response.description}`,
         );
       }
     }

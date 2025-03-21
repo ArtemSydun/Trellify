@@ -34,8 +34,6 @@ import {
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
   mapNotificationsToBoolean,
-  notificationProfiles,
-  sortCategories,
 } from 'src/common/helpers/trello-notifications';
 
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
@@ -43,6 +41,8 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { BoardMember } from 'src/trello/dto/member.dto';
@@ -95,6 +95,7 @@ export class TrelloWebhooksLogicService {
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly notificationBotService: NotificationBotService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly i18nService: I18nService,
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
@@ -522,7 +523,16 @@ export class TrelloWebhooksLogicService {
   }
 
   async getProfileNotifications(): Promise<NotificationProfiles> {
-    return notificationProfiles;
+    const plans = await this.subscriptionService.findAll();
+
+    return {
+      basic: plans.find((plan) => plan.name === SubscriptionPlans.BASIC)
+        .notifications,
+      advanced: plans.find((plan) => plan.name === SubscriptionPlans.ADVANCED)
+        .notifications,
+      full: plans.find((plan) => plan.name === SubscriptionPlans.FULL)
+        .notifications,
+    };
   }
 
   async getWebhooksByCreatorToken(
@@ -560,6 +570,26 @@ export class TrelloWebhooksLogicService {
       i18n,
     );
 
+    const defaultProfileNotifications = (
+      await this.subscriptionService.findSubscriptionByName(
+        SubscriptionPlans.BASIC,
+      )
+    ).notifications;
+
+    const defaultProfileEnabledActionKeys = [];
+
+    for (const category of Object.keys(defaultProfileNotifications)) {
+      for (const actionKey of Object.keys(
+        defaultProfileNotifications[category],
+      )) {
+        if (defaultProfileNotifications[category][actionKey]) {
+          defaultProfileEnabledActionKeys.push(actionKey);
+        }
+      }
+    }
+
+    console.log(defaultProfileEnabledActionKeys);
+
     if (webhook) {
       webhook = await this.recreateWebhookIfUnavailable(
         webhook,
@@ -585,6 +615,7 @@ export class TrelloWebhooksLogicService {
 
       const defaultUserNotifications = initializeNotificationArrays(
         userToUpdate.trello.userId,
+        defaultProfileEnabledActionKeys,
       );
 
       const newUserNotificationBooleans = mapNotificationsToBoolean(
@@ -690,7 +721,10 @@ export class TrelloWebhooksLogicService {
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
           },
         ],
-        notifications: initializeNotificationArrays(userToUpdate.trello.userId),
+        notifications: initializeNotificationArrays(
+          userToUpdate.trello.userId,
+          defaultProfileEnabledActionKeys,
+        ),
       };
 
       const userWebhook = {
@@ -1021,9 +1055,6 @@ export class TrelloWebhooksLogicService {
       return;
     }
 
-    //we ensure that personal category actions will be processed first
-    const sortedCategories = sortCategories(matchingCategories);
-
     let boardData = null;
     let cardData = null;
     let boardMemberships: BoardMember[] | null;
@@ -1068,7 +1099,7 @@ export class TrelloWebhooksLogicService {
       notifiedAuthorUser = authorMember?.id;
     }
 
-    for (const category of sortedCategories) {
+    for (const category of matchingCategories) {
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
@@ -1083,51 +1114,49 @@ export class TrelloWebhooksLogicService {
         continue;
       }
 
+      //separate handler because checklist memeber actions does not have
+      // webhookAction?.action?.member even though it is targeted action
+      if (
+        detailedActionType ===
+          TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED ||
+        detailedActionType ===
+          TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
+      ) {
+        if (actionSubscribers.includes(targetedChecklistUserId))
+          await this.actionsService.handlePersonalAction(
+            targetedChecklistUserId,
+            boardData,
+            detailedActionType,
+            webhookAction,
+            webhook,
+            cardData
+              ? await this.trelloCardsApiService.fetchCardById(
+                  authorizedToken,
+                  targetCard.id,
+                )
+              : null,
+          );
+        notifiedTargetUser = targetedChecklistUserId;
+      }
+
+      if (targetMember && actionSubscribers.includes(targetMember.id)) {
+        await this.actionsService.handlePersonalAction(
+          targetMember.id,
+          boardData,
+          detailedActionType,
+          webhookAction,
+          webhook,
+          targetCard
+            ? await this.trelloCardsApiService.fetchCardById(
+                authorizedToken,
+                targetCard.id,
+              )
+            : null,
+        );
+        notifiedTargetUser = targetMember.id;
+      }
+
       switch (category) {
-        case TrelloWebhookNotificationCategories.PERSONAL:
-          //separate handler because checklist memeber actions does not have
-          // webhookAction?.action?.member even though it is targeted action
-          if (
-            detailedActionType ===
-              TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED ||
-            detailedActionType ===
-              TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
-          ) {
-            if (actionSubscribers.includes(targetedChecklistUserId))
-              await this.actionsService.handlePersonalAction(
-                targetedChecklistUserId,
-                boardData,
-                detailedActionType,
-                webhookAction,
-                webhook,
-                cardData
-                  ? await this.trelloCardsApiService.fetchCardById(
-                      authorizedToken,
-                      targetCard.id,
-                    )
-                  : null,
-              );
-            notifiedTargetUser = targetedChecklistUserId;
-          }
-
-          if (targetMember && actionSubscribers.includes(targetMember.id)) {
-            await this.actionsService.handlePersonalAction(
-              targetMember.id,
-              boardData,
-              detailedActionType,
-              webhookAction,
-              webhook,
-              targetCard
-                ? await this.trelloCardsApiService.fetchCardById(
-                    authorizedToken,
-                    targetCard.id,
-                  )
-                : null,
-            );
-            notifiedTargetUser = targetMember.id;
-          }
-          break;
-
         case TrelloWebhookNotificationCategories.CARD:
           if (
             detailedActionType === TrelloWebhookDetailedActions.CARD_CREATED

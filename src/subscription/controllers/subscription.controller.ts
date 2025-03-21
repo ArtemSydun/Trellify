@@ -19,6 +19,7 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
+import { ApiCustomNotFoundResponse } from 'src/common/decorators/swagger.decorators';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
@@ -52,11 +53,10 @@ export class SubscriptionController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
+  @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOperation({
-    summary: 'Get all subscription plans, (Superadmin / admin / support)',
+    summary: 'Get all subscription plans',
     description: 'Get all subscription plans.',
   })
   @ApiOkResponse({
@@ -67,17 +67,17 @@ export class SubscriptionController {
     return this.subscriptionService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiOperation({
-    summary: 'Get subscription plan by id (Superadmin / admin / support)',
+    summary: 'Get subscription plan by id',
     description: 'Get subscription plan by id',
   })
   @ApiOkResponse({
     description: 'Subscription plan by id',
     type: Subscription,
   })
+  @ApiCustomNotFoundResponse('Subscription plan', 'id')
   findOneSubscription(
     @Param('id') id: string,
     @Req() req,

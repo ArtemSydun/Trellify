@@ -178,10 +178,10 @@ describe('UsersService', () => {
         price: 0,
         subscribers: [],
         notifications: {
-          personal: {},
           card: {},
-          board: {},
+          checklist: {},
           list: {},
+          board: {},
         },
       };
 
@@ -1260,7 +1260,7 @@ describe('UsersService', () => {
       );
       expect(redisService.updateDailyStats).toHaveBeenCalledWith(
         'contactUs',
-        1,
+        formBody.email,
       );
       expect(response).toEqual({
         message: expect.any(String),

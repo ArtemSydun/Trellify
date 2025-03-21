@@ -197,19 +197,6 @@ export class CronService {
     // Format date for messages (but not for storage!)
     const formattedDateForMessage = format(startOfDay, 'dd-MM-yyyy');
 
-    // Fetch users and stats
-    const usersLoggedIn = await this.usersService.findAll({
-      date: 'lastLoginDate',
-      fromDate: startOfDay.toISOString(),
-      toDate: endOfDay.toISOString(),
-    });
-
-    const newUsers = await this.usersService.findAll({
-      date: 'createdAt',
-      fromDate: startOfDay.toISOString(),
-      toDate: endOfDay.toISOString(),
-    });
-
     // Get stored daily stats
     const dailyStats = JSON.parse(
       await this.redisService.getValue(redisKeys.DAILY_STATS),
@@ -219,9 +206,10 @@ export class CronService {
     const message = await this.adminBotService.dailyStatsNotification(
       formattedDateForMessage,
       {
-        ...dailyStats,
-        newUsers: newUsers.total,
-        loginnedUsers: usersLoggedIn.total,
+        loginnedUsers: dailyStats.loginnedUser?.length || 0,
+        newUsers: dailyStats.newUsers?.length || 0,
+        deletedUsers: dailyStats.deletedUsers?.length || 0,
+        contactUs: dailyStats.contactUs?.length || 0,
       },
     );
 
@@ -273,19 +261,6 @@ export class CronService {
     const formattedEndDate = format(addDays(startOfWeek, 6), 'dd-MM-yyyy'); // Sunday
     const formattedDateRange = `${formattedStartDate} - ${formattedEndDate}`;
 
-    // Fetch users and stats for the entire week
-    const usersLoggedIn = await this.usersService.findAll({
-      date: 'lastLoginDate',
-      fromDate: startOfWeek.toISOString(),
-      toDate: endOfWeek.toISOString(),
-    });
-
-    const newUsers = await this.usersService.findAll({
-      date: 'createdAt',
-      fromDate: startOfWeek.toISOString(),
-      toDate: endOfWeek.toISOString(),
-    });
-
     // Get stored weekly stats
     const weeklyStats = JSON.parse(
       await this.redisService.getValue(redisKeys.WEEKLY_STATS),
@@ -295,9 +270,10 @@ export class CronService {
     const message = await this.adminBotService.weeklyStatsNotification(
       formattedDateRange, // Pass Monday → Sunday date range
       {
-        ...weeklyStats,
-        newUsers: newUsers.total,
-        loginnedUsers: usersLoggedIn.total,
+        loginnedUsers: weeklyStats.loginnedUsers?.length || 0,
+        newUsers: weeklyStats.newUsers?.length || 0,
+        deletedUsers: weeklyStats.deletedUsers?.length || 0,
+        contactUs: weeklyStats.contactUs?.length || 0,
       },
     );
 
