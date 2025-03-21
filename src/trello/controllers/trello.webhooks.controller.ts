@@ -30,7 +30,6 @@ import {
   ApiCustomNotFoundResponse,
   ApiCustomUnathorizedResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
@@ -252,7 +251,6 @@ export class TrelloWebhooksController {
   })
   @ApiOkResponse({
     description: 'Notification profiles',
-    example: notificationProfiles,
   })
   @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {

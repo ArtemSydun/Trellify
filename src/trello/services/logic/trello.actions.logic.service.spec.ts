@@ -145,7 +145,8 @@ describe('TrelloActionsLogicService', () => {
         action: {
           ...webhookActionMock.action,
           display: {
-            translationKey: TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+            translationKey:
+              TrelloWebhookPersonalActions.CARD_MEMBER_ADDED_PERSONAL,
           },
         },
       };
@@ -185,7 +186,8 @@ describe('TrelloActionsLogicService', () => {
         action: {
           ...webhookActionMock.action,
           display: {
-            translationKey: TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED,
+            translationKey:
+              TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED_PERSONAL,
           },
         },
       };

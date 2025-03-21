@@ -10,29 +10,9 @@ import {
   TrelloWebhookDetailedActions,
   TrelloWebhookNotificationCategories,
 } from '../../trello/enums/trello.actions.enum';
-import {
-  advancedProfileActions,
-  basicProfileActions,
-  categoryKeysMap,
-  fullProfileActions,
-} from '../constants/trello';
+import { categoryKeysMap } from '../constants/trello';
 import { I18nKeys } from '../enums/i18n-keys.enum';
 import { toCamelCase } from './camelCase';
-
-const getKeysFromProfileActions = <T extends string>(
-  actions: T[],
-  enumObj: Record<string, T>,
-): string[] => {
-  const reverseEnumMap = Object.entries(enumObj).reduce(
-    (acc, [key, value]) => {
-      acc[value] = key;
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  return actions.map((action) => reverseEnumMap[action]);
-};
 
 export const getCategoriesForAction = (actionKey: string): string[] => {
   // Iterate over categoryKeysMap to find which categories contain the actionKey
@@ -54,11 +34,6 @@ export const sortCategories = (categoriesToSort: string[]): string[] => {
     return 0;
   });
 };
-
-export const defaultActionsKeys = getKeysFromProfileActions(
-  basicProfileActions,
-  TrelloWebhookDetailedActions,
-);
 
 export const getActionEnumKey = (actionType) => {
   if (Object.values(TrelloWebhookDetailedActions).includes(actionType)) {
@@ -82,7 +57,9 @@ export const initializeCategoryNotifications = (
   return Object.entries(actions).reduce(
     (acc, [key, value]) => {
       const camelCaseKey = toCamelCase(key, '_');
-      acc[camelCaseKey] = enabledActions.includes(value) ? [trelloUserId] : [];
+      acc[camelCaseKey] = enabledActions.includes(toCamelCase(value, '_'))
+        ? [trelloUserId]
+        : [];
       return acc;
     },
     {} as Record<string, string[]>,
@@ -104,7 +81,7 @@ export const initializeNotificationArrays = (
         },
         {} as Record<string, string>,
       ),
-      profileKeys || defaultActionsKeys,
+      profileKeys || [],
     );
     return acc;
   }, {} as NotificationCategoriesDto);
@@ -231,41 +208,6 @@ export function createFilteredWebhookCopy(webhook: Webhook): Webhook {
 
   return webhookCopy;
 }
-
-export const generateProfilesNotificationBooleans = () => {
-  // Step 1: Get profile action keys
-  const basicProfile = getKeysFromProfileActions(
-    basicProfileActions,
-    TrelloWebhookDetailedActions,
-  );
-
-  const advancedProfile = getKeysFromProfileActions(
-    advancedProfileActions,
-    TrelloWebhookDetailedActions,
-  );
-
-  const fullProfile = getKeysFromProfileActions(
-    fullProfileActions,
-    TrelloWebhookDetailedActions,
-  );
-
-  // Step 2: Initialize notification categories for these profiles
-  const profiles = {
-    basic: mapNotificationsToBoolean(
-      initializeNotificationArrays('userId', basicProfile),
-    ),
-    advanced: mapNotificationsToBoolean(
-      initializeNotificationArrays('userId', advancedProfile),
-    ),
-    full: mapNotificationsToBoolean(
-      initializeNotificationArrays('userId', fullProfile),
-    ),
-  };
-
-  return profiles;
-};
-
-export const notificationProfiles = generateProfilesNotificationBooleans();
 
 export const notificationMessageGenerator = (
   userToNotify: User,
