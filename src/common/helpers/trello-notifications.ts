@@ -6,10 +6,7 @@ import {
 import { Webhook } from 'src/trello/entities/webhook.entity';
 import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
-import {
-  TrelloWebhookDetailedActions,
-  TrelloWebhookNotificationCategories,
-} from '../../trello/enums/trello.actions.enum';
+import { TrelloWebhookDetailedActions } from '../../trello/enums/trello.actions.enum';
 import { categoryKeysMap } from '../constants/trello';
 import { I18nKeys } from '../enums/i18n-keys.enum';
 import { toCamelCase } from './camelCase';
@@ -24,15 +21,6 @@ export const getCategoriesForAction = (actionKey: string): string[] => {
   });
 
   return matchingCategories;
-};
-
-//to ensure that personal category will be processed first
-export const sortCategories = (categoriesToSort: string[]): string[] => {
-  return [...categoriesToSort].sort((a, b) => {
-    if (a === TrelloWebhookNotificationCategories.PERSONAL) return -1;
-    if (b === TrelloWebhookNotificationCategories.PERSONAL) return 1;
-    return 0;
-  });
 };
 
 export const getActionEnumKey = (actionType) => {

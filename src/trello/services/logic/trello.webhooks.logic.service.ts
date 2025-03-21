@@ -34,7 +34,6 @@ import {
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
   mapNotificationsToBoolean,
-  sortCategories,
 } from 'src/common/helpers/trello-notifications';
 
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
@@ -1056,9 +1055,6 @@ export class TrelloWebhooksLogicService {
       return;
     }
 
-    //we ensure that personal category actions will be processed first
-    const sortedCategories = sortCategories(matchingCategories);
-
     let boardData = null;
     let cardData = null;
     let boardMemberships: BoardMember[] | null;
@@ -1103,7 +1099,7 @@ export class TrelloWebhooksLogicService {
       notifiedAuthorUser = authorMember?.id;
     }
 
-    for (const category of sortedCategories) {
+    for (const category of matchingCategories) {
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
