@@ -10,7 +10,7 @@ import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
-import { dailyStatsKeys } from '../enums/daily-stats-keys.enum';
+import { periodStatsKeys } from '../enums/daily-stats-keys.enum';
 import { redisKeys } from '../enums/redis-keys.enum';
 
 @Injectable()
@@ -23,9 +23,6 @@ export class RedisService {
   ) {}
 
   async onModuleInit() {
-    // UNIQUE USERS DELETION CODE BLOCK WILL BE USELESS AFTER ONE EXECUTION ON PROD.
-    // REMOVE IT BEFORE NEXT PROD UPDATE
-
     // Fetch data from Redis
     const dailyStatsString = await this.getValue(redisKeys.DAILY_STATS);
     const weeklyStatsString = await this.getValue(redisKeys.WEEKLY_STATS);
@@ -45,47 +42,6 @@ export class RedisService {
     if (!weeklyStatsString) {
       console.log('Initializing weekly stats...');
       await this.initializeWeeklyStats();
-    }
-
-    if (dailyStatsString) {
-      const dailyStats = JSON.parse(dailyStatsString);
-
-      if ('uniqueUsers' in dailyStats) {
-        console.log('Renaming uniqueUsers to loginnedUsers in dailyStats');
-
-        // If loginnedUsers does not exist, move the data
-        if (!('loginnedUsers' in dailyStats)) {
-          dailyStats.loginnedUsers = dailyStats.uniqueUsers;
-        }
-
-        // Delete the old property
-        delete dailyStats.uniqueUsers;
-
-        // Save the updated data back to Redis
-        await this.setValue(redisKeys.DAILY_STATS, JSON.stringify(dailyStats));
-      }
-    }
-
-    if (weeklyStatsString) {
-      const weeklyStats = JSON.parse(weeklyStatsString);
-
-      if ('uniqueUsers' in weeklyStats) {
-        console.log('Renaming uniqueUsers to loginnedUsers in weeklyStats');
-
-        // If loginnedUsers does not exist, move the data
-        if (!('loginnedUsers' in weeklyStats)) {
-          weeklyStats.loginnedUsers = weeklyStats.uniqueUsers;
-        }
-
-        // Delete the old property
-        delete weeklyStats.uniqueUsers;
-
-        // Save the updated data back to Redis
-        await this.setValue(
-          redisKeys.WEEKLY_STATS,
-          JSON.stringify(weeklyStats),
-        );
-      }
     }
 
     console.log('Cleanup completed successfully!');
@@ -125,14 +81,14 @@ export class RedisService {
   }
 
   async initializeDailyStats(): Promise<string> {
-    // Convert dailyStatsEnum values into an object with all values set to 0
-    const dailyStatsVars = Object.values(dailyStatsKeys);
+    // Convert dailyStatsEnum values into an object with all values set to []
+    const dailyStatsVars = Object.values(periodStatsKeys);
     const dailyStats = dailyStatsVars.reduce(
       (acc, key) => {
-        acc[key] = 0;
+        acc[key] = [];
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, string[]>,
     );
 
     return await this.setValue(
@@ -143,13 +99,13 @@ export class RedisService {
 
   async initializeWeeklyStats(): Promise<string> {
     // Convert dailyStatsEnum values into an object with all values set to 0
-    const weeklyStatsVars = Object.values(dailyStatsKeys);
+    const weeklyStatsVars = Object.values(periodStatsKeys);
     const weeklyStats = weeklyStatsVars.reduce(
       (acc, key) => {
-        acc[key] = 0;
+        acc[key] = [];
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, string[]>,
     );
 
     return await this.setValue(
@@ -178,14 +134,19 @@ export class RedisService {
     );
   }
 
-  async updateDailyStats(key: string, value: number): Promise<string> {
+  async updateDailyStats(key: string, value: string): Promise<string> {
     const dailyStats = await this.getValue(redisKeys.DAILY_STATS);
-
     const keyValue = JSON.parse(dailyStats)[key];
+
+    if (keyValue.includes(value)) {
+      return dailyStats;
+    }
+
+    const newKeyValue = [...keyValue, value];
 
     const updatedDailyStats = {
       ...JSON.parse(dailyStats),
-      [key]: keyValue + value,
+      [key]: newKeyValue,
     };
 
     return await this.setValue(
@@ -194,14 +155,20 @@ export class RedisService {
     );
   }
 
-  async updateWeeklyStats(key: string, value: number): Promise<string> {
+  async updateWeeklyStats(key: string, value: string): Promise<string> {
     const weeklyStats = await this.getValue(redisKeys.WEEKLY_STATS);
 
     const keyValue = JSON.parse(weeklyStats)[key];
 
+    if (keyValue.includes(value)) {
+      return weeklyStats;
+    }
+
+    const newKeyValue = [...keyValue, value];
+
     const updatedWeeklyStats = {
       ...JSON.parse(weeklyStats),
-      [key]: keyValue + value,
+      [key]: newKeyValue,
     };
 
     return await this.setValue(

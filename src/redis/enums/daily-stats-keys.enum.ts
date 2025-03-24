@@ -1,5 +1,6 @@
-export enum dailyStatsKeys {
+export enum periodStatsKeys {
+  LOGINNED_USERS = 'loginnedUsers',
   NEW_USERS = 'newUsers',
-  UNIQUE_USERS = 'loginnedUsers',
+  DELETED_USERS = 'deletedUsers',
   CONTACT_US = 'contactUs',
 }

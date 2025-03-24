@@ -84,7 +84,7 @@ export class TrelloActionsLogicService {
       const targetActionMessages: Partial<
         Record<TrelloWebhookPersonalActions, string | null>
       > = {
-        [TrelloWebhookPersonalActions.CARD_MEMBER_ADDED]:
+        [TrelloWebhookPersonalActions.CARD_MEMBER_ADDED_PERSONAL]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -94,7 +94,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
-        [TrelloWebhookPersonalActions.CARD_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.CARD_MEMBER_REMOVED_PERSONAL]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_CARD_MEMBER_REMOVED, {
             lang: notificationLanguage,
             args: {
@@ -104,7 +104,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been deleted from card [${cardData?.name}](${cardData?.url})`,
-        [TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED_PERSONAL]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_MEMBER_REMOVED, {
             lang: notificationLanguage,
             args: {
@@ -113,7 +113,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been removed from board ${boardData?.name}`,
-        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_ADDED]:
+        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_ADDED_PERSONAL]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_PERSONAL_CHECKLIST_ITEM_MEMBER_ADDED,
             {
@@ -127,7 +127,7 @@ export class TrelloActionsLogicService {
             },
           ) ||
           `${userInitials} you has been added to checklist item '${checklistItemName}' in card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_REMOVED]:
+        [TrelloWebhookPersonalActions.CHECKLIST_ITEM_MEMBER_REMOVED_PERSONAL]:
           this.i18n?.t(
             I18nKeys.NOTIFICATION_PERSONAL_CHECKLIST_ITEM_MEMBER_REMOVED,
             {
@@ -141,7 +141,7 @@ export class TrelloActionsLogicService {
             },
           ) ||
           `${userInitials} you has been removed from checklist in card [${cardData?.name}](${cardData?.url}).`,
-        [TrelloWebhookPersonalActions.BOARD_ADMIN_ADDED]:
+        [TrelloWebhookPersonalActions.BOARD_ADMIN_ADDED_PERSONAL]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_ADMIN_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -153,7 +153,7 @@ export class TrelloActionsLogicService {
             },
           }) ||
           `${userInitials} you has been added to the board [${boardData?.name}](${boardData?.url}) as admin`,
-        [TrelloWebhookPersonalActions.BOARD_MEMBER_NORMAL_ROLE_ADDED]:
+        [TrelloWebhookPersonalActions.BOARD_MEMBER_NORMAL_ROLE_ADDED_PERSONAL]:
           this.i18n?.t(I18nKeys.NOTIFICATION_PERSONAL_BOARD_NORMAL_ROLE_ADDED, {
             lang: notificationLanguage,
             args: {
@@ -170,7 +170,10 @@ export class TrelloActionsLogicService {
       const message = targetActionMessages[actionType];
 
       if (message) {
-        if (actionType === TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED) {
+        if (
+          actionType ===
+          TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED_PERSONAL
+        ) {
           await this.trelloWebhooksLogicService.disconnectFromTrelloWebhook(
             targetUser,
             webhook,

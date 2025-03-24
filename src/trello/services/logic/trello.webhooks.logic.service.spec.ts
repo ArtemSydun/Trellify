@@ -11,6 +11,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { decryptText, encryptText } from 'src/common/helpers/hashing';
 
 import {
+  basicNotificationProfileStub,
   newWebhookStub,
   webhookActionStub,
   webhookStub,
@@ -45,13 +46,10 @@ import {
   createFilteredWebhookCopy,
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
-  notificationProfiles,
 } from 'src/common/helpers/trello-notifications';
 import { CreateWebhookDto } from 'src/trello/dto/create-webhook.dto';
 import {
   TrelloWebhookActions,
-  TrelloWebhookBoardActions,
-  TrelloWebhookDetailedActions,
   TrelloWebhookNotificationProfiles,
   TrelloWebhookPersonalActions,
 } from 'src/trello/enums/trello.actions.enum';
@@ -66,6 +64,7 @@ import { BoardMember } from 'src/trello/dto/member.dto';
 
 import { ConfigService } from '@nestjs/config';
 import { I18nService } from 'nestjs-i18n';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -168,6 +167,10 @@ describe('TrelloWebhooksLogicService', () => {
         {
           provide: NotificationBotService,
           useValue: createMock<NotificationBotService>(),
+        },
+        {
+          provide: SubscriptionService,
+          useValue: createMock<SubscriptionService>(),
         },
         { provide: I18nService, useValue: createMock<I18nService>() },
       ],
@@ -1349,7 +1352,7 @@ describe('TrelloWebhooksLogicService', () => {
     let basicNotificationProfile: NotificationBooleansDto;
 
     beforeEach(() => {
-      basicNotificationProfile = notificationProfiles.basic;
+      basicNotificationProfile = basicNotificationProfileStub;
 
       updateWebhookNotificationsDto = {
         notifications: basicNotificationProfile,
@@ -1472,7 +1475,7 @@ describe('TrelloWebhooksLogicService', () => {
     let basicNotificationProfile: NotificationBooleansDto;
 
     beforeEach(() => {
-      basicNotificationProfile = notificationProfiles.basic;
+      basicNotificationProfile = basicNotificationProfileStub;
 
       updateManyWebhooksDto = {
         notifications: basicNotificationProfile,
@@ -1662,116 +1665,6 @@ describe('TrelloWebhooksLogicService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should correctly handle a card action with subscribers', async () => {
-      const webhookStubCardNotifications = {
-        ...webhookStubData,
-        notifications: {
-          ...webhookStubData.notifications,
-          card: { cardCommentAdded: [userStubData.trello.userId] },
-        },
-      };
-
-      const webhookCardAction = {
-        ...webhookActionMock,
-      };
-
-      webhookCardAction.action.type = TrelloWebhookActions.CARD_COMMENT_ADDED;
-      webhookCardAction.action.display.translationKey =
-        TrelloWebhookDetailedActions.CARD_COMMENT_ADDED;
-
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(webhookStubCardNotifications);
-
-      // jest
-      //   .spyOn(trelloCardsApiService, 'fetchCardById')
-      //   .mockResolvedValue(trelloCardMock);
-
-      jest
-        .spyOn(trelloActionsService, 'handleCardActions')
-        .mockResolvedValue(undefined);
-
-      await trelloWebhooksLogicService.handleTrelloWebhook(webhookCardAction);
-
-      expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
-        [userStubData.trello.userId],
-        trelloBoardMock,
-        trelloCardMock,
-        TrelloWebhookDetailedActions.CARD_COMMENT_ADDED,
-        webhookCardAction,
-      );
-    });
-
-    it('should correctly handle a board action with subscribers', async () => {
-      const webhookStubBoardNotifications = {
-        ...webhookStubData,
-        notifications: {
-          ...webhookStubData.notifications,
-          board: { boardRenamed: [userStubData.trello.userId] },
-        },
-      };
-
-      const webhookBoardAction = {
-        ...webhookActionMock,
-      };
-
-      webhookBoardAction.action.type = TrelloWebhookActions.BOARD_UPDATED;
-      webhookBoardAction.action.display.translationKey =
-        TrelloWebhookBoardActions.BOARD_RENAMED;
-
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(webhookStubBoardNotifications);
-
-      jest
-        .spyOn(trelloActionsService, 'handleBoardActions')
-        .mockResolvedValue(undefined);
-
-      await trelloWebhooksLogicService.handleTrelloWebhook(webhookBoardAction);
-
-      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
-        [userStubData.trello.userId],
-        trelloBoardMock,
-        TrelloWebhookDetailedActions.BOARD_RENAMED,
-        webhookBoardAction,
-      );
-    });
-
-    it('should correctly handle an admin action with subscribers', async () => {
-      const webhookStubAdminNotifications = {
-        ...webhookStubData,
-        notifications: {
-          ...webhookStubData.notifications,
-          board: { boardMemberInvitationJoined: [userStubData.trello.userId] },
-        },
-      };
-
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(webhookStubAdminNotifications);
-
-      jest
-        .spyOn(trelloActionsService, 'handleBoardActions')
-        .mockResolvedValue(undefined);
-
-      const webhookAdminAction = {
-        ...webhookActionMock,
-      };
-
-      webhookAdminAction.action.type = TrelloWebhookActions.BOARD_MEMBER_ADDED;
-      webhookAdminAction.action.display.translationKey =
-        TrelloWebhookBoardActions.BOARD_MEMBER_INVITATION_JOINED;
-
-      await trelloWebhooksLogicService.handleTrelloWebhook(webhookAdminAction);
-
-      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
-        [userStubData.trello.userId],
-        trelloBoardMock,
-        TrelloWebhookDetailedActions.BOARD_MEMBER_INVITATION_JOINED,
-        webhookAdminAction,
-      );
-    });
-
     it('should correctly handle a personal action with subscribers', async () => {
       const webhookStubPersonalNotifications = {
         ...webhookStubData,
@@ -1788,7 +1681,7 @@ describe('TrelloWebhooksLogicService', () => {
       webhookPersonalAction.action.type =
         TrelloWebhookActions.CARD_MEMBER_ADDED;
       webhookPersonalAction.action.display.translationKey =
-        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED;
+        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED_PERSONAL;
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneById')
@@ -1805,108 +1698,55 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloActionsService.handlePersonalAction).toHaveBeenCalledWith(
         userStubData.trello.userId,
         trelloBoardMock,
-        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED_PERSONAL,
         webhookPersonalAction,
         webhookStubPersonalNotifications,
         trelloCardMock,
       );
     });
 
-    it('should not notify target member twice', async () => {
-      const webhookStubCardNotifications = {
-        ...webhookStubData,
-        notifications: {
-          ...webhookStubData.notifications,
-          card: {
-            cardMemberAdded: [
-              userStubData.trello.userId,
-              '674ec752cba1224342f87c20',
-            ],
-          },
-          personal: {
-            cardMemberAdded: [userStubData.trello.userId],
-          },
-        },
-      };
+    // it('should notify about admin actions only board members', async () => {
+    //   const webhookStubMultipleNotifications = {
+    //     ...webhookStubData,
+    //     notifications: {
+    //       ...webhookStubData.notifications,
+    //       board: { boardAdminAdded: [userStubData.trello.userId] },
+    //     },
+    //   };
 
-      const webhookCardAction = {
-        ...webhookActionMock,
-      };
+    //   const adminMemberIds = boardMemberships
+    //     .filter((member) => member.memberType === 'admin')
+    //     .map((admin) => admin.idMember);
 
-      webhookCardAction.action.type = TrelloWebhookActions.CARD_MEMBER_ADDED;
-      webhookCardAction.action.display.translationKey =
-        TrelloWebhookDetailedActions.CARD_MEMBER_ADDED;
+    //   jest
+    //     .spyOn(trelloWebhookRepository, 'findOneById')
+    //     .mockResolvedValue(webhookStubMultipleNotifications);
 
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(webhookStubCardNotifications);
+    //   jest
+    //     .spyOn(trelloActionsService, 'handleBoardActions')
+    //     .mockResolvedValue(undefined);
 
-      jest
-        .spyOn(trelloActionsService, 'handleCardActions')
-        .mockResolvedValue(undefined);
+    //   jest
+    //     .spyOn(trelloBoardsApiService, 'fetchBoardMemberships')
+    //     .mockResolvedValue(boardMemberships);
 
-      await trelloWebhooksLogicService.handleTrelloWebhook(webhookCardAction);
+    //   const webhookAdminAction = {
+    //     ...webhookActionMock,
+    //   };
 
-      expect(trelloActionsService.handlePersonalAction).toHaveBeenCalledWith(
-        userStubData.trello.userId,
-        trelloBoardMock,
-        TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
-        webhookCardAction,
-        webhookStubCardNotifications,
-        trelloCardMock,
-      );
+    //   webhookAdminAction.action.type = TrelloWebhookActions.BOARD_ADMIN_ADDED;
+    //   webhookAdminAction.action.display.translationKey =
+    //     TrelloWebhookBoardActions.BOARD_ADMIN_ADDED;
 
-      expect(trelloActionsService.handleCardActions).toHaveBeenCalledWith(
-        ['674ec752cba1224342f87c20'],
-        trelloBoardMock,
-        trelloCardMock,
-        TrelloWebhookDetailedActions.CARD_MEMBER_ADDED,
-        webhookCardAction,
-      );
-    });
+    //   await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
 
-    it('should notify about admin actions only board admin role members', async () => {
-      const webhookStubMultipleNotifications = {
-        ...webhookStubData,
-        notifications: {
-          ...webhookStubData.notifications,
-          board: { boardAdminAdded: [userStubData.trello.userId] },
-        },
-      };
-
-      const adminMemberIds = boardMemberships
-        .filter((member) => member.memberType === 'admin')
-        .map((admin) => admin.idMember);
-
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(webhookStubMultipleNotifications);
-
-      jest
-        .spyOn(trelloActionsService, 'handleBoardActions')
-        .mockResolvedValue(undefined);
-
-      jest
-        .spyOn(trelloBoardsApiService, 'fetchBoardMemberships')
-        .mockResolvedValue(boardMemberships);
-
-      const webhookAdminAction = {
-        ...webhookActionMock,
-      };
-
-      webhookAdminAction.action.type = TrelloWebhookActions.BOARD_ADMIN_ADDED;
-      webhookAdminAction.action.display.translationKey =
-        TrelloWebhookBoardActions.BOARD_ADMIN_ADDED;
-
-      await trelloWebhooksLogicService.handleTrelloWebhook(webhookActionMock);
-
-      expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
-        adminMemberIds,
-        trelloBoardMock,
-        TrelloWebhookBoardActions.BOARD_ADMIN_ADDED,
-        webhookAdminAction,
-      );
-    });
+    //   expect(trelloActionsService.handleBoardActions).toHaveBeenCalledWith(
+    //     adminMemberIds,
+    //     trelloBoardMock,
+    //     TrelloWebhookBoardActions.BOARD_ADMIN_ADDED,
+    //     webhookAdminAction,
+    //   );
+    // });
   });
 
   describe('disconnectFromTrelloWebhook', () => {

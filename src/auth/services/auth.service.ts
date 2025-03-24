@@ -19,6 +19,7 @@ import { hashPassword, verifyPassword } from 'src/common/helpers/hashing';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { DistributionService } from 'src/distribution/services/distribution.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
@@ -107,6 +108,15 @@ export class AuthService {
     const token: string = this.jwtService.sign(payload);
 
     this.logger.log(`User logged in successfully: ${updatedUser.email}`);
+
+    await this.redisService.updateDailyStats(
+      periodStatsKeys.LOGINNED_USERS,
+      updatedUser.email,
+    );
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.LOGINNED_USERS,
+      updatedUser.email,
+    );
 
     return {
       accessToken: token,
