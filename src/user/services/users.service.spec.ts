@@ -23,7 +23,7 @@ import {
 } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
@@ -31,10 +31,12 @@ import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/services/redis.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -53,6 +55,7 @@ describe('UsersService', () => {
   let adminBotService: AdminBotService;
   let mailerService: MailerService;
   let redisService: RedisService;
+  let subscriptionService: SubscriptionService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -102,6 +105,10 @@ describe('UsersService', () => {
           useValue: createMock<RedisService>(),
         },
         {
+          provide: SubscriptionService,
+          useValue: createMock<SubscriptionService>(),
+        },
+        {
           provide: MailerService,
           useValue: createMock<MailerService>(),
         },
@@ -128,6 +135,9 @@ describe('UsersService', () => {
     mailerService = moduleRef.get<MailerService>(MailerService);
 
     redisService = moduleRef.get<RedisService>(RedisService);
+
+    subscriptionService =
+      moduleRef.get<SubscriptionService>(SubscriptionService);
 
     mockUsers = [userStub(), superAdminStub()];
 
@@ -162,13 +172,52 @@ describe('UsersService', () => {
 
   describe('createUser', () => {
     it('should create a new user successfully', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          card: {},
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      };
+
       const createUserDto = {
         email: superAdminStub().email,
         password: 'password123',
         timezone: 0,
+        subscription: {
+          id: 'id1',
+          plan: SubscriptionPlans.TRIAL,
+          amount: 0,
+          lastPaymentDate: null,
+          nextPaymentDate: (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 14);
+            return date;
+          })(),
+        },
+        trello: { userId: null, token: null, webhooks: [] },
+        telegram: {
+          username: null,
+          chatId: null,
+          updatedAt: new Date(),
+        },
+        discord: {
+          userId: null,
+          username: null,
+          updatedAt: new Date(),
+        },
       };
+
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
       jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest
+        .spyOn(subscriptionService, 'findSubscriptionByName')
+        .mockResolvedValue(trialSubscriptionPlan);
 
       const result = await usersService.createUser(createUserDto);
 
@@ -234,7 +283,7 @@ describe('UsersService', () => {
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         userToDelete,
       );
       expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
@@ -738,13 +787,13 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(user);
 
       const result = await usersService.findUserByProperty(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
 
       expect(result).toEqual(user);
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
     });
@@ -754,7 +803,7 @@ describe('UsersService', () => {
 
       await expect(
         usersService.findUserByProperty(
-          UserSearchPathEnum.Email,
+          UserSearchPath.Email,
           'nonexistent@example.com',
         ),
       ).rejects.toThrow(
@@ -800,7 +849,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         connectTelegramDto.chatId,
       );
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
@@ -1102,7 +1151,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TrelloUserId,
+        UserSearchPath.TrelloUserId,
         connectedUser.trello.userId,
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();
@@ -1157,7 +1206,7 @@ describe('UsersService', () => {
             filter: { id: user.id },
             update: {
               $pull: {
-                [UserSearchPathEnum.TrelloWebhooks]: {
+                [UserSearchPath.TrelloWebhooks]: {
                   webhookId: webhookToDelete.id,
                 },
               },
@@ -1213,7 +1262,7 @@ describe('UsersService', () => {
       );
 
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         formBody,
       );
 
@@ -1222,7 +1271,7 @@ describe('UsersService', () => {
       );
       expect(redisService.updateDailyStats).toHaveBeenCalledWith(
         'contactUs',
-        1,
+        formBody.email,
       );
       expect(response).toEqual({
         message: expect.any(String),

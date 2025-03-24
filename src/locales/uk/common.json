@@ -67,6 +67,13 @@
                 "webhooksWasUpdated": "Вебхуки було оновлено успішно"
             }
         },
+        "subscription": {
+            "expiring": "Привіт. Дружнє нагадування, що твоя {subscription} підписка закінчується протягом 24 годин.",
+            "createdSuccessfully": "План підписки {subscription} створено усіпшно",
+            "updatedSuccessfully": "План підписки {subscription} оновлено успішно",
+            "deletedSuccessfully": "План підписки {subscription} видалено успішно",
+            "userChangedSuccessfully": "Користувач {user} успішно змінив свою підписку на {subscription}"
+        },
         "notifications": {
             "personal": {
                 "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
@@ -77,43 +84,62 @@
                 "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
                 "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
             },
-            "board": {
-                "boardRenamed": "Дошку {oldBoardName} було перейменовано на [{boardName}]({boardUrl}).",
-                "boardClosed": "Дошку {boardName} було закрито.",
-                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито."
-            },
             "card": {
+                "cardCreated": "Створено нову картку [{cardName}]({cardUrl}) на дошці [{boardName}]({boardUrl}).",
                 "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
                 "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
+                "cardUnarchived": "Картку [{cardName}]({cardUrl}) було розархівовано.",
+                "cardDescriptionChanged": "Опис картки [{cardName}]({cardUrl}) було змінено.",
                 "cardMemberAdded": "Додано нового учасника [{memberName}]({memberUrl}) до картки [{cardName}]({cardUrl}).",
                 "cardMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з картки [{cardName}]({cardUrl}).",
                 "cardMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до картки [{cardName}]({cardUrl}).",
                 "cardMemberLeft": "Учасник [{memberName}]({memberUrl}) вийшов з картки [{cardName}]({cardUrl}).",
-                "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
-                "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
                 "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
                 "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
-                "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
-                "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
+                "cardStartDateRemoved": "Видалено дату початку в картці [{cardName}]({cardUrl}).",
+                "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
+                "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
+                "cardDueDateRemoved": "Дату виконання видалено з картки [{cardName}]({cardUrl}).",
+                "cardDueDateMarkedCompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як виконану.",
+                "cardDueDateMarkedIncompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як невиконану.",
+                "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}.",
+                "cardMovedFromBoard": "Картку [{cardName}]({cardUrl}) переміщено з дошки [{boardBefore}]({boardBeforeUrl}) в дошку [{boardAfter}]({boardAfterUrl}).",
+                "cardMovedToBoard": "Картку [{cardName}]({cardUrl}) переміщено в дошку [{boardAfter}]({boardAfterUrl}) з дошки [{boardBefore}]({boardBeforeUrl}).",
                 "cardCommentAdded": "До картки [{cardName}]({cardUrl}) додано коментар від користувача [{actionAuthor}]({actionAuthorUrl}): \n  '{commentText}'",
                 "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
-                "cardChecklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
-                "cardChecklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+                "cardAttachmentRemoved": "Видалено вкладення картки [{cardName}]({cardUrl}).",
+                "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
+                "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
+                "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl})."
+            },
+            "list": {
+                "listCreated": "Список {listName} було створено на дошці [{boardName}]({boardUrl})",
+                "listRenamed": "Список {oldListName} було перейменовано на {listName} на дошці [{boardName}]({boardUrl})",
+                "listArchived": "Список {listname} було заархівовано на дошці [{boardName}]({boardUrl})",
+                "listUnarchived": "Список {listname} було розархівовано на дошці [{boardName}]({boardUrl})",
+                "listDeleted": "Список {listname} було видалено з дошки [{boardName}]({boardUrl})"
+            },
+            "checklist": {
+                "checklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
+                "checklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+                "checklistRenamed": "Чек-лист '{oldChecklistName}' було перейменовано на '{checklistName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
                 "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
+                "checklistItemRenamed": "Елемент чеклиста, '{oldChecklistItemName}', було перейменовано в '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+                "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
+                "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
+                "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку.",
                 "checklistItemMemberAdded": "Додано учасника [{memberName}]({memberUrl}) до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemMemberLeft": "Учасник [{memberName}]({memberUrl}) залишив елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
                 "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
-                "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
-                "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку.",
-                "customFieldItemUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
-                "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
+                "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl})."
             },
-            "admin": {
+            "board": {
+                "boardRenamed": "Дошку '{oldBoardName}' було перейменовано на [{boardName}]({boardUrl}).",
+                "boardClosed": "Дошку {boardName} було закрито.",
+                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито.",
                 "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
                 "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
                 "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
@@ -176,6 +202,13 @@
                 "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
             },
             "invalidEntityId": "Сутність не знайдено або вона була видалена"
+        },
+        "subscription": {
+            "hasSubscribers": "План підписки {subscription} досі має підписників",
+            "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
+            "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
+            "alreadyExist": "План підписки {subscription} вже існує",
+            "doesNotExist": "Плану підписки {subscription} не існує"
         }
     }
 }

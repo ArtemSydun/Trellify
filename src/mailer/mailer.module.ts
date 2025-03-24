@@ -1,7 +1,7 @@
 import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule as NodeMailerModule } from '@nestjs-modules/mailer';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { MailerService } from './services/mailer.service';
 
 @Module({
@@ -10,12 +10,12 @@ import { MailerService } from './services/mailer.service';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         transport: {
-          host: configService.get<string>(configServiceEnum.MAILER_HOST),
-          port: configService.get<number>(configServiceEnum.MAILER_PORT),
+          host: configService.get<string>(configServiceKeys.MAILER_HOST),
+          port: configService.get<number>(configServiceKeys.MAILER_PORT),
           secure: false,
           auth: {
-            user: configService.get<string>(configServiceEnum.MAILER_SENDER),
-            pass: configService.get<string>(configServiceEnum.MAILER_PASSWORD),
+            user: configService.get<string>(configServiceKeys.MAILER_SENDER),
+            pass: configService.get<string>(configServiceKeys.MAILER_PASSWORD),
           },
           authMethod: 'PLAIN',
         },

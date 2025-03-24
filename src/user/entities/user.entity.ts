@@ -3,6 +3,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Languages } from 'src/common/enums/languages.enum';
 import { DiscordSettings } from '../dto/discord.settings.dto';
+import { SubscriptionSettings } from '../dto/subscription.dto';
 import { TelegramSettings } from '../dto/telegram.settings.dto';
 import { TrelloSettings } from '../dto/trello.settings.dto';
 import { UserRoles } from '../enums/role.enum';
@@ -13,7 +14,7 @@ export class User {
     description: 'Unique identifier for the user',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @Prop({ default: randomUUID() })
+  @Prop({ default: () => randomUUID() })
   id: string;
 
   @ApiProperty({
@@ -26,6 +27,14 @@ export class User {
 
   @Prop({ required: true })
   password: string;
+
+  @ApiProperty({
+    description: 'Paid subscription settings',
+    type: SubscriptionSettings,
+    required: true,
+  })
+  @Prop({ type: SubscriptionSettings, required: true })
+  subscription: SubscriptionSettings;
 
   @ApiProperty({
     description: 'Role of the user in the application',

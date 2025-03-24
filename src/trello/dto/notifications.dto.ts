@@ -13,20 +13,13 @@ import {
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
 export class NotificationCategoriesDto {
-  @ApiProperty({
-    description:
-      'Notifications related to personal actions (related to certain user)',
-    type: Object,
-    example: initializeNotificationArrays('userId1').personal,
-  })
-  personal: Record<string, string[]>;
-
-  @ApiProperty({
-    description: 'Notifications related to board events with user IDs.',
-    type: Object,
-    example: initializeNotificationArrays('userId1').board,
-  })
-  board: Record<string, string[]>;
+  // @ApiProperty({
+  //   description:
+  //     'Notifications related to personal actions (related to certain user)',
+  //   type: Object,
+  //   example: initializeNotificationArrays('userId1').personal,
+  // })
+  // personal: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
@@ -36,32 +29,37 @@ export class NotificationCategoriesDto {
   card: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to checklist events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').admin,
+    example: initializeNotificationArrays('userId1').checklist,
   })
-  admin: Record<string, string[]>;
-}
-
-export class NotificationBooleansDto {
-  @ApiProperty({
-    description:
-      'Notifications related to personal actions (related to certain user)',
-    type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .personal,
-  })
-  @IsNotEmptyObject()
-  personal: Record<string, boolean>;
+  checklist: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .board,
+    example: initializeNotificationArrays('userId1').board,
   })
-  @IsNotEmptyObject()
-  board: Record<string, boolean>;
+  board: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to list events with user IDs.',
+    type: Object,
+    example: initializeNotificationArrays('userId1').list,
+  })
+  list: Record<string, string[]>;
+}
+
+export class NotificationBooleansDto {
+  // @ApiProperty({
+  //   description:
+  //     'Notifications related to personal actions (related to certain user)',
+  //   type: Object,
+  //   example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
+  //     .personal,
+  // })
+  // @IsNotEmptyObject()
+  // personal: Record<string, boolean>;
 
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
@@ -73,13 +71,31 @@ export class NotificationBooleansDto {
   card: Record<string, boolean>;
 
   @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
+    description: 'Notifications related to checklist events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .admin,
+      .checklist,
   })
   @IsNotEmptyObject()
-  admin: Record<string, boolean>;
+  checklist: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to board events with user IDs.',
+    type: Object,
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
+      .board,
+  })
+  @IsNotEmptyObject()
+  board: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to list events with user IDs.',
+    type: Object,
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
+      .list,
+  })
+  @IsNotEmptyObject()
+  list: Record<string, boolean>;
 }
 
 export class UpdateNotificationsDto {

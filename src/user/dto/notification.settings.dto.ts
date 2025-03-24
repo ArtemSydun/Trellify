@@ -1,5 +1,4 @@
 import { Optional } from '@nestjs/common';
-import { Prop } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class NotificationSettings {
@@ -9,7 +8,6 @@ export class NotificationSettings {
     required: false,
   })
   @Optional()
-  @Prop({ required: false })
   username?: string;
 
   @ApiProperty({
@@ -18,6 +16,5 @@ export class NotificationSettings {
     required: false,
   })
   @Optional()
-  @Prop({ required: false })
   chatId?: string;
 }

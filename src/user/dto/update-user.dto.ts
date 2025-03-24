@@ -3,6 +3,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRoles } from '../enums/role.enum';
 import { CreateUserDto } from './create-user.dto';
+import { SubscriptionSettings } from './subscription.dto';
 import { TelegramSettings } from './telegram.settings.dto';
 import { TrelloSettings } from './trello.settings.dto';
 
@@ -28,4 +29,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({ type: Date })
   @Optional()
   lastActivityDate?: Date;
+
+  @ApiPropertyOptional({ type: SubscriptionSettings })
+  @Optional()
+  subscription?: SubscriptionSettings;
 }

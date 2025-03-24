@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Schema as MongooseSchema } from 'mongoose';
-import { initializeNotificationArrays } from 'src/common/helpers/trello-notifications';
 import { WebhookAuthor } from '../dto/author.dto';
 import { NotificationCategoriesDto } from '../dto/notifications.dto';
 import { WebhookSubscriber } from '../dto/subscriber.dto';
@@ -73,7 +72,6 @@ export class Webhook {
     description:
       'Notifications for various events with user IDs for each event.',
     type: Object,
-    example: initializeNotificationArrays('userId1'),
   })
   @Prop({ type: MongooseSchema.Types.Mixed, required: false })
   notifications: NotificationCategoriesDto;

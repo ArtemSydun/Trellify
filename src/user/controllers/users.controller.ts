@@ -249,7 +249,7 @@ export class UsersController {
       },
     },
   })
-  handleTelegramQuery(
+  handleTelegramConnection(
     @Req() req,
     @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
@@ -313,7 +313,10 @@ export class UsersController {
       },
     },
   })
-  handleDiscordQuery(@Req() req, @Body() connectDiscordDto: DiscordSettings) {
+  handleDiscordConnection(
+    @Req() req,
+    @Body() connectDiscordDto: DiscordSettings,
+  ) {
     return this.usersService.manageUserDiscordConnection(
       req.user,
       connectDiscordDto,

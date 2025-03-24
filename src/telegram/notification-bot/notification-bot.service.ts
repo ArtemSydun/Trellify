@@ -10,12 +10,12 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { I18nService } from 'nestjs-i18n';
 import { InjectBot } from 'nestjs-telegraf';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { Telegraf, Context, Markup } from 'telegraf';
 import { NotificationBotActions } from './notification-bot.actions';
@@ -66,7 +66,7 @@ export class NotificationBotService implements OnModuleInit {
       }
 
       const user: User = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
 
@@ -75,10 +75,10 @@ export class NotificationBotService implements OnModuleInit {
           this.i18n?.t(I18nKeys.MESSAGES_GENERAL_PROFILE_FOUND, {
             lang: user.language,
             args: {
-              infoUrl: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help`,
+              infoUrl: `${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/help`,
             },
           }) ||
-            `Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here](${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/help)`,
+            `Your telegram account have already been authorized. To setup configuration for notifications, follow steps [here](${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/help)`,
 
           { parse_mode: 'Markdown', ...keyboard },
         );
@@ -104,7 +104,7 @@ export class NotificationBotService implements OnModuleInit {
                 [
                   {
                     text: 'Trellify',
-                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings/telegram?chatId=${chatId}&username=${username}`,
+                    url: `${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/settings/telegram?chatId=${chatId}&username=${username}`,
                   },
                 ],
               ],
@@ -120,7 +120,7 @@ export class NotificationBotService implements OnModuleInit {
         ctx?.update?.message?.from?.language_code || Languages.EN;
 
       const user: User = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
 
@@ -138,7 +138,7 @@ export class NotificationBotService implements OnModuleInit {
       const steps = this.i18n.t(I18nKeys.MESSAGES_GENERAL_HELP_STEPS, {
         lang: userLanguage,
         args: {
-          websiteUrl: this.configService.get(configServiceEnum.FRONTEND_LINK),
+          websiteUrl: this.configService.get(configServiceKeys.FRONTEND_LINK),
         },
       });
 
@@ -167,7 +167,7 @@ export class NotificationBotService implements OnModuleInit {
 
       try {
         const user: null | User = await this.userRepository.findUserByProperty(
-          UserSearchPathEnum.TelegramChatId,
+          UserSearchPath.TelegramChatId,
           chatID,
         );
 
@@ -203,7 +203,7 @@ export class NotificationBotService implements OnModuleInit {
                         I18nKeys.MESSAGES_GENERAL_AUTHORIZE_THROUGH_WEBSITE,
                         { lang: userLanguage },
                       ) || 'Authorize through website',
-                    url: `${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/settings?chatId=${chatID}&username=${username}`,
+                    url: `${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/settings?chatId=${chatID}&username=${username}`,
                   },
                 ],
               ],
@@ -216,7 +216,7 @@ export class NotificationBotService implements OnModuleInit {
     this.bot.hears('💻 Trellify Website', async (ctx: any) => {
       await ctx.reply(
         `[💻 Trellify Website](${this.configService.get(
-          configServiceEnum.LANDING_LINK,
+          configServiceKeys.LANDING_LINK,
         )})\n`,
         { parse_mode: 'Markdown' },
       );
@@ -225,7 +225,7 @@ export class NotificationBotService implements OnModuleInit {
     this.bot.hears('⚙️ Trellify Configuration', async (ctx: any) => {
       await ctx.reply(
         `[⚙️ Trellify Configuration](${this.configService.get(
-          configServiceEnum.FRONTEND_LINK,
+          configServiceKeys.FRONTEND_LINK,
         )})\n`,
         { parse_mode: 'Markdown' },
       );
@@ -253,7 +253,7 @@ export class NotificationBotService implements OnModuleInit {
     try {
       const response = await axios.get(
         `https://api.telegram.org/bot${this.configService.get(
-          configServiceEnum.TELEGRAM_NOTIFICATION_BOT_TOKEN,
+          configServiceKeys.TELEGRAM_NOTIFICATION_BOT_TOKEN,
         )}/getChat`,
         { params: { chat_id: chatId } },
       );
