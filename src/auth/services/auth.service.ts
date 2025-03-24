@@ -159,8 +159,6 @@ export class AuthService {
     const payload = {
       email,
       password,
-      telegram: { username: null, chatId: null },
-      trello: { userId: null, token: null, webhooks: [] },
       language,
       timezone: timezone !== 0 ? timezone / 60 : timezone,
     };

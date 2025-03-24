@@ -121,6 +121,17 @@ export class UsersService {
           return date;
         })(),
       },
+      trello: { userId: null, token: null, webhooks: [] },
+      telegram: {
+        username: null,
+        chatId: null,
+        updatedAt: new Date(),
+      },
+      discord: {
+        userId: null,
+        username: null,
+        updatedAt: new Date(),
+      },
     };
 
     const createdUser = await this.userRepository.create(newUser);
