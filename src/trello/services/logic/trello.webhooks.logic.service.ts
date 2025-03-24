@@ -965,7 +965,6 @@ export class TrelloWebhooksLogicService {
       userToUpdate,
       {
         lastActivityDate: updateDate,
-        lastLoginDate: updateDate,
       },
       i18n,
     );
