@@ -217,7 +217,7 @@ export class SubscriptionService {
     const subscriptionToDelete =
       await this.subscriptionRepository.findOneById(id);
 
-    if (subscriptionToDelete.subscribers) {
+    if (subscriptionToDelete.subscribers?.length) {
       throw new BadRequestException(
         i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_HAS_SUBSCRIBERS, {
           args: { subscription: subscriptionToDelete.name },
