@@ -200,6 +200,17 @@ describe('UsersService', () => {
             return date;
           })(),
         },
+        trello: { userId: null, token: null, webhooks: [] },
+        telegram: {
+          username: null,
+          chatId: null,
+          updatedAt: new Date(),
+        },
+        discord: {
+          userId: null,
+          username: null,
+          updatedAt: new Date(),
+        },
       };
 
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
