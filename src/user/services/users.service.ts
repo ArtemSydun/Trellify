@@ -114,6 +114,7 @@ export class UsersService {
         id: trialSubscriptionPlan.id,
         plan: trialSubscriptionPlan.name,
         amount: trialSubscriptionPlan.price,
+        expired: false,
         lastPaymentDate: null,
         nextPaymentDate: (() => {
           const date = new Date();

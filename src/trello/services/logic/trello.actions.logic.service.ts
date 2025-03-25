@@ -57,8 +57,8 @@ export class TrelloActionsLogicService {
       const targetUser =
         await this.userService.findUserByTrelloId(userTrelloId);
 
-      // const availablePlans =
-      //   await this.subscriptionService.actionAvailablePlans(actionType);
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
       const serverDate = new Date(webhookAction?.action?.date);
@@ -180,12 +180,15 @@ export class TrelloActionsLogicService {
           );
         }
 
-        // if (!availablePlans.includes(targetUser.subscription.plan)) {
-        //   this.logger.warn(
-        //     `User ${targetUser.email} does not have subscription`,
-        //   );
-        //   return;
-        // }
+        if (
+          targetUser.subscription.expired ||
+          !availablePlans.includes(targetUser.subscription.plan)
+        ) {
+          this.logger.warn(
+            `User ${targetUser.email} does not have subscription`,
+          );
+          return;
+        }
 
         const userTimeZone = new Date(
           addMinutes(serverDate, (targetUser.timezone || 0) * 60),
@@ -262,8 +265,8 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
 
-      // const availablePlans =
-      //   await this.subscriptionService.actionAvailablePlans(actionType);
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const serverDate = new Date(webhookAction?.action?.date);
 
@@ -569,12 +572,15 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        // if (!availablePlans.includes(userToNotify.subscription.plan)) {
-        //   this.logger.warn(
-        //     `User ${userToNotify.email} does not have subscription`,
-        //   );
-        //   return;
-        // }
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
 
         const userLanguage = userToNotify.language || Languages.EN;
 
@@ -678,8 +684,8 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(trelloUserIds);
 
-      // const availablePlans =
-      //   await this.subscriptionService.actionAvailablePlans(actionType);
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const serverDate = new Date(webhookAction?.action?.date);
       const checklistItemName = webhookAction?.action?.data?.checkItem?.name;
@@ -893,12 +899,15 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        // if (!availablePlans.includes(userToNotify.subscription.plan)) {
-        //   this.logger.warn(
-        //     `User ${userToNotify.email} does not have subscription`,
-        //   );
-        //   return;
-        // }
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
 
         const userLanguage = userToNotify.language || Languages.EN;
 
@@ -1001,8 +1010,8 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(userTrelloIds);
 
-      // const availablePlans =
-      //   await this.subscriptionService.actionAvailablePlans(actionType);
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const listName = webhookAction?.action?.data?.list?.name;
       const oldListName = webhookAction?.action?.data?.old?.name;
@@ -1069,12 +1078,15 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        // if (!availablePlans.includes(userToNotify.subscription.plan)) {
-        //   this.logger.warn(
-        //     `User ${userToNotify.email} does not have subscription`,
-        //   );
-        //   return;
-        // }
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
 
         const userLanguage = userToNotify.language || Languages.EN;
 
@@ -1158,8 +1170,8 @@ export class TrelloActionsLogicService {
       const usersToNotify =
         await this.userService.findUsersByTrelloIds(userTrelloIds);
 
-      // const availablePlans =
-      //   await this.subscriptionService.actionAvailablePlans(actionType);
+      const availablePlans =
+        await this.subscriptionService.actionAvailablePlans(actionType);
 
       const oldBoardName = webhookAction?.action?.data?.old?.name;
 
@@ -1341,12 +1353,15 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        // if (!availablePlans.includes(userToNotify.subscription.plan)) {
-        //   this.logger.warn(
-        //     `User ${userToNotify.email} does not have subscription`,
-        //   );
-        //   return;
-        // }
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
+          this.logger.warn(
+            `User ${userToNotify.email} does not have subscription`,
+          );
+          return;
+        }
         const userLanguage = userToNotify.language || Languages.EN;
 
         const userTimeZone = new Date(

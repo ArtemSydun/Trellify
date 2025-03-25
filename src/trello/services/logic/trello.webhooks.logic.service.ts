@@ -41,6 +41,8 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { RedisService } from 'src/redis/services/redis.service';
+import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
@@ -95,7 +97,9 @@ export class TrelloWebhooksLogicService {
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly notificationBotService: NotificationBotService,
+    @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
+    private readonly redisService: RedisService,
     private readonly i18nService: I18nService,
   ) {
     this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
@@ -523,16 +527,21 @@ export class TrelloWebhooksLogicService {
   }
 
   async getProfileNotifications(): Promise<NotificationProfiles> {
-    const plans = await this.subscriptionService.findAll();
+    const plans = await this.redisService.getSubscriptionPlans();
 
     return {
-      basic: plans.find((plan) => plan.name === SubscriptionPlans.BASIC)
-        .notifications,
-      advanced: plans.find((plan) => plan.name === SubscriptionPlans.ADVANCED)
-        .notifications,
-      full: plans.find((plan) => plan.name === SubscriptionPlans.FULL)
-        .notifications,
+      basic: plans.basic,
+      advanced: plans.advanced,
+      full: plans.full,
     };
+    // return {
+    //   basic: plans.find((plan) => plan.name === SubscriptionPlans.BASIC)
+    //     .notifications,
+    //   advanced: plans.find((plan) => plan.name === SubscriptionPlans.ADVANCED)
+    //     .notifications,
+    //   full: plans.find((plan) => plan.name === SubscriptionPlans.FULL)
+    //     .notifications,
+    // };
   }
 
   async getWebhooksByCreatorToken(
@@ -587,8 +596,6 @@ export class TrelloWebhooksLogicService {
         }
       }
     }
-
-    console.log(defaultProfileEnabledActionKeys);
 
     if (webhook) {
       webhook = await this.recreateWebhookIfUnavailable(
@@ -979,6 +986,70 @@ export class TrelloWebhooksLogicService {
             `Webhooks has been updated successfully`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  async updateWebhooksForSubscribers(
+    subscription: string | Subscription,
+    newNotifications: any,
+  ): Promise<void> {
+    // Fetch the target subscription plan
+    const targetSubscription =
+      await this.subscriptionService.getSubscription(subscription);
+
+    // Find all webhooks with subscribers using the given subscription name as their notification profile
+    const webhooks =
+      await this.trelloWebhookRepository.findAllWebhooksWithPlanSubscribers(
+        targetSubscription.name as SubscriptionPlans,
+      );
+
+    if (!webhooks.length) return;
+
+    // Update each webhook's notifications and subscribers' profiles
+    await Promise.all(
+      webhooks.map(async (webhook) => {
+        const updatedNotifications = { ...webhook.notifications };
+
+        // Iterate over each category
+        for (const category of Object.keys(newNotifications)) {
+          if (!updatedNotifications[category])
+            updatedNotifications[category] = {};
+
+          // Iterate over each action
+          for (const action of Object.keys(newNotifications[category])) {
+            const allowedUsers = webhook.notifications[category][action] || [];
+
+            // Get all users who have the relevant notification profile for this webhook
+            const usersToUpdate = webhook.subscribers
+              .filter(
+                (subscriber) =>
+                  subscriber.notificationProfile === targetSubscription.name,
+              )
+              .map((subscriber) => subscriber.trelloUserId);
+
+            // If the notification is enabled, ensure all users are listed
+            if (newNotifications[category][action]) {
+              updatedNotifications[category][action] = Array.from(
+                new Set([...allowedUsers, ...usersToUpdate]),
+              );
+            } else {
+              // Remove users from notifications if they are not allowed
+              updatedNotifications[category][action] = allowedUsers.filter(
+                (userId) => !usersToUpdate.includes(userId),
+              );
+            }
+          }
+        }
+
+        // Update the webhook in the database
+        await this.trelloWebhookRepository.updateById(webhook.id, {
+          notifications: updatedNotifications,
+        });
+
+        console.log(`✅ Webhook ${webhook.id} updated successfully.`);
+      }),
+    );
+
+    console.log(`✅ All related webhooks updated successfully.`);
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {

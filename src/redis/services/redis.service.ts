@@ -26,13 +26,9 @@ export class RedisService {
     // Fetch data from Redis
     const dailyStatsString = await this.getValue(redisKeys.DAILY_STATS);
     const weeklyStatsString = await this.getValue(redisKeys.WEEKLY_STATS);
-    const subscriptionPlans = await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
 
-    // Initialize only if missing
-    if (!subscriptionPlans) {
-      console.log('Initializing subscription plans...');
-      await this.initializeSubscriptionPlans();
-    }
+    console.log('Refreshing subscription plans');
+    await this.initializeSubscriptionPlans();
 
     if (!dailyStatsString) {
       console.log('Initializing daily stats...');
@@ -177,8 +173,8 @@ export class RedisService {
     );
   }
 
-  async getSubscriptionPlans(): Promise<string> {
-    return await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
+  async getSubscriptionPlans(): Promise<any> {
+    return JSON.parse(await this.getValue(redisKeys.SUBSCRIPTION_PLANS));
   }
 
   async makeTokenInvalid(token: string): Promise<void> {
