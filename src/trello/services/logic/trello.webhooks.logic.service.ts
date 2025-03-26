@@ -530,9 +530,18 @@ export class TrelloWebhooksLogicService {
     const plans = await this.redisService.getSubscriptionPlans();
 
     return {
-      basic: plans.basic,
-      advanced: plans.advanced,
-      full: plans.full,
+      basic: {
+        price: plans.basic.price,
+        notifications: plans.basic.notifications,
+      },
+      advanced: {
+        price: plans.advanced.price,
+        notifications: plans.advanced.notifications,
+      },
+      full: {
+        price: plans.full.price,
+        notifications: plans.full.notifications,
+      },
     };
     // return {
     //   basic: plans.find((plan) => plan.name === SubscriptionPlans.BASIC)

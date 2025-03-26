@@ -117,7 +117,10 @@ export class RedisService {
     // Transform array into an object with plan names as keys and notifications as values
     const subscriptionPlansObject = subscriptionPlans.reduce(
       (acc, plan) => {
-        acc[plan.name] = plan.notifications;
+        acc[plan.name] = {
+          price: plan.price,
+          notifications: plan.notifications,
+        };
         return acc;
       },
       {} as Record<string, any>,

@@ -36,6 +36,7 @@ import { RedisService } from 'src/redis/services/redis.service';
 import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { UsedTrialService } from 'src/subscription/services/used-trial.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
@@ -69,6 +70,7 @@ export class UsersService {
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
+    private readonly usedTrialService: UsedTrialService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
   ) {}
@@ -106,6 +108,16 @@ export class UsersService {
         i18n,
       );
 
+    let trialExpired = false;
+    const currentDate = new Date();
+    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+      createUserDto.email,
+    );
+
+    if (usedTrial?.trialEnds < currentDate) {
+      trialExpired = true;
+    }
+
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
@@ -114,13 +126,15 @@ export class UsersService {
         id: trialSubscriptionPlan.id,
         plan: trialSubscriptionPlan.name,
         amount: trialSubscriptionPlan.price,
-        expired: false,
+        expired: trialExpired,
         lastPaymentDate: null,
-        nextPaymentDate: (() => {
-          const date = new Date();
-          date.setDate(date.getDate() + 14);
-          return date;
-        })(),
+        nextPaymentDate:
+          usedTrial?.trialEnds ||
+          (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 14);
+            return date;
+          })(),
       },
       trello: { userId: null, token: null, webhooks: [] },
       telegram: {
@@ -136,6 +150,19 @@ export class UsersService {
     };
 
     const createdUser = await this.userRepository.create(newUser);
+
+    if (!usedTrial) {
+      await this.usedTrialService.createUsedTrial({
+        email: createdUser.email,
+        userId: createdUser.id,
+        trelloUserId: null,
+        trialStarts: createdUser.createdAt,
+        trialEnds: createdUser.subscription.nextPaymentDate,
+      });
+      this.logger.log(
+        `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
+      );
+    }
 
     await this.redisService.updateDailyStats(
       periodStatsKeys.NEW_USERS,
@@ -153,8 +180,9 @@ export class UsersService {
         i18n,
       );
     }
+
     this.logger.log(
-      `User with email ${createUserDto.email} created successfully`,
+      `User with email ${createdUser.email} created successfully`,
     );
     return createdUser;
   }
@@ -654,21 +682,32 @@ export class UsersService {
     const { token } = connectTrelloDto;
 
     const updateDate = new Date();
+    const updatedUserProps: Partial<User> = {
+      trello: { ...userToUpdate.trello },
+      lastActivityDate: updateDate,
+    };
 
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
         i18n,
       );
+
+      updatedUserProps.trello = {
+        userId: null,
+        username: null,
+        webhooks: [],
+        token: null,
+      };
+
       const updatedUser = await this.userRepository.updateById(
         userToUpdate.id,
-        {
-          trello: { userId: null, username: null, webhooks: [], token: null },
-          lastActivityDate: updateDate,
-        },
+        updatedUserProps,
       );
 
-      this.logger.log(`Trello profile disconnected for user ${user}`);
+      this.logger.log(
+        `Trello profile disconnected for user ${userToUpdate.trello.username}`,
+      );
       return {
         message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
         statusCode: HttpStatus.OK,
@@ -676,19 +715,20 @@ export class UsersService {
       };
     }
 
-    await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
+    if (userToUpdate.trello.userId !== null && token) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_DISCONNECT_FIRST) ||
+          `You should disconnect your Trello account first before connecting a new one.`,
+      );
+    }
 
-    const updatedUserProps: Partial<User> = {
-      trello: { ...userToUpdate.trello },
-    };
+    await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
 
     if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
       updatedUserProps.trello.token = encryptText(
         token,
         this.configService.get(configServiceKeys.ENCRYPTION_KEY),
       );
-    } else {
-      updatedUserProps.trello.token = userToUpdate.trello.token;
     }
 
     const trelloToken =
@@ -716,9 +756,40 @@ export class UsersService {
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
+    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+      userToUpdate.email,
+    );
+
+    const usedTrialByTrelloId =
+      await this.usedTrialService.findUsedTrialByTrelloUserId(trelloProfile.id);
+
+    if (usedTrialByTrelloId) {
+      if (new Date(usedTrialByTrelloId.trialEnds) < new Date()) {
+        throw new ConflictException(
+          i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_TRIAL_EXPIRED) ||
+            `This user has an expired trial version`,
+        );
+      }
+      await this.usedTrialService.updateUsedTrialById(usedTrialByTrelloId.id, {
+        email: userToUpdate.email,
+      });
+
+      await this.usedTrialService.deleteUserTrialById(usedTrial.id);
+
+      updatedUserProps.subscription = {
+        ...userToUpdate.subscription,
+        nextPaymentDate: usedTrialByTrelloId.trialEnds,
+      };
+    }
+
+    if (!usedTrialByTrelloId && usedTrial && !usedTrial.trelloUserId) {
+      await this.usedTrialService.updateUsedTrialById(usedTrial.id, {
+        trelloUserId: trelloProfile.id,
+      });
+    }
+
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       ...updatedUserProps,
-      lastActivityDate: updateDate,
     });
 
     this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
