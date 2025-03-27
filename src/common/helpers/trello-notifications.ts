@@ -23,7 +23,7 @@ export const getCategoriesForAction = (actionKey: string): string[] => {
   return matchingCategories;
 };
 
-export const getActionEnumKey = (actionType) => {
+export const getActionEnumKey = (actionType: TrelloWebhookDetailedActions) => {
   if (Object.values(TrelloWebhookDetailedActions).includes(actionType)) {
     return toCamelCase(
       Object.keys(TrelloWebhookDetailedActions).find(

@@ -180,7 +180,10 @@ export class TrelloActionsLogicService {
           );
         }
 
-        if (!availablePlans.includes(targetUser.subscription.plan)) {
+        if (
+          targetUser.subscription.expired ||
+          !availablePlans.includes(targetUser.subscription.plan)
+        ) {
           this.logger.warn(
             `User ${targetUser.email} does not have subscription`,
           );
@@ -569,7 +572,10 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
           this.logger.warn(
             `User ${userToNotify.email} does not have subscription`,
           );
@@ -893,7 +899,10 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
           this.logger.warn(
             `User ${userToNotify.email} does not have subscription`,
           );
@@ -1069,7 +1078,10 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
           this.logger.warn(
             `User ${userToNotify.email} does not have subscription`,
           );
@@ -1341,7 +1353,10 @@ export class TrelloActionsLogicService {
       };
 
       const userPromises = usersToNotify.map(async (userToNotify) => {
-        if (!availablePlans.includes(userToNotify.subscription.plan)) {
+        if (
+          userToNotify.subscription?.expired ||
+          !availablePlans.includes(userToNotify.subscription.plan)
+        ) {
           this.logger.warn(
             `User ${userToNotify.email} does not have subscription`,
           );

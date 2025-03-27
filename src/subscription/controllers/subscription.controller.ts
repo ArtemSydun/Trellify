@@ -36,7 +36,7 @@ export class SubscriptionController {
   @Roles(UserRoles.superadmin)
   @Post()
   @ApiOperation({
-    summary: 'Create new subscription plan, (Superadmin / admin / support)',
+    summary: 'Create new subscription plan, (Superadmin only)',
     description: 'Create new subscription plan.',
   })
   @ApiOkResponse({

@@ -105,6 +105,7 @@ export class UsersRepository {
       telegramUserName,
       language,
       subscriptionPlan,
+      subscriptionExpired,
     } = filters;
     const perPage = limit; // Elements per page
     const offset = (page - 1) * perPage; // Calculate skip amount
@@ -134,6 +135,9 @@ export class UsersRepository {
 
     if (subscriptionPlan)
       query[UserSearchPath.SubscriptionPlan] = subscriptionPlan;
+    if (typeof subscriptionExpired === 'boolean') {
+      query[UserSearchPath.SubscriptionExpired] = subscriptionExpired;
+    }
 
     // Define sorting
     const sortOrder = order === 'asc' ? 1 : -1;
@@ -145,7 +149,8 @@ export class UsersRepository {
     const users = await this.UserModel.find(query)
       .sort({ [orderBy]: sortOrder })
       .skip(offset)
-      .limit(perPage);
+      .limit(perPage)
+      .lean();
 
     return {
       total,

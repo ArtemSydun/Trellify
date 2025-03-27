@@ -251,6 +251,41 @@ export class TrelloWebhooksController {
   })
   @ApiOkResponse({
     description: 'Notification profiles',
+    example: {
+      basic: {
+        price: 1,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+      advanced: {
+        price: 3,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+      full: {
+        price: 5,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+    },
   })
   @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {

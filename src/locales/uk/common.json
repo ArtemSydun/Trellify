@@ -199,6 +199,7 @@
                 "invalidAppKey": "Щось погане коїться з Trellify. Будь ласка, перевірте свій токен Трело, або напишіть в підтримку",
                 "checkConnection": "Будь ласка, перевірте ваше підключення до Trello",
                 "expiredToken": "Будь ласка, надайте токен з дійсною датою завершення",
+                "disconnectFirst": "Вам потрібно відключити наявний Trello аккаунт перед підключенням нового",
                 "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
             },
             "invalidEntityId": "Сутність не знайдено або вона була видалена"
@@ -208,7 +209,8 @@
             "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
             "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
             "alreadyExist": "План підписки {subscription} вже існує",
-            "doesNotExist": "Плану підписки {subscription} не існує"
+            "doesNotExist": "Плану підписки {subscription} не існує",
+            "trialExpired": "Термін пробної підписки для цього користувача закінчився"
         }
     }
 }

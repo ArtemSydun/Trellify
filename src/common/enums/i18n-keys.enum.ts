@@ -182,6 +182,7 @@ export enum I18nKeys {
   ERRORS_TRELLO_INVALID_WEBHOOK_ID = 'common.errors.trello.webhook.invalidWebhookId',
   ERRORS_TRELLO_CHECK_CONNECTION = 'common.errors.trello.profile.checkConnection',
   ERRORS_TRELLO_EXPIRED_TOKEN = 'common.errors.trello.profile.expiredToken',
+  ERRORS_TRELLO_DISCONNECT_FIRST = 'common.errors.trello.profile.disconnectFirst',
   ERRORS_TRELLO_ALREADY_CONNECTED = 'common.errors.trello.profile.alreadyConnected',
 
   // Subscription errors
@@ -190,4 +191,5 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.doesNotExist',
+  ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
 }

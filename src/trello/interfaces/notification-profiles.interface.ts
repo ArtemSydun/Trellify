@@ -1,7 +1,16 @@
 import { NotificationBooleansDto } from '../dto/notifications.dto';
 
 export interface NotificationProfiles {
-  basic: NotificationBooleansDto;
-  advanced: NotificationBooleansDto;
-  full: NotificationBooleansDto;
+  basic: {
+    price: number;
+    notifications: NotificationBooleansDto;
+  };
+  advanced: {
+    price: number;
+    notifications: NotificationBooleansDto;
+  };
+  full: {
+    price: number;
+    notifications: NotificationBooleansDto;
+  };
 }

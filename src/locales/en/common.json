@@ -199,6 +199,7 @@
                 "invalidAppKey": "Something bad is going on with Trellify. Please, check your Trello token or reach Trellify support",
                 "checkConnection": "Please check your Trello connection",
                 "expiredToken": "Please provide a token with a valid expiration date",
+                "disconnectFirst": "You should disconnect your previous Trello account before connecting a new one",
                 "alreadyConnected": "This trello profile is already binded to other user"
             },
             "invalidEntityId": "This entity was not found or was deleted"
@@ -208,7 +209,8 @@
             "userNotSubscribed": "User {userId} is not subscribed on {subscription} plan",
             "userAlreadySubscribed": "User {userId} is already subscribed on {subscription} plan",
             "alreadyExist": "Subscription plan {subscription} already exist",
-            "doesNotExist": "Subscription plan {subscription} does not exist"
+            "doesNotExist": "Subscription plan {subscription} does not exist",
+            "trialExpired": "This user's trial version has already expired"
         }
     }
 }
