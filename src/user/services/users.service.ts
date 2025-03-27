@@ -756,36 +756,45 @@ export class UsersService {
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
 
-    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
-      userToUpdate.email,
-    );
+    if (userToUpdate.subscription.plan === SubscriptionPlans.TRIAL) {
+      const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+        userToUpdate.email,
+      );
 
-    const usedTrialByTrelloId =
-      await this.usedTrialService.findUsedTrialByTrelloUserId(trelloProfile.id);
-
-    if (usedTrialByTrelloId) {
-      if (new Date(usedTrialByTrelloId.trialEnds) < new Date()) {
-        throw new ConflictException(
-          i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_TRIAL_EXPIRED) ||
-            `This user has an expired trial version`,
+      const usedTrialByTrelloId =
+        await this.usedTrialService.findUsedTrialByTrelloUserId(
+          trelloProfile.id,
         );
+
+      if (usedTrialByTrelloId) {
+        if (new Date(usedTrialByTrelloId.trialEnds) < new Date()) {
+          throw new ConflictException(
+            i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_TRIAL_EXPIRED) ||
+              `This user's trial version has already expired.`,
+          );
+        }
+        await this.usedTrialService.updateUsedTrialById(
+          usedTrialByTrelloId.id,
+          {
+            email: userToUpdate.email,
+          },
+        );
+
+        if (usedTrial && usedTrial.email !== usedTrialByTrelloId.email) {
+          await this.usedTrialService.deleteUserTrialById(usedTrial.id);
+        }
+
+        updatedUserProps.subscription = {
+          ...userToUpdate.subscription,
+          nextPaymentDate: usedTrialByTrelloId.trialEnds,
+        };
       }
-      await this.usedTrialService.updateUsedTrialById(usedTrialByTrelloId.id, {
-        email: userToUpdate.email,
-      });
 
-      await this.usedTrialService.deleteUserTrialById(usedTrial.id);
-
-      updatedUserProps.subscription = {
-        ...userToUpdate.subscription,
-        nextPaymentDate: usedTrialByTrelloId.trialEnds,
-      };
-    }
-
-    if (!usedTrialByTrelloId && usedTrial && !usedTrial.trelloUserId) {
-      await this.usedTrialService.updateUsedTrialById(usedTrial.id, {
-        trelloUserId: trelloProfile.id,
-      });
+      if (!usedTrialByTrelloId && usedTrial && !usedTrial.trelloUserId) {
+        await this.usedTrialService.updateUsedTrialById(usedTrial.id, {
+          trelloUserId: trelloProfile.id,
+        });
+      }
     }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {

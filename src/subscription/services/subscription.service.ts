@@ -262,16 +262,16 @@ export class SubscriptionService {
   }
 
   async actionAvailablePlans(actionType: any): Promise<string[]> {
-    const allPlans = JSON.parse(await this.redisService.getSubscriptionPlans());
+    const allPlans = await this.redisService.getSubscriptionPlans();
     const enumKey = getActionEnumKey(actionType);
 
     const availablePlans: string[] = [];
 
     // Iterate over the plans (Object.entries gives [planName, planData])
     for (const [planName, planData] of Object.entries(allPlans)) {
-      for (const notifications of Object.values(planData)) {
+      for (const category of Object.values(planData.notifications)) {
         // Ensure the category exists and contains the action type before accessing it
-        if (notifications && notifications[enumKey] === true) {
+        if (category && category[enumKey] === true) {
           availablePlans.push(planName);
           break; // No need to check other categories for this plan, move to next plan
         }

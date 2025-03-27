@@ -10,6 +10,7 @@ import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { periodStatsKeys } from '../enums/daily-stats-keys.enum';
 import { redisKeys } from '../enums/redis-keys.enum';
 
@@ -176,7 +177,7 @@ export class RedisService {
     );
   }
 
-  async getSubscriptionPlans(): Promise<any> {
+  async getSubscriptionPlans(): Promise<NotificationProfiles> {
     return JSON.parse(await this.getValue(redisKeys.SUBSCRIPTION_PLANS));
   }
 
