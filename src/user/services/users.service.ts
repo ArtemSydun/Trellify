@@ -444,11 +444,17 @@ export class UsersService {
     i18n?: I18nContext,
     reqUser?: Partial<User>,
   ): Promise<DefaultResponse<User>> {
-    if (reqUser?.role !== UserRoles.superadmin) {
+    const userToUpdate = await this.getUser(user, i18n);
+
+    //do not let update roles for not superadmins, and do not let superadmin lower his role
+    if (
+      reqUser?.role !== UserRoles.superadmin ||
+      (reqUser?.role === UserRoles.superadmin &&
+        userToUpdate.id === reqUser?.id)
+    ) {
       delete updateUserDto.role;
     }
 
-    const userToUpdate = await this.getUser(user, i18n);
     const updatedUserProps: Partial<User> = {};
 
     for (const [key, value] of Object.entries(updateUserDto)) {
@@ -499,7 +505,12 @@ export class UsersService {
     delete updatedUser.password;
 
     return {
-      message: `User ${userToUpdate.id} updated successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_UPDATED, {
+          args: {
+            email: userToUpdate.email,
+          },
+        }) || `User ${userToUpdate.email} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -537,6 +548,53 @@ export class UsersService {
       message: `User ${userToUpdate.id} preferences updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
+    };
+  }
+
+  public async updateUserSubscription(
+    user: string | User,
+    subscription: string | Subscription,
+    reqUser: Partial<User>,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user, i18n);
+    const adminUser = await this.getUser(reqUser.id);
+
+    if (adminUser.role !== UserRoles.superadmin) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          `Forbidden resource`,
+      );
+    }
+
+    const oldSubscription =
+      await this.subscriptionService.getSubscription(subscription);
+
+    const newSubscription = await this.subscriptionService.getSubscription(
+      userToUpdate.subscription.id,
+    );
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      oldSubscription,
+      userToUpdate.id,
+    );
+
+    await this.subscriptionService.addSubscriberToPlan(
+      newSubscription,
+      userToUpdate.id,
+    );
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_SUBSCRIPTION_UPDATED, {
+          args: {
+            email: userToUpdate.email,
+            subscription: newSubscription.name,
+          },
+        }) ||
+        `User ${userToUpdate.email} subscription plan successfully changed to ${newSubscription.name} plan`,
+      statusCode: HttpStatus.OK,
+      data: userToUpdate,
     };
   }
 

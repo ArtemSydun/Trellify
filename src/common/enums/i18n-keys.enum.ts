@@ -41,7 +41,10 @@ export enum I18nKeys {
 
   // user related messages
   MESSAGES_USER_CREATED = 'common.messages.user.created',
+  MESSAGES_USER_UPDATED = 'common.messages.user.updated',
   MESSAGES_USER_DELETED = 'common.messages.user.deleted',
+  MESSAGES_USER_SUBSCRIPTION_UPDATED = 'common.messages.user.subscriptionUpdated',
+
   MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
   MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY = 'common.messages.user.passwordChangedSuccessfully',
   MESSAGES_USER_EMAIL_CHANGED_SUCCESSFULLY = 'common.messages.user.emailChangedSuccessfully',

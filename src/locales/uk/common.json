@@ -47,7 +47,9 @@
         },
         "user": {
             "created": "Користувача було успішно створено",
+            "updated": "Користувача {email} оновлено успішно",
             "deleted": "Усі дані про користувача {email} було видалено.",
+            "subscriptionUpdated": "Підписку користувача {email} було успішно змінено на {subscription}",
             "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
             "passwordChangedSuccessfully": "Пароль було успішно змінено",
             "emailChangedSuccessfully": "Пошту було успішно змінено"

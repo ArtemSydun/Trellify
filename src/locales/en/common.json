@@ -47,7 +47,9 @@
         },
         "user": {
             "created": "User has been created successfully",
+            "updated": "User {email} been updated successfully",
             "deleted": "All user {email} data has been deleted.",
+            "subscriptionUpdated": "User {email} subscription plan changed to {subscription} plan",
             "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
             "passwordChangedSuccessfully": "Password has been successfully changed",
             "emailChangedSuccessfully": "Email has been successfully changed"

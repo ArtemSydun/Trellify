@@ -37,6 +37,8 @@ import { RedisService } from 'src/redis/services/redis.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { UsedTrialService } from 'src/subscription/services/used-trial.service';
+import { usedTrialStub } from '../__mocks__/used-trial.stub';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -54,6 +56,7 @@ describe('UsersService', () => {
   let notificationBotService: NotificationBotService;
   let adminBotService: AdminBotService;
   let mailerService: MailerService;
+  let usedTrialService: UsedTrialService;
   let redisService: RedisService;
   let subscriptionService: SubscriptionService;
   let mockUsers: User[];
@@ -109,6 +112,10 @@ describe('UsersService', () => {
           useValue: createMock<SubscriptionService>(),
         },
         {
+          provide: UsedTrialService,
+          useValue: createMock<UsedTrialService>(),
+        },
+        {
           provide: MailerService,
           useValue: createMock<MailerService>(),
         },
@@ -135,6 +142,7 @@ describe('UsersService', () => {
     mailerService = moduleRef.get<MailerService>(MailerService);
 
     redisService = moduleRef.get<RedisService>(RedisService);
+    usedTrialService = moduleRef.get<UsedTrialService>(UsedTrialService);
 
     subscriptionService =
       moduleRef.get<SubscriptionService>(SubscriptionService);
@@ -171,7 +179,7 @@ describe('UsersService', () => {
   });
 
   describe('createUser', () => {
-    it('should create a new user successfully', async () => {
+    it('should create a new user with fresh subscription successfully', async () => {
       const trialSubscriptionPlan = {
         id: 'id1',
         name: SubscriptionPlans.TRIAL,
@@ -193,6 +201,7 @@ describe('UsersService', () => {
           id: 'id1',
           plan: SubscriptionPlans.TRIAL,
           amount: 0,
+          expired: false,
           lastPaymentDate: null,
           nextPaymentDate: (() => {
             const date = new Date();
@@ -218,6 +227,148 @@ describe('UsersService', () => {
       jest
         .spyOn(subscriptionService, 'findSubscriptionByName')
         .mockResolvedValue(trialSubscriptionPlan);
+
+      jest
+        .spyOn(usedTrialService, 'findUserTrialByEmail')
+        .mockResolvedValue(null);
+
+      const result = await usersService.createUser(createUserDto);
+
+      expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+        createUserDto.email,
+      );
+      expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
+      expect(usersRepository.create).toHaveBeenCalledWith({
+        id: expect.any(String),
+        ...createUserDto,
+        password: 'hashedPassword',
+      });
+      expect(result).toEqual(superAdminStub());
+    });
+
+    it('should create a new user with trial expiration date if he already used trial and it is not expired', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          card: {},
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      };
+
+      const trialExpires = new Date();
+
+      const createUserDto = {
+        email: superAdminStub().email,
+        password: 'password123',
+        timezone: 0,
+        subscription: {
+          id: 'id1',
+          plan: SubscriptionPlans.TRIAL,
+          amount: 0,
+          expired: false,
+          lastPaymentDate: null,
+          nextPaymentDate: trialExpires,
+        },
+        trello: { userId: null, token: null, webhooks: [] },
+        telegram: {
+          username: null,
+          chatId: null,
+          updatedAt: new Date(),
+        },
+        discord: {
+          userId: null,
+          username: null,
+          updatedAt: new Date(),
+        },
+      };
+
+      const usedTrial = {
+        ...usedTrialStub,
+        email: createUserDto.email,
+        trialEnds: trialExpires,
+      };
+
+      jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest
+        .spyOn(subscriptionService, 'findSubscriptionByName')
+        .mockResolvedValue(trialSubscriptionPlan);
+
+      jest
+        .spyOn(usedTrialService, 'findUserTrialByEmail')
+        .mockResolvedValue(usedTrial);
+
+      const result = await usersService.createUser(createUserDto);
+
+      expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+        createUserDto.email,
+      );
+      expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
+      expect(usersRepository.create).toHaveBeenCalledWith({
+        id: expect.any(String),
+        ...createUserDto,
+        password: 'hashedPassword',
+      });
+      expect(result).toEqual(superAdminStub());
+    });
+    it('should create a new user with expired subscription if he already used trial', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          card: {},
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      };
+
+      const createUserDto = {
+        email: superAdminStub().email,
+        password: 'password123',
+        timezone: 0,
+        subscription: {
+          id: 'id1',
+          plan: SubscriptionPlans.TRIAL,
+          amount: 0,
+          expired: false,
+          lastPaymentDate: null,
+          nextPaymentDate: usedTrialStub.trialEnds,
+        },
+        trello: { userId: null, token: null, webhooks: [] },
+        telegram: {
+          username: null,
+          chatId: null,
+          updatedAt: new Date(),
+        },
+        discord: {
+          userId: null,
+          username: null,
+          updatedAt: new Date(),
+        },
+      };
+
+      const usedTrial = {
+        ...usedTrialStub,
+        email: createUserDto.email,
+      };
+
+      jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest
+        .spyOn(subscriptionService, 'findSubscriptionByName')
+        .mockResolvedValue(trialSubscriptionPlan);
+
+      jest
+        .spyOn(usedTrialService, 'findUserTrialByEmail')
+        .mockResolvedValue(usedTrial);
 
       const result = await usersService.createUser(createUserDto);
 
@@ -1071,10 +1222,100 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw an error if token is invalid or not infinite', async () => {
-      const userToUpdate = { ...userStub() };
+    it('should throw an error if user tries to connect another trello account still having other in profile', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          card: {},
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      };
+      const userToUpdate = {
+        ...userStub(),
+        trello: {
+          userId: null,
+          userName: null,
+          webhooks: [],
+        },
+        subscription: {
+          ...userStub().subscription,
+          plan: trialSubscriptionPlan.name,
+        },
+      };
+
+      const connectTrelloDto = { token: 'validtoken' };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+
+      await expect(
+        usersService.manageUserTrelloConnection(userToUpdate, connectTrelloDto),
+      ).rejects.toThrow(
+        new ConflictException(
+          'This trello profile is already binded to other user',
+        ),
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate,
+        undefined,
+      );
+    });
+
+    it('should throw an error if a user with a trial tries to connect to another Trello account that has already used their trial.', async () => {
+      const userToUpdate = {
+        ...userStub(),
+      };
+
       const connectTrelloDto = { token: 'invalidtoken' };
 
+      const usedTrialByTrelloId = {
+        ...usedTrialStub,
+        email: 'anymail@mail.com',
+        trelloUserId: userToUpdate.trello.userId,
+      };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+
+      jest
+        .spyOn(trelloTokensLogicService, 'isTokenInfinite')
+        .mockResolvedValue(true);
+
+      jest
+        .spyOn(usedTrialService, 'findUsedTrialByTrelloUserId')
+        .mockResolvedValue(usedTrialByTrelloId);
+
+      await expect(
+        usersService.manageUserTrelloConnection(userToUpdate, connectTrelloDto),
+      ).rejects.toThrow(
+        new ConflictException(
+          'You should disconnect your Trello account first before connecting a new one.',
+        ),
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate,
+        undefined,
+      );
+    });
+
+    it('should throw an error if token is invalid or not infinite', async () => {
+      const userToUpdate = {
+        ...userStub(),
+        trello: {
+          userId: null,
+          username: null,
+          webhooks: [],
+        },
+      };
+
+      const connectTrelloDto = { token: 'invalidtoken' };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
         .mockRejectedValue(
@@ -1084,10 +1325,7 @@ describe('UsersService', () => {
         );
 
       await expect(
-        usersService.manageUserTrelloConnection(
-          userToUpdate.id,
-          connectTrelloDto,
-        ),
+        usersService.manageUserTrelloConnection(userToUpdate, connectTrelloDto),
       ).rejects.toThrow(
         new BadRequestException(
           'Please provide a token with a valid expiration date',
@@ -1095,7 +1333,7 @@ describe('UsersService', () => {
       );
 
       expect(usersService.getUser).toHaveBeenCalledWith(
-        userToUpdate.id,
+        userToUpdate,
         undefined,
       );
       expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(
