@@ -354,7 +354,7 @@ export class UsersService {
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Partial<User>> {
-    const userToFind = await this.getUser(user);
+    const userToFind = await this.getUser(user, i18n);
     if (!user) {
       this.logger.warn(`User with ID ${userToFind.id} not found`);
       throw new NotFoundException(
@@ -406,7 +406,7 @@ export class UsersService {
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
-    const subscriber = await this.getUser(user);
+    const subscriber = await this.getUser(user, i18n);
 
     const webhooks =
       await this.trelloWebhooksLogicService.findUserSubscribedWebhooks(
@@ -941,7 +941,7 @@ export class UsersService {
     targetSubscription: string | Subscription,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user);
+    const userToUpdate = await this.getUser(user, i18n);
 
     const oldSubscription = await this.subscriptionService.getSubscription(
       userToUpdate.subscription.id,
