@@ -581,7 +581,7 @@ describe('UsersService', () => {
 
       const result = await usersService.findUserProfile(user.id);
 
-      expect(usersService.getUser).toHaveBeenCalledWith(user.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(user.id, undefined);
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('telegram.chatId');
       expect(result).not.toHaveProperty('trello.token');
@@ -659,7 +659,7 @@ describe('UsersService', () => {
         undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(mockUser);
+      expect(usersService.getUser).toHaveBeenCalledWith(mockUser, undefined);
       expect(
         trelloWebhooksLogicService.findUserSubscribedWebhooks,
       ).toHaveBeenCalledWith(mockUser, undefined);
