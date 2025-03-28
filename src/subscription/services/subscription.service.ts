@@ -7,7 +7,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { isUUID } from 'class-validator';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { getActionEnumKey } from 'src/common/helpers/trello-notifications';
@@ -39,16 +38,8 @@ export class SubscriptionService {
     i18n?: I18nContext,
   ): Promise<Subscription> {
     if (typeof subscription === 'string') {
-      if (isUUID(subscription)) {
-        // If it's a valid UUID string, fetch the subscription by ID
-        return await this.findSubscriptionById(subscription, i18n);
-      } else {
-        // If it's a named subscription plan, fetch it by name
-        return await this.findSubscriptionByName(
-          subscription as SubscriptionPlans,
-          i18n,
-        );
-      }
+      // If it's a valid UUID string, fetch the subscription by ID
+      return await this.findSubscriptionById(subscription, i18n);
     }
     return subscription; // If it's already a Subscription object, return it as-is
   }
