@@ -626,6 +626,7 @@ export class TrelloWebhooksLogicService {
           trelloUserId: userToUpdate.trello.userId,
           trelloToken: userToUpdate.trello.token,
           notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+          authorNotifications: true,
         });
       }
 
@@ -735,6 +736,7 @@ export class TrelloWebhooksLogicService {
             trelloToken: userToUpdate.trello.token,
             trelloUserId: userToUpdate.trello.userId,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: true,
           },
         ],
         notifications: initializeNotificationArrays(
@@ -815,7 +817,7 @@ export class TrelloWebhooksLogicService {
     const subscriberIds = webhookToUpdate.subscribers.map(
       (subscriber) => subscriber.trelloUserId,
     );
-    const { notifications, notificationProfile } =
+    const { notifications, notificationProfile, authorNotifications } =
       updateWebhookNotificationsDto;
 
     if (!subscriberIds.includes(userToUpdate.trello.userId)) {
@@ -853,6 +855,7 @@ export class TrelloWebhooksLogicService {
       );
 
       subscriberToUpdate.notificationProfile = notificationProfile;
+      subscriberToUpdate.authorNotifications = authorNotifications;
 
       const updatedWebhook = await this.trelloWebhookRepository.updateById(
         webhookToUpdate.id,
@@ -1062,9 +1065,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    // delete webhookAction.model?.prefs;
-    // delete webhookAction.model?.labelNames;
-    // console.log(JSON.stringify(webhookAction, null, 2));
+    delete webhookAction.model?.prefs;
+    delete webhookAction.model?.labelNames;
+    console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
@@ -1110,6 +1113,11 @@ export class TrelloWebhooksLogicService {
       webhookAction?.action?.data?.checkItem?.idMember ||
       webhookAction?.action?.data?.old?.idMember ||
       '';
+
+    const authorSubscriber = webhook.subscribers.find(
+      (subscriber) =>
+        subscriber.trelloUserId === webhookAction?.action?.memberCreator?.id,
+    );
 
     // to handle unknown detailed type actions which has clear generalActionType etc createCheckItem
     if (detailedActionType === 'unknown') {
@@ -1169,14 +1177,21 @@ export class TrelloWebhooksLogicService {
     let notifiedTargetUser: string | null = '';
     let notifiedAuthorUser: string | null = '';
 
-    if (
-      (targetedChecklistUserId &&
-        authorMember?.id === targetedChecklistUserId) ||
-      (!targetedChecklistUserId && !targetMember?.id) ||
-      (targetMember?.id && authorMember?.id === targetMember?.id)
-    ) {
-      notifiedAuthorUser = authorMember?.id;
-    }
+    // If the action author is a webhook subscriber and has authorNotifications enabled (authorNotifications: true),
+    // we do not send them notifications about actions they have performed (notifiedAuthorUser = null).
+    // Otherwise, we check the following conditions to determine if they should be notified:
+    // 1. If a targeted checklist user exists and the author is the targeted user.
+    // 2. If there is no targeted checklist user and no targeted member (general case).
+    // 3. If a target member exists and the author is the same as the target member.
+    // If any of the conditions are met, the author will be notified (notifiedAuthorUser = authorMember?.id).
+    notifiedAuthorUser = authorSubscriber?.authorNotifications
+      ? null
+      : (targetedChecklistUserId &&
+            authorMember?.id === targetedChecklistUserId) ||
+          (!targetedChecklistUserId && !targetMember?.id) ||
+          (targetMember?.id && authorMember?.id === targetMember?.id)
+        ? authorMember?.id
+        : null;
 
     for (const category of matchingCategories) {
       const actionSubscribers =

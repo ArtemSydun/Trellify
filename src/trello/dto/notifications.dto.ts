@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmptyObject,
   ValidateNested,
@@ -117,6 +118,13 @@ export class UpdateNotificationsDto {
     message: 'notificationProfile must be a valid profile value',
   })
   notificationProfile: TrelloWebhookNotificationProfiles;
+
+  @ApiProperty({
+    description: 'Status of author notifications enabling',
+    example: true,
+  })
+  @IsBoolean()
+  authorNotifications: boolean;
 }
 
 export class UpdateManyNotificationsDto extends UpdateNotificationsDto {

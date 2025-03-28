@@ -728,7 +728,7 @@ describe('UsersService', () => {
       );
 
       expect(result).toEqual({
-        message: expect.stringContaining(user.id),
+        message: expect.stringContaining(user.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -756,7 +756,7 @@ describe('UsersService', () => {
       expect(result.data?.role).toEqual(userToUpdate.role);
 
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.id),
+        message: expect.stringContaining(userToUpdate.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -796,7 +796,7 @@ describe('UsersService', () => {
       expect(result.data?.trello?.userId).toEqual(trelloProfileMock.id);
 
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.id),
+        message: expect.stringContaining(userToUpdate.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
