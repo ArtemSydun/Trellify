@@ -47,7 +47,9 @@
         },
         "user": {
             "created": "User has been created successfully",
+            "updated": "User {email} been updated successfully",
             "deleted": "All user {email} data has been deleted.",
+            "subscriptionUpdated": "User {email} subscription plan changed to {subscription} plan",
             "allWebhooksDisconnected": "User {email} disconnected from all webhooks",
             "passwordChangedSuccessfully": "Password has been successfully changed",
             "emailChangedSuccessfully": "Email has been successfully changed"
@@ -89,11 +91,15 @@
                 "cardRenamed": "The card has been renamed from '{oldCardName}' to [{cardName}]({cardUrl}).",
                 "cardArchived": "The card [{cardName}]({cardUrl}) has been archived.",
                 "cardUnarchived": "The card [{cardName}]({cardUrl}) has been unarchived.",
-                "cardDescriptionChanged": "The card [{cardName}]({cardUrl}) description has been changed.",
+                "cardDeleted": "Card has been deleted from the list {listName}",
                 "cardMemberAdded": "A member [{memberName}]({memberUrl}) has been added to the card [{cardName}]({cardUrl}).",
                 "cardMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from the card [{cardName}]({cardUrl}).",
                 "cardMemberJoined": "A member [{memberName}]({memberUrl}) has joined the card [{cardName}]({cardUrl}).",
                 "cardMemberLeft": "A member [{memberName}]({memberUrl}) has left the card [{cardName}]({cardUrl}).",
+                "cardLabelAdded": "A label has been added to the card [{cardName}]({cardUrl}).",
+                "cardLabelRemoved": "A label has been removed from the card [{cardName}]({cardUrl}).",
+                "cardDescriptionChanged": "The card [{cardName}]({cardUrl}) description has been changed.",
+                "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) \n  '{commentText}'",
                 "cardStartDateAdded": "A start date has been added to the card [{cardName}]({cardUrl}).",
                 "cardStartDateChanged": "The start date on the card [{cardName}]({cardUrl}) has been updated.",
                 "cardStartDateRemoved": "The start date on the card [{cardName}]({cardUrl}) has been removed.",
@@ -102,55 +108,52 @@
                 "cardDueDateRemoved": "The due date on the card [{cardName}]({cardUrl}) has been removed.",
                 "cardDueDateMarkedCompleted": "The due date on the card [{cardName}]({cardUrl}) has been marked as complete.",
                 "cardDueDateMarkedIncompleted": "The due date on the card [{cardName}]({cardUrl}) has been marked as incomplete.",
-                "cardMovedToList": "The card [{cardName}]({cardUrl}) has been moved from {listBefore} to {listAfter} list.",
-                "cardMovedFromBoard": "The card [{cardName}]({cardUrl}) has been moved from [{boardBefore}]({boardBeforeUrl}) board to [{boardAfter}]({boardAfterUrl}) board.",
-                "cardMovedToBoard": "The card [{cardName}]({cardUrl}) has been moved to [{boardAfter}]({boardAfterUrl}) board from [{boardBefore}]({boardBeforeUrl}) board.",
-                "cardCommentAdded": "To the card [{cardName}]({cardUrl}) a comment has been added from user [{actionAuthor}]({actionAuthorUrl}) \n  '{commentText}'",
                 "cardAttachmentAdded": "An attachment has been added to the card [{cardName}]({cardUrl}).",
                 "cardAttachmentRemoved": "An attachment has been removed from the card [{cardName}]({cardUrl}).",
-                "cardLabelAdded": "A label has been added to the card [{cardName}]({cardUrl}).",
-                "cardLabelRemoved": "A label has been removed from the card [{cardName}]({cardUrl}).",
-                "customFieldItemUpdated": "The status of {customFieldName} in the card [{cardName}]({cardUrl}) has been updated."
-            },
-            "list": {
-                "listCreated": "The list {listName} has been created on the board [{boardName}]({boardUrl})",
-                "listRenamed": "The list '{oldListName}' has been renamed to '{listName}' on the board [{boardName}]({boardUrl})",
-                "listArchived": "The list {listname} has been archived on the board [{boardName}]({boardUrl})",
-                "listUnarchived": "The list {listname} has been unarchived on the board [{boardName}]({boardUrl})",
-                "listDeleted": "The list {listname} has been deleted from the board [{boardName}]({boardUrl})"
+                "cardCustomFieldUpdated": "The status of {customFieldName} in the card [{cardName}]({cardUrl}) has been updated.",
+                "cardMovedFromBoard": "The card [{cardName}]({cardUrl}) has been moved from [{boardBefore}]({boardBeforeUrl}) board to [{boardAfter}]({boardAfterUrl}) board.",
+                "cardMovedToBoard": "The card [{cardName}]({cardUrl}) has been moved to [{boardAfter}]({boardAfterUrl}) board from [{boardBefore}]({boardBeforeUrl}) board.",
+                "cardMovedToList": "The card [{cardName}]({cardUrl}) has been moved from {listBefore} to {listAfter} list."
             },
             "checklist": {
                 "checklistAdded": "A checklist has been added to the card [{cardName}]({cardUrl}).",
-                "checklistRemoved": "A checklist has been removed from the card [{cardName}]({cardUrl}).",
                 "checklistRenamed": "A checklist '{oldChecklistName}' has been renamed to '{checklistName}' in the card [{cardName}]({cardUrl}).",
+                "checklistRemoved": "A checklist has been removed from the card [{cardName}]({cardUrl}).",
                 "checklistItemAdded": "A checklist item, '{checklistItemName}', has been added to the card [{cardName}]({cardUrl}).",
-                "checklistItemDeleted": "A checklist item, '{checklistItemName}', has been deleted from the card [{cardName}]({cardUrl}).",
                 "checklistItemRenamed": "A checklist item, '{oldChecklistItemName}', has been renamed to '{checklistItemName}' in the card [{cardName}]({cardUrl}).",
-                "checklistItemCompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as completed.",
-                "checklistItemIncompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as incompleted.",
-                "checklistItemConvertedToCard": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been converted to a new card.",
+                "checklistItemDeleted": "A checklist item, '{checklistItemName}', has been deleted from the card [{cardName}]({cardUrl}).",
                 "checklistItemMemberAdded": "A member [{memberName}]({memberUrl}) has been added to a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
                 "checklistItemMemberRemoved": "A member [{memberName}]({memberUrl}) has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
                 "checklistItemMemberJoined": "A member [{memberName}]({memberUrl}) has joined a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
                 "checklistItemMemberLeft": "A member [{memberName}]({memberUrl}) has left a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
                 "checklistItemDueDateUpdated": "The due date for a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been updated.",
-                "checklistItemDueDateDeleted": "The due date has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl})."
+                "checklistItemDueDateDeleted": "The due date has been removed from a checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}).",
+                "checklistItemCompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as completed.",
+                "checklistItemIncompleted": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been marked as incompleted.",
+                "checklistItemConvertedToCard": "The checklist item, '{checklistItemName}', in the card [{cardName}]({cardUrl}) has been converted to a new card."
+            },
+            "list": {
+                "listCreated": "The list {listName} has been created on the board [{boardName}]({boardUrl})",
+                "listRenamed": "The list '{oldListName}' has been renamed to '{listName}' on the board [{boardName}]({boardUrl})",
+                "listArchived": "The list {listName} has been archived on the board [{boardName}]({boardUrl})",
+                "listUnarchived": "The list {listName} has been unarchived on the board [{boardName}]({boardUrl})",
+                "listDeleted": "The list {listName} has been deleted from the board [{boardName}]({boardUrl})"
             },
             "board": {
                 "boardRenamed": "The board '{oldBoardName}' has been renamed to [{boardName}]({boardUrl}).",
+                "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}",
                 "boardClosed": "The board {boardName} has been closed.",
                 "boardReopened": "The board [{boardName}]({boardUrl}) has been reopened.",
-                "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
                 "boardMemberJoined": "A new member [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}).",
+                "boardMemberInvitationJoined": "The user [{memberName}]({memberUrl}) has joined the board [{boardName}]({boardUrl}) via invitation.",
                 "boardMemberLeft": "The user [{memberName}]({memberUrl}) has left the board [{boardName}]({boardUrl}).",
                 "boardMemberRemoved": "The user [{memberName}]({memberUrl}) has been removed from the board [{boardName}]({boardUrl}).",
+                "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
                 "boardNormalRoleAdded": "A new normal role has been added to a user [{memberName}]({memberUrl}) on the board [{boardName}]({boardUrl}).",
                 "boardNormalRoleBecame": "User [{memberName}]({memberUrl}) lowered his role on the board [{boardName}]({boardUrl}).",
-                "boardAdminAdded": "A new admin [{memberName}]({memberUrl}) has been added to the board [{boardName}]({boardUrl}).",
                 "customFieldCreated": "The custom field {customFieldName} has been created on the board [{boardName}]({boardUrl}).",
                 "customFieldRenamed": "The custom field has been renamed from '{oldCustomFieldName}' to '{customFieldName}' on the board [{boardName}]({boardUrl}).",
-                "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl}).",
-                "boardPermLevelChanged": "Board [{boardName}]({boardUrl}) permission level has been changed to {permissionLevelName}"
+                "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl})."
             }
         }
     },
@@ -199,6 +202,7 @@
                 "invalidAppKey": "Something bad is going on with Trellify. Please, check your Trello token or reach Trellify support",
                 "checkConnection": "Please check your Trello connection",
                 "expiredToken": "Please provide a token with a valid expiration date",
+                "disconnectFirst": "You should disconnect your previous Trello account before connecting a new one",
                 "alreadyConnected": "This trello profile is already binded to other user"
             },
             "invalidEntityId": "This entity was not found or was deleted"
@@ -208,7 +212,8 @@
             "userNotSubscribed": "User {userId} is not subscribed on {subscription} plan",
             "userAlreadySubscribed": "User {userId} is already subscribed on {subscription} plan",
             "alreadyExist": "Subscription plan {subscription} already exist",
-            "doesNotExist": "Subscription plan {subscription} does not exist"
+            "doesNotExist": "Subscription plan {subscription} does not exist",
+            "trialExpired": "This user's trial version has already expired"
         }
     }
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean } from 'class-validator';
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
 export class WebhookSubscriber {
@@ -35,4 +36,11 @@ export class WebhookSubscriber {
     example: TrelloWebhookNotificationProfiles.BASIC,
   })
   notificationProfile: TrelloWebhookNotificationProfiles;
+
+  @ApiProperty({
+    description: 'Status of author notifications enabling',
+    example: true,
+  })
+  @IsBoolean()
+  authorNotifications: boolean;
 }

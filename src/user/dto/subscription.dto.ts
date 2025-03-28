@@ -53,4 +53,11 @@ export class SubscriptionSettings {
     nullable: true,
   })
   nextPaymentDate?: Date;
+
+  @ApiProperty({
+    description: 'Boolean value of if subscription is expired or not',
+    example: false,
+    required: true,
+  })
+  expired?: boolean;
 }

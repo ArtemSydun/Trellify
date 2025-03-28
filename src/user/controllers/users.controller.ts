@@ -579,4 +579,48 @@ export class UsersController {
       req.user,
     );
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @Patch(':id/subscription/:subscriptionId')
+  @ApiOperation({
+    summary: 'Update a user subscription by user id (Superadmin only)',
+    description:
+      'This endpoint allows to update a user subscriptions by user id. It can only be accessed by users with the superadmin role.',
+  })
+  @ApiOkResponse({
+    description: 'User subscription updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User subscription {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  updateUserSubscriptionById(
+    @Param('id') id: string,
+    @Param('subscriptionId') subscriptionId: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.updateUserSubscription(
+      id,
+      subscriptionId,
+      req.user,
+      req.i18nContext,
+    );
+  }
 }

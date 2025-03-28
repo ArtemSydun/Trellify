@@ -13,6 +13,7 @@ import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { getActionEnumKey } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { RedisService } from 'src/redis/services/redis.service';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
@@ -29,6 +30,8 @@ export class SubscriptionService {
     private readonly userService: UsersService,
     @Inject(forwardRef(() => RedisService))
     private readonly redisService: RedisService,
+    @Inject(forwardRef(() => TrelloWebhooksLogicService))
+    private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
   ) {}
 
   public async getSubscription(
@@ -127,6 +130,28 @@ export class SubscriptionService {
       subscriptionToUpdate.id,
       updateSubscriptionDto,
     );
+
+    let isNotificationsUpdated = false;
+
+    for (const category of Object.keys(subscriptionToUpdate.notifications)) {
+      for (const action of Object.keys(
+        subscriptionToUpdate.notifications[category],
+      )) {
+        if (
+          subscriptionToUpdate.notifications[category][action] ===
+          updatedSubscription.notifications[category][action]
+        ) {
+          isNotificationsUpdated = true;
+        }
+      }
+    }
+
+    if (isNotificationsUpdated) {
+      await this.trelloWebhooksLogicService.updateWebhooksForSubscribers(
+        subscriptionToUpdate,
+        updatedSubscription.notifications,
+      );
+    }
 
     await this.redisService.initializeSubscriptionPlans();
 
@@ -237,16 +262,16 @@ export class SubscriptionService {
   }
 
   async actionAvailablePlans(actionType: any): Promise<string[]> {
-    const allPlans = JSON.parse(await this.redisService.getSubscriptionPlans());
+    const allPlans = await this.redisService.getSubscriptionPlans();
     const enumKey = getActionEnumKey(actionType);
 
     const availablePlans: string[] = [];
 
     // Iterate over the plans (Object.entries gives [planName, planData])
     for (const [planName, planData] of Object.entries(allPlans)) {
-      for (const notifications of Object.values(planData)) {
+      for (const category of Object.values(planData.notifications)) {
         // Ensure the category exists and contains the action type before accessing it
-        if (notifications && notifications[enumKey] === true) {
+        if (category && category[enumKey] === true) {
           availablePlans.push(planName);
           break; // No need to check other categories for this plan, move to next plan
         }

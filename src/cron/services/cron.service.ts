@@ -9,6 +9,8 @@ import {
   format,
   isBefore,
   parseISO,
+  formatISO,
+  startOfDay,
 } from 'date-fns';
 import { I18nService } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -18,9 +20,11 @@ import { SharedConfigService } from 'src/config/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { redisKeys } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
+import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
 
@@ -36,6 +40,7 @@ export class CronService {
     private readonly adminBotService: AdminBotService,
     private readonly notificationBotService: NotificationBotService,
     private readonly discordService: DiscordService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly i18nService: I18nService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
@@ -165,12 +170,142 @@ export class CronService {
     }
   }
 
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyAboutSubscriptionPayment() {
+    const now = new Date();
+
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    ).toISOString();
+    const todayEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ).toISOString();
+
+    const usersToNotify = await this.usersService.findAll({
+      date: UserSearchPath.SubscriptionNextPayment,
+      fromDate: todayStart,
+      toDate: todayEnd,
+      limit: 10000,
+    });
+
+    // Create an array of promises for sending notifications
+    const notificationPromises = usersToNotify.data.map(async (user) => {
+      const promises = [];
+      const userLanguage = user.language || Languages.EN;
+      const message = this.i18nService.t(
+        I18nKeys.MESSAGES_SUBSCRIPTION_EXPIRING,
+        {
+          lang: userLanguage,
+          args: {
+            subscription: user.subscription.plan,
+          },
+        },
+      );
+
+      if (user.telegram?.chatId) {
+        promises.push(
+          this.notificationBotService.sendMessageToUser(user.telegram, message),
+        );
+      }
+
+      if (user.discord?.userId) {
+        promises.push(
+          this.discordService.sendDirectMessage(user.discord.userId, message),
+        );
+      }
+
+      return Promise.all(promises); // Ensure all messages for this user are sent in parallel
+    });
+
+    // Wait for all notifications to be sent
+    await Promise.all(notificationPromises);
+
+    console.log('All notifications sent.');
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async subscriptionExpirationUpdate() {
+    const fromDate = formatISO(startOfDay(subDays(new Date(), 3))); // 3 days ago at 00:00:00
+    const toDate = new Date().toISOString();
+
+    // Fetch expired users whose subscription is not yet marked as expired
+    const expiredUsers = await this.usersService.findAll({
+      date: UserSearchPath.SubscriptionNextPayment,
+      fromDate,
+      toDate,
+      subscriptionExpired: false,
+    });
+
+    // Group users by their subscription plan name
+    const usersBySubscriptions = expiredUsers.data.reduce(
+      (acc, user) => {
+        const planName = user.subscription?.plan;
+
+        if (!planName) return acc; // Skip users without a subscription plan
+
+        if (!acc[planName]) {
+          acc[planName] = [];
+        }
+
+        acc[planName].push(user);
+        return acc;
+      },
+      {} as Record<string, User[]>,
+    );
+
+    // Fetch all subscription plans
+    const subscriptions = await this.subscriptionService.findAll();
+
+    // Process all subscriptions concurrently
+    await Promise.all(
+      subscriptions.map(async (subscription) => {
+        const planName = subscription.name;
+
+        if (usersBySubscriptions[planName]) {
+          const usersToUpdate = usersBySubscriptions[planName];
+
+          // Update all users for this subscription concurrently
+          await Promise.all(
+            usersToUpdate.map((user) =>
+              this.usersService.updateUser(user.id, {
+                subscription: {
+                  ...user.subscription,
+                  expired: true,
+                  nextPaymentDate: null,
+                },
+              }),
+            ),
+          );
+
+          console.log(
+            `Processed ${usersToUpdate.length} users for plan ${planName}.`,
+          );
+        }
+      }),
+    );
+
+    console.log('Total expired subscriptions processed: ', expiredUsers.total);
+  }
+
   //if server is down at this moment, it will send daily stats when the server will up
   //but if server was down more then one day, we do not guarantee
   //data accuracy, because loginnedUsers based on lastLoginDate of user object,
   @Cron('55 23 * * *')
   async dailyStatsClosing(formattedYesterday?: string) {
     let statsDate: Date;
+    const totalUsers = await this.usersService.findTotal();
 
     if (formattedYesterday) {
       // If a specific date is provided (for recovery), parse it correctly
@@ -210,6 +345,7 @@ export class CronService {
         newUsers: dailyStats.newUsers?.length || 0,
         deletedUsers: dailyStats.deletedUsers?.length || 0,
         contactUs: dailyStats.contactUs?.length || 0,
+        totalUsers: totalUsers || 0,
       },
     );
 
@@ -232,6 +368,7 @@ export class CronService {
   @Cron('55 23 * * 0') // Runs every Sunday at 11:55 PM
   async weeklyStatsClosing(formattedDayOfWeekAgo?: string) {
     let statsDate: Date;
+    const totalUsers = await this.usersService.findTotal();
 
     if (formattedDayOfWeekAgo) {
       // If a specific date is provided (for recovery), parse it correctly
@@ -274,6 +411,7 @@ export class CronService {
         newUsers: weeklyStats.newUsers?.length || 0,
         deletedUsers: weeklyStats.deletedUsers?.length || 0,
         contactUs: weeklyStats.contactUs?.length || 0,
+        totalUsers: totalUsers || 0,
       },
     );
 
@@ -384,70 +522,5 @@ export class CronService {
         );
       }
     }
-  }
-
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async notifyAboutSubscriptionPayment() {
-    const now = new Date();
-
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      0,
-      0,
-      0,
-      0,
-    ).toISOString();
-    const todayEnd = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59,
-      999,
-    ).toISOString();
-
-    const usersToNotify = await this.usersService.findAll({
-      date: UserSearchPath.SubscriptionNextPayment,
-      fromDate: todayStart,
-      toDate: todayEnd,
-      limit: 10000,
-    });
-
-    // Create an array of promises for sending notifications
-    const notificationPromises = usersToNotify.data.map(async (user) => {
-      const promises = [];
-      const userLanguage = user.language || Languages.EN;
-      const message = this.i18nService.t(
-        I18nKeys.MESSAGES_SUBSCRIPTION_EXPIRING,
-        {
-          lang: userLanguage,
-          args: {
-            subscription: user.subscription.plan,
-          },
-        },
-      );
-
-      if (user.telegram?.chatId) {
-        promises.push(
-          this.notificationBotService.sendMessageToUser(user.telegram, message),
-        );
-      }
-
-      if (user.discord?.userId) {
-        promises.push(
-          this.discordService.sendDirectMessage(user.discord.userId, message),
-        );
-      }
-
-      return Promise.all(promises); // Ensure all messages for this user are sent in parallel
-    });
-
-    // Wait for all notifications to be sent
-    await Promise.all(notificationPromises);
-
-    console.log('All notifications sent.');
   }
 }

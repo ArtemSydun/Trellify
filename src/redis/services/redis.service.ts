@@ -10,6 +10,7 @@ import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { periodStatsKeys } from '../enums/daily-stats-keys.enum';
 import { redisKeys } from '../enums/redis-keys.enum';
 
@@ -26,13 +27,9 @@ export class RedisService {
     // Fetch data from Redis
     const dailyStatsString = await this.getValue(redisKeys.DAILY_STATS);
     const weeklyStatsString = await this.getValue(redisKeys.WEEKLY_STATS);
-    const subscriptionPlans = await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
 
-    // Initialize only if missing
-    if (!subscriptionPlans) {
-      console.log('Initializing subscription plans...');
-      await this.initializeSubscriptionPlans();
-    }
+    console.log('Refreshing subscription plans');
+    await this.initializeSubscriptionPlans();
 
     if (!dailyStatsString) {
       console.log('Initializing daily stats...');
@@ -121,7 +118,10 @@ export class RedisService {
     // Transform array into an object with plan names as keys and notifications as values
     const subscriptionPlansObject = subscriptionPlans.reduce(
       (acc, plan) => {
-        acc[plan.name] = plan.notifications;
+        acc[plan.name] = {
+          price: plan.price,
+          notifications: plan.notifications,
+        };
         return acc;
       },
       {} as Record<string, any>,
@@ -177,8 +177,8 @@ export class RedisService {
     );
   }
 
-  async getSubscriptionPlans(): Promise<string> {
-    return await this.getValue(redisKeys.SUBSCRIPTION_PLANS);
+  async getSubscriptionPlans(): Promise<NotificationProfiles> {
+    return JSON.parse(await this.getValue(redisKeys.SUBSCRIPTION_PLANS));
   }
 
   async makeTokenInvalid(token: string): Promise<void> {

@@ -27,6 +27,7 @@ export const webhookStub = {
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
       notificationProfile: TrelloWebhookNotificationProfiles.CUSTOM,
+      authorNotifications: false,
     },
     {
       email: 'email2@mail.com',
@@ -35,6 +36,7 @@ export const webhookStub = {
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
       notificationProfile: TrelloWebhookNotificationProfiles.CUSTOM,
+      authorNotifications: false,
     },
   ],
   notifications: {
@@ -62,7 +64,7 @@ export const webhookStub = {
       cardCommentAdded: ['674ec752cba1224342f87c20'],
       cardAttachmentAdded: ['674ec752cba1224342f87c20'],
 
-      customFieldItemUpdated: [],
+      cardCustomFieldUpdated: [],
       cardMovedToList: ['674ec752cba1224342f87c20'],
     },
     checklist: {
@@ -135,6 +137,7 @@ export const newWebhookStub = {
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
       notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+      authorNotifications: false,
     },
     {
       email: 'email2@mail.com',
@@ -143,6 +146,7 @@ export const newWebhookStub = {
       trelloToken:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM83/',
       notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+      authorNotifications: false,
     },
   ],
   notifications: {
@@ -170,7 +174,7 @@ export const newWebhookStub = {
       cardCommentAdded: ['674ec752cba1224342f87c20'],
       cardAttachmentAdded: ['674ec752cba1224342f87c20'],
 
-      customFieldItemUpdated: [],
+      cardCustomFieldUpdated: [],
       cardMovedToList: ['674ec752cba1224342f87c20'],
     },
     checklist: {
@@ -369,7 +373,7 @@ export const basicNotificationProfileStub = {
     cardCommentAdded: true,
     cardAttachmentAdded: true,
     cardAttachmentRemoved: true,
-    customFieldItemUpdated: false,
+    cardCustomFieldUpdated: false,
   },
   checklist: {
     checklistAdded: false,

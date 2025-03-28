@@ -65,6 +65,7 @@ import { BoardMember } from 'src/trello/dto/member.dto';
 import { ConfigService } from '@nestjs/config';
 import { I18nService } from 'nestjs-i18n';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { RedisService } from 'src/redis/services/redis.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -171,6 +172,10 @@ describe('TrelloWebhooksLogicService', () => {
         {
           provide: SubscriptionService,
           useValue: createMock<SubscriptionService>(),
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
         },
         { provide: I18nService, useValue: createMock<I18nService>() },
       ],
@@ -1135,6 +1140,7 @@ describe('TrelloWebhooksLogicService', () => {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: true,
           },
         ],
         notifications: initializeNotificationArrays(userStubData.trello.userId),
@@ -1355,6 +1361,7 @@ describe('TrelloWebhooksLogicService', () => {
       basicNotificationProfile = basicNotificationProfileStub;
 
       updateWebhookNotificationsDto = {
+        authorNotifications: false,
         notifications: basicNotificationProfile,
         notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
       };
@@ -1478,6 +1485,7 @@ describe('TrelloWebhooksLogicService', () => {
       basicNotificationProfile = basicNotificationProfileStub;
 
       updateManyWebhooksDto = {
+        authorNotifications: false,
         notifications: basicNotificationProfile,
         notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
         webhooks: [webhooksStubData[0].id, webhooksStubData[1].id],
@@ -1763,6 +1771,7 @@ describe('TrelloWebhooksLogicService', () => {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: false,
           },
         ],
       };

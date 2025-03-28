@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { WebhookQueryDto } from '../dto/webhook.query.dto';
 import { Webhook } from '../entities/webhook.entity';
 
@@ -50,6 +51,20 @@ export class TrelloWebhookRepository {
   async findWebhooksCreatedByUser(trelloUserId: string): Promise<Webhook[]> {
     return this.TrelloWebhookModel.find({
       'author.trelloUserId': trelloUserId,
+    })
+      .lean()
+      .exec();
+  }
+
+  async findAllWebhooksWithPlanSubscribers(
+    plan: SubscriptionPlans,
+  ): Promise<Webhook[]> {
+    return this.TrelloWebhookModel.find({
+      subscribers: {
+        $elemMatch: {
+          notificationProfile: plan,
+        },
+      },
     })
       .lean()
       .exec();

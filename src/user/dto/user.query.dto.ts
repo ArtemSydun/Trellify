@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean } from 'class-validator';
 import { CommonQueryParams } from 'src/common/dto/common.query.dto';
 import { Languages } from 'src/common/enums/languages.enum';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
@@ -65,6 +65,6 @@ export class UserQueryDto extends CommonQueryParams {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  nextPaymentDate?: string;
+  @IsBoolean()
+  subscriptionExpired?: boolean;
 }

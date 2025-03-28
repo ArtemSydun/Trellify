@@ -41,7 +41,10 @@ export enum I18nKeys {
 
   // user related messages
   MESSAGES_USER_CREATED = 'common.messages.user.created',
+  MESSAGES_USER_UPDATED = 'common.messages.user.updated',
   MESSAGES_USER_DELETED = 'common.messages.user.deleted',
+  MESSAGES_USER_SUBSCRIPTION_UPDATED = 'common.messages.user.subscriptionUpdated',
+
   MESSAGES_USER_ALL_WEBHOOKS_DISCONNECTED = 'common.messages.user.allWebhooksDisconnected',
   MESSAGES_USER_PASSWORD_CHANGED_SUCCESSFULLY = 'common.messages.user.passwordChangedSuccessfully',
   MESSAGES_USER_EMAIL_CHANGED_SUCCESSFULLY = 'common.messages.user.emailChangedSuccessfully',
@@ -75,70 +78,81 @@ export enum I18nKeys {
   NOTIFICATION_PERSONAL_BOARD_NORMAL_ROLE_ADDED = 'common.messages.notifications.personal.boardNormalRoleAddedSelf',
   NOTIFICATION_PERSONAL_BOARD_MEMBER_REMOVED = 'common.messages.notifications.personal.boardMemberRemovedSelf',
 
-  NOTIFICATION_BOARD_RENAMED = 'common.messages.notifications.board.boardRenamed',
-  NOTIFICATION_BOARD_CLOSED = 'common.messages.notifications.board.boardClosed',
-  NOTIFICATION_BOARD_REOPENED = 'common.messages.notifications.board.boardReopened',
-  NOTIFICATION_BOARD_MEMBER_INVITATION_JOINED = 'common.messages.notifications.board.boardMemberInvitationJoined',
-  NOTIFICATION_BOARD_MEMBER_JOINED = 'common.messages.notifications.board.boardMemberJoined',
-  NOTIFICATION_BOARD_MEMBER_LEFT = 'common.messages.notifications.board.boardMemberLeft',
-  NOTIFICATION_BOARD_MEMBER_REMOVED = 'common.messages.notifications.board.boardMemberRemoved',
-  NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_ADDED = 'common.messages.notifications.board.boardNormalRoleAdded',
-  NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_BECAME = 'common.messages.notifications.board.boardNormalRoleBecame',
-  NOTIFICATION_BOARD_ADMIN_ADDED = 'common.messages.notifications.board.boardAdminAdded',
-  NOTIFICATION_CUSTOM_FIELD_CREATED = 'common.messages.notifications.board.customFieldCreated',
-  NOTIFICATION_CUSTOM_FIELD_RENAMED = 'common.messages.notifications.board.customFieldRenamed',
-  NOTIFICATION_CUSTOM_FIELD_DELETED = 'common.messages.notifications.board.customFieldDeleted',
-  NOTIFICATION_BOARD_PERM_LEVEL_CHANGED = 'common.messages.notifications.board.boardPermLevelChanged',
-
   NOTIFICATION_CARD_CREATED = 'common.messages.notifications.card.cardCreated',
   NOTIFICATION_CARD_RENAMED = 'common.messages.notifications.card.cardRenamed',
   NOTIFICATION_CARD_ARCHIVED = 'common.messages.notifications.card.cardArchived',
   NOTIFICATION_CARD_UNARCHIVED = 'common.messages.notifications.card.cardUnarchived',
-  NOTIFICATION_CARD_DESCRIPTION_CHANGED = 'common.messages.notifications.card.cardDescriptionChanged',
+  NOTIFICATION_CARD_DELETED = 'common.messages.notifications.card.cardDeleted',
+
   NOTIFICATION_CARD_MEMBER_ADDED = 'common.messages.notifications.card.cardMemberAdded',
   NOTIFICATION_CARD_MEMBER_REMOVED = 'common.messages.notifications.card.cardMemberRemoved',
   NOTIFICATION_CARD_MEMBER_JOINED = 'common.messages.notifications.card.cardMemberJoined',
   NOTIFICATION_CARD_MEMBER_LEFT = 'common.messages.notifications.card.cardMemberLeft',
+
+  NOTIFICATION_CARD_LABEL_ADDED = 'common.messages.notifications.card.cardLabelAdded',
+  NOTIFICATION_CARD_LABEL_REMOVED = 'common.messages.notifications.card.cardLabelRemoved',
+
+  NOTIFICATION_CARD_DESCRIPTION_CHANGED = 'common.messages.notifications.card.cardDescriptionChanged',
+  NOTIFICATION_CARD_COMMENT_ADDED = 'common.messages.notifications.card.cardCommentAdded',
+
   NOTIFICATION_CARD_START_DATE_ADDED = 'common.messages.notifications.card.cardStartDateAdded',
   NOTIFICATION_CARD_START_DATE_CHANGED = 'common.messages.notifications.card.cardStartDateChanged',
   NOTIFICATION_CARD_START_DATE_REMOVED = 'common.messages.notifications.card.cardStartDateRemoved',
+
   NOTIFICATION_CARD_DUE_DATE_ADDED = 'common.messages.notifications.card.cardDueDateAdded',
   NOTIFICATION_CARD_DUE_DATE_CHANGED = 'common.messages.notifications.card.cardDueDateChanged',
   NOTIFICATION_CARD_DUE_DATE_REMOVED = 'common.messages.notifications.card.cardDueDateRemoved',
   NOTIFICATION_CARD_DUE_DATE_MARKED_COMPLETED = 'common.messages.notifications.card.cardDueDateMarkedCompleted',
   NOTIFICATION_CARD_DUE_DATE_MARKED_INCOMPLETED = 'common.messages.notifications.card.cardDueDateMarkedIncompleted',
-  NOTIFICATION_CARD_MOVED_TO_LIST = 'common.messages.notifications.card.cardMovedToList',
-  NOTIFICATION_CARD_MOVED_FROM_BOARD = 'common.messages.notifications.card.cardMovedFromBoard',
-  NOTIFICATION_CARD_MOVED_TO_BOARD = 'common.messages.notifications.card.cardMovedToBoard',
-  NOTIFICATION_CARD_COMMENT_ADDED = 'common.messages.notifications.card.cardCommentAdded',
+
   NOTIFICATION_CARD_ATTACHMENT_ADDED = 'common.messages.notifications.card.cardAttachmentAdded',
   NOTIFICATION_CARD_ATTACHMENT_REMOVED = 'common.messages.notifications.card.cardAttachmentRemoved',
-  NOTIFICATION_CARD_LABEL_ADDED = 'common.messages.notifications.card.cardLabelAdded',
-  NOTIFICATION_CARD_LABEL_REMOVED = 'common.messages.notifications.card.cardLabelRemoved',
 
-  NOTIFICATION_CUSTOM_FIELD_ITEM_UPDATED = 'common.messages.notifications.card.customFieldItemUpdated',
+  NOTIFICATION_CARD_CUSTOM_FIELD_UPDATED = 'common.messages.notifications.card.cardCustomFieldUpdated',
+
+  NOTIFICATION_CARD_MOVED_FROM_BOARD = 'common.messages.notifications.card.cardMovedFromBoard',
+  NOTIFICATION_CARD_MOVED_TO_BOARD = 'common.messages.notifications.card.cardMovedToBoard',
+  NOTIFICATION_CARD_MOVED_TO_LIST = 'common.messages.notifications.card.cardMovedToList',
 
   NOTIFICATION_CHECKLIST_ADDED = 'common.messages.notifications.checklist.checklistAdded',
-  NOTIFICATION_CHECKLIST_REMOVED = 'common.messages.notifications.checklist.checklistRemoved',
   NOTIFICATION_CHECKLIST_RENAMED = 'common.messages.notifications.checklist.checklistRenamed',
+  NOTIFICATION_CHECKLIST_REMOVED = 'common.messages.notifications.checklist.checklistRemoved',
+
   NOTIFICATION_CHECKLIST_ITEM_ADDED = 'common.messages.notifications.checklist.checklistItemAdded',
-  NOTIFICATION_CHECKLIST_ITEM_DELETED = 'common.messages.notifications.checklist.checklistItemDeleted',
   NOTIFICATION_CHECKLIST_ITEM_RENAMED = 'common.messages.notifications.checklist.checklistItemRenamed',
-  NOTIFICATION_CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'common.messages.notifications.checklist.checklistItemCompleted',
-  NOTIFICATION_CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'common.messages.notifications.checklist.checklistItemIncompleted',
-  NOTIFICATION_CHECKLIST_ITEM_CONVERTED_TO_CARD = 'common.messages.notifications.checklist.checklistItemConvertedToCard',
+  NOTIFICATION_CHECKLIST_ITEM_DELETED = 'common.messages.notifications.checklist.checklistItemDeleted',
+
   NOTIFICATION_CHECKLIST_ITEM_MEMBER_ADDED = 'common.messages.notifications.checklist.checklistItemMemberAdded',
   NOTIFICATION_CHECKLIST_ITEM_MEMBER_REMOVED = 'common.messages.notifications.checklist.checklistItemMemberRemoved',
   NOTIFICATION_CHECKLIST_ITEM_MEMBER_JOINED = 'common.messages.notifications.checklist.checklistItemMemberJoined',
   NOTIFICATION_CHECKLIST_ITEM_MEMBER_LEFT = 'common.messages.notifications.checklist.checklistItemMemberLeft',
-  NOTIFICATION_CHECKLIST_ITEM_DUE_DATE_DELETED = 'common.messages.notifications.checklist.checklistItemDueDateDeleted',
+
   NOTIFICATION_CHECKLIST_ITEM_DUE_DATE_UPDATED = 'common.messages.notifications.checklist.checklistItemDueDateUpdated',
+  NOTIFICATION_CHECKLIST_ITEM_DUE_DATE_DELETED = 'common.messages.notifications.checklist.checklistItemDueDateDeleted',
+  NOTIFICATION_CHECKLIST_ITEM_STATE_CHANGED_COMPLETED = 'common.messages.notifications.checklist.checklistItemCompleted',
+  NOTIFICATION_CHECKLIST_ITEM_STATE_CHANGED_INCOMPLETED = 'common.messages.notifications.checklist.checklistItemIncompleted',
+  NOTIFICATION_CHECKLIST_ITEM_CONVERTED_TO_CARD = 'common.messages.notifications.checklist.checklistItemConvertedToCard',
 
   NOTIFICATION_LIST_CREATED = 'common.messages.notifications.list.listCreated',
   NOTIFICATION_LIST_RENAMED = 'common.messages.notifications.list.listRenamed',
   NOTIFICATION_LIST_ARCHIVED = 'common.messages.notifications.list.listArchived',
   NOTIFICATION_LIST_UNARCHIVED = 'common.messages.notifications.list.listUnarchived',
   NOTIFICATION_LIST_DELETED = 'common.messages.notifications.list.listDeleted',
+
+  NOTIFICATION_BOARD_RENAMED = 'common.messages.notifications.board.boardRenamed',
+  NOTIFICATION_BOARD_PERM_LEVEL_CHANGED = 'common.messages.notifications.board.boardPermLevelChanged',
+  NOTIFICATION_BOARD_CLOSED = 'common.messages.notifications.board.boardClosed',
+  NOTIFICATION_BOARD_REOPENED = 'common.messages.notifications.board.boardReopened',
+  NOTIFICATION_BOARD_MEMBER_JOINED = 'common.messages.notifications.board.boardMemberJoined',
+  NOTIFICATION_BOARD_MEMBER_INVITATION_JOINED = 'common.messages.notifications.board.boardMemberInvitationJoined',
+  NOTIFICATION_BOARD_MEMBER_LEFT = 'common.messages.notifications.board.boardMemberLeft',
+  NOTIFICATION_BOARD_MEMBER_REMOVED = 'common.messages.notifications.board.boardMemberRemoved',
+  NOTIFICATION_BOARD_ADMIN_ADDED = 'common.messages.notifications.board.boardAdminAdded',
+  NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_ADDED = 'common.messages.notifications.board.boardNormalRoleAdded',
+  NOTIFICATION_BOARD_MEMBER_NORMAL_ROLE_BECAME = 'common.messages.notifications.board.boardNormalRoleBecame',
+  NOTIFICATION_CUSTOM_FIELD_CREATED = 'common.messages.notifications.board.customFieldCreated',
+  NOTIFICATION_CUSTOM_FIELD_RENAMED = 'common.messages.notifications.board.customFieldRenamed',
+  NOTIFICATION_CUSTOM_FIELD_DELETED = 'common.messages.notifications.board.customFieldDeleted',
 
   // General Errors
   ERRORS_GENERAL_INVALID_REQUEST = 'common.errors.general.invalidRequest',
@@ -182,6 +196,7 @@ export enum I18nKeys {
   ERRORS_TRELLO_INVALID_WEBHOOK_ID = 'common.errors.trello.webhook.invalidWebhookId',
   ERRORS_TRELLO_CHECK_CONNECTION = 'common.errors.trello.profile.checkConnection',
   ERRORS_TRELLO_EXPIRED_TOKEN = 'common.errors.trello.profile.expiredToken',
+  ERRORS_TRELLO_DISCONNECT_FIRST = 'common.errors.trello.profile.disconnectFirst',
   ERRORS_TRELLO_ALREADY_CONNECTED = 'common.errors.trello.profile.alreadyConnected',
 
   // Subscription errors
@@ -190,4 +205,5 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.doesNotExist',
+  ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
 }
