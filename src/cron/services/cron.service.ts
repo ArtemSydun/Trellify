@@ -305,6 +305,7 @@ export class CronService {
   @Cron('55 23 * * *')
   async dailyStatsClosing(formattedYesterday?: string) {
     let statsDate: Date;
+    const totalUsers = await this.usersService.findTotal();
 
     if (formattedYesterday) {
       // If a specific date is provided (for recovery), parse it correctly
@@ -344,6 +345,7 @@ export class CronService {
         newUsers: dailyStats.newUsers?.length || 0,
         deletedUsers: dailyStats.deletedUsers?.length || 0,
         contactUs: dailyStats.contactUs?.length || 0,
+        totalUsers: totalUsers || 0,
       },
     );
 
@@ -366,6 +368,7 @@ export class CronService {
   @Cron('55 23 * * 0') // Runs every Sunday at 11:55 PM
   async weeklyStatsClosing(formattedDayOfWeekAgo?: string) {
     let statsDate: Date;
+    const totalUsers = await this.usersService.findTotal();
 
     if (formattedDayOfWeekAgo) {
       // If a specific date is provided (for recovery), parse it correctly
@@ -408,6 +411,7 @@ export class CronService {
         newUsers: weeklyStats.newUsers?.length || 0,
         deletedUsers: weeklyStats.deletedUsers?.length || 0,
         contactUs: weeklyStats.contactUs?.length || 0,
+        totalUsers: totalUsers || 0,
       },
     );
 

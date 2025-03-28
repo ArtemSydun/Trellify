@@ -312,6 +312,10 @@ export class UsersService {
     return this.userRepository.getAll(filters);
   }
 
+  public async findTotal(): Promise<number> {
+    return this.userRepository.getTotal();
+  }
+
   public async findUserById(id: string, i18n?: I18nContext): Promise<User> {
     const user = await this.userRepository.findOneById(id);
     if (!user) {

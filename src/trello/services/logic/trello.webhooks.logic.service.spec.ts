@@ -1361,6 +1361,7 @@ describe('TrelloWebhooksLogicService', () => {
       basicNotificationProfile = basicNotificationProfileStub;
 
       updateWebhookNotificationsDto = {
+        authorNotifications: false,
         notifications: basicNotificationProfile,
         notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
       };
@@ -1484,6 +1485,7 @@ describe('TrelloWebhooksLogicService', () => {
       basicNotificationProfile = basicNotificationProfileStub;
 
       updateManyWebhooksDto = {
+        authorNotifications: false,
         notifications: basicNotificationProfile,
         notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
         webhooks: [webhooksStubData[0].id, webhooksStubData[1].id],
@@ -1769,6 +1771,7 @@ describe('TrelloWebhooksLogicService', () => {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: false,
           },
         ],
       };

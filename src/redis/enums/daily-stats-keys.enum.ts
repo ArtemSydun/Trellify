@@ -3,4 +3,5 @@ export enum periodStatsKeys {
   NEW_USERS = 'newUsers',
   DELETED_USERS = 'deletedUsers',
   CONTACT_US = 'contactUs',
+  TOTAL_USERS = 'totalUsers',
 }
