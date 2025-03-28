@@ -571,12 +571,12 @@ export class UsersService {
       );
     }
 
-    const oldSubscription =
-      await this.subscriptionService.getSubscription(subscription);
-
-    const newSubscription = await this.subscriptionService.getSubscription(
+    const oldSubscription = await this.subscriptionService.getSubscription(
       userToUpdate.subscription.id,
     );
+
+    const newSubscription =
+      await this.subscriptionService.getSubscription(subscription);
 
     await this.subscriptionService.removeSubscriberFromPlan(
       oldSubscription,
@@ -588,6 +588,14 @@ export class UsersService {
       userToUpdate.id,
     );
 
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      subscription: {
+        ...userToUpdate.subscription,
+        id: newSubscription.id,
+        plan: newSubscription.name as SubscriptionPlans,
+      },
+    });
+
     return {
       message:
         i18n?.t(I18nKeys.MESSAGES_USER_SUBSCRIPTION_UPDATED, {
@@ -598,7 +606,7 @@ export class UsersService {
         }) ||
         `User ${userToUpdate.email} subscription plan successfully changed to ${newSubscription.name} plan`,
       statusCode: HttpStatus.OK,
-      data: userToUpdate,
+      data: updatedUser,
     };
   }
 
