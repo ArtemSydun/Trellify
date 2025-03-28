@@ -1140,6 +1140,7 @@ describe('TrelloWebhooksLogicService', () => {
             trelloUserId: userStubData.trello.userId,
             trelloToken: userStubData.trello.token,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: true,
           },
         ],
         notifications: initializeNotificationArrays(userStubData.trello.userId),
