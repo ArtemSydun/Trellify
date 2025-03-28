@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
+import { SubscriptionPlans } from '../enum/subscription-plan.enum';
 
 @Schema({ timestamps: true })
 export class Subscription {
@@ -11,8 +12,11 @@ export class Subscription {
   @Prop({ default: () => randomUUID() })
   id: string;
 
-  @ApiProperty({ description: 'Name of the subscription plan' })
-  @Prop({ required: true })
+  @ApiProperty({
+    description: 'Name of the subscription plan',
+    enum: SubscriptionPlans,
+  })
+  @Prop({ required: true, enum: SubscriptionPlans })
   name: string;
 
   @ApiProperty({
