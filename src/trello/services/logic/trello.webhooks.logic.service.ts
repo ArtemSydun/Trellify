@@ -1185,7 +1185,8 @@ export class TrelloWebhooksLogicService {
       if (
         actionSubscribers.length === 0 ||
         (actionSubscribers.length === 1 &&
-          actionSubscribers.includes(notifiedAuthorUser))
+          actionSubscribers.includes(notifiedAuthorUser) &&
+          detailedActionType !== TrelloWebhookDetailedActions.CARD_CREATED)
       ) {
         this.logger.warn(
           `Nobody tracks ${enumKey} action in category ${category}.`,
@@ -1248,12 +1249,7 @@ export class TrelloWebhooksLogicService {
               ));
 
             const membersToNotify = boardMemberships
-              .filter(
-                (member) =>
-                  actionSubscribers.includes(member.idMember) &&
-                  member.idMember !== notifiedTargetUser &&
-                  member.idMember !== notifiedAuthorUser,
-              )
+              .filter((member) => actionSubscribers.includes(member.idMember))
               .map((member) => member.idMember);
 
             await this.actionsService.handleCardActions(

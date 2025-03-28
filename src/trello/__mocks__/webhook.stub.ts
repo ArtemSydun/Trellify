@@ -62,7 +62,7 @@ export const webhookStub = {
       cardCommentAdded: ['674ec752cba1224342f87c20'],
       cardAttachmentAdded: ['674ec752cba1224342f87c20'],
 
-      customFieldItemUpdated: [],
+      cardCustomFieldUpdated: [],
       cardMovedToList: ['674ec752cba1224342f87c20'],
     },
     checklist: {
@@ -170,7 +170,7 @@ export const newWebhookStub = {
       cardCommentAdded: ['674ec752cba1224342f87c20'],
       cardAttachmentAdded: ['674ec752cba1224342f87c20'],
 
-      customFieldItemUpdated: [],
+      cardCustomFieldUpdated: [],
       cardMovedToList: ['674ec752cba1224342f87c20'],
     },
     checklist: {
@@ -369,7 +369,7 @@ export const basicNotificationProfileStub = {
     cardCommentAdded: true,
     cardAttachmentAdded: true,
     cardAttachmentRemoved: true,
-    customFieldItemUpdated: false,
+    cardCustomFieldUpdated: false,
   },
   checklist: {
     checklistAdded: false,
