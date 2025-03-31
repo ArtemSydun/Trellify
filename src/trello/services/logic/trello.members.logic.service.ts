@@ -79,7 +79,7 @@ export class TrelloMembersLogicService {
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Organization[]> {
-    const userToFind = await this.userService.getUser(user);
+    const userToFind = await this.userService.getUser(user, i18n);
 
     validateTrelloToken(userToFind.trello.token, i18n);
 
@@ -92,6 +92,7 @@ export class TrelloMembersLogicService {
       await this.trelloMembersApiService.fetchMemberOrganizations(
         userToFind.trello.userId,
         decryptedUserToken,
+        i18n,
       );
 
     const normalizedOrganizations: Organization[] = response.map(

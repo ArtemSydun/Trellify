@@ -205,6 +205,25 @@ export class TrelloWebhooksController {
     return this.webhooksService.findWebhookById(id, req.i18nContext);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':boardId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get webhook by board id',
+    description: 'This endpoint retrieves a webhook by board id.',
+  })
+  @ApiOkResponse({
+    description: 'Get webhook by board id',
+    type: Webhook,
+  })
+  @ApiCustomUnathorizedResponse()
+  getWebhookByBoardId(
+    @Param('boardId') boardId: string,
+    @Req() req,
+  ): Promise<Webhook> {
+    return this.webhooksService.findWebhookByBoardId(boardId, req.i18nContext);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin, UserRoles.admin, UserRoles.support)
   @Get(':id/subscribers')

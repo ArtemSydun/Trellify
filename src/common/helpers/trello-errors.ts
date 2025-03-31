@@ -14,7 +14,7 @@ export function parseTrelloError(err: any, i18n?: I18nContext): string {
   } else {
     message = err.message;
   }
-
+  console.log(message.toLowerCase());
   switch (message.toLowerCase()) {
     case 'invalid key':
       message =
@@ -35,6 +35,11 @@ export function parseTrelloError(err: any, i18n?: I18nContext): string {
       message =
         i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_WEBHOOK_ID) ||
         `Invalid value for idWebhook`;
+      break;
+    case 'unauthorized permission requested':
+      message =
+        i18n?.t(I18nKeys.ERRORS_TRELLO_UNATHORIZED_PERMISSION) ||
+        `Author token does not have permissions to get this content`;
       break;
 
     default:
