@@ -132,36 +132,53 @@ export class TrelloWebhooksLogicService {
       );
     }
 
-    const decryptedAuthorToken = decryptText(
-      webhook.author.trelloToken,
-      this.encryptionKey,
-    );
+    return webhook;
+  }
 
-    let boardData;
+  async findWebhookByBoardId(
+    boardId: string,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
+    const webhook =
+      await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
-    try {
-      boardData = await this.trelloBoardsApiService.fetchBoardById(
-        decryptedAuthorToken,
-        webhook.idModel,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error find board ${webhook.boardName}: `,
-        error.message || error.response.message,
+    if (!webhook) {
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID, {
+          args: { boardId },
+        }) || `Webhook with boardId ${boardId} not found`,
       );
     }
 
+    return await this.updateWebhookWithBoardData(webhook, i18n);
+  }
+
+  private async updateWebhookWithBoardData(
+    webhook: string | Webhook,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
+    const decryptedAuthorToken = decryptText(
+      webhookToUpdate.author.trelloToken,
+      this.encryptionKey,
+    );
+    const boardData = await this.trelloBoardsApiService.fetchBoardById(
+      decryptedAuthorToken,
+      webhookToUpdate.idModel,
+      i18n,
+    );
     const updatedWebhookProps: any = {};
     let shouldUpdateUsers = false;
 
     if (boardData) {
-      if (boardData.idOrganization !== webhook.idWorkspace) {
+      if (boardData.idOrganization !== webhookToUpdate.idWorkspace) {
         updatedWebhookProps.idWorkspace = boardData.idOrganization;
       }
 
       if (
-        boardData.name !== webhook.boardName ||
-        boardData.url !== webhook.boardUrl
+        boardData.name !== webhookToUpdate.boardName ||
+        boardData.url !== webhookToUpdate.boardUrl
       ) {
         updatedWebhookProps.boardName = boardData.name;
         updatedWebhookProps.boardUrl = boardData.url;
@@ -169,14 +186,12 @@ export class TrelloWebhooksLogicService {
       }
     }
 
-    // If there are updates, update the webhook
     if (Object.keys(updatedWebhookProps).length > 0) {
       const updatedWebhook = await this.trelloWebhookRepository.updateById(
-        webhook.id,
+        webhookToUpdate.id,
         updatedWebhookProps,
       );
 
-      // Only update users if board name or URL changed
       if (shouldUpdateUsers) {
         const usersToUpdate =
           await this.userService.findUsersConnectedToWebhook(updatedWebhook.id);
@@ -184,7 +199,7 @@ export class TrelloWebhooksLogicService {
         const updateUserPromises = usersToUpdate.map((subscriber) => {
           const updatedWebhooks = subscriber.trello.webhooks.map(
             (userWebhook) => {
-              if (userWebhook.webhookId === webhook.id) {
+              if (userWebhook.webhookId === webhookToUpdate.id) {
                 return {
                   ...userWebhook,
                   idModel: updatedWebhook.idModel,
@@ -213,25 +228,7 @@ export class TrelloWebhooksLogicService {
       return updatedWebhook;
     }
 
-    return webhook;
-  }
-
-  async findWebhookByBoardId(
-    boardId: string,
-    i18n?: I18nContext,
-  ): Promise<Webhook> {
-    const webhook =
-      await this.trelloWebhookRepository.findOneByBoardId(boardId);
-
-    if (!webhook) {
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID, {
-          args: { boardId },
-        }) || `Webhook with boardId ${boardId} not found`,
-      );
-    }
-
-    return webhook;
+    return webhookToUpdate;
   }
 
   async findWebhooks(
@@ -335,6 +332,7 @@ export class TrelloWebhooksLogicService {
     const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${existingWebhook.idModel}`;
 
     authorWebhooks = [];
+    let ifAuthorHasAccess = true;
 
     try {
       await this.trelloTokensLogicService.isTokenInfinite(
@@ -356,8 +354,24 @@ export class TrelloWebhooksLogicService {
       }
     }
 
+    try {
+      await this.trelloBoardsApiService.fetchBoardById(
+        decryptedAuthorToken,
+        existingWebhook?.idModel,
+        i18n,
+      );
+    } catch (err) {
+      this.logger.warn(err.message);
+      if (
+        err.message === i18n?.t(I18nKeys.ERRORS_TRELLO_UNATHORIZED_PERMISSION)
+      ) {
+        ifAuthorHasAccess = false;
+      }
+    }
+
     if (!webhookBoard) {
       const boardId = existingWebhook.idModel;
+
       webhookBoard = await this.trelloBoardsApiService.fetchBoardById(
         decryptedUserToken,
         boardId,
@@ -374,7 +388,10 @@ export class TrelloWebhooksLogicService {
     }
 
     // Check if the webhook still exists in Trello
-    if (!authorWebhooks.some((webhook) => webhook.id === existingWebhook.id)) {
+    if (
+      !authorWebhooks.some((webhook) => webhook.id === existingWebhook.id) ||
+      !ifAuthorHasAccess
+    ) {
       // Find all users connected to the old webhook
       const usersConnectedToWebhook =
         await this.userService.findUsersConnectedToWebhook(existingWebhook.id);
@@ -388,6 +405,17 @@ export class TrelloWebhooksLogicService {
 
       // Delete old webhook
       await this.trelloWebhookRepository.deleteById(existingWebhookCopy.id);
+      try {
+        await this.trelloWebhookApiService.deleteWebhook(
+          decryptedAuthorToken,
+          existingWebhook.id,
+        );
+      } catch (err) {
+        this.logger.warn(
+          'Error deleting old webhook on recreation: ',
+          err.message,
+        );
+      }
 
       // Create a new webhook using the Trello API
       const newWebhook = await this.trelloWebhookApiService.createWebhook(
@@ -1065,9 +1093,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    delete webhookAction.model?.prefs;
-    delete webhookAction.model?.labelNames;
-    console.log(JSON.stringify(webhookAction, null, 2));
+    // delete webhookAction.model?.prefs;
+    // delete webhookAction.model?.labelNames;
+    // console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,

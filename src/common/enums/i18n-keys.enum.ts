@@ -194,6 +194,7 @@ export enum I18nKeys {
   ERRORS_TRELLO_INVALID_TOKEN = 'common.errors.trello.profile.invalidToken',
   ERRORS_TRELLO_INVALID_APP_KEY = 'common.errors.trello.profile.invalidAppKey',
   ERRORS_TRELLO_INVALID_WEBHOOK_ID = 'common.errors.trello.webhook.invalidWebhookId',
+  ERRORS_TRELLO_UNATHORIZED_PERMISSION = 'common.errors.trello.webhook.unathorizedPermission',
   ERRORS_TRELLO_CHECK_CONNECTION = 'common.errors.trello.profile.checkConnection',
   ERRORS_TRELLO_EXPIRED_TOKEN = 'common.errors.trello.profile.expiredToken',
   ERRORS_TRELLO_DISCONNECT_FIRST = 'common.errors.trello.profile.disconnectFirst',
