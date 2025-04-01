@@ -1093,9 +1093,9 @@ export class TrelloWebhooksLogicService {
   }
 
   async handleTrelloWebhook(webhookAction: any): Promise<any> {
-    delete webhookAction.model?.prefs;
-    delete webhookAction.model?.labelNames;
-    console.log(JSON.stringify(webhookAction, null, 2));
+    // delete webhookAction.model?.prefs;
+    // delete webhookAction.model?.labelNames;
+    // console.log(JSON.stringify(webhookAction, null, 2));
 
     const filteredLog = {
       webhookId: webhookAction.webhook?.id,
