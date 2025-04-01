@@ -107,7 +107,7 @@ export class TrelloWebhooksLogicService {
     this.webhookActionCount = 0;
   }
 
-  async getWebhook(
+  public async getWebhook(
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -118,7 +118,7 @@ export class TrelloWebhooksLogicService {
     return webhook; // If it's already a Webhook object, return it as-is
   }
 
-  async findWebhookById(
+  public async findWebhookById(
     webhookId: string,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -135,7 +135,7 @@ export class TrelloWebhooksLogicService {
     return webhook;
   }
 
-  async findWebhookByBoardId(
+  public async findWebhookByBoardId(
     boardId: string,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -153,7 +153,7 @@ export class TrelloWebhooksLogicService {
     return await this.updateWebhookWithBoardData(webhook, i18n);
   }
 
-  private async updateWebhookWithBoardData(
+  public async updateWebhookWithBoardData(
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -231,17 +231,17 @@ export class TrelloWebhooksLogicService {
     return webhookToUpdate;
   }
 
-  async findWebhooks(
+  public async findWebhooks(
     queryParams: WebhookQueryDto,
   ): Promise<DefaultPaginatedResponse<Webhook>> {
     return await this.trelloWebhookRepository.getAll(queryParams);
   }
 
-  async findAllWebhooks(): Promise<Webhook[]> {
+  public async findAllWebhooks(): Promise<Webhook[]> {
     return await this.trelloWebhookRepository.findAll();
   }
 
-  async findMyConnectedWebhooks(
+  public async findMyConnectedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -257,7 +257,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findMyCreatedWebhooks(
+  public async findMyCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -271,7 +271,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findUserSubscribedWebhooks(
+  public async findUserSubscribedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -282,7 +282,7 @@ export class TrelloWebhooksLogicService {
     );
   }
 
-  async findUserCreatedWebhooks(
+  public async findUserCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -296,7 +296,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findWebhookSubscribers(
+  public async findWebhookSubscribers(
     webhookId: string,
     i18n?: I18nContext,
   ): Promise<User[]> {
@@ -309,7 +309,7 @@ export class TrelloWebhooksLogicService {
     return subscribers;
   }
 
-  async recreateWebhookIfUnavailable(
+  public async recreateWebhookIfUnavailable(
     webhook: Webhook | string,
     userToUpdate: User | string,
     i18n?: I18nContext,
@@ -518,7 +518,7 @@ export class TrelloWebhooksLogicService {
     return existingWebhook;
   }
 
-  async webhookHealthCheck(
+  public async webhookHealthCheck(
     webhook: Webhook | string,
     userToUpdate: User | string,
     i18n?: I18nContext,
@@ -554,7 +554,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async getProfileNotifications(): Promise<NotificationProfiles> {
+  public async getProfileNotifications(): Promise<NotificationProfiles> {
     const plans = await this.redisService.getSubscriptionPlans();
 
     return {
@@ -581,7 +581,7 @@ export class TrelloWebhooksLogicService {
     // };
   }
 
-  async getWebhooksByCreatorToken(
+  public async getWebhooksByCreatorToken(
     creatorToken: string,
     i18n?: I18nContext,
   ): Promise<any> {
@@ -591,7 +591,7 @@ export class TrelloWebhooksLogicService {
     return tokenRelatedWebhooks;
   }
 
-  async createTrelloWebhook(
+  public async createTrelloWebhook(
     user: string | User,
     createWebhookDto: CreateWebhookDto,
     i18n?: I18nContext,
@@ -834,7 +834,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async updateTrelloWebhookNotifications(
+  public async updateTrelloWebhookNotifications(
     user: string | User,
     webhook: string | Webhook,
     updateWebhookNotificationsDto: UpdateNotificationsDto,
@@ -911,7 +911,11 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async updateManyTrelloWebhookNotifications(
+  public async updateManyWebhooks(operations: any[]) {
+    return await this.trelloWebhookRepository.bulkUpdateWebhooks(operations);
+  }
+
+  public async updateManyTrelloWebhookNotifications(
     user: string | User,
     updateManyWebhooksDto: UpdateManyNotificationsDto,
     i18n?: I18nContext,
@@ -1028,7 +1032,7 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async updateWebhooksForSubscribers(
+  public async updateWebhooksForSubscribers(
     subscription: string | Subscription,
     newNotifications: any,
   ): Promise<void> {
@@ -1092,7 +1096,7 @@ export class TrelloWebhooksLogicService {
     console.log(`✅ All related webhooks updated successfully.`);
   }
 
-  async handleTrelloWebhook(webhookAction: any): Promise<any> {
+  public async handleTrelloWebhook(webhookAction: any): Promise<any> {
     // delete webhookAction.model?.prefs;
     // delete webhookAction.model?.labelNames;
     // console.log(JSON.stringify(webhookAction, null, 2));
@@ -1408,7 +1412,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async disconnectFromTrelloWebhook(
+  public async disconnectFromTrelloWebhook(
     user: string | User,
     webhook: string | Webhook,
     i18n?: I18nContext,
@@ -1495,7 +1499,7 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async disconnectFromAllTrelloWebhooks(
+  public async disconnectFromAllTrelloWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
@@ -1591,7 +1595,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async removeTrelloWebhook(
+  public async removeTrelloWebhook(
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -1638,7 +1642,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async removeAllWebhooksCreatedByUser(
+  public async removeAllWebhooksCreatedByUser(
     user: User | string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -1668,7 +1672,7 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async removeAllWebhooks(
+  public async removeAllWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {

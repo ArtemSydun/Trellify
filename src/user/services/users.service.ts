@@ -442,6 +442,72 @@ export class UsersService {
     return await this.userRepository.existsByEmail(email);
   }
 
+  public async updateUserEmail(
+    user: string | User,
+    newEmail: string,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const userToUpdate = await this.getUser(user);
+
+    const oldEmail = userToUpdate.email;
+
+    const createdWebhooks =
+      await this.trelloWebhooksLogicService.findMyCreatedWebhooks(
+        userToUpdate,
+        i18n,
+      );
+
+    const connectedWebhooks =
+      await this.trelloWebhooksLogicService.findMyConnectedWebhooks(
+        userToUpdate,
+        i18n,
+      );
+
+    const operations: any[] = [];
+
+    // Prepare bulk operations for createdWebhooks (update author.email)
+    for (const webhook of createdWebhooks) {
+      operations.push({
+        updateOne: {
+          filter: { id: webhook.id },
+          update: { 'author.email': newEmail },
+        },
+      });
+    }
+
+    // Prepare bulk operations for connectedWebhooks (update subscriber emails)
+    for (const webhook of connectedWebhooks) {
+      const needsUpdate = webhook.subscribers.some(
+        (subscriber: any) => subscriber.email === oldEmail,
+      );
+
+      if (needsUpdate) {
+        const updatedSubscribers = webhook.subscribers.map((subscriber: any) =>
+          subscriber.email === oldEmail
+            ? { ...subscriber, email: newEmail }
+            : subscriber,
+        );
+
+        operations.push({
+          updateOne: {
+            filter: { id: webhook.id },
+            update: { subscribers: updatedSubscribers },
+          },
+        });
+      }
+    }
+
+    if (operations.length > 0) {
+      await this.trelloWebhooksLogicService.updateManyWebhooks(operations);
+    }
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      email: newEmail,
+    });
+
+    return updatedUser;
+  }
+
   public async updateUser(
     user: string | User,
     updateUserDto: UpdateUserDto,
@@ -449,6 +515,24 @@ export class UsersService {
     reqUser?: Partial<User>,
   ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user, i18n);
+
+    if (updateUserDto.email) {
+      const updatedUser = await this.updateUserEmail(
+        user,
+        updateUserDto.email,
+        i18n,
+      );
+      return {
+        message:
+          i18n?.t(I18nKeys.MESSAGES_USER_UPDATED, {
+            args: {
+              email: userToUpdate.email,
+            },
+          }) || `User ${userToUpdate.email} updated successfully`,
+        statusCode: HttpStatus.OK,
+        data: updatedUser,
+      };
+    }
 
     //do not let update roles for not superadmins, and do not let superadmin lower his role
     if (
@@ -936,6 +1020,7 @@ export class UsersService {
     }
   }
 
+  //user self change after payment
   public async changeSubscriptionPlan(
     user: string | User,
     targetSubscription: string | Subscription,
