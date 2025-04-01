@@ -298,6 +298,18 @@ export class AuthService {
       );
     }
 
+    const isEmailUsed = await this.userService.doesUserExist(newEmail);
+
+    if (isEmailUsed) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_USER_ALREADY_EXIST, {
+          args: {
+            email: newEmail,
+          },
+        }) || `User ${newEmail} already exists`,
+      );
+    }
+
     await verifyPassword(password, userToUpdate.password, i18n);
 
     const payload = {
@@ -328,9 +340,7 @@ export class AuthService {
     const decoded = this.verifyToken(token, i18n);
     const { newEmail, id } = decoded;
 
-    await this.userRepository.updateById(id, {
-      email: newEmail,
-    });
+    await this.userService.updateUserEmail(id, newEmail, i18n);
 
     return {
       message:
