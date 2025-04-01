@@ -190,7 +190,7 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
+  @Get('by-webhook-id/:id')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get webhook by id',
@@ -206,7 +206,7 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':boardId')
+  @Get('by-board-id/:boardId')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get webhook by board id',
