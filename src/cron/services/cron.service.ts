@@ -18,6 +18,7 @@ import { Languages } from 'src/common/enums/languages.enum';
 import { decryptText } from 'src/common/helpers/hashing';
 import { SharedConfigService } from 'src/config/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { redisKeys } from 'src/redis/enums/redis-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { SubscriptionService } from 'src/subscription/services/subscription.service';
@@ -341,10 +342,10 @@ export class CronService {
     const message = await this.adminBotService.dailyStatsNotification(
       formattedDateForMessage,
       {
-        loginnedUsers: dailyStats.loginnedUser?.length || 0,
-        newUsers: dailyStats.newUsers?.length || 0,
-        deletedUsers: dailyStats.deletedUsers?.length || 0,
-        contactUs: dailyStats.contactUs?.length || 0,
+        loginnedUsers: dailyStats[periodStatsKeys.LOGINNED_USERS]?.length || 0,
+        newUsers: dailyStats[periodStatsKeys.NEW_USERS]?.length || 0,
+        deletedUsers: dailyStats[periodStatsKeys.DELETED_USERS]?.length || 0,
+        contactUs: dailyStats[periodStatsKeys.CONTACT_US]?.length || 0,
         totalUsers: totalUsers || 0,
       },
     );
@@ -407,10 +408,10 @@ export class CronService {
     const message = await this.adminBotService.weeklyStatsNotification(
       formattedDateRange, // Pass Monday → Sunday date range
       {
-        loginnedUsers: weeklyStats.loginnedUsers?.length || 0,
-        newUsers: weeklyStats.newUsers?.length || 0,
-        deletedUsers: weeklyStats.deletedUsers?.length || 0,
-        contactUs: weeklyStats.contactUs?.length || 0,
+        loginnedUsers: weeklyStats[periodStatsKeys.LOGINNED_USERS]?.length || 0,
+        newUsers: weeklyStats[periodStatsKeys.NEW_USERS]?.length || 0,
+        deletedUsers: weeklyStats[periodStatsKeys.DELETED_USERS]?.length || 0,
+        contactUs: weeklyStats[periodStatsKeys.CONTACT_US]?.length || 0,
         totalUsers: totalUsers || 0,
       },
     );

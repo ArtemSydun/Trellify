@@ -195,6 +195,7 @@
                 "webhookNotFoundByBoardId": "Webhook with boardId {boardId} not found",
                 "webhooksDisconnect": "Error disconnecting from all Trello webhooks",
                 "invalidWebhookId": "Invalid value for idWebhook",
+                "unathorizedPermission": "Author token does not have permissions to see this content",
                 "failedToUpdateWebhooks": "Webhooks {failedWebhooks} failed to update"
             },
             "profile": {

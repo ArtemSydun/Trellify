@@ -79,7 +79,6 @@ jest.mock('src/common/helpers/trello-tokens.ts', () => ({
 
 describe('TrelloWebhooksLogicService', () => {
   let originalDate = Date;
-
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let trelloWebhookRepository: TrelloWebhookRepository;
   let trelloTokensLogicService: TrelloTokensLogicService;
@@ -289,20 +288,12 @@ describe('TrelloWebhooksLogicService', () => {
   });
 
   describe('findWebhookById', () => {
-    it('should return the webhook if it exists and board name has not changed', async () => {
+    it('should return the webhook if it exists', async () => {
       const webhook = { ...webhookStub };
-      const decryptedAuthorToken = webhook.author.trelloToken.replace(
-        'encrypted',
-        '',
-      );
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue({ ...webhookStub });
-
-      jest
-        .spyOn(trelloBoardsApiService, 'fetchBoardById')
-        .mockResolvedValue({ ...trelloBoardMock });
+        .mockResolvedValue(webhook);
 
       const result = await trelloWebhooksLogicService.findWebhookById(
         webhook.id,
@@ -311,17 +302,22 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloWebhookRepository.findOneById).toHaveBeenCalledWith(
         webhook.id,
       );
-
-      expect(trelloBoardsApiService.fetchBoardById).toHaveBeenCalledWith(
-        decryptedAuthorToken,
-        webhook.idModel,
-      );
-
-      expect(webhook.boardName).toEqual(trelloBoardMock.name);
       expect(result).toEqual(webhook);
     });
 
-    it('should update webhook properties if board name was changed', async () => {
+    it('should throw NotFoundException if webhook does not exist', async () => {
+      jest
+        .spyOn(trelloWebhookRepository, 'findOneById')
+        .mockResolvedValue(null);
+
+      await expect(
+        trelloWebhooksLogicService.findWebhookById('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findWebhookByBoardId', () => {
+    it('should return updated webhook if board name was changed', async () => {
       const webhook = { ...webhookStub };
 
       const boardMock = {
@@ -344,7 +340,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
+        .spyOn(trelloWebhookRepository, 'findOneByBoardId')
         .mockResolvedValue(webhook);
 
       jest
@@ -363,17 +359,18 @@ describe('TrelloWebhooksLogicService', () => {
         .spyOn(usersService, 'updateManyUsers')
         .mockResolvedValue(undefined);
 
-      const result = await trelloWebhooksLogicService.findWebhookById(
-        webhook.id,
+      const result = await trelloWebhooksLogicService.findWebhookByBoardId(
+        webhook.idModel,
       );
 
-      expect(trelloWebhookRepository.findOneById).toHaveBeenCalledWith(
-        webhook.id,
+      expect(trelloWebhookRepository.findOneByBoardId).toHaveBeenCalledWith(
+        webhook.idModel,
       );
 
       expect(trelloBoardsApiService.fetchBoardById).toHaveBeenCalledWith(
         decryptedAuthorToken,
         webhook.idModel,
+        undefined,
       );
 
       expect(trelloWebhookRepository.updateById).toHaveBeenCalledWith(
@@ -387,6 +384,7 @@ describe('TrelloWebhooksLogicService', () => {
       expect(usersService.findUsersConnectedToWebhook).toHaveBeenCalledWith(
         updatedWebhook.id,
       );
+
       const updateCalls = updateManyUsersSpy.mock.calls[0][0];
 
       expect(updateCalls).toEqual([
@@ -408,36 +406,36 @@ describe('TrelloWebhooksLogicService', () => {
         },
       ]);
 
-      expect(usersService.updateManyUsers).toHaveBeenCalledTimes(1);
-
       expect(result).toEqual(updatedWebhook);
     });
 
-    it('should throw NotFoundException if webhook does not exist', async () => {
-      jest
-        .spyOn(trelloWebhookRepository, 'findOneById')
-        .mockResolvedValue(null);
-
-      await expect(
-        trelloWebhooksLogicService.findWebhookById('non-existent-id'),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('findWebhookByBoardId', () => {
-    it('should return webhook', async () => {
+    it('should return webhook if board name is the same', async () => {
       const webhook = { ...webhookStub };
-      const boardId = webhook.idModel;
+      const decryptedAuthorToken = webhook.author.trelloToken.replace(
+        'encrypted',
+        '',
+      );
 
       jest
         .spyOn(trelloWebhookRepository, 'findOneByBoardId')
         .mockResolvedValue(webhook);
 
-      const result =
-        await trelloWebhooksLogicService.findWebhookByBoardId(boardId);
+      jest
+        .spyOn(trelloBoardsApiService, 'fetchBoardById')
+        .mockResolvedValue({ ...trelloBoardMock });
+
+      const result = await trelloWebhooksLogicService.findWebhookByBoardId(
+        webhook.idModel,
+      );
 
       expect(trelloWebhookRepository.findOneByBoardId).toHaveBeenCalledWith(
-        boardId,
+        webhook.idModel,
+      );
+
+      expect(trelloBoardsApiService.fetchBoardById).toHaveBeenCalledWith(
+        decryptedAuthorToken,
+        webhook.idModel,
+        undefined,
       );
 
       expect(result).toEqual(webhook);

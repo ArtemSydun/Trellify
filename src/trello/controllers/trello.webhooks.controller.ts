@@ -190,7 +190,7 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
+  @Get('by-webhook-id/:id')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get webhook by id',
@@ -203,6 +203,25 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   getWebhookById(@Param('id') id: string, @Req() req): Promise<Webhook> {
     return this.webhooksService.findWebhookById(id, req.i18nContext);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('by-board-id/:boardId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get webhook by board id',
+    description: 'This endpoint retrieves a webhook by board id.',
+  })
+  @ApiOkResponse({
+    description: 'Get webhook by board id',
+    type: Webhook,
+  })
+  @ApiCustomUnathorizedResponse()
+  getWebhookByBoardId(
+    @Param('boardId') boardId: string,
+    @Req() req,
+  ): Promise<Webhook> {
+    return this.webhooksService.findWebhookByBoardId(boardId, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
