@@ -8,6 +8,8 @@ import { UsersModule } from 'src/user/users.module';
 import { session } from 'telegraf';
 import { AdminBotService } from './admin-bot/admin-bot.service';
 import { NotificationBotService } from './notification-bot/notification-bot.service';
+import { DisconnectTgScene } from './notification-bot/scenes/disconnectTg.scene';
+import { TelegramRateLimiterService } from './rate-limiter/telegram-rate-limiter.service';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { NotificationBotService } from './notification-bot/notification-bot.serv
         ),
         middlewares: [session()],
       }),
+
       inject: [ConfigService],
     }),
     TelegrafModule.forRootAsync({
@@ -40,7 +43,12 @@ import { NotificationBotService } from './notification-bot/notification-bot.serv
     HttpModule,
   ],
   controllers: [],
-  providers: [NotificationBotService, AdminBotService],
+  providers: [
+    NotificationBotService,
+    AdminBotService,
+    DisconnectTgScene,
+    TelegramRateLimiterService,
+  ],
   exports: [NotificationBotService, AdminBotService],
 })
 export class TelegramModule {}

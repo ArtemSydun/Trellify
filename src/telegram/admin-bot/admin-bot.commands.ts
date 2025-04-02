@@ -1,8 +1,9 @@
+import { TelegramCommands } from 'src/common/enums/telegram-commands';
 import { Context, Telegraf } from 'telegraf';
 
 export const commandTranslations = {
-  en: [{ command: '/start', description: '🚀 Start bot' }],
-  uk: [{ command: '/start', description: '🚀 Розпочати' }],
+  en: [{ command: `/${TelegramCommands.START}`, description: '🚀 Start bot' }],
+  uk: [{ command: `/${TelegramCommands.START}`, description: '🚀 Розпочати' }],
   // Add more languages here...
 };
 

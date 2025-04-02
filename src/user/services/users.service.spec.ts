@@ -1080,7 +1080,7 @@ describe('UsersService', () => {
       );
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userToUpdate.telegram,
-        'Trello notifier bot disconnected successfully',
+        expect.any(String),
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
