@@ -185,7 +185,8 @@
         },
         "telegram": {
             "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify",
-            "botIsNotConnected": "Цей телеграм аккаунт не підключено до аккаунту Trellify"
+            "botIsNotConnected": "Цей телеграм аккаунт не підключено до аккаунту Trellify",
+            "rateLimitExceeded": "Забагато запитів. Зачекай будь ласка {seconds} секунд"
         },
         "discord": {
             "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify",

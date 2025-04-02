@@ -182,7 +182,7 @@ export enum I18nKeys {
   // Telegram Errors
   ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED = 'common.errors.telegram.botAlreadyConnected',
   ERRORS_TELEGRAM_BOT_IS_NOT_CONNECTED = 'common.errors.telegram.botIsNotConnected',
-
+  ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED = 'common.errors.telegram.rateLimitExceeded',
   // Discord Errors
   ERRORS_DISCORD_BOT_ALREADY_CONNECTED = 'common.errors.discord.botAlreadyConnected',
   ERRORS_DISCORD_BOT_IS_NOT_CONNECTED = 'common.errors.discord.botIsNotConnected',

@@ -185,7 +185,8 @@
         },
         "telegram": {
             "botAlreadyConnected": "This telegram account is already connected to Trellify",
-            "botIsNotConnected": "This telegram account is not connected to Trellify"
+            "botIsNotConnected": "This telegram account is not connected to Trellify",
+            "rateLimitExceeded": "Too much requests. Please, wait {seconds} seconds"
         },
         "discord": {
             "botAlreadyConnected": "This discord account is already connected to Trellify",

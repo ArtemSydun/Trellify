@@ -9,6 +9,7 @@ import { session } from 'telegraf';
 import { AdminBotService } from './admin-bot/admin-bot.service';
 import { NotificationBotService } from './notification-bot/notification-bot.service';
 import { DisconnectTgScene } from './notification-bot/scenes/disconnectTg.scene';
+import { TelegramRateLimiterService } from './rate-limiter/telegram-rate-limiter.service';
 
 @Module({
   imports: [
@@ -42,7 +43,12 @@ import { DisconnectTgScene } from './notification-bot/scenes/disconnectTg.scene'
     HttpModule,
   ],
   controllers: [],
-  providers: [NotificationBotService, AdminBotService, DisconnectTgScene],
+  providers: [
+    NotificationBotService,
+    AdminBotService,
+    DisconnectTgScene,
+    TelegramRateLimiterService,
+  ],
   exports: [NotificationBotService, AdminBotService],
 })
 export class TelegramModule {}

@@ -11,15 +11,18 @@ import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
 import axios from 'axios';
 import { I18nService } from 'nestjs-i18n';
 import { InjectBot } from 'nestjs-telegraf';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
+import { TelegramCommands } from 'src/common/enums/telegram-commands';
 import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { UsersService } from 'src/user/services/users.service';
 import { Telegraf, Context, Markup } from 'telegraf';
+import { TelegramRateLimiterService } from '../rate-limiter/telegram-rate-limiter.service';
 import { NotificationBotActions } from './notification-bot.actions';
 import { BOT_MESSAGES } from './notification-bot.messages';
 import { NotificationBotUtils } from './notification-bot.utils';
@@ -28,9 +31,14 @@ export class NotificationBotService implements OnModuleInit {
   private readonly logger = new Logger(NotificationBotService.name);
   private notificationBotActions: NotificationBotActions;
   private notificationBotUtils: NotificationBotUtils;
+  private readonly rateLimiter = new RateLimiterMemory({
+    points: 5,
+    duration: 15,
+  });
 
   constructor(
     @InjectBot('notificationBot') private readonly bot: Telegraf<Context>,
+    private readonly telegramRateLimiter: TelegramRateLimiterService,
     private readonly configService: ConfigService,
     private readonly userRepository: UsersRepository,
     @Inject(forwardRef(() => UsersService))
@@ -57,6 +65,27 @@ export class NotificationBotService implements OnModuleInit {
 
       const chatId: number = ctx?.update?.message?.from?.id;
       const username: string = ctx?.update?.message?.chat?.username;
+
+      const isLimited = await this.telegramRateLimiter.isLimited(
+        chatId.toString(),
+        NotificationBotService.name,
+      );
+
+      if (isLimited) {
+        const wait = Math.ceil(
+          (await this.telegramRateLimiter.getRemainingTTL(
+            chatId.toString(),
+            NotificationBotService.name,
+          )) / 1000,
+        );
+
+        return ctx.reply(
+          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+            args: { seconds: wait },
+            lang: userLanguage,
+          }) || `Too many requests. Please wait ${wait}s.`,
+        );
+      }
 
       const keyboard = Markup.keyboard([
         ['💻 Trellify Website', '⚙️ Trellify Configuration'],
@@ -122,6 +151,27 @@ export class NotificationBotService implements OnModuleInit {
       let userLanguage =
         ctx?.update?.message?.from?.language_code || Languages.EN;
 
+      const isLimited = await this.telegramRateLimiter.isLimited(
+        chatId.toString(),
+        NotificationBotService.name,
+      );
+
+      if (isLimited) {
+        const wait = Math.ceil(
+          (await this.telegramRateLimiter.getRemainingTTL(
+            chatId.toString(),
+            NotificationBotService.name,
+          )) / 1000,
+        );
+
+        return ctx.reply(
+          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+            args: { seconds: wait },
+            lang: userLanguage,
+          }) || `Too many requests. Please wait ${wait}s.`,
+        );
+      }
+
       const user: User = await this.userRepository.findUserByProperty(
         UserSearchPath.TelegramChatId,
         chatId,
@@ -158,10 +208,32 @@ export class NotificationBotService implements OnModuleInit {
       await ctx.reply(helpMessage, { parse_mode: 'Markdown' });
     });
 
-    this.bot.command('my_profile', async (ctx: any) => {
+    this.bot.command(TelegramCommands.MY_PROFILE, async (ctx: any) => {
+      const chatId = ctx?.from?.id?.toString();
       const chatID: number = ctx?.update?.message?.from?.id;
       let userLanguage = ctx?.update?.message?.from?.language_code;
       const username: string = ctx?.update?.message?.chat?.username;
+
+      const isLimited = await this.telegramRateLimiter.isLimited(
+        chatId,
+        NotificationBotService.name,
+      );
+
+      if (isLimited) {
+        const wait = Math.ceil(
+          (await this.telegramRateLimiter.getRemainingTTL(
+            chatId,
+            NotificationBotService.name,
+          )) / 1000,
+        );
+
+        return ctx.reply(
+          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+            args: { seconds: wait },
+            lang: userLanguage,
+          }) || `Too many requests. Please wait ${wait}s.`,
+        );
+      }
 
       if (!chatID) {
         await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
@@ -216,17 +288,39 @@ export class NotificationBotService implements OnModuleInit {
       }
     });
 
-    this.bot.command('disconnect', async (ctx: any) => {
-      const chatID: number = ctx?.update?.message?.from?.id;
+    this.bot.command(TelegramCommands.DISCONNECT, async (ctx: any) => {
+      const chatId: number = ctx?.update?.message?.from?.id;
       const telegramNickname: string = ctx?.update?.message?.chat?.username;
+      const userLanguage = ctx?.update?.message?.from?.language_code;
 
-      if (!chatID) {
+      if (!chatId) {
         await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
         return;
       }
 
+      const isLimited = await this.telegramRateLimiter.isLimited(
+        chatId.toString(),
+        NotificationBotService.name,
+      );
+
+      if (isLimited) {
+        const wait = Math.ceil(
+          (await this.telegramRateLimiter.getRemainingTTL(
+            chatId.toString(),
+            NotificationBotService.name,
+          )) / 1000,
+        );
+
+        return ctx.reply(
+          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+            args: { seconds: wait },
+            lang: userLanguage,
+          }) || `Too many requests. Please wait ${wait}s.`,
+        );
+      }
+
       // Store values to wizard state
-      ctx.scene.state.chatID = chatID;
+      ctx.scene.state.chatID = chatId;
       ctx.scene.state.telegramNickname = telegramNickname;
 
       // Enter the disconnect wizard scene
