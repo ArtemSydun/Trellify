@@ -451,6 +451,25 @@ export class UsersService {
 
     const oldEmail = userToUpdate.email;
 
+    if (oldEmail === newEmail) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_EMAIL_SAME_ADRESS) ||
+          'New email must be different from current',
+      );
+    }
+
+    const isEmailUsed = await this.doesUserExist(newEmail);
+
+    if (isEmailUsed) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_USER_ALREADY_EXIST, {
+          args: {
+            email: newEmail,
+          },
+        }) || `User ${newEmail} already exists`,
+      );
+    }
+
     const createdWebhooks =
       await this.trelloWebhooksLogicService.findMyCreatedWebhooks(
         userToUpdate,
@@ -735,7 +754,7 @@ export class UsersService {
       await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          `Trello notifier bot disconnected successfully`,
+          `Trellify bot disconnected successfully`,
       );
     }
 

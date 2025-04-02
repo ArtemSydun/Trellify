@@ -52,10 +52,12 @@ export enum I18nKeys {
   //Telegram
   MESSAGES_TELEGRAM_CONNECTED_SUCCESSFULLY = 'common.messages.telegram.connectedSuccessfully',
   MESSAGES_TELEGRAM_DISCONNECTED_SUCCESSFULLY = 'common.messages.telegram.disconnectedSuccessfully',
+  MESSAGES_TELEGRAM_DISCONNECT_CONFIRMATION = 'common.messages.telegram.disconnectConfirmation',
 
   //Discord
   MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY = 'common.messages.discord.connectedSuccessfully',
   MESSAGES_DISCORD_DISCONNECTED_SUCCESSFULLY = 'common.messages.discord.disconnectedSuccessfully',
+  MESSAGES_DISCORD_DISCONNECT_CONFIRMATION = 'common.messages.discord.disconnectConfirmation',
 
   // Webhook Messages
   MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
@@ -155,6 +157,7 @@ export enum I18nKeys {
   NOTIFICATION_CUSTOM_FIELD_DELETED = 'common.messages.notifications.board.customFieldDeleted',
 
   // General Errors
+  ERRORS_GENERAL_DEFAULT = 'common.errors.general.default',
   ERRORS_GENERAL_INVALID_REQUEST = 'common.errors.general.invalidRequest',
   ERRORS_GENERAL_INVALID_CREDENTIALS = 'common.errors.general.invalidCredentials',
   ERRORS_GENERAL_FORBIDDEN_RESOURCE = 'common.errors.general.forbiddenResource',
@@ -178,9 +181,11 @@ export enum I18nKeys {
 
   // Telegram Errors
   ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED = 'common.errors.telegram.botAlreadyConnected',
-
+  ERRORS_TELEGRAM_BOT_IS_NOT_CONNECTED = 'common.errors.telegram.botIsNotConnected',
+  ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED = 'common.errors.telegram.rateLimitExceeded',
   // Discord Errors
   ERRORS_DISCORD_BOT_ALREADY_CONNECTED = 'common.errors.discord.botAlreadyConnected',
+  ERRORS_DISCORD_BOT_IS_NOT_CONNECTED = 'common.errors.discord.botIsNotConnected',
 
   // Trello Errors
   ERRORS_TRELLO_WEBHOOKS_BULK_FAIL = 'common.errors.trello.webhook.failedToUpdateWebhooks',

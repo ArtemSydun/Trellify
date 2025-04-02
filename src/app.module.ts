@@ -3,9 +3,10 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AuthModule } from './auth/auth.module';
+import { CustomThrottlerGuard } from './auth/guards/custom-throttler';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from './discord/discord.module';
@@ -53,7 +54,7 @@ import { UsersModule } from './user/users.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
   ],
   exports: [],

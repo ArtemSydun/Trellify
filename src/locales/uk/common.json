@@ -56,11 +56,13 @@
         },
         "telegram": {
             "connectedSuccessfully": "Телеграм аккаунт підключено успішно",
-            "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно"
+            "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно",
+            "disconnectConfirmation": "Ви впевнені що бажаєте відключити телеграм аккаунт? Ви більше не будете отримувати сповіщення від Trellify"
         },
         "discord": {
             "connectedSuccessfully": "Діскорд аккаунт підключено успішно",
-            "disconnectedSuccessfully": "Діскорд аккаунт відключено успішно"
+            "disconnectedSuccessfully": "Діскорд аккаунт відключено успішно",
+            "disconnectConfirmation": "Ви впевнені що бажаєте відключити діскорд аккаунт? Ви більше не будете отримувати сповіщення від Trellify"
         },
         "trello": {
             "webhook": {
@@ -159,6 +161,7 @@
     },
     "errors": {
         "general": {
+            "default": "Сталася помилка, спробуйте трішки пізніше або зв'яжіться з підтримкою",
             "invalidRequest": "Запит для поля {field} є недійсним.",
             "invalidCredentials": "Недійсні облікові дані.",
             "forbiddenResource": "Доступ до ресурсу заборонено",
@@ -181,10 +184,13 @@
             "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
         },
         "telegram": {
-            "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify"
+            "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify",
+            "botIsNotConnected": "Цей телеграм аккаунт не підключено до аккаунту Trellify",
+            "rateLimitExceeded": "Забагато запитів. Зачекай будь ласка {seconds} секунд"
         },
         "discord": {
-            "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify"
+            "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify",
+            "botIsNotConnected": "Цей діскорд аккаунт не підключено до аккаунту Trellify"
         },
         "trello": {
             "webhook": {

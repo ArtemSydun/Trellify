@@ -247,8 +247,6 @@ export class TrelloWebhooksLogicService {
   ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user, i18n);
 
-    validateTrelloToken(requestedUser.trello.token, i18n);
-
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksConnectedToUser(
         requestedUser.trello.userId,
@@ -262,7 +260,7 @@ export class TrelloWebhooksLogicService {
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user, i18n);
-    validateTrelloToken(requestedUser.trello.token, i18n);
+
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksCreatedByUser(
         requestedUser.trello.userId,

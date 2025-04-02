@@ -494,37 +494,8 @@ describe('TrelloWebhooksLogicService', () => {
         undefined,
       );
 
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
       expect(result).toHaveLength(webhooks.length);
       expect(result).toEqual(webhooks);
-    });
-
-    it('should throw an error if Trello token is invalid', async () => {
-      const requestedUser = userStub();
-      requestedUser.trello.token = null;
-
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestedUser);
-
-      (validateTrelloToken as jest.Mock).mockImplementation(() => {
-        throw new BadRequestException();
-      });
-
-      await expect(
-        trelloWebhooksLogicService.findMyConnectedWebhooks(requestedUser.id),
-      ).rejects.toThrow(BadRequestException);
-
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
-      expect(
-        trelloWebhookRepository.findWebhooksConnectedToUser,
-      ).not.toHaveBeenCalled();
     });
   });
 
@@ -551,43 +522,8 @@ describe('TrelloWebhooksLogicService', () => {
         undefined,
       );
 
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
       expect(result).toHaveLength(webhooks.length);
       expect(result).toEqual(webhooks);
-    });
-
-    it('should throw an error if Trello token is invalid', async () => {
-      const requestedUser = {
-        ...userStub(),
-        trello: {
-          ...userStub().trello,
-          token: null,
-        },
-      };
-      requestedUser.trello.token = null;
-
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestedUser);
-
-      (validateTrelloToken as jest.Mock).mockImplementation(() => {
-        throw new BadRequestException();
-      });
-
-      await expect(
-        trelloWebhooksLogicService.findMyCreatedWebhooks(requestedUser.id),
-      ).rejects.toThrow(BadRequestException);
-
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
-      expect(
-        trelloWebhookRepository.findWebhooksCreatedByUser,
-      ).not.toHaveBeenCalled();
     });
   });
   describe('findMyConnectedWebhooks', () => {
@@ -619,37 +555,8 @@ describe('TrelloWebhooksLogicService', () => {
         undefined,
       );
 
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
       expect(result).toHaveLength(webhooks.length);
       expect(result).toEqual(webhooks);
-    });
-
-    it('should throw an error if Trello token is invalid', async () => {
-      const requestedUser = userStub();
-      requestedUser.trello.token = null;
-
-      jest.spyOn(usersService, 'getUser').mockResolvedValue(requestedUser);
-
-      (validateTrelloToken as jest.Mock).mockImplementation(() => {
-        throw new BadRequestException();
-      });
-
-      await expect(
-        trelloWebhooksLogicService.findMyConnectedWebhooks(requestedUser.id),
-      ).rejects.toThrow(BadRequestException);
-
-      expect(validateTrelloToken).toHaveBeenCalledWith(
-        requestedUser.trello.token,
-        undefined,
-      );
-
-      expect(
-        trelloWebhookRepository.findWebhooksConnectedToUser,
-      ).not.toHaveBeenCalled();
     });
   });
 
