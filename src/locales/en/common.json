@@ -56,11 +56,13 @@
         },
         "telegram": {
             "connectedSuccessfully": "Telegram account connected successfully",
-            "disconnectedSuccessfully": "Telegram account disconnected successfully"
+            "disconnectedSuccessfully": "Telegram account disconnected successfully",
+            "disconnectConfirmation": "Are you sure you want to disconnect telegram account? You will not receive any notifications from Trellify anymore"
         },
         "discord": {
             "connectedSuccessfully": "Discord account connected successfully",
-            "disconnectedSuccessfully": "Discord account disconnected successfully"
+            "disconnectedSuccessfully": "Discord account disconnected successfully",
+            "disconnectConfirmation": "Are you sure you want to disconnect discord account? You will not receive any notifications from Trellify anymore"
         },
         "trello": {
             "webhook": {
@@ -159,6 +161,7 @@
     },
     "errors": {
         "general": {
+            "default": "An error occured, please, try again later or contact with support",
             "invalidRequest": "The request for the {field} field is invalid.",
             "invalidCredentials": "Invalid credentials",
             "forbiddenResource": "Forbidden resource",
@@ -181,10 +184,12 @@
             "notFoundByProperty": "User with property {path}: {value} not found"
         },
         "telegram": {
-            "botAlreadyConnected": "This telegram account is already connected to Trellify"
+            "botAlreadyConnected": "This telegram account is already connected to Trellify",
+            "botIsNotConnected": "This telegram account is not connected to Trellify"
         },
         "discord": {
-            "botAlreadyConnected": "This discord account is already connected to Trellify"
+            "botAlreadyConnected": "This discord account is already connected to Trellify",
+            "botIsNotConnected": "This discord account is not connected to Trellify"
         },
         "trello": {
             "webhook": {

@@ -7,6 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
 import axios from 'axios';
 import { I18nService } from 'nestjs-i18n';
 import { InjectBot } from 'nestjs-telegraf';
@@ -17,11 +18,11 @@ import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersRepository } from 'src/user/repositories/users.repository';
+import { UsersService } from 'src/user/services/users.service';
 import { Telegraf, Context, Markup } from 'telegraf';
 import { NotificationBotActions } from './notification-bot.actions';
 import { BOT_MESSAGES } from './notification-bot.messages';
 import { NotificationBotUtils } from './notification-bot.utils';
-
 @Injectable()
 export class NotificationBotService implements OnModuleInit {
   private readonly logger = new Logger(NotificationBotService.name);
@@ -32,6 +33,8 @@ export class NotificationBotService implements OnModuleInit {
     @InjectBot('notificationBot') private readonly bot: Telegraf<Context>,
     private readonly configService: ConfigService,
     private readonly userRepository: UsersRepository,
+    @Inject(forwardRef(() => UsersService))
+    private readonly userService: UsersService,
     private readonly i18n: I18nService,
   ) {
     this.notificationBotUtils = new NotificationBotUtils();
@@ -211,6 +214,23 @@ export class NotificationBotService implements OnModuleInit {
           },
         );
       }
+    });
+
+    this.bot.command('disconnect', async (ctx: any) => {
+      const chatID: number = ctx?.update?.message?.from?.id;
+      const telegramNickname: string = ctx?.update?.message?.chat?.username;
+
+      if (!chatID) {
+        await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+        return;
+      }
+
+      // Store values to wizard state
+      ctx.scene.state.chatID = chatID;
+      ctx.scene.state.telegramNickname = telegramNickname;
+
+      // Enter the disconnect wizard scene
+      await ctx.scene.enter('disconnectTg');
     });
 
     this.bot.hears('💻 Trellify Website', async (ctx: any) => {

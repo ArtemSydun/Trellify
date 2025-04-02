@@ -735,7 +735,7 @@ export class UsersService {
       await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          `Trello notifier bot disconnected successfully`,
+          `Trellify bot disconnected successfully`,
       );
     }
 
