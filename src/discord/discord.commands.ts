@@ -44,6 +44,7 @@ export class DiscordCommands {
   public async onStart(@Context() [interaction]: SlashCommandContext) {
     // console.log(interaction);
     const userId: string = interaction.user.id;
+    const username: string = interaction.user.username;
     const userLanguage = supportedLanguages.includes(
       interaction.locale.split('-')[0] as Languages,
     )
@@ -80,7 +81,13 @@ export class DiscordCommands {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
 
     return interaction.reply({
-      content: 'Click the button below to authorize Trellify bot:',
+      content:
+        this.i18n?.t(I18nKeys.MESSAGES_GENERAL_GREETINGS_MESSAGE, {
+          lang: userLanguage,
+          args: {
+            name: username,
+          },
+        }) || 'Click the button below to authorize Trellify bot:',
       components: [row],
     });
   }
