@@ -166,7 +166,8 @@
             "invalidCredentials": "Invalid credentials",
             "forbiddenResource": "Forbidden resource",
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
-            "profileNotFound": "Your Trellify profile was not found. Please check if you are registered"
+            "profileNotFound": "Your Trellify profile was not found. Please check if you are registered",
+            "actionCanceled": "Action canceled"
         },
         "jwt": {
             "invalidToken": "Your authorization token is not valid or expired"

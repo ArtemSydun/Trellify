@@ -1,24 +1,30 @@
-import { TelegramCommands } from 'src/common/enums/telegram-commands';
+import { TelegramCommandsEnum } from 'src/common/enums/telegram-commands.enum';
 import { Context, Telegraf } from 'telegraf';
 
 export const commandTranslations = {
   en: [
-    { command: `/${TelegramCommands.START}`, description: '🚀 Start bot' },
-    { command: `/${TelegramCommands.MY_PROFILE}`, description: '👤 Profile' },
+    { command: `/${TelegramCommandsEnum.START}`, description: '🚀 Start bot' },
     {
-      command: `/${TelegramCommands.DISCONNECT}`,
+      command: `/${TelegramCommandsEnum.MY_PROFILE}`,
+      description: '👤 Profile',
+    },
+    {
+      command: `/${TelegramCommandsEnum.DISCONNECT}`,
       description: '🔗 Disconnect',
     },
-    { command: `/${TelegramCommands.HELP}`, description: '❓ Help' },
+    { command: `/${TelegramCommandsEnum.HELP}`, description: '❓ Help' },
   ],
   uk: [
-    { command: `/${TelegramCommands.START}`, description: '🚀 Розпочати' },
-    { command: `/${TelegramCommands.MY_PROFILE}`, description: '👤 Профіль' },
+    { command: `/${TelegramCommandsEnum.START}`, description: '🚀 Розпочати' },
     {
-      command: `/${TelegramCommands.DISCONNECT}`,
+      command: `/${TelegramCommandsEnum.MY_PROFILE}`,
+      description: '👤 Профіль',
+    },
+    {
+      command: `/${TelegramCommandsEnum.DISCONNECT}`,
       description: '🔗 Відключити',
     },
-    { command: `/${TelegramCommands.HELP}`, description: '❓ Допомога' },
+    { command: `/${TelegramCommandsEnum.HELP}`, description: '❓ Допомога' },
   ],
   // Add more languages here...
 };

@@ -85,7 +85,14 @@ export class DisconnectTgScene {
     const user = ctx.wizard.state.user;
     const userLanguage = ctx.wizard.state.userLanguage || Languages.EN;
 
-    await ctx.editMessageReplyMarkup({});
+    try {
+      if (ctx.updateType === 'callback_query' && ctx.callbackQuery?.message) {
+        await ctx.editMessageReplyMarkup({});
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to edit message markup:', err.message);
+      // Safe to continue, don't throw
+    }
 
     if (!selectedAction) {
       await ctx.reply(BOT_MESSAGES.ERROR.GENERAL);

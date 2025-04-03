@@ -166,7 +166,8 @@
             "invalidCredentials": "Недійсні облікові дані.",
             "forbiddenResource": "Доступ до ресурсу заборонено",
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
-            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію"
+            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію",
+            "actionCanceled": "Виконання події відмінено"
         },
         "jwt": {
             "invalidToken": "Ваш токен не є дійсним або закінчився термін дії"
