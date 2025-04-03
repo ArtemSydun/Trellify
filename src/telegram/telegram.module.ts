@@ -2,6 +2,11 @@ import { HttpModule } from '@nestjs/axios';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
+import {
+  TelegrafI18nModule,
+  TelegrafI18nMiddlewareProvider,
+  TelegrafI18nContext,
+} from 'nestjs-telegraf-i18n';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersModule } from 'src/user/users.module';
@@ -13,29 +18,47 @@ import { TelegramRateLimiterService } from './rate-limiter/telegram-rate-limiter
 
 @Module({
   imports: [
+    TelegrafI18nModule,
     TelegrafModule.forRootAsync({
       botName: 'notificationBot',
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      inject: [ConfigService, TelegrafI18nMiddlewareProvider],
+      useFactory: async (
+        configService: ConfigService,
+        telegrafI18nMiddlewareProvider: TelegrafI18nMiddlewareProvider,
+      ) => ({
         token: configService.get<string>(
           configServiceKeys.TELEGRAM_NOTIFICATION_BOT_TOKEN,
         ),
-        middlewares: [session()],
+        options: {
+          contextType: TelegrafI18nContext,
+        },
+        middlewares: [
+          session(),
+          telegrafI18nMiddlewareProvider.telegrafI18nMiddleware,
+        ],
       }),
-
-      inject: [ConfigService],
     }),
     TelegrafModule.forRootAsync({
       botName: 'adminBot',
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      inject: [ConfigService, TelegrafI18nMiddlewareProvider],
+      useFactory: async (
+        configService: ConfigService,
+        telegrafI18nMiddlewareProvider: TelegrafI18nMiddlewareProvider,
+      ) => ({
         token: configService.get<string>(
           configServiceKeys.TELEGRAM_ADMIN_BOT_TOKEN,
         ),
 
-        middlewares: [session()],
+        options: {
+          contextType: TelegrafI18nContext,
+        },
+        middlewares: [
+          session(),
+          telegrafI18nMiddlewareProvider.telegrafI18nMiddleware,
+        ],
       }),
-      inject: [ConfigService],
     }),
 
     forwardRef(() => UsersModule),
