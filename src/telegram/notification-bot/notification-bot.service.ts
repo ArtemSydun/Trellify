@@ -7,7 +7,6 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ThrottlerStorage, ThrottlerStorageService } from '@nestjs/throttler';
 import axios from 'axios';
 import { I18nService } from 'nestjs-i18n';
 import { InjectBot } from 'nestjs-telegraf';
@@ -15,7 +14,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
-import { TelegramCommands } from 'src/common/enums/telegram-commands';
+import { TelegramCommandsEnum } from 'src/common/enums/telegram-commands.enum';
 import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
@@ -24,6 +23,7 @@ import { UsersService } from 'src/user/services/users.service';
 import { Telegraf, Context, Markup } from 'telegraf';
 import { TelegramRateLimiterService } from '../rate-limiter/telegram-rate-limiter.service';
 import { NotificationBotActions } from './notification-bot.actions';
+import { setLocalizedCommands } from './notification-bot.commands';
 import { BOT_MESSAGES } from './notification-bot.messages';
 import { NotificationBotUtils } from './notification-bot.utils';
 @Injectable()
@@ -51,6 +51,7 @@ export class NotificationBotService implements OnModuleInit {
   // ✅ Initialize bot commands when module loads
   async onModuleInit() {
     this.setupCommands();
+    setLocalizedCommands(this.bot);
   }
 
   private setupCommands() {
@@ -177,7 +178,7 @@ export class NotificationBotService implements OnModuleInit {
         chatId,
       );
 
-      if (user.language) {
+      if (user) {
         userLanguage = user.language;
       }
 
@@ -208,7 +209,7 @@ export class NotificationBotService implements OnModuleInit {
       await ctx.reply(helpMessage, { parse_mode: 'Markdown' });
     });
 
-    this.bot.command(TelegramCommands.MY_PROFILE, async (ctx: any) => {
+    this.bot.command(TelegramCommandsEnum.MY_PROFILE, async (ctx: any) => {
       const chatId = ctx?.from?.id?.toString();
       const chatID: number = ctx?.update?.message?.from?.id;
       let userLanguage = ctx?.update?.message?.from?.language_code;
@@ -288,7 +289,7 @@ export class NotificationBotService implements OnModuleInit {
       }
     });
 
-    this.bot.command(TelegramCommands.DISCONNECT, async (ctx: any) => {
+    this.bot.command(TelegramCommandsEnum.DISCONNECT, async (ctx: any) => {
       const chatId: number = ctx?.update?.message?.from?.id;
       const telegramNickname: string = ctx?.update?.message?.chat?.username;
       const userLanguage = ctx?.update?.message?.from?.language_code;

@@ -22,7 +22,7 @@
                 "steps": [
                     "**Register on the Trellify website**: Visit our [website]({websiteUrl}) and create an account.",
                     "**Connect your Trello profile**: Log in to Trello and link your account with Trellify.",
-                    "**Connect your Telegram account**: Use this bot to link your Telegram account for receiving notifications.",
+                    "**Connect your messanger account**: Use this bot to link your messanger account for receiving notifications.",
                     "**Set up notifications**: Enable notifications for the boards you want to monitor in the Trellify settings."
                 ],
                 "closingMessage": "If you have any questions, reach out to support."
@@ -166,7 +166,8 @@
             "invalidCredentials": "Invalid credentials",
             "forbiddenResource": "Forbidden resource",
             "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
-            "profileNotFound": "Your Trellify profile was not found. Please check if you are registered"
+            "profileNotFound": "Your Trellify profile was not found. Please check if you are registered",
+            "actionCanceled": "Action canceled"
         },
         "jwt": {
             "invalidToken": "Your authorization token is not valid or expired"

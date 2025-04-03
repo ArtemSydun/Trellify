@@ -163,6 +163,7 @@ export enum I18nKeys {
   ERRORS_GENERAL_FORBIDDEN_RESOURCE = 'common.errors.general.forbiddenResource',
   ERRORS_GENERAL_FAILED_SEND_EMAIL = 'common.errors.general.failedSendEmail',
   ERRORS_GENERAL_PROFILE_NOT_FOUND = 'common.errors.general.profileNotFound',
+  ERRORS_GENERAL_ACTION_CANCELED = 'common.errors.general.actionCanceled',
 
   // JWT Errors
   ERRORS_JWT_INVALID_TOKEN = 'common.errors.jwt.invalidToken',

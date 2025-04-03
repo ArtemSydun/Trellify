@@ -821,7 +821,7 @@ export class UsersService {
       await this.discordService.sendDirectMessage(
         userToUpdate.discord.userId,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          'Discord connected successfully',
+          'Discord disconnected successfully',
       );
     }
 
