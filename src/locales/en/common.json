@@ -68,7 +68,8 @@
             "webhook": {
                 "webhookHealthIsOk": "Webhook to the {boardName} is active now",
                 "webhookWasRecreated": "Webhook has been recreated",
-                "webhooksWasUpdated": "Webhooks has been updated successfully"
+                "webhooksWasUpdated": "Webhooks has been updated successfully",
+                "webhookWasDeleted": "Webhook {webhook} has been deleted successfully from Trello and all connected users"
             }
         },
         "subscription": {

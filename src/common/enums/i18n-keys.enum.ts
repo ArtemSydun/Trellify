@@ -63,6 +63,7 @@ export enum I18nKeys {
   MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
   MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED = 'common.messages.trello.webhook.webhookWasRecreated',
   MESSAGES_TRELLO_WEBHOOKS_WAS_UPDATED = 'common.messages.trello.webhook.webhooksWasUpdated',
+  MESSAGES_TRELLO_WEBHOOKS_WAS_DELETED = 'common.messages.trello.webhook.webhookWasDeleted',
 
   //Subscriptions messages
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',

@@ -1626,7 +1626,13 @@ export class TrelloWebhooksLogicService {
         `Webhook for model ${webhookToDelete.boardName} deleted successfully`,
       );
       return {
-        message: `Webhook ${webhookId} deleted successfully from Trello and all connected users`,
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOKS_WAS_DELETED, {
+            args: {
+              webhook: webhookToDelete.boardName,
+            },
+          }) ||
+          `Webhook ${webhookToDelete.boardName} has been deleted successfully from Trello and all connected users`,
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
