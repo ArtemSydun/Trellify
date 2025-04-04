@@ -111,30 +111,39 @@ export class CronService {
         }
 
         //if webhook has 1 subscriber and disconnected telegram and discord
-        if (webhook.subscribers.length === 1) {
-          const connectedUser = await this.usersService.findUserByTrelloId(
-            webhook.subscribers[0].trelloUserId,
-          );
+        try {
+          if (webhook.subscribers.length === 1) {
+            const connectedUser = await this.usersService.findUserByTrelloId(
+              webhook.subscribers[0].trelloUserId,
+            );
 
-          const daysSinceTelegramConnected = differenceInDays(
-            currentDate,
-            connectedUser.telegram.updatedAt,
-          );
+            const daysSinceTelegramConnected = differenceInDays(
+              currentDate,
+              connectedUser.telegram.updatedAt,
+            );
 
-          const daysSinceDiscordConnected = differenceInDays(
-            currentDate,
-            connectedUser.discord.updatedAt,
-          );
+            const daysSinceDiscordConnected = differenceInDays(
+              currentDate,
+              connectedUser.discord.updatedAt,
+            );
 
-          if (
-            daysSinceTelegramConnected >= 30 &&
-            daysSinceDiscordConnected >= 30 &&
-            !connectedUser.telegram.chatId &&
-            !connectedUser.discord.userId
-          ) {
-            unactiveWebhooks.push(webhook);
-            continue;
+            if (
+              daysSinceTelegramConnected >= 30 &&
+              daysSinceDiscordConnected >= 30 &&
+              !connectedUser.telegram.chatId &&
+              !connectedUser.discord.userId
+            ) {
+              unactiveWebhooks.push(webhook);
+              continue;
+            }
           }
+        } catch (err) {
+          this.logger.warn(
+            `Webhook ${webhook.boardName} only one subscriber was not found`,
+            err.message || err.response || err.response.message,
+          );
+          unactiveWebhooks.push(webhook);
+          continue;
         }
 
         //if webhook has no subscriber and updates
@@ -167,7 +176,10 @@ export class CronService {
       console.log('Successfully removed inactive webhooks:', removedWebhooks);
       this.logger.log(`Unactive webhooks clear cron finished`);
     } catch (error) {
-      console.error('Error in clearUnactiveBoards:', error.message);
+      console.error(
+        'Weekly clearUnactiveWebhooks cron execution failed:',
+        error.message || error.response.message,
+      );
     }
   }
 

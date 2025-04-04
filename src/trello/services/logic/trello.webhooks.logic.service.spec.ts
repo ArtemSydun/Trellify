@@ -1998,7 +1998,7 @@ describe('TrelloWebhooksLogicService', () => {
       );
 
       expect(result).toEqual({
-        message: expect.stringContaining(webhookStubData.id),
+        message: expect.stringContaining(webhookStubData.boardName),
         statusCode: HttpStatus.OK,
       });
     });
@@ -2024,7 +2024,7 @@ describe('TrelloWebhooksLogicService', () => {
       expect(trelloWebhookRepository.deleteById).toHaveBeenCalled();
 
       expect(result).toEqual({
-        message: expect.stringContaining(webhookStubData.id),
+        message: expect.stringContaining(webhookStubData.boardName),
         statusCode: HttpStatus.OK,
       });
     });

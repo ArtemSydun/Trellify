@@ -130,7 +130,6 @@ export class DisconnectTgScene {
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.log(error);
       await ctx.reply(
         this.i18n.t(I18nKeys.ERRORS_GENERAL_DEFAULT, { lang: userLanguage }) ||
           'Disconnection error',

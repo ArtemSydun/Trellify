@@ -68,7 +68,8 @@
             "webhook": {
                 "webhookHealthIsOk": "Вебхук до дошки {board} активний",
                 "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз",
-                "webhooksWasUpdated": "Вебхуки було оновлено успішно"
+                "webhooksWasUpdated": "Вебхуки було оновлено успішно",
+                "webhookWasDeleted": "Вебхук {webhook} успішно видалено з Trello і всіх підключених користувачів"
             }
         },
         "subscription": {

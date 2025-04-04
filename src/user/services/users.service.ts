@@ -15,7 +15,7 @@ import {
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
@@ -73,6 +73,7 @@ export class UsersService {
     private readonly usedTrialService: UsedTrialService,
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
+    private readonly i18nService: I18nService,
   ) {}
 
   public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
@@ -365,8 +366,8 @@ export class UsersService {
     }
 
     delete userToFind.password;
-    delete userToFind.telegram.chatId;
-    delete userToFind.trello.token;
+    delete userToFind.telegram?.chatId;
+    delete userToFind.trello?.token;
 
     return userToFind;
   }
@@ -888,7 +889,7 @@ export class UsersService {
       };
     }
 
-    if (userToUpdate.trello.userId !== null && token) {
+    if (userToUpdate.trello?.userId && token) {
       throw new ConflictException(
         i18n?.t(I18nKeys.ERRORS_TRELLO_DISCONNECT_FIRST) ||
           `You should disconnect your Trello account first before connecting a new one.`,
@@ -897,7 +898,7 @@ export class UsersService {
 
     await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
 
-    if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
+    if (!userToUpdate.trello?.token || userToUpdate.trello.token !== token) {
       updatedUserProps.trello.token = encryptText(
         token,
         this.configService.get(configServiceKeys.ENCRYPTION_KEY),
@@ -905,7 +906,7 @@ export class UsersService {
     }
 
     const trelloToken =
-      updatedUserProps.trello.token || userToUpdate.trello.token;
+      updatedUserProps.trello?.token || userToUpdate.trello.token;
 
     const trelloProfile =
       await this.trelloMembersLogicService.findMemberProfile(
@@ -928,6 +929,7 @@ export class UsersService {
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
+    updatedUserProps.trello.webhooks = [];
 
     if (userToUpdate.subscription.plan === SubscriptionPlans.TRIAL) {
       const usedTrial = await this.usedTrialService.findUserTrialByEmail(
@@ -1014,14 +1016,29 @@ export class UsersService {
 
       this.notificationBotService.sendMessageToUser(
         user.telegram,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
-          lang: userLanguage,
-          args: {
-            boardName: webhookToRemove.boardName,
-            boardUrl: webhookToRemove.boardUrl,
+        this.i18nService.t(
+          I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED,
+          {
+            lang: userLanguage,
+            args: {
+              boardName: webhookToRemove.boardName,
+              boardUrl: webhookToRemove.boardUrl,
+            },
           },
-        }) ||
+        ) ||
           `Notifications for board [${webhookToRemove.boardName}](${webhookToRemove.boardUrl}) has been disconnected. Please, reconnect notifications`,
+        false,
+        [
+          [
+            {
+              text:
+                this.i18nService.t(I18nKeys.FIELDS_SETTINGS, {
+                  lang: userLanguage,
+                }) || 'Settings',
+              url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhookToRemove.idWorkspace}`,
+            },
+          ],
+        ],
       );
     });
 
@@ -1029,7 +1046,7 @@ export class UsersService {
       if (bulkUpdateOperations.length > 0) {
         const result = await this.updateManyUsers(bulkUpdateOperations);
         this.logger.log(result);
-        Promise.all([sendTelegramNotification]);
+        await Promise.all(sendTelegramNotification);
       }
     } catch (err) {
       this.logger.error(`Error during bulk update: ${err.message || err}`);
