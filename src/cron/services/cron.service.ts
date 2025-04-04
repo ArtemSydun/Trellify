@@ -76,16 +76,16 @@ export class CronService {
             TrelloBoardField.DATE_LAST_ACTIVITY,
           );
         } catch (error) {
-          this.logger.error(
-            `Webhook for board ${webhook.idModel} check fails: `,
+          this.logger.warn(
+            `Webhook for board ${webhook.boardName} check fails: `,
             error.response.message,
           );
           unactiveWebhooks.push(webhook);
         }
 
         if (!dateLastActivity) {
-          console.log(
-            `No ${TrelloBoardField.DATE_LAST_ACTIVITY} for board ${webhook.boardName}`,
+          console.warn(
+            `No ${TrelloBoardField.DATE_LAST_ACTIVITY} for board ${webhook.boardName}. Board does not exist, or it is fresh board with no`,
           );
           continue;
         }
@@ -174,13 +174,13 @@ export class CronService {
 
       const removedWebhooks = await Promise.all(removePromises);
       console.log('Successfully removed inactive webhooks:', removedWebhooks);
-      this.logger.log(`Unactive webhooks clear cron finished`);
     } catch (error) {
       console.error(
         'Weekly clearUnactiveWebhooks cron execution failed:',
         error.message || error.response.message,
       );
     }
+    this.logger.log(`Unactive webhooks clear cron finished`);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

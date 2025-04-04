@@ -388,7 +388,6 @@ export class UsersService {
       );
     }
 
-    this.logger.log(`User with Trello ID ${trelloUserId} found`);
     return userByTrelloId;
   }
 
