@@ -39,6 +39,7 @@ import { SubscriptionService } from 'src/subscription/services/subscription.serv
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { UsedTrialService } from 'src/subscription/services/used-trial.service';
 import { usedTrialStub } from '../__mocks__/used-trial.stub';
+import { I18nService } from 'nestjs-i18n';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -48,6 +49,7 @@ jest.mock('src/common/helpers/hashing', () => ({
 
 describe('UsersService', () => {
   let originalDate = Date;
+  let configService: ConfigService;
   let usersService: UsersService;
   let usersRepository: UsersRepository;
   let trelloMembersLogicService: TrelloMembersLogicService;
@@ -119,9 +121,14 @@ describe('UsersService', () => {
           provide: MailerService,
           useValue: createMock<MailerService>(),
         },
+        {
+          provide: I18nService,
+          useValue: createMock<I18nService>(),
+        },
       ],
     }).compile();
 
+    configService = moduleRef.get<ConfigService>(ConfigService);
     usersService = moduleRef.get<UsersService>(UsersService);
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     trelloMembersLogicService = moduleRef.get<TrelloMembersLogicService>(
@@ -1426,6 +1433,7 @@ describe('UsersService', () => {
       jest
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockImplementation(jest.fn());
+      jest.spyOn(configService, 'get').mockReturnValue('https://example.com');
 
       await usersService.removeWebhookFromAllUsers(webhookToDelete);
 

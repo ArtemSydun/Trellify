@@ -1046,7 +1046,7 @@ export class UsersService {
       if (bulkUpdateOperations.length > 0) {
         const result = await this.updateManyUsers(bulkUpdateOperations);
         this.logger.log(result);
-        Promise.all([sendTelegramNotification]);
+        await Promise.all(sendTelegramNotification);
       }
     } catch (err) {
       this.logger.error(`Error during bulk update: ${err.message || err}`);
