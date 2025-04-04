@@ -353,14 +353,21 @@ export class NotificationBotService implements OnModuleInit {
     html?: boolean,
     replyMarkup?: any,
   ) {
-    if (telegramInfo.chatId) {
-      const parseMode = html ? 'HTML' : 'Markdown';
-      await this.bot.telegram.sendMessage(telegramInfo.chatId, message, {
-        parse_mode: parseMode,
-        reply_markup: replyMarkup?.inline_keyboard
-          ? replyMarkup
-          : { inline_keyboard: replyMarkup },
-      });
+    try {
+      if (telegramInfo.chatId) {
+        const parseMode = html ? 'HTML' : 'Markdown';
+        await this.bot.telegram.sendMessage(telegramInfo.chatId, message, {
+          parse_mode: parseMode,
+          reply_markup: replyMarkup?.inline_keyboard
+            ? replyMarkup
+            : { inline_keyboard: replyMarkup },
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Telegram message was not sent to ${telegramInfo.username}:`,
+        err.response.description,
+      );
     }
   }
 
