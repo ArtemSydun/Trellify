@@ -157,6 +157,9 @@ export enum I18nKeys {
   NOTIFICATION_CUSTOM_FIELD_RENAMED = 'common.messages.notifications.board.customFieldRenamed',
   NOTIFICATION_CUSTOM_FIELD_DELETED = 'common.messages.notifications.board.customFieldDeleted',
 
+  // Used trials
+  MESSAGES_USED_TRIAL_DELETED = 'common.messages.usedTrial.deleted',
+
   // General Errors
   ERRORS_GENERAL_DEFAULT = 'common.errors.general.default',
   ERRORS_GENERAL_INVALID_REQUEST = 'common.errors.general.invalidRequest',
@@ -212,6 +215,8 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_NOT_SUBSCRIBED = 'common.errors.subscription.userNotSubscribed',
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
-  ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.doesNotExist',
+  ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
+
+  ERRORS_USED_TRIAL_NOT_FOUND = 'common.errors.usedTrial.notFound',
 }

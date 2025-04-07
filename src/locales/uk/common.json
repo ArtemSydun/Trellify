@@ -158,6 +158,9 @@
                 "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
                 "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}."
             }
+        },
+        "usedTrial": {
+            "deleted": "Пробний період скинуто для користувача Трелло {trelloUserId}"
         }
     },
     "errors": {
@@ -221,8 +224,11 @@
             "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
             "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
             "alreadyExist": "План підписки {subscription} вже існує",
-            "doesNotExist": "Плану підписки {subscription} не існує",
+            "notFound": "Плану підписки {subscription} не існує",
             "trialExpired": "Термін пробної підписки для цього користувача закінчився"
+        },
+        "usedTrial": {
+            "notFound": "Пробна підписка не знайдена для користувача Трелло {trelloUserId}"
         }
     }
 }

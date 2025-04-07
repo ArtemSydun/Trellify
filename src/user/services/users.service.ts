@@ -356,14 +356,6 @@ export class UsersService {
     i18n?: I18nContext,
   ): Promise<Partial<User>> {
     const userToFind = await this.getUser(user, i18n);
-    if (!user) {
-      this.logger.warn(`User with ID ${userToFind.id} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_ID, {
-          args: { id: userToFind.id },
-        }) || `User with id ${userToFind.id} not found`,
-      );
-    }
 
     delete userToFind.password;
     delete userToFind.telegram?.chatId;

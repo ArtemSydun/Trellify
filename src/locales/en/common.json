@@ -158,6 +158,9 @@
                 "customFieldRenamed": "The custom field has been renamed from '{oldCustomFieldName}' to '{customFieldName}' on the board [{boardName}]({boardUrl}).",
                 "customFieldDeleted": "The custom field {customFieldName} has been deleted on the board [{boardName}]({boardUrl})."
             }
+        },
+        "usedTrial": {
+            "deleted": "User trial record for trello user {trelloUserId} deleted successfully"
         }
     },
     "errors": {
@@ -221,8 +224,11 @@
             "userNotSubscribed": "User {userId} is not subscribed on {subscription} plan",
             "userAlreadySubscribed": "User {userId} is already subscribed on {subscription} plan",
             "alreadyExist": "Subscription plan {subscription} already exist",
-            "doesNotExist": "Subscription plan {subscription} does not exist",
+            "notFound": "Subscription plan {subscription} does not exist",
             "trialExpired": "This user's trial version has already expired"
+        },
+        "usedTrial": {
+            "notFound": "User trial for trello user {trelloUserId} deleted successfully"
         }
     }
 }

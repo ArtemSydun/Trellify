@@ -85,7 +85,7 @@ export class CronService {
 
         if (!dateLastActivity) {
           console.warn(
-            `No ${TrelloBoardField.DATE_LAST_ACTIVITY} for board ${webhook.boardName}. Board does not exist, or it is fresh board with no`,
+            `No ${TrelloBoardField.DATE_LAST_ACTIVITY} for board ${webhook.boardName}. Board does not exist, or it is fresh board with no actions on it`,
           );
           continue;
         }
@@ -139,20 +139,30 @@ export class CronService {
           }
         } catch (err) {
           this.logger.warn(
-            `Webhook ${webhook.boardName} only one subscriber was not found`,
+            `Webhook ${webhook.boardName} single subscriber was not found`,
             err.message || err.response || err.response.message,
           );
           unactiveWebhooks.push(webhook);
           continue;
         }
 
-        //if webhook has no subscriber and updates
-        if (
-          webhook.subscribers.length === 0 &&
-          daysSinceLastWebhookUpdate >= 30
-        ) {
-          unactiveWebhooks.push(webhook);
-          continue;
+        //if webhook has no subscribers, author is deleted or no updates last 30 days
+        if (webhook.subscribers.length === 0) {
+          try {
+            await this.usersService.findUserByTrelloId(
+              webhook.author.trelloUserId,
+            );
+            if (daysSinceLastWebhookUpdate >= 30) {
+              unactiveWebhooks.push(webhook);
+              continue;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            this.logger.warn(
+              `Webhook for board ${webhook.boardName} are going to be deleted`,
+            );
+            unactiveWebhooks.push(webhook);
+          }
         }
       }
 
@@ -173,7 +183,10 @@ export class CronService {
       });
 
       const removedWebhooks = await Promise.all(removePromises);
-      console.log('Successfully removed inactive webhooks:', removedWebhooks);
+      console.log(
+        `Successfully removed ${removedWebhooks.length} inactive webhooks:`,
+        removedWebhooks,
+      );
     } catch (error) {
       console.error(
         'Weekly clearUnactiveWebhooks cron execution failed:',
@@ -302,14 +315,16 @@ export class CronService {
             ),
           );
 
-          console.log(
+          this.logger.log(
             `Processed ${usersToUpdate.length} users for plan ${planName}.`,
           );
         }
       }),
     );
 
-    console.log('Total expired subscriptions processed: ', expiredUsers.total);
+    this.logger.log(
+      `Total expired subscriptions processed: ${expiredUsers.total}`,
+    );
   }
 
   //if server is down at this moment, it will send daily stats when the server will up
