@@ -187,6 +187,10 @@ export class CronService {
         `Successfully removed ${removedWebhooks.length} inactive webhooks:`,
         removedWebhooks,
       );
+      await this.adminBotService.notifyAdmins(
+        `Successfully removed ${removedWebhooks.length} inactive webhooks from Trellify` +
+          `\n<b>Date:</b> ${new Date().toLocaleString()}`,
+      );
     } catch (error) {
       console.error(
         'Weekly clearUnactiveWebhooks cron execution failed:',
