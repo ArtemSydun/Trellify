@@ -1,4 +1,6 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { CreateUsedTrialDto } from '../dto/create-used-trial.dto';
 
@@ -58,12 +60,17 @@ export class UsedTrialService {
 
   async updateUsedTrialById(
     id: string,
-    updateUsedTrialDto: any,
+    updateUsedTrialDto: Partial<UsedTrial>,
+    i18n?: I18nContext,
   ): Promise<UsedTrial> {
     const usedTrialToDelete = await this.usedTrialRepository.findOneById(id);
 
     if (!usedTrialToDelete) {
-      throw new NotFoundException(`Used trial ${id} does not exist`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USED_TRIAL_NOT_FOUND, {
+          args: { trelloUserId: usedTrialToDelete.trelloUserId },
+        }) || `Used trial ${id} does not exist`,
+      );
     }
 
     const updatedUsedTrial = await this.usedTrialRepository.updateById(
@@ -74,13 +81,22 @@ export class UsedTrialService {
     return updatedUsedTrial;
   }
 
-  async deleteUserTrialById(id: string): Promise<DefaultResponse<null>> {
+  async deleteUserTrialById(
+    id: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<null>> {
     const usedTrialToDelete = await this.usedTrialRepository.findOneById(id);
 
     await this.usedTrialRepository.deleteById(usedTrialToDelete.id);
 
     return {
-      message: `User trial deleted successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USED_TRIAL_DELETED, {
+          args: {
+            trelloUserId: usedTrialToDelete.trelloUserId,
+          },
+        }) ||
+        `User trial for trello user ${usedTrialToDelete.trelloUserId} deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }
