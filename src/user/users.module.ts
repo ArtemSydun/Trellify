@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'src/auth/auth.module';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { MailerModule } from 'src/mailer/mailer.module';
 import { RedisModule } from 'src/redis/redis.module';

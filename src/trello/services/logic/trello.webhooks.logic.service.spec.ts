@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import {
   TrelloActionsLogicService,
   TrelloMembersLogicService,

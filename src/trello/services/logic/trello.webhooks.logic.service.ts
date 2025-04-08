@@ -63,7 +63,7 @@ import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { CreateWebhookDto } from '../../dto/create-webhook.dto';
 import { Webhook } from '../../entities/webhook.entity';
 import { WebhookSearchPath } from '../../enums/query.enum';

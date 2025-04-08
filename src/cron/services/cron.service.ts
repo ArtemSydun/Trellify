@@ -16,7 +16,7 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { decryptText } from 'src/common/helpers/hashing';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { redisKeys } from 'src/redis/enums/redis-keys.enum';

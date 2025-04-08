@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { configServiceKeys } from '../common/enums/config-service-keys.enum';
+import { configServiceKeys } from '../../common/enums/config-service-keys.enum';
 
 @Injectable()
 export class SharedConfigService {

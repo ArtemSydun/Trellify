@@ -11,7 +11,7 @@ import { RedisModule } from 'src/redis/redis.module';
 import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
 import { UsersModule } from 'src/user/users.module';
-import { SharedConfigService } from '../config/shared.config.service';
+import { SharedConfigService } from '../config/services/shared.config.service';
 import { Webhook, WebhookSchema } from './entities/webhook.entity';
 import { TrelloWebhookRepository } from './repositories/webhook.repository';
 

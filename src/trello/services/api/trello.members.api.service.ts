@@ -5,7 +5,7 @@ import { trelloApiLink } from 'src/common/constants/trello';
 import { parseTrelloError } from 'src/common/helpers/trello-errors';
 import { TrelloMember } from 'src/trello/dto/member.dto';
 import { Organization } from 'src/trello/dto/organization.dto';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
  *  https://trello.com/power-ups/admin
