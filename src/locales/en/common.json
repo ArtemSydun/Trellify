@@ -65,6 +65,8 @@
             "disconnectConfirmation": "Are you sure you want to disconnect discord account? You will not receive any notifications from Trellify anymore"
         },
         "trello": {
+            "connectedSuccessfully": "Trello {username} connected successfully",
+            "disconnectedSuccessfully": "Trello {username} disconnected successfully",
             "webhook": {
                 "webhookHealthIsOk": "Webhook to the {boardName} is active now",
                 "webhookWasRecreated": "Webhook has been recreated",

@@ -50,7 +50,6 @@ export class DistributionController {
   }
 
   @Post('subscribe')
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Subscribe to newsletter',
     description: 'Subscribe to newsletter by email.',
@@ -125,7 +124,6 @@ export class DistributionController {
   }
 
   @Patch('subscribers/:email')
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update distribution subscription by email',
     description: 'Update distribution subscription.',
@@ -144,7 +142,6 @@ export class DistributionController {
   }
 
   @Get('unsubscribe/:id')
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Unsubscribe from Trellify distribution',
     description: 'Unsubscribe from Trellify distribution.',

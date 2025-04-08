@@ -65,6 +65,8 @@
             "disconnectConfirmation": "Ви впевнені що бажаєте відключити діскорд аккаунт? Ви більше не будете отримувати сповіщення від Trellify"
         },
         "trello": {
+            "connectedSuccessfully": "Трело {username} підключено успішно",
+            "disconnectedSuccessfully": "Трело {username} відключено успішно",
             "webhook": {
                 "webhookHealthIsOk": "Вебхук до дошки {board} активний",
                 "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз",
@@ -160,7 +162,7 @@
             }
         },
         "usedTrial": {
-            "deleted": "Пробний період скинуто для користувача Трелло {trelloUserId}"
+            "deleted": "Пробний період скинуто для користувача Трело {trelloUserId}"
         }
     },
     "errors": {
@@ -228,7 +230,7 @@
             "trialExpired": "Термін пробної підписки для цього користувача закінчився"
         },
         "usedTrial": {
-            "notFound": "Пробна підписка не знайдена для користувача Трелло {trelloUserId}"
+            "notFound": "Пробна підписка не знайдена для користувача Трело {trelloUserId}"
         }
     }
 }

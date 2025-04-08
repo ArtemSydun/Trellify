@@ -848,7 +848,7 @@ export class UsersService {
 
     const updateDate = new Date();
     const updatedUserProps: Partial<User> = {
-      trello: { ...userToUpdate.trello },
+      trello: { ...userToUpdate.trello, updatedAt: updateDate },
       lastActivityDate: updateDate,
     };
 
@@ -874,7 +874,13 @@ export class UsersService {
         `Trello profile disconnected for user ${userToUpdate.trello.username}`,
       );
       return {
-        message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_DISCONNECTED_SUCCESSFULLY, {
+            args: {
+              username: userToUpdate.trello.username,
+            },
+          }) ||
+          `Trello ${userToUpdate.trello.username} disconnected successfully`,
         statusCode: HttpStatus.OK,
         data: updatedUser,
       };
@@ -969,7 +975,12 @@ export class UsersService {
 
     this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
     return {
-      message: `Trello ${updatedUser.trello.username} connected successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_TRELLO_CONNECTED_SUCCESSFULLY, {
+          args: {
+            username: updatedUser.trello.username,
+          },
+        }) || `Trello ${updatedUser.trello.username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };

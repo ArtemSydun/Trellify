@@ -19,7 +19,10 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
-import { ApiCustomNotFoundResponse } from 'src/common/decorators/swagger.decorators';
+import {
+  ApiCustomForbiddenResponse,
+  ApiCustomNotFoundResponse,
+} from 'src/common/decorators/swagger.decorators';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { CreateSubscriptionDto } from '../dto/create-subscription.dto';
@@ -27,7 +30,6 @@ import { UpdateSubscriptionDto } from '../dto/update-subscription.dto';
 import { Subscription } from '../entities/subscription.entity';
 import { SubscriptionService } from '../services/subscription.service';
 
-@ApiBearerAuth()
 @Controller('subscription')
 export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
@@ -35,6 +37,7 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Post()
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create new subscription plan, (Superadmin only)',
     description: 'Create new subscription plan.',
@@ -43,6 +46,7 @@ export class SubscriptionController {
     description: 'Create new subscription plan',
     type: Subscription,
   })
+  @ApiCustomForbiddenResponse()
   createSubscription(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
     @Req() req,
@@ -53,7 +57,6 @@ export class SubscriptionController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOperation({
     summary: 'Get all subscription plans',
@@ -63,11 +66,10 @@ export class SubscriptionController {
     description: 'All subscription plans',
     type: [Subscription],
   })
-  findAllSubscriptions(): Promise<Subscription[]> {
+  findAllSubscriptions(): Promise<Partial<Subscription>[]> {
     return this.subscriptionService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiOperation({
     summary: 'Get subscription plan by id',
@@ -88,6 +90,7 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Patch(':id')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update subscription plan by id (Superadmin only)',
     description: 'Update subscription plan by id',
@@ -127,6 +130,7 @@ export class SubscriptionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.superadmin)
   @Delete(':id')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete subscription plan by id (Superadmin only)',
     description: 'Delete subscription plan by id',
