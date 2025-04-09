@@ -14,7 +14,6 @@ import { SeederService } from './seeders/user.seeder';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

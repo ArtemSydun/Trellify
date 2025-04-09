@@ -59,18 +59,25 @@ export enum I18nKeys {
   MESSAGES_DISCORD_DISCONNECTED_SUCCESSFULLY = 'common.messages.discord.disconnectedSuccessfully',
   MESSAGES_DISCORD_DISCONNECT_CONFIRMATION = 'common.messages.discord.disconnectConfirmation',
 
-  // Webhook Messages
+  // Trello Messages
+  MESSAGES_TRELLO_CONNECTED_SUCCESSFULLY = 'common.messages.trello.connectedSuccessfully',
+  MESSAGES_TRELLO_DISCONNECTED_SUCCESSFULLY = 'common.messages.trello.disconnectedSuccessfully',
+
   MESSAGES_TRELLO_WEBHOOK_HEALTH_IS_OK = 'common.messages.trello.webhook.webhookHealthIsOk',
   MESSAGES_TRELLO_WEBHOOK_WAS_RECREATED = 'common.messages.trello.webhook.webhookWasRecreated',
   MESSAGES_TRELLO_WEBHOOKS_WAS_UPDATED = 'common.messages.trello.webhook.webhooksWasUpdated',
   MESSAGES_TRELLO_WEBHOOKS_WAS_DELETED = 'common.messages.trello.webhook.webhookWasDeleted',
-
   //Subscriptions messages
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
   MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY = 'common.messages.subscription.createdSuccessfully',
   MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY = 'common.messages.subscription.updatedSuccessfully',
   MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
   MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY = 'common.messages.subscription.userChangedSuccessfully',
+
+  //Distribution messages
+  MESSAGES_DISTRIBUTION_SUBSCRIBED = 'common.messages.distribution.subscribed',
+  MESSAGES_DISTRIBUTION_UNSUBSCRIBED = 'common.messages.distribution.unsubscribed',
+  MESSAGES_DISTRIBUTION_PREFERENCES_UPDATED = 'common.messages.distribution.preferencesUpdated',
 
   // Trello Notification Messages
   NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.notifications.personal.cardMemberAddedSelf',
@@ -217,6 +224,10 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
+
+  //Distribution errors
+  ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED = 'common.errors.distribution.emailIsNotSubscribed',
+  ERRORS_DISTRIBUTION_TRELLIFY_USER_IS_NOT_SUBSCRIBED = 'common.errors.distribution.trellifyUserIsNotSubscribed',
 
   ERRORS_USED_TRIAL_NOT_FOUND = 'common.errors.usedTrial.notFound',
 }

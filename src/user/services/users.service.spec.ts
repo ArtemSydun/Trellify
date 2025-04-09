@@ -1211,6 +1211,7 @@ describe('UsersService', () => {
           username: trelloProfileMock.username,
           webhooks: [],
           token: `encrypted${connectTrelloDto.token}`,
+          updatedAt: fixedDate,
         },
         lastActivityDate: fixedDate,
       });

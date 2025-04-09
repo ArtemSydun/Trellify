@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserWebhookDto } from './user.webhook.dto';
 
@@ -39,4 +40,7 @@ export class TrelloSettings {
     required: false,
   })
   webhooks?: UserWebhookDto[];
+
+  @Optional()
+  updatedAt?: Date;
 }

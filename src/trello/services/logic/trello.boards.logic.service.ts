@@ -6,7 +6,7 @@ import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { BoardMember } from 'src/trello/dto/member.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { TrelloBoard } from '../../dto/board.dto';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 

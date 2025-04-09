@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { SubscriptionModule } from 'src/subscription/subscription.module';

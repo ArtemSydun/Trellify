@@ -42,6 +42,7 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | API_REQUEST_LIMIT               | Allowed number of requests per certain period of time.                        |
 | API_REFRESH_LIMIT_TIME          | Requests limit refresh time (in seconds).                                     |
 | **Database settings:**          |                                                                               |
+| MONGODB_DATABASE                | MongoDB database name                                                         |
 | MONGODB_PORT                    | The port on which MongoDB is accessible for connections.                      |
 | MONGODB_HOSTNAME                | The hostname or IP address of the server where MongoDB is running.            |
 | MONGODB_USERNAME                | Username for authenticating with MongoDB.                                     |

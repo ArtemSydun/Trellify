@@ -6,7 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AuthModule } from './auth/auth.module';
-import { CustomThrottlerGuard } from './auth/guards/custom-throttler';
+import { CustomThrottlerGuard } from './common/guards/custom-throttler';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from './discord/discord.module';
