@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Res,
+  Req,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -59,9 +60,11 @@ export class DistributionController {
   })
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
+    @Req() req,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
     return this.distributionService.createDistributionSubscriber(
       createDistributionDto,
+      req.i18nContext,
     );
   }
 
@@ -98,8 +101,11 @@ export class DistributionController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiNotFoundResponse()
-  findOneByEmail(@Param('email') email: string) {
-    return this.distributionService.findDistributionSubscriberByEmail(email);
+  findOneByEmail(@Param('email') email: string, @Req() req) {
+    return this.distributionService.findDistributionSubscriberByEmail(
+      email,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -117,9 +123,10 @@ export class DistributionController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiNotFoundResponse()
-  findOneByTrellifyUserId(@Param('userId') userId: string) {
+  findOneByTrellifyUserId(@Param('userId') userId: string, @Req() req) {
     return this.distributionService.findDistributionSubscriberByTrellifyUserId(
       userId,
+      req.i18nContext,
     );
   }
 
@@ -137,11 +144,16 @@ export class DistributionController {
   update(
     @Param('email') email: string,
     @Body() updateDistributionDto: UpdateDistributionDto,
+    @Req() req,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
-    return this.distributionService.updateByEmail(email, updateDistributionDto);
+    return this.distributionService.updateByEmail(
+      email,
+      updateDistributionDto,
+      req.i18nContext,
+    );
   }
 
-  @Get('unsubscribe/:id')
+  @Get('unsubscribe/:email')
   @ApiOperation({
     summary: 'Unsubscribe from Trellify distribution',
     description: 'Unsubscribe from Trellify distribution.',
@@ -152,8 +164,14 @@ export class DistributionController {
     type: DistributionSubscriber,
   })
   @ApiNotFoundResponse()
-  remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
-    return this.distributionService.removeDistributionSubscriber(id);
+  remove(
+    @Param('email') email: string,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return this.distributionService.removeDistributionSubscriber(
+      email,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

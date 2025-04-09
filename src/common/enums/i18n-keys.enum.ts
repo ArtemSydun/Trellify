@@ -74,6 +74,11 @@ export enum I18nKeys {
   MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
   MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY = 'common.messages.subscription.userChangedSuccessfully',
 
+  //Distribution messages
+  MESSAGES_DISTRIBUTION_SUBSCRIBED = 'common.messages.distribution.subscribed',
+  MESSAGES_DISTRIBUTION_UNSUBSCRIBED = 'common.messages.distribution.unsubscribed',
+  MESSAGES_DISTRIBUTION_PREFERENCES_UPDATED = 'common.messages.distribution.preferencesUpdated',
+
   // Trello Notification Messages
   NOTIFICATION_PERSONAL_CARD_MEMBER_ADDED = 'common.messages.notifications.personal.cardMemberAddedSelf',
   NOTIFICATION_PERSONAL_CARD_MEMBER_REMOVED = 'common.messages.notifications.personal.cardMemberRemovedSelf',
@@ -219,6 +224,10 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
+
+  //Distribution errors
+  ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED = 'common.errors.distribution.emailIsNotSubscribed',
+  ERRORS_DISTRIBUTION_TRELLIFY_USER_IS_NOT_SUBSCRIBED = 'common.errors.distribution.trellifyUserIsNotSubscribed',
 
   ERRORS_USED_TRIAL_NOT_FOUND = 'common.errors.usedTrial.notFound',
 }
