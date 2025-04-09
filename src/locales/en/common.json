@@ -81,6 +81,11 @@
             "deletedSuccessfully": "Subscription plan {subscription} deleted successfully",
             "userChangedSuccessfully": "User {email} successfully changed plan to {subscription} plan"
         },
+        "distribution": {
+            "subscribed": "You will receive Trellify updates and news on your email {email}",
+            "unsubscribed": "Email {email} removed from Trellify mail subscription successfully",
+            "preferencesUpdated": "Email {email} subscription preferences updated successfully"
+        },
         "notifications": {
             "personal": {
                 "cardMemberAddedSelf": "{userInitials}, you've been added to the card [{cardName}]({cardUrl}).",
@@ -228,6 +233,10 @@
             "alreadyExist": "Subscription plan {subscription} already exist",
             "notFound": "Subscription plan {subscription} does not exist",
             "trialExpired": "This user's trial version has already expired"
+        },
+        "distribution": {
+            "emailIsNotSubscribed": "Email {email} is not subscribed to Trellify news letter",
+            "trellifyUserIsNotSubscribed": "Trellify user {userId} is not subscribed to Trellify news letter"
         },
         "usedTrial": {
             "notFound": "User trial for trello user {trelloUserId} deleted successfully"

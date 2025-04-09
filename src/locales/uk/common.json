@@ -81,6 +81,11 @@
             "deletedSuccessfully": "План підписки {subscription} видалено успішно",
             "userChangedSuccessfully": "Користувач {email} успішно змінив свою підписку на {subscription}"
         },
+        "distribution": {
+            "subscribed": "Ви будете отримувати новини з Trellify на пошту {email}",
+            "unsubscribed": "Пошта {email} видалена з підписки на новини Trellify",
+            "preferencesUpdated": "Налаштування підписки оновлено успішно для {email}"
+        },
         "notifications": {
             "personal": {
                 "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
@@ -228,6 +233,10 @@
             "alreadyExist": "План підписки {subscription} вже існує",
             "notFound": "Плану підписки {subscription} не існує",
             "trialExpired": "Термін пробної підписки для цього користувача закінчився"
+        },
+        "distribution": {
+            "emailIsNotSubscribed": "Пошта {email} не підписана на розсилку новин Trellify",
+            "trellifyUserIsNotSubscribed": "Користувач Trellify {userId} не підписаний на розсилку новин"
         },
         "usedTrial": {
             "notFound": "Пробна підписка не знайдена для користувача Трело {trelloUserId}"
