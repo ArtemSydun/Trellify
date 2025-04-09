@@ -66,7 +66,7 @@ export class SubscriptionController {
     description: 'All subscription plans',
     type: [Subscription],
   })
-  findAllSubscriptions(): Promise<Partial<Subscription>[]> {
+  findAllSubscriptions(): Promise<Subscription[]> {
     return this.subscriptionService.findAll();
   }
 
