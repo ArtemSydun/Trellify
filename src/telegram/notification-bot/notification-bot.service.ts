@@ -51,7 +51,6 @@ export class NotificationBotService implements OnModuleInit {
   // ✅ Initialize bot commands when module loads
   async onModuleInit() {
     this.setupCommands();
-    setLocalizedCommands(this.bot);
   }
 
   private setupCommands() {
@@ -326,6 +325,61 @@ export class NotificationBotService implements OnModuleInit {
 
       // Enter the disconnect wizard scene
       await ctx.scene.enter('disconnectTg');
+    });
+
+    this.bot.command(TelegramCommandsEnum.SUPPORT, async (ctx: any) => {
+      const chatId: number = ctx?.update?.message?.from?.id;
+      const telegramNickname: string = ctx?.update?.message?.chat?.username;
+      let userLanguage = ctx?.update?.message?.from?.language_code;
+      const supportLink =
+        this.configService.get(configServiceKeys.TELEGRAM_SUPPORT_LINK) || '';
+
+      if (!chatId) {
+        await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+        return;
+      }
+
+      const isLimited = await this.telegramRateLimiter.isLimited(
+        chatId.toString(),
+        NotificationBotService.name,
+      );
+
+      if (isLimited) {
+        const wait = Math.ceil(
+          (await this.telegramRateLimiter.getRemainingTTL(
+            chatId.toString(),
+            NotificationBotService.name,
+          )) / 1000,
+        );
+
+        return ctx.reply(
+          this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+            args: { seconds: wait },
+            lang: userLanguage,
+          }) || `Too many requests. Please wait ${wait}s.`,
+        );
+      }
+
+      // Store values to wizard state
+      ctx.scene.state.chatID = chatId;
+      ctx.scene.state.telegramNickname = telegramNickname;
+
+      const user: null | User = await this.userRepository.findUserByProperty(
+        UserSearchPath.TelegramChatId,
+        chatId,
+      );
+
+      if (user) {
+        userLanguage = user?.language;
+      }
+
+      await ctx.reply(
+        this.i18n.t(I18nKeys.MESSAGES_TELEGRAM_CONTACT_SUPPORT, {
+          args: { supportLink },
+          lang: userLanguage,
+        }) ||
+          `Didn't find answer to your question? Reach our support ${supportLink}`,
+      );
     });
 
     this.bot.hears('💻 Trellify Website', async (ctx: any) => {

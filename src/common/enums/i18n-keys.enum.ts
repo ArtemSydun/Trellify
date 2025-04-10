@@ -53,6 +53,7 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_CONNECTED_SUCCESSFULLY = 'common.messages.telegram.connectedSuccessfully',
   MESSAGES_TELEGRAM_DISCONNECTED_SUCCESSFULLY = 'common.messages.telegram.disconnectedSuccessfully',
   MESSAGES_TELEGRAM_DISCONNECT_CONFIRMATION = 'common.messages.telegram.disconnectConfirmation',
+  MESSAGES_TELEGRAM_CONTACT_SUPPORT = 'common.messages.telegram.contactSupport',
 
   //Discord
   MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY = 'common.messages.discord.connectedSuccessfully',
