@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
+import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler';
 import { CronModule } from './cron/cron.module';
@@ -50,7 +51,7 @@ import { UsersModule } from './user/users.module';
     DiscordModule,
     SubscriptionModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
