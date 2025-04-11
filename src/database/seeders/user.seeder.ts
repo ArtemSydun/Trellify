@@ -55,7 +55,8 @@ export class SeederService implements OnModuleInit {
           subscription: {
             id: '',
             plan: SubscriptionPlans.LIFETIME,
-            amount: 0,
+            lastAmount: 0,
+            totalAmount: 0,
             lastPaymentDate: null,
             nextPaymentDate: null,
           },

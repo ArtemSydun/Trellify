@@ -187,6 +187,13 @@ describe('UsersService', () => {
 
   describe('createUser', () => {
     it('should create a new user with fresh subscription successfully', async () => {
+      const newUser = {
+        ...superAdminStub(),
+        telegram: { ...superAdminStub().telegram, updatedAt: null },
+        trello: { ...superAdminStub().trello, updatedAt: null },
+        discord: { ...superAdminStub().discord, updatedAt: null },
+      };
+
       const trialSubscriptionPlan = {
         id: 'id1',
         name: SubscriptionPlans.TRIAL,
@@ -207,7 +214,8 @@ describe('UsersService', () => {
         subscription: {
           id: 'id1',
           plan: SubscriptionPlans.TRIAL,
-          amount: 0,
+          lastAmount: 0,
+          totalAmount: 0,
           expired: false,
           lastPaymentDate: null,
           nextPaymentDate: (() => {
@@ -216,21 +224,21 @@ describe('UsersService', () => {
             return date;
           })(),
         },
-        trello: { userId: null, token: null, webhooks: [] },
+        trello: { userId: null, token: null, webhooks: [], updatedAt: null },
         telegram: {
           username: null,
           chatId: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
         discord: {
           userId: null,
           username: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
       };
 
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
-      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest.spyOn(usersRepository, 'create').mockResolvedValue(newUser);
       jest
         .spyOn(subscriptionService, 'findSubscriptionByName')
         .mockResolvedValue(trialSubscriptionPlan);
@@ -250,10 +258,17 @@ describe('UsersService', () => {
         ...createUserDto,
         password: 'hashedPassword',
       });
-      expect(result).toEqual(superAdminStub());
+      expect(result).toEqual(newUser);
     });
 
     it('should create a new user with trial expiration date if he already used trial and it is not expired', async () => {
+      const newUser = {
+        ...superAdminStub(),
+        telegram: { ...superAdminStub().telegram, updatedAt: null },
+        trello: { ...superAdminStub().trello, updatedAt: null },
+        discord: { ...superAdminStub().discord, updatedAt: null },
+      };
+
       const trialSubscriptionPlan = {
         id: 'id1',
         name: SubscriptionPlans.TRIAL,
@@ -276,21 +291,22 @@ describe('UsersService', () => {
         subscription: {
           id: 'id1',
           plan: SubscriptionPlans.TRIAL,
-          amount: 0,
+          lastAmount: 0,
+          totalAmount: 0,
           expired: false,
           lastPaymentDate: null,
           nextPaymentDate: trialExpires,
         },
-        trello: { userId: null, token: null, webhooks: [] },
+        trello: { userId: null, token: null, webhooks: [], updatedAt: null },
         telegram: {
           username: null,
           chatId: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
         discord: {
           userId: null,
           username: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
       };
 
@@ -301,7 +317,7 @@ describe('UsersService', () => {
       };
 
       jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
-      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+      jest.spyOn(usersRepository, 'create').mockResolvedValue(newUser);
       jest
         .spyOn(subscriptionService, 'findSubscriptionByName')
         .mockResolvedValue(trialSubscriptionPlan);
@@ -321,7 +337,7 @@ describe('UsersService', () => {
         ...createUserDto,
         password: 'hashedPassword',
       });
-      expect(result).toEqual(superAdminStub());
+      expect(result).toEqual(newUser);
     });
     it('should create a new user with expired subscription if he already used trial', async () => {
       const trialSubscriptionPlan = {
@@ -344,21 +360,22 @@ describe('UsersService', () => {
         subscription: {
           id: 'id1',
           plan: SubscriptionPlans.TRIAL,
-          amount: 0,
+          lastAmount: 0,
+          totalAmount: 0,
           expired: false,
           lastPaymentDate: null,
           nextPaymentDate: usedTrialStub.trialEnds,
         },
-        trello: { userId: null, token: null, webhooks: [] },
+        trello: { userId: null, token: null, webhooks: [], updatedAt: null },
         telegram: {
           username: null,
           chatId: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
         discord: {
           userId: null,
           username: null,
-          updatedAt: new Date(),
+          updatedAt: null,
         },
       };
 
