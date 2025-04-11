@@ -13,6 +13,7 @@ export const commandTranslations = {
       description: '🔗 Disconnect',
     },
     { command: `/${TelegramCommandsEnum.HELP}`, description: '❓ Help' },
+    { command: `/${TelegramCommandsEnum.SUPPORT}`, description: '👨‍💻 Support' },
   ],
   uk: [
     { command: `/${TelegramCommandsEnum.START}`, description: '🚀 Розпочати' },
@@ -25,6 +26,10 @@ export const commandTranslations = {
       description: '🔗 Відключити',
     },
     { command: `/${TelegramCommandsEnum.HELP}`, description: '❓ Допомога' },
+    {
+      command: `/${TelegramCommandsEnum.SUPPORT}`,
+      description: '👨‍💻 Підтримка',
+    },
   ],
   // Add more languages here...
 };
