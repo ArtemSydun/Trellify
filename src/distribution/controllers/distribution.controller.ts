@@ -15,6 +15,7 @@ import {
   ApiNotFoundResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -33,23 +34,29 @@ import { DistributionService } from '../services/distribution.service';
 export class DistributionController {
   constructor(private readonly distributionService: DistributionService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin)
-  @Post('send')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Send distribution to subscribers',
-    description: 'Send distribution to subscibers.',
-  })
-  @ApiOkResponse({
-    description: 'Distribution send to all newsletter subscribers',
-  })
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomForbiddenResponse()
-  sendDistribution(@Body() distribution: { subject: string }) {
-    return this.distributionService.sendDistribution(distribution.subject);
-  }
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(UserRoles.superadmin, UserRoles.admin)
+  // @Post('send')
+  // @ApiBearerAuth()
+  // @ApiOperation({
+  //   summary: 'Send distribution to subscribers',
+  //   description: 'Send distribution to subscibers.',
+  // })
+  // @ApiOkResponse({
+  //   description: 'Distribution send to all newsletter subscribers',
+  // })
+  // @ApiCustomUnathorizedResponse()
+  // @ApiCustomForbiddenResponse()
+  // sendDistribution(@Body() distribution: { subject: string }) {
+  //   return this.distributionService.sendDistribution(distribution.subject);
+  // }
 
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
   @Post('subscribe')
   @ApiOperation({
     summary: 'Subscribe to newsletter',
