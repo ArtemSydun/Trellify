@@ -46,7 +46,6 @@ export class CronService {
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
-    this.clearUnactiveWebhooks();
   }
 
   async onModuleInit() {
