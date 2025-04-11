@@ -190,6 +190,8 @@ export function createFilteredWebhookCopy(webhook: Webhook): Webhook {
 
   const webhookCopy = {
     ...webhook,
+    totalSubscribers:
+      filteredWebhookProperties.updatedWebhookSubscribers.length,
     subscribers: filteredWebhookProperties.updatedWebhookSubscribers,
     notifications: filteredWebhookProperties.updatedWebhookNotifications,
   };

@@ -7,6 +7,7 @@ export enum WebhookOrderBy {
   CreatedAt = 'createdAt',
   UpdatedAt = 'updatedAt',
   BoardName = 'boardName',
+  TotalSubscribers = 'totalSubscribers',
 }
 
 export class WebhookQueryDto extends CommonQueryParams {

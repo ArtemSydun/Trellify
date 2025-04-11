@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DefaultPaginatedResponse } from 'src/common/interfaces/responses';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UserQueryDto } from '../dto/user.query.dto';
+import { UserOrderBy, UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
@@ -97,7 +97,7 @@ export class UsersRepository {
   ): Promise<DefaultPaginatedResponse<User>> {
     const {
       order = 'desc',
-      orderBy = 'createdAt',
+      orderBy = UserOrderBy.CreatedAt,
       limit = 10,
       page = 1,
       email,
