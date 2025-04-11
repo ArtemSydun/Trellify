@@ -126,7 +126,8 @@ export class UsersService {
       subscription: {
         id: trialSubscriptionPlan.id,
         plan: trialSubscriptionPlan.name,
-        amount: trialSubscriptionPlan.price,
+        lastAmount: 0,
+        totalAmount: 0,
         expired: trialExpired,
         lastPaymentDate: null,
         nextPaymentDate:
