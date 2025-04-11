@@ -434,6 +434,7 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        totalSubscribers: existingWebhookCopy.subscribers.length,
         subscribers: existingWebhookCopy.subscribers, // Keep old subscribers
         notifications: existingWebhookCopy.notifications, // Keep old notifications
       };
@@ -696,6 +697,7 @@ export class TrelloWebhooksLogicService {
       await Promise.all([
         this.userService.updateUser(userToUpdate, updatedUserProps, i18n),
         this.trelloWebhookRepository.updateById(webhook.id, {
+          totalSubscribers: webhook.subscribers.length,
           subscribers: webhook.subscribers,
           notifications: updatedNotifications,
         }),
@@ -755,6 +757,7 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        totalSubscribers: 1,
         subscribers: [
           {
             userId: userToUpdate.id,
@@ -1460,6 +1463,7 @@ export class TrelloWebhooksLogicService {
     const updatedWebhook = await this.trelloWebhookRepository.updateById(
       webhookToUpdate.id,
       {
+        totalSubscribers: filteredSubcribers.length,
         subscribers: filteredSubcribers,
         notifications: filteredNotifications,
       },

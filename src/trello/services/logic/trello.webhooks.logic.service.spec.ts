@@ -1038,6 +1038,7 @@ describe('TrelloWebhooksLogicService', () => {
           trelloToken: userStubData.trello.token,
           trelloUserId: userStubData.trello.userId,
         },
+        totalSubscribers: 1,
         subscribers: [
           {
             userId: userStubData.id,

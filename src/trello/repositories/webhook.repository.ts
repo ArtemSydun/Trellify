@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
-import { WebhookQueryDto } from '../dto/webhook.query.dto';
+import { WebhookOrderBy, WebhookQueryDto } from '../dto/webhook.query.dto';
 import { Webhook } from '../entities/webhook.entity';
+import { WebhookSearchPath } from '../enums/query.enum';
 
 @Injectable()
 export class TrelloWebhookRepository {
@@ -93,7 +94,7 @@ export class TrelloWebhookRepository {
   public async getAll(filters: WebhookQueryDto) {
     const {
       order = 'desc',
-      orderBy = 'createdAt',
+      orderBy = WebhookOrderBy.CreatedAt,
       limit = 10,
       page = 1,
       idModel,
@@ -113,7 +114,8 @@ export class TrelloWebhookRepository {
 
     if (idModel) query.idModel = idModel;
     if (boardName) query.boardName = { $regex: boardName, $options: 'i' };
-    if (authorId) query['author.trelloUserId'] = authorId;
+    if (authorId) query[WebhookSearchPath.AuthorTrelloUserId] = authorId;
+
     if (subscriberId)
       query['subscribers.trelloUserId'] = { $in: [subscriberId] };
 
