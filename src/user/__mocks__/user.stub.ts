@@ -35,6 +35,7 @@ export const superAdminStub = () => {
       ],
       token:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+      updatedAt: fixedDate,
     },
     telegram: {
       chatId: 123,

@@ -65,6 +65,7 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | **Trello settings:**            |                                                                               |
 | TRELLO_API_KEY                  | API key for interacting with Trello.                                          |
 | **Telegram settings:**          |                                                                               |
+| TELEGRAM_SUPPORT_LINK           | Telegram link to live support                                                 |
 | TELEGRAM_NOTIFICATION_BOT_TOKEN | Telegram bot token for user notifications                                     |
 | TELEGRAM_ADMIN_BOT_TOKEN        | Telegram bot token for admin notifications                                    |
 | **Discord settings:**           |                                                                               |
