@@ -46,6 +46,7 @@ export class CronService {
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+    this.clearUnactiveWebhooks();
   }
 
   async onModuleInit() {
@@ -119,12 +120,12 @@ export class CronService {
 
             const daysSinceTelegramConnected = differenceInDays(
               currentDate,
-              connectedUser.telegram.updatedAt,
+              connectedUser.telegram?.updatedAt || connectedUser.createdAt,
             );
 
             const daysSinceDiscordConnected = differenceInDays(
               currentDate,
-              connectedUser.discord.updatedAt,
+              connectedUser.discord?.updatedAt || connectedUser.createdAt,
             );
 
             if (

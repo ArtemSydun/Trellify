@@ -137,16 +137,16 @@ export class UsersService {
             return date;
           })(),
       },
-      trello: { userId: null, token: null, webhooks: [] },
+      trello: { userId: null, token: null, webhooks: [], updatedAt: null },
       telegram: {
         username: null,
         chatId: null,
-        updatedAt: new Date(),
+        updatedAt: null,
       },
       discord: {
         userId: null,
         username: null,
-        updatedAt: new Date(),
+        updatedAt: null,
       },
     };
 
