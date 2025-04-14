@@ -1,4 +1,4 @@
-name: 'api-trellify-${STAGE}'
+name: '${APP_NAME}-${STAGE}'
 services:
   node:
     build:
@@ -44,15 +44,15 @@ services:
 volumes:
   mongodb-data:
     driver: local
-    name: trellify-mongo-data-${STAGE}
+    name: ${APP_NAME}-mongo-data-${STAGE}
   mongodb-log:
     driver: local
-    name: trellify-mongo-log-${STAGE}
+    name: ${APP_NAME}-mongo-log-${STAGE}
   redis_data:
     driver: local
-    name: trellify-redis-data-${STAGE}
+    name: ${APP_NAME}-redis-data-${STAGE}
 
 networks:
   backend_network:
     driver: bridge
-    name: trellify-backend-network-${STAGE}
+    name: ${APP_NAME}-backend-network-${STAGE}
