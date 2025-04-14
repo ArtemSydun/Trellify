@@ -1535,8 +1535,11 @@ export class TrelloWebhooksLogicService {
           const updateObject: any = {
             $pull: {
               [WebhookSearchPath.Subscribers]: {
-                trelloUserId: userToDisconnect.trello.userId, // Match objects with the specific `trelloUserId`
+                trelloUserId: userToDisconnect.trello.userId,
               },
+            },
+            $inc: {
+              totalSubscribers: -1,
             },
           };
 
