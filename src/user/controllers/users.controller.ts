@@ -196,7 +196,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('telegram')
+  @Post(':id/telegram')
   @ApiOperation({
     summary: 'Connect / Disconnect Telegram',
     description:
@@ -250,10 +250,12 @@ export class UsersController {
     },
   })
   handleTelegramConnection(
+    @Param('id') userId: string,
     @Req() req,
     @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
     return this.usersService.manageUserTelegramConnection(
+      userId,
       req.user,
       connectTelegramDto,
       req.i18nContext,
@@ -261,7 +263,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('discord')
+  @Post(':id/discord')
   @ApiOperation({
     summary: 'Connect / Disconnect Discord',
     description:
@@ -314,10 +316,12 @@ export class UsersController {
     },
   })
   handleDiscordConnection(
+    @Param() userId: string,
     @Req() req,
     @Body() connectDiscordDto: DiscordSettings,
   ) {
     return this.usersService.manageUserDiscordConnection(
+      userId,
       req.user,
       connectDiscordDto,
       req.i18nContext,
@@ -325,7 +329,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('trello')
+  @Post(':id/trello')
   @ApiOperation({
     summary: 'Connect / Disconnect Trello',
     description:
@@ -357,8 +361,13 @@ export class UsersController {
     'Invalid trello token',
     'Please provide us token with valid expiration date',
   )
-  handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
+  handleTrelloQuery(
+    @Param('id') userId: string,
+    @Req() req,
+    @Body() connectTrelloDto: ConnectTrelloDto,
+  ) {
     return this.usersService.manageUserTrelloConnection(
+      userId,
       req.user,
       connectTrelloDto,
       req.i18nContext,
