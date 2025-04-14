@@ -3,4 +3,5 @@ export enum TelegramCommandsEnum {
   HELP = 'help',
   MY_PROFILE = 'my_profile',
   DISCONNECT = 'disconnect',
+  SUPPORT = 'support',
 }

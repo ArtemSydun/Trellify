@@ -67,6 +67,7 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | **Telegram settings:**          |                                                                                     |
 | TELEGRAM_NOTIFICATION_BOT_TOKEN | Telegram bot token for user notifications                                           |
 | TELEGRAM_ADMIN_BOT_TOKEN        | Telegram bot token for admin notifications                                          |
+| TELEGRAM_SUPPORT_LINK           | Telegram link to live support                                                 |
 | **Discord settings:**           |                                                                                     |
 | DISCORD_BOT_TOKEN               | Discord bot token for user notifications                                            |
 | DISCORD_DEVELOPMENT_GUILD_ID    | Discord server for bot authorizing ID                                               |

@@ -1,10 +1,12 @@
 export enum WebhookSearchPath {
+  Id = 'id',
   IdModel = 'idModel',
-  Active = 'active',
-  ConsecutiveFailures = 'consecutiveFailures',
-  FirstConsecutiveFailDate = 'firstConsecutiveFailDate',
+  IdWorkspace = 'idWorkspace',
   BoardName = 'boardName',
-  AuthorToken = 'authorToken',
+  AuthorToken = 'author.trelloToken',
+  AuthorTrelloUserId = 'author.trelloUserId',
+  AuthorEmail = 'author.email',
   Subscribers = 'subscribers',
+  TotalSubscribers = 'totalSubscribers',
   Notifications = 'notifications',
 }

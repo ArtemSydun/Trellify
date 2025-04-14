@@ -19,6 +19,7 @@ export const webhookStub = {
       'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
     trelloUserId: '674ec752cba1224342f87c20',
   },
+  totalSubscribers: 2,
   subscribers: [
     {
       email: 'email1@mail.com',
@@ -129,6 +130,8 @@ export const newWebhookStub = {
       'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
     trelloUserId: '674ec752cba1224342f87c20',
   },
+  totalSubscribers: 2,
+
   subscribers: [
     {
       email: 'email1@mail.com',

@@ -61,6 +61,14 @@ export class Webhook {
   author: WebhookAuthor;
 
   @ApiProperty({
+    description: 'Number of total webhook subscribers',
+    type: Number,
+    example: 2,
+  })
+  @Prop({ type: Number, required: true })
+  totalSubscribers: number;
+
+  @ApiProperty({
     description: 'List of Trello user IDs who are subscribed to this webhook.',
     type: [WebhookSubscriber],
     example: ['userId1'],

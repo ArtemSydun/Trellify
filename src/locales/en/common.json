@@ -57,7 +57,8 @@
         "telegram": {
             "connectedSuccessfully": "Telegram account connected successfully",
             "disconnectedSuccessfully": "Telegram account disconnected successfully",
-            "disconnectConfirmation": "Are you sure you want to disconnect telegram account? You will not receive any notifications from Trellify anymore"
+            "disconnectConfirmation": "Are you sure you want to disconnect telegram account? You will not receive any notifications from Trellify anymore",
+            "contactSupport": "Didn't find the answer to your question? Reach out to our live support {supportLink}"
         },
         "discord": {
             "connectedSuccessfully": "Discord account connected successfully",

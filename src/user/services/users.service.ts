@@ -84,6 +84,8 @@ export class UsersService {
     return user; // If it's already a User object, return it as-is
   }
 
+  //all commented parts will be used when payments will be implemented
+  //lifetimeSubscriptionPlan should be changed to trialSubscriptionPlan then
   public async createUser(
     createUserDto: CreateUserDto,
     i18n?: I18nContext,
@@ -103,72 +105,80 @@ export class UsersService {
       );
     }
 
-    const trialSubscriptionPlan =
+    const lifetimeSubscriptionPlan =
       await this.subscriptionService.findSubscriptionByName(
-        SubscriptionPlans.TRIAL,
+        SubscriptionPlans.LIFETIME,
         i18n,
       );
 
-    let trialExpired = false;
-    const currentDate = new Date();
-    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
-      createUserDto.email,
-    );
+    // const trialSubscriptionPlan =
+    //   await this.subscriptionService.findSubscriptionByName(
+    //     SubscriptionPlans.TRIAL,
+    //     i18n,
+    //   );
 
-    if (usedTrial?.trialEnds < currentDate) {
-      trialExpired = true;
-    }
+    // let trialExpired = false;
+    // const currentDate = new Date();
+    // const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+    //   createUserDto.email,
+    // );
+
+    // if (usedTrial?.trialEnds < currentDate) {
+    //   trialExpired = true;
+    // }
 
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
       password: await hashPassword(createUserDto.password),
       subscription: {
-        id: trialSubscriptionPlan.id,
-        plan: trialSubscriptionPlan.name,
-        amount: trialSubscriptionPlan.price,
-        expired: trialExpired,
+        id: lifetimeSubscriptionPlan.id,
+        plan: lifetimeSubscriptionPlan.name,
+        lastAmount: 0,
+        totalAmount: 0,
+        expired: false,
         lastPaymentDate: null,
-        nextPaymentDate:
-          usedTrial?.trialEnds ||
-          (() => {
-            const date = new Date();
-            date.setDate(date.getDate() + 14);
-            return date;
-          })(),
+        nextPaymentDate: null,
+        // usedTrial?.trialEnds ||
+        // (() => {
+        //   const date = new Date();
+        //   date.setDate(date.getDate() + 14);
+        //   return date;
+        // })(),
       },
-      trello: { userId: null, token: null, webhooks: [] },
+      trello: { userId: null, token: null, webhooks: [], updatedAt: null },
       telegram: {
         username: null,
         chatId: null,
-        updatedAt: new Date(),
+        updatedAt: null,
       },
       discord: {
         userId: null,
         username: null,
-        updatedAt: new Date(),
+        updatedAt: null,
       },
     };
 
     const createdUser = await this.userRepository.create(newUser);
 
-    if (!usedTrial) {
-      await this.usedTrialService.createUsedTrial({
-        email: createdUser.email,
-        userId: createdUser.id,
-        trelloUserId: null,
-        trialStarts: createdUser.createdAt,
-        trialEnds: createdUser.subscription.nextPaymentDate,
-      });
-      this.logger.log(
-        `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
-      );
-    }
+    // if (!usedTrial) {
+    //   await this.usedTrialService.createUsedTrial({
+    //     email: createdUser.email,
+    //     userId: createdUser.id,
+    //     trelloUserId: null,
+    //     trialStarts: createdUser.createdAt,
+    //     trialEnds: createdUser.subscription.nextPaymentDate,
+    //   });
+    //   this.logger.log(
+    //     `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
+    //   );
+    // }
 
     await this.redisService.updateDailyStats(
       periodStatsKeys.NEW_USERS,
       newUser.email,
     );
+
     await this.redisService.updateWeeklyStats(
       periodStatsKeys.NEW_USERS,
       newUser.email,
@@ -176,7 +186,7 @@ export class UsersService {
 
     if (createdUser) {
       await this.subscriptionService.addSubscriberToPlan(
-        trialSubscriptionPlan,
+        lifetimeSubscriptionPlan,
         createdUser,
         i18n,
       );
@@ -650,6 +660,7 @@ export class UsersService {
     };
   }
 
+  //superadmin subscription change
   public async updateUserSubscription(
     user: string | User,
     subscription: string | Subscription,
@@ -688,6 +699,14 @@ export class UsersService {
         ...userToUpdate.subscription,
         id: newSubscription.id,
         plan: newSubscription.name as SubscriptionPlans,
+        expired:
+          newSubscription.name === SubscriptionPlans.LIFETIME
+            ? false
+            : userToUpdate.subscription.expired,
+        nextPaymentDate:
+          newSubscription.name === SubscriptionPlans.LIFETIME
+            ? null
+            : userToUpdate.subscription.nextPaymentDate,
       },
     });
 
@@ -722,12 +741,28 @@ export class UsersService {
   }
 
   public async manageUserTelegramConnection(
-    user: string | User,
+    userId: string | User,
+    reqUser: string | User,
     connectTelegramDto: ConnectTelegramDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user, i18n);
+    const userToUpdate = await this.getUser(userId, i18n);
+
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
     const { chatId, username } = connectTelegramDto;
+
     const updateDate = new Date();
 
     if (chatId && username) {
@@ -745,8 +780,9 @@ export class UsersService {
     } else {
       await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          `Trellify bot disconnected successfully`,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE, {
+          lang: userToUpdate.language,
+        }) || `Trellify bot disconnected successfully`,
       );
     }
 
@@ -761,12 +797,20 @@ export class UsersService {
         args: {
           workspacesLink: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces`,
         },
+        lang: userToUpdate.language,
       }) || `Trellify authorized successfully`,
     );
 
     this.logger.log(
-      `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
     );
+
     return {
       message:
         i18n?.t(
@@ -780,11 +824,26 @@ export class UsersService {
   }
 
   public async manageUserDiscordConnection(
-    user: string | User,
+    targetUser: string | User,
+    reqUser: string | User,
     connectDiscordDto: DiscordSettings,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user, i18n);
+    const userToUpdate = await this.getUser(targetUser, i18n);
+
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
     const { userId, username } = connectDiscordDto;
     const updateDate = new Date();
 
@@ -794,26 +853,28 @@ export class UsersService {
         userId,
       );
 
-      await this.discordService.sendDirectMessage(
-        userId,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
-          args: {
-            workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
-          },
-        }) || 'Discord connected successfully',
-      );
-
       if (connectedUser) {
         throw new ConflictException(
           i18n?.t(I18nKeys.ERRORS_DISCORD_BOT_ALREADY_CONNECTED) ||
             `Trellify bot is already connected for another discord user`,
         );
       }
+
+      await this.discordService.sendDirectMessage(
+        userToUpdate.id,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
+          args: {
+            workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
+          },
+          lang: userToUpdate.language,
+        }) || 'Discord connected successfully',
+      );
     } else {
       await this.discordService.sendDirectMessage(
         userToUpdate.discord.userId,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          'Discord disconnected successfully',
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE, {
+          lang: userToUpdate.language,
+        }) || 'Discord disconnected successfully',
       );
     }
 
@@ -823,7 +884,13 @@ export class UsersService {
     });
 
     this.logger.log(
-      `Discord ${username ? username : userToUpdate.discord.username} ${userId ? 'connected' : 'disconnected'} successfully`,
+      `Discord ${username || userToUpdate.discord?.username} ${userId ? 'connected' : 'disconnected'} by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
     );
 
     return {
@@ -832,20 +899,34 @@ export class UsersService {
           userId
             ? I18nKeys.MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY
             : I18nKeys.MESSAGES_DISCORD_DISCONNECTED_SUCCESSFULLY,
-        ) || `Discord ${userId ? 'connected' : 'disconnected '} successfully`,
+        ) || `Discord ${userId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
   }
 
   public async manageUserTrelloConnection(
-    user: string | User,
+    targetUser: string | User,
+    reqUser: string | User,
     connectTrelloDto: ConnectTrelloDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User | string>> {
-    const userToUpdate = await this.getUser(user, i18n);
-    const { token } = connectTrelloDto;
+    const userToUpdate = await this.getUser(targetUser, i18n);
 
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
+    const { token } = connectTrelloDto;
     const updateDate = new Date();
     const updatedUserProps: Partial<User> = {
       trello: { ...userToUpdate.trello, updatedAt: updateDate },
@@ -863,6 +944,7 @@ export class UsersService {
         username: null,
         webhooks: [],
         token: null,
+        updatedAt: updateDate,
       };
 
       const updatedUser = await this.userRepository.updateById(
@@ -871,14 +953,19 @@ export class UsersService {
       );
 
       this.logger.log(
-        `Trello profile disconnected for user ${userToUpdate.trello.username}`,
+        `Trello profile disconnected for user ${userToUpdate.trello.username} by ${
+          reqUser
+            ? typeof reqUser === 'string'
+              ? reqUser
+              : reqUser.email
+            : 'self'
+        }`,
       );
+
       return {
         message:
           i18n?.t(I18nKeys.MESSAGES_TRELLO_DISCONNECTED_SUCCESSFULLY, {
-            args: {
-              username: userToUpdate.trello.username,
-            },
+            args: { username: userToUpdate.trello.username },
           }) ||
           `Trello ${userToUpdate.trello.username} disconnected successfully`,
         statusCode: HttpStatus.OK,
@@ -928,11 +1015,11 @@ export class UsersService {
     updatedUserProps.trello.username = trelloProfile.username;
     updatedUserProps.trello.webhooks = [];
 
+    // Handle trial plan updates
     if (userToUpdate.subscription.plan === SubscriptionPlans.TRIAL) {
       const usedTrial = await this.usedTrialService.findUserTrialByEmail(
         userToUpdate.email,
       );
-
       const usedTrialByTrelloId =
         await this.usedTrialService.findUsedTrialByTrelloUserId(
           trelloProfile.id,
@@ -945,6 +1032,7 @@ export class UsersService {
               `This user's trial version has already expired.`,
           );
         }
+
         await this.usedTrialService.updateUsedTrialById(
           usedTrialByTrelloId.id,
           {
@@ -973,13 +1061,20 @@ export class UsersService {
       ...updatedUserProps,
     });
 
-    this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
+    this.logger.log(
+      `Trello profile connected for user ${userToUpdate.id} by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
+    );
+
     return {
       message:
         i18n?.t(I18nKeys.MESSAGES_TRELLO_CONNECTED_SUCCESSFULLY, {
-          args: {
-            username: updatedUser.trello.username,
-          },
+          args: { username: updatedUser.trello.username },
         }) || `Trello ${updatedUser.trello.username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
