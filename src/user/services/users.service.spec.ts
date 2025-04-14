@@ -60,7 +60,8 @@ describe('UsersService', () => {
   let mailerService: MailerService;
   let usedTrialService: UsedTrialService;
   let redisService: RedisService;
-  // let subscriptionService: SubscriptionService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let subscriptionService: SubscriptionService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
