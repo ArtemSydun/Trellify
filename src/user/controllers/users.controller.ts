@@ -316,7 +316,7 @@ export class UsersController {
     },
   })
   handleDiscordConnection(
-    @Param() userId: string,
+    @Param('id') userId: string,
     @Req() req,
     @Body() connectDiscordDto: DiscordSettings,
   ) {
