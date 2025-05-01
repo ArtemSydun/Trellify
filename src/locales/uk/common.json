@@ -193,7 +193,6 @@
             "notFoundByEmail": "Користувача з поштою {email} не знайдено",
             "alreadyExist": "Користувач з поштою {email} вже існує",
             "notFoundById": "Користувача з ідентифікатором {id} не знайдено",
-            "notFoundByTrelloId": "Користувача з Trello ID {trelloUserId} не знайдено",
             "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
         },
         "telegram": {
