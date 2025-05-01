@@ -38,7 +38,7 @@ echo "4️⃣Remove all unused images"
 docker image prune -af
 
 echo "5️⃣Starting new containers"
-STAGE=$STAGE docker compose --env-file $ENV_FILE_PATH up -d --build > deploy.log 2>&1
+STAGE=$STAGE docker compose --env-file $ENV_FILE_PATH up -d --build 2>&1 | tee deploy.log
 
 echo "6️⃣Save deployment log with timestamp"
 mkdir -p "$DEPLOY_DIR_PATH/logs"
