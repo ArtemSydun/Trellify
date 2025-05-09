@@ -21,6 +21,7 @@ export enum UserSearchPath {
   SubscriptionExpired = 'subscription.expired',
   SubscriptionLastPayment = 'subscription.lastPaymentDate',
   SubscriptionNextPayment = 'subscription.nextPaymentDate',
+  PaypalSubscriptionId = 'subscription.paypalSubscriptionId',
 
   // Simple properties
   Email = 'email',

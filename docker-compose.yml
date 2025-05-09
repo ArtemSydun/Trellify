@@ -34,8 +34,13 @@ services:
     image: redis:alpine
     restart: unless-stopped
     ports:
-      - '${REDIS_HOST_PORT}:${REDIS_PORT}'
-    command: ['redis-server', '--appendonly', 'yes']
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --requirepass
+      - ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     networks:

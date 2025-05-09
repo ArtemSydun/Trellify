@@ -50,6 +50,11 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | MONGODB_URI                     | The connection URI for the MongoDB database                                         |
 | MONGODB_SUPERADMIN_EMAIL        | Email for the database's superadmin account                                         |
 | MONGODB_SUPERADMIN_PASSWORD     | Password for the database's superadmin account                                      |
+| **Redis settings:**             |                                                                                     |
+| REDIS_HOST_PORT                 | Redis server port                                                                   |
+| REDIS_PORT                      | Redis internal port (usually 6379)                                                  |
+| REDIS_HOST                      | The hostname or IP address of the server where Redis is running                     |
+| REDIS_PASSWORD                  | Redis password                                                                      |
 | **JWT settings:**               |                                                                                     |
 | JWT_EXPIRES_IN                  | Token expiration duration (e.g., "7d" for 7 days)                                   |
 | JWT_SECRET                      | Secret key used for signing JWT tokens                                              |
@@ -67,7 +72,11 @@ STAGE=<your_stage> docker compose --env-file .env.<your_stage> up -d --build
 | **Telegram settings:**          |                                                                                     |
 | TELEGRAM_NOTIFICATION_BOT_TOKEN | Telegram bot token for user notifications                                           |
 | TELEGRAM_ADMIN_BOT_TOKEN        | Telegram bot token for admin notifications                                          |
-| TELEGRAM_SUPPORT_LINK           | Telegram link to live support                                                 |
+| TELEGRAM_SUPPORT_LINK           | Telegram link to live support                                                       |
 | **Discord settings:**           |                                                                                     |
 | DISCORD_BOT_TOKEN               | Discord bot token for user notifications                                            |
 | DISCORD_DEVELOPMENT_GUILD_ID    | Discord server for bot authorizing ID                                               |
+| **Paypal settings:**            |                                                                                     |
+| PAYPAL_CLIENT_ID                | Paypal merchant client ID                                                           |
+| PAYPAL_CLIENT_SECRET            | Paypal merchant secret                                                              |
+| PAYPAL_API_URL                  | Paypal API url                                                                      |

@@ -244,7 +244,7 @@ describe('TrelloWebhooksLogicService', () => {
       .spyOn(trelloWebhooksLogicService, 'getWebhook')
       .mockResolvedValue(webhookStub);
 
-    Object.defineProperty(trelloWebhooksLogicService, 'webhookCallbackURL', {
+    Object.defineProperty(trelloWebhooksLogicService, 'trelloWebhookUrl', {
       value: 'https://mycallback.url',
       writable: true,
     });
@@ -804,7 +804,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       expect(trelloWebhookApiService.createWebhook).toHaveBeenCalledWith(
         decryptedUserToken,
-        `${(trelloWebhooksLogicService as any).webhookCallbackURL}/${existingWebhook.idModel}`,
+        `${(trelloWebhooksLogicService as any).trelloWebhookUrl}/${existingWebhook.idModel}`,
         existingWebhook.idModel,
         undefined,
       );
@@ -890,7 +890,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       expect(trelloWebhookApiService.createWebhook).toHaveBeenCalledWith(
         decryptedUserToken,
-        `${(trelloWebhooksLogicService as any).webhookCallbackURL}/${existingWebhook.idModel}`,
+        `${(trelloWebhooksLogicService as any).trelloWebhookUrl}/${existingWebhook.idModel}`,
         trelloBoard.id,
         undefined,
       );
@@ -1125,7 +1125,7 @@ describe('TrelloWebhooksLogicService', () => {
 
       expect(trelloWebhookApiService.createWebhook).toHaveBeenCalledWith(
         decryptedAuthorToken,
-        `${(trelloWebhooksLogicService as any).webhookCallbackURL}/${createWebhookDto.boardId}`,
+        `${(trelloWebhooksLogicService as any).trelloWebhookUrl}/${createWebhookDto.boardId}`,
         createWebhookDto.boardId,
         undefined,
       );

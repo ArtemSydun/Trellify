@@ -77,7 +77,7 @@ import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 
 @Injectable()
 export class TrelloWebhooksLogicService {
-  private readonly webhookCallbackURL: string;
+  private readonly trelloWebhookUrl: string;
   private readonly encryptionKey: string;
   private readonly logger = new Logger(TrelloWebhooksLogicService.name);
   private webhookActionCount: number;
@@ -102,7 +102,7 @@ export class TrelloWebhooksLogicService {
     private readonly redisService: RedisService,
     private readonly i18nService: I18nService,
   ) {
-    this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
+    this.trelloWebhookUrl = this.sharedConfigService.gettrelloWebhookUrl();
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
     this.webhookActionCount = 0;
   }
@@ -327,7 +327,7 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${existingWebhook.idModel}`;
+    const boardPersonalWebhookURL = `${this.trelloWebhookUrl}/${existingWebhook.idModel}`;
 
     authorWebhooks = [];
     let ifAuthorHasAccess = true;
@@ -596,7 +596,7 @@ export class TrelloWebhooksLogicService {
     i18n?: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     const { boardId } = createWebhookDto;
-    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
+    const boardPersonalWebhookURL = `${this.trelloWebhookUrl}/${boardId}`;
     let webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
     const updateDate = new Date();

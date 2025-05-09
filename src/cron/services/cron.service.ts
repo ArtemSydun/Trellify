@@ -265,7 +265,7 @@ export class CronService {
     console.log('All notifications sent.');
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_DAY_AT_1PM)
   async subscriptionExpirationUpdate() {
     const fromDate = formatISO(startOfDay(subDays(new Date(), 3))); // 3 days ago at 00:00:00
     const toDate = new Date().toISOString();

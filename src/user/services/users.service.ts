@@ -8,6 +8,7 @@ import {
   ForbiddenException,
   forwardRef,
   Inject,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -29,6 +30,7 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
@@ -58,10 +60,12 @@ import { UsersRepository } from '../repositories/users.repository';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private readonly encryptionKey: string;
 
   constructor(
     private readonly userRepository: UsersRepository,
     private readonly configService: ConfigService,
+    private readonly sharedConfigService: SharedConfigService,
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
@@ -74,7 +78,9 @@ export class UsersService {
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
     private readonly i18nService: I18nService,
-  ) {}
+  ) {
+    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+  }
 
   public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
     if (typeof user === 'string') {
@@ -139,6 +145,7 @@ export class UsersService {
         expired: false,
         lastPaymentDate: null,
         nextPaymentDate: null,
+        paypalSubscriptionId: null,
         // usedTrial?.trialEnds ||
         // (() => {
         //   const date = new Date();
@@ -271,7 +278,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
+        this.encryptionKey,
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -576,7 +583,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.configService.get(configServiceKeys.ENCRYPTION_KEY),
+              this.encryptionKey,
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -983,10 +990,7 @@ export class UsersService {
     await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
 
     if (!userToUpdate.trello?.token || userToUpdate.trello.token !== token) {
-      updatedUserProps.trello.token = encryptText(
-        token,
-        this.configService.get(configServiceKeys.ENCRYPTION_KEY),
-      );
+      updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
     }
 
     const trelloToken =
@@ -1153,10 +1157,42 @@ export class UsersService {
     }
   }
 
+  public async cancelUserSubscription(
+    paypalSubscriptionId: string,
+    userId: string,
+    reason: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const subscriber = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    if (subscriber.id !== userId) {
+      throw new BadRequestException(
+        'You are not allowed to cancel somebodys subscription',
+      );
+    }
+
+    await this.subscriptionService.cancelPaypalSubscription(
+      paypalSubscriptionId,
+      reason,
+    );
+
+    return {
+      message: 'Subscription cancelled successfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
+
   //user self change after payment
   public async changeSubscriptionPlan(
     user: string | User,
-    targetSubscription: string | Subscription,
+    targetSubscriptionId: string,
+    paypalSubscriptionId: string,
+    amount: string,
+    paymentDate: Date,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user, i18n);
@@ -1166,14 +1202,14 @@ export class UsersService {
       i18n,
     );
 
-    const newSubscription = await this.subscriptionService.getSubscription(
-      targetSubscription,
-      i18n,
-    );
-
     await this.subscriptionService.removeSubscriberFromPlan(
       oldSubscription,
       userToUpdate,
+      i18n,
+    );
+
+    const newSubscription = await this.subscriptionService.getSubscription(
+      targetSubscriptionId,
       i18n,
     );
 
@@ -1183,11 +1219,25 @@ export class UsersService {
       i18n,
     );
 
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) {
+      throw new Error(`Invalid amount value: ${amount}`);
+    }
+
+    const nextPaymentDate = new Date(paymentDate);
+    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+
     const updatedUser = await this.updateUser(userToUpdate, {
       subscription: {
         ...userToUpdate.subscription,
         id: newSubscription.id,
         plan: newSubscription.name as SubscriptionPlans,
+        expired: false,
+        paypalSubscriptionId: paypalSubscriptionId,
+        lastAmount: parsedAmount,
+        totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
+        lastPaymentDate: paymentDate,
+        nextPaymentDate: nextPaymentDate,
       },
     });
 
@@ -1195,11 +1245,11 @@ export class UsersService {
       message:
         i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
           args: {
-            user: userToUpdate.email,
+            email: userToUpdate.email,
             subscription: newSubscription.name,
           },
         }) ||
-        `User ${userToUpdate.email} successfully successfully changed plan to ${newSubscription.name}`,
+        `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
       statusCode: HttpStatus.OK,
       data: updatedUser.data,
     };

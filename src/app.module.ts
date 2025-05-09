@@ -12,6 +12,7 @@ import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from './discord/discord.module';
 import { DistributionModule } from './distribution/distribution.module';
+import { PaypalModule } from './paypal/pay-pal.module';
 import { RedisModule } from './redis/redis.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { TelegramModule } from './telegram/telegram.module';
@@ -50,6 +51,7 @@ import { UsersModule } from './user/users.module';
     DistributionModule,
     DiscordModule,
     SubscriptionModule,
+    PaypalModule,
   ],
   controllers: [AppController],
   providers: [
