@@ -25,7 +25,6 @@ import { SubscriptionService } from 'src/subscription/services/subscription.serv
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoardField } from 'src/trello/enums/trello.model.fields.enum';
-import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UsersService } from 'src/user/services/users.service';
 
@@ -265,12 +264,11 @@ export class CronService {
     console.log('All notifications sent.');
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_HOUR)
   async subscriptionExpirationUpdate() {
-    const fromDate = formatISO(startOfDay(subDays(new Date(), 3))); // 3 days ago at 00:00:00
-    const toDate = new Date().toISOString();
+    const fromDate = formatISO(startOfDay(subDays(new Date(), 1))); // from the previous day
+    const toDate = new Date().toISOString(); // to now
 
-    // Fetch expired users whose subscription is not yet marked as expired
     const expiredUsers = await this.usersService.findAll({
       date: UserSearchPath.SubscriptionNextPayment,
       fromDate,
@@ -278,56 +276,32 @@ export class CronService {
       subscriptionExpired: false,
     });
 
-    // Group users by their subscription plan name
-    const usersBySubscriptions = expiredUsers.data.reduce(
-      (acc, user) => {
-        const planName = user.subscription?.plan;
+    let expiredCount = 0;
+    let renewedCount = 0;
 
-        if (!planName) return acc; // Skip users without a subscription plan
-
-        if (!acc[planName]) {
-          acc[planName] = [];
-        }
-
-        acc[planName].push(user);
-        return acc;
-      },
-      {} as Record<string, User[]>,
-    );
-
-    // Fetch all subscription plans
-    const subscriptions = await this.subscriptionService.findAll();
-
-    // Process all subscriptions concurrently
     await Promise.all(
-      subscriptions.map(async (subscription) => {
-        const planName = subscription.name;
-
-        if (usersBySubscriptions[planName]) {
-          const usersToUpdate = usersBySubscriptions[planName];
-
-          // Update all users for this subscription concurrently
-          await Promise.all(
-            usersToUpdate.map((user) =>
-              this.usersService.updateUser(user.id, {
-                subscription: {
-                  ...user.subscription,
-                  expired: true,
-                  nextPaymentDate: null,
-                },
-              }),
-            ),
+      expiredUsers.data.map(async (user) => {
+        try {
+          const result = await this.usersService.refreshSubscriptionPayment(
+            user?.subscription?.paypalSubscriptionId,
           );
 
-          this.logger.log(
-            `Processed ${usersToUpdate.length} users for plan ${planName}.`,
+          if (result.data.subscription.expired) {
+            expiredCount++;
+          } else {
+            renewedCount++;
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to process subscription for user ${user.id}`,
+            error,
           );
         }
       }),
     );
 
     this.logger.log(
-      `Total expired subscriptions processed: ${expiredUsers.total}`,
+      `Subscription check complete. Expired: ${expiredCount}, Renewed: ${renewedCount}`,
     );
   }
 

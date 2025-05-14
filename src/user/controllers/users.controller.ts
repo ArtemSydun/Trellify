@@ -632,4 +632,28 @@ export class UsersController {
       req.i18nContext,
     );
   }
+  @UseGuards(JwtAuthGuard)
+  @Post('/subscription/:paypalSubscriptionId/cancel')
+  @ApiOperation({
+    summary: 'User subscription cancellation',
+    description: 'This endpoint allows to user cancel his subscription',
+  })
+  @ApiOkResponse({
+    description: 'User subscription cancelled successfully',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  cancelSubscriptionById(
+    @Param('paypalSubscriptionId') paypalSubscriptionId: string,
+    @Body('reason') reason: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.cancelUserSubscription(
+      paypalSubscriptionId,
+      req.user.id,
+      reason,
+      req.i18nContext,
+    );
+  }
 }

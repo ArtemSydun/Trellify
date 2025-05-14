@@ -40,6 +40,7 @@ export class TrelloActionsLogicService {
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
     private readonly i18n: I18nService,
     private readonly configService: ConfigService,

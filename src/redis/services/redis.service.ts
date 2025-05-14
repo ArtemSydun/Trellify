@@ -121,6 +121,7 @@ export class RedisService {
         acc[plan.name] = {
           price: plan.price,
           notifications: plan.notifications,
+          paypaylPlanId: plan.paypalPlanId,
         };
         return acc;
       },

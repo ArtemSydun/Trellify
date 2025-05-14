@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, Min, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { NotificationBooleansDto } from 'src/trello/dto/notifications.dto';
 
 export class UpdateSubscriptionDto {
@@ -16,4 +22,11 @@ export class UpdateSubscriptionDto {
   @ValidateNested()
   @Type(() => NotificationBooleansDto)
   notifications: NotificationBooleansDto;
+
+  @ApiProperty({
+    description: 'PayPal subscription plan id',
+  })
+  @IsOptional()
+  @IsString()
+  paypalPlanId?: string;
 }

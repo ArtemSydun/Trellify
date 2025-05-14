@@ -14,14 +14,6 @@ import {
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
 export class NotificationCategoriesDto {
-  // @ApiProperty({
-  //   description:
-  //     'Notifications related to personal actions (related to certain user)',
-  //   type: Object,
-  //   example: initializeNotificationArrays('userId1').personal,
-  // })
-  // personal: Record<string, string[]>;
-
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
@@ -52,16 +44,6 @@ export class NotificationCategoriesDto {
 }
 
 export class NotificationBooleansDto {
-  // @ApiProperty({
-  //   description:
-  //     'Notifications related to personal actions (related to certain user)',
-  //   type: Object,
-  //   example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-  //     .personal,
-  // })
-  // @IsNotEmptyObject()
-  // personal: Record<string, boolean>;
-
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
