@@ -40,6 +40,8 @@ import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum'
 import { UsedTrialService } from 'src/subscription/services/used-trial.service';
 import { usedTrialStub } from '../__mocks__/used-trial.stub';
 import { I18nService } from 'nestjs-i18n';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
+import { PaypalLogicService } from 'src/paypal/services/paypal-logic.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -83,6 +85,10 @@ describe('UsersService', () => {
           useValue: createMock<ConfigService>(),
         },
         {
+          provide: SharedConfigService,
+          useValue: createMock<SharedConfigService>(),
+        },
+        {
           provide: TrelloMembersLogicService,
           useValue: createMock<TrelloMembersLogicService>(),
         },
@@ -113,6 +119,10 @@ describe('UsersService', () => {
         {
           provide: SubscriptionService,
           useValue: createMock<SubscriptionService>(),
+        },
+        {
+          provide: PaypalLogicService,
+          useValue: createMock<PaypalLogicService>(),
         },
         {
           provide: UsedTrialService,

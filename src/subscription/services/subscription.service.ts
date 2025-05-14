@@ -5,8 +5,10 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { addDays, differenceInHours, parseISO } from 'date-fns';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { getActionEnumKey } from 'src/common/helpers/trello-notifications';
@@ -24,6 +26,7 @@ import { SubscriptionRepository } from '../repositories/subscription.repository'
 
 @Injectable()
 export class SubscriptionService {
+  private readonly logger = new Logger(SubscriptionService.name);
   constructor(
     private readonly subscriptionRepository: SubscriptionRepository,
     @Inject(forwardRef(() => UsersService))
@@ -274,21 +277,57 @@ export class SubscriptionService {
     };
   }
 
-  // async deactivatePaypalSubscription(
-  //   paypalSubscriptionId: string,
-  // ): Promise<any> {
-  //   const subscriber = await this.usersService.findUserByProperty(
-  //     UserSearchPath.PaypalSubscriptionId,
-  //     paypalSubscriptionId,
-  //   );
-  // }
+  async checkSubscriptionPayment(
+    paypalSubscriptionId: string,
+    user: string | User,
+  ): Promise<{
+    nextPaymentDate: Date;
+    lastPaymentDate: Date;
+  } | null> {
+    const lastTransaction =
+      await this.paypalService.getLastSubscriptionPayment(paypalSubscriptionId);
+
+    const userToCheck = await this.usersService.getUser(user);
+    const subscription = await this.findSubscriptionById(
+      userToCheck?.subscription?.id,
+    );
+
+    const amount = parseFloat(
+      lastTransaction?.amount_with_breakdown?.gross_amount?.value || '',
+    );
+    const status = lastTransaction?.status;
+    const time = lastTransaction?.time;
+
+    if (status === 'COMPLETED' && amount === subscription?.price && time) {
+      const paymentDate = parseISO(time);
+      const hoursSincePayment = differenceInHours(new Date(), paymentDate);
+
+      //if payment was made last 24 hours
+      if (hoursSincePayment <= 24) {
+        const nextPaymentDate = addDays(paymentDate, 30);
+
+        return {
+          nextPaymentDate,
+          lastPaymentDate: paymentDate,
+        };
+      }
+    }
+
+    if (status !== 'COMPLETED') {
+      this.logger.warn(
+        `Last transaction for user ${userToCheck.id} not completed. Status: ${status}`,
+      );
+    }
+
+    return null;
+  }
 
   async cancelPaypalSubscription(
-    subscriptionId: string,
+    paypalSubscriptionId: string,
     reason: string,
   ): Promise<any> {
     const response = await this.paypalService.cancelSubscription(
-      subscriptionId,
+      paypalSubscriptionId,
       reason,
     );
 

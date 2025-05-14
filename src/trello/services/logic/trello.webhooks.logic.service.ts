@@ -99,6 +99,7 @@ export class TrelloWebhooksLogicService {
     private readonly notificationBotService: NotificationBotService,
     @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => RedisService))
     private readonly redisService: RedisService,
     private readonly i18nService: I18nService,
   ) {
@@ -347,8 +348,6 @@ export class TrelloWebhooksLogicService {
         this.logger.warn(
           `User ${existingWebhook.author.trelloUserId} has invalid trello token`,
         );
-        // await this.removeAllWebhooksCreatedByUser(webhooksAuthor, i18n);
-        // throw new BadRequestException(`Please refresh page`);
       }
     }
 
@@ -570,14 +569,6 @@ export class TrelloWebhooksLogicService {
         notifications: plans.full.notifications,
       },
     };
-    // return {
-    //   basic: plans.find((plan) => plan.name === SubscriptionPlans.BASIC)
-    //     .notifications,
-    //   advanced: plans.find((plan) => plan.name === SubscriptionPlans.ADVANCED)
-    //     .notifications,
-    //   full: plans.find((plan) => plan.name === SubscriptionPlans.FULL)
-    //     .notifications,
-    // };
   }
 
   public async getWebhooksByCreatorToken(
@@ -1193,18 +1184,10 @@ export class TrelloWebhooksLogicService {
     if (targetBoard) {
       boardData = batchResponseObject.board || null;
       boardMemberships = batchResponseObject.boardMemberships || null;
-      // boardData = await this.trelloBoardsApiService.fetchBoardById(
-      //   authorizedToken,
-      //   targetBoard.id,
-      // );
     }
 
     if (targetCard) {
       cardData = batchResponseObject.card || null;
-      // cardData = await this.trelloCardsApiService.fetchCardById(
-      //   authorizedToken,
-      //   targetCard.id,
-      // );
     }
 
     let notifiedTargetUser: string | null = '';

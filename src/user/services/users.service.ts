@@ -33,6 +33,7 @@ import {
 import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { PaypalLogicService } from 'src/paypal/services/paypal-logic.service';
 import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
 import { Subscription } from 'src/subscription/entities/subscription.entity';
@@ -74,7 +75,10 @@ export class UsersService {
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => SubscriptionService))
     private readonly subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => PaypalLogicService))
+    private readonly paypalLogicService: PaypalLogicService,
     private readonly usedTrialService: UsedTrialService,
+    @Inject(forwardRef(() => RedisService))
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
     private readonly i18nService: I18nService,
@@ -111,47 +115,42 @@ export class UsersService {
       );
     }
 
-    const lifetimeSubscriptionPlan =
+    const trialSubscriptionPlan =
       await this.subscriptionService.findSubscriptionByName(
-        SubscriptionPlans.LIFETIME,
+        SubscriptionPlans.TRIAL,
         i18n,
       );
 
-    // const trialSubscriptionPlan =
-    //   await this.subscriptionService.findSubscriptionByName(
-    //     SubscriptionPlans.TRIAL,
-    //     i18n,
-    //   );
+    let trialExpired = false;
+    const currentDate = new Date();
+    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+      createUserDto.email,
+    );
 
-    // let trialExpired = false;
-    // const currentDate = new Date();
-    // const usedTrial = await this.usedTrialService.findUserTrialByEmail(
-    //   createUserDto.email,
-    // );
-
-    // if (usedTrial?.trialEnds < currentDate) {
-    //   trialExpired = true;
-    // }
+    if (usedTrial?.trialEnds < currentDate) {
+      trialExpired = true;
+    }
 
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
       password: await hashPassword(createUserDto.password),
       subscription: {
-        id: lifetimeSubscriptionPlan.id,
-        plan: lifetimeSubscriptionPlan.name,
+        id: trialSubscriptionPlan.id,
+        plan: trialSubscriptionPlan.name,
         lastAmount: 0,
         totalAmount: 0,
-        expired: false,
+        expired: trialExpired,
         lastPaymentDate: null,
-        nextPaymentDate: null,
+        nextPaymentDate:
+          usedTrial?.trialEnds ||
+          (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 14);
+            return date;
+          })(),
         paypalSubscriptionId: null,
-        // usedTrial?.trialEnds ||
-        // (() => {
-        //   const date = new Date();
-        //   date.setDate(date.getDate() + 14);
-        //   return date;
-        // })(),
+        lastPaymentId: null,
       },
       trello: { userId: null, token: null, webhooks: [], updatedAt: null },
       telegram: {
@@ -168,18 +167,18 @@ export class UsersService {
 
     const createdUser = await this.userRepository.create(newUser);
 
-    // if (!usedTrial) {
-    //   await this.usedTrialService.createUsedTrial({
-    //     email: createdUser.email,
-    //     userId: createdUser.id,
-    //     trelloUserId: null,
-    //     trialStarts: createdUser.createdAt,
-    //     trialEnds: createdUser.subscription.nextPaymentDate,
-    //   });
-    //   this.logger.log(
-    //     `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
-    //   );
-    // }
+    if (!usedTrial) {
+      await this.usedTrialService.createUsedTrial({
+        email: createdUser.email,
+        userId: createdUser.id,
+        trelloUserId: null,
+        trialStarts: createdUser.createdAt,
+        trialEnds: createdUser.subscription.nextPaymentDate,
+      });
+      this.logger.log(
+        `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
+      );
+    }
 
     await this.redisService.updateDailyStats(
       periodStatsKeys.NEW_USERS,
@@ -193,7 +192,7 @@ export class UsersService {
 
     if (createdUser) {
       await this.subscriptionService.addSubscriberToPlan(
-        lifetimeSubscriptionPlan,
+        trialSubscriptionPlan,
         createdUser,
         i18n,
       );
@@ -1157,6 +1156,82 @@ export class UsersService {
     }
   }
 
+  public async refreshSubscriptionPayment(
+    paypalSubscriptionId: string,
+    paymentId?: string,
+  ): Promise<DefaultResponse<User>> {
+    const userToRefresh = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+    );
+
+    const sub = userToRefresh?.subscription;
+
+    const correspondingSubscription =
+      await this.subscriptionService.findSubscriptionById(sub?.id);
+
+    const paymentCheckResult =
+      await this.subscriptionService.checkSubscriptionPayment(
+        sub.paypalSubscriptionId,
+        userToRefresh,
+      );
+
+    const updatedSubscription = {
+      ...sub,
+      nextPaymentDate:
+        paymentCheckResult?.nextPaymentDate || sub.nextPaymentDate,
+      expired: !paymentCheckResult,
+      lastPaymentId: paymentId || sub.lastPaymentId,
+    };
+
+    if (paymentCheckResult) {
+      updatedSubscription.lastPaymentDate = paymentCheckResult.lastPaymentDate;
+      updatedSubscription.lastAmount = correspondingSubscription?.price;
+      updatedSubscription.totalAmount =
+        (sub.totalAmount || 0) + (correspondingSubscription?.price || 0);
+    }
+
+    const updatedUser = await this.updateUser(userToRefresh, {
+      subscription: updatedSubscription,
+    });
+
+    return {
+      message: `User monthly plan payment verified successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
+  public async handleRefundedSubscriptionPayment(
+    paymentId: string,
+  ): Promise<DefaultResponse<User>> {
+    const refundedUser = await this.findUserByProperty(
+      UserSearchPath.LastPaymentId,
+      paymentId,
+    );
+
+    const updatedSubscription = {
+      ...refundedUser?.subscription,
+      nextPaymentDate: null,
+      expired: true,
+    };
+
+    const updatedUser = await this.updateUser(refundedUser, {
+      subscription: updatedSubscription,
+    });
+
+    await this.subscriptionService.cancelPaypalSubscription(
+      refundedUser?.subscription?.paypalSubscriptionId,
+      'Refund requested',
+    );
+
+    return {
+      message: `Subscription expired due to refund`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
   public async cancelUserSubscription(
     paypalSubscriptionId: string,
     userId: string,
@@ -1187,12 +1262,79 @@ export class UsersService {
   }
 
   //user self change after payment
+  // public async changeSubscriptionPlan(
+  //   user: string | User,
+  //   targetSubscriptionId: string,
+  //   paypalSubscriptionId: string,
+  //   amount: string,
+  //   paymentDate: Date,
+  //   i18n?: I18nContext,
+  // ): Promise<DefaultResponse<User>> {
+  //   const userToUpdate = await this.getUser(user, i18n);
+
+  //   const oldSubscription = await this.subscriptionService.getSubscription(
+  //     userToUpdate.subscription.id,
+  //     i18n,
+  //   );
+
+  //   await this.subscriptionService.removeSubscriberFromPlan(
+  //     oldSubscription,
+  //     userToUpdate,
+  //     i18n,
+  //   );
+
+  //   const newSubscription = await this.subscriptionService.getSubscription(
+  //     targetSubscriptionId,
+  //     i18n,
+  //   );
+
+  //   await this.subscriptionService.addSubscriberToPlan(
+  //     newSubscription,
+  //     userToUpdate,
+  //     i18n,
+  //   );
+
+  //   const parsedAmount = parseFloat(amount);
+  //   if (isNaN(parsedAmount)) {
+  //     throw new Error(`Invalid amount value: ${amount}`);
+  //   }
+
+  //   const nextPaymentDate = new Date(paymentDate);
+  //   nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+
+  //   const updatedUser = await this.updateUser(userToUpdate, {
+  //     subscription: {
+  //       ...userToUpdate.subscription,
+  //       id: newSubscription.id,
+  //       plan: newSubscription.name as SubscriptionPlans,
+  //       expired: false,
+  //       paypalSubscriptionId,
+  //       lastPaymentId: null,
+  //       lastAmount: parsedAmount,
+  //       totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
+  //       lastPaymentDate: paymentDate,
+  //       nextPaymentDate,
+  //     },
+  //   });
+
+  //   return {
+  //     message:
+  //       i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+  //         args: {
+  //           email: userToUpdate.email,
+  //           subscription: newSubscription.name,
+  //         },
+  //       }) ||
+  //       `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
+  //     statusCode: HttpStatus.OK,
+  //     data: updatedUser.data,
+  //   };
+  // }
   public async changeSubscriptionPlan(
     user: string | User,
     targetSubscriptionId: string,
     paypalSubscriptionId: string,
     amount: string,
-    paymentDate: Date,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
     const userToUpdate = await this.getUser(user, i18n);
@@ -1224,20 +1366,16 @@ export class UsersService {
       throw new Error(`Invalid amount value: ${amount}`);
     }
 
-    const nextPaymentDate = new Date(paymentDate);
-    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
-
     const updatedUser = await this.updateUser(userToUpdate, {
       subscription: {
         ...userToUpdate.subscription,
         id: newSubscription.id,
         plan: newSubscription.name as SubscriptionPlans,
-        expired: false,
+        expired: true,
         paypalSubscriptionId: paypalSubscriptionId,
+        lastPaymentId: null,
         lastAmount: parsedAmount,
         totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
-        lastPaymentDate: paymentDate,
-        nextPaymentDate: nextPaymentDate,
       },
     });
 

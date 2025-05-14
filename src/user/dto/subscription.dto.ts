@@ -70,4 +70,14 @@ export class SubscriptionSettings {
   @IsOptional()
   @IsString()
   paypalSubscriptionId?: string | null;
+
+  @ApiProperty({
+    description: 'PayPal last payment ID (null if not paid via PayPal)',
+    example: 'I-9WX9XYY3GAXX',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPaymentId?: string | null;
 }

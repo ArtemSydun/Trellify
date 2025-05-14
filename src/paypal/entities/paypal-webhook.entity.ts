@@ -1,26 +1,11 @@
-import { randomUUID } from 'crypto';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Schema({ timestamps: true, collection: 'paypal_webhooks' })
 export class PaypalWebhook {
-  @ApiProperty({ description: 'Unique identifier for the PaypalWebhook' })
-  @Prop({ default: () => randomUUID() })
+  @ApiProperty({ description: 'Paypal webhook ID' })
+  @Prop({ required: true })
   id: string;
-
-  @ApiProperty({ description: 'Paypal webhook id' })
-  @Prop({ required: true })
-  paypalWebhookId: string;
-
-  @ApiProperty({ description: 'Paypal plan id' })
-  @Prop({ required: true })
-  paypalPlanId: string;
-
-  @ApiProperty({
-    description: 'Id of trellify plan',
-  })
-  @Prop({ required: true })
-  trellifyPlanId: string;
 
   @ApiProperty({
     description:

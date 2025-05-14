@@ -32,45 +32,19 @@ export class PaypalLogicService {
     private readonly usersService: UsersService,
   ) {}
 
-  async createWebhook(trellifyPlanId: string): Promise<any> {
-    const trellifyPlan =
-      await this.subscriptionService.findSubscriptionById(trellifyPlanId);
-
-    const existingWebhook =
-      await this.paypalWebhookRepository.findOneByTrellifyPlanId(
-        trellifyPlanId,
-      );
-
-    if (existingWebhook) {
-      throw new ConflictException(
-        `Webhook for plan ${trellifyPlan.name} already exist`,
-      );
-    }
-
+  async createWebhook(): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
-    const webhooks = await this.paypalApiService.findWebhooks(accessToken);
+    const webhooks = await this.paypalWebhookRepository.findAllPaypalWebhooks();
 
-    if (
-      webhooks.find(
-        (webhook) =>
-          webhook.url === this.sharedConfigService.getPaypalWebhookUrl(),
-      )
-    ) {
-      throw new ConflictException(
-        `Paypal webhook for ${trellifyPlan.name} plan already created`,
-      );
+    if (webhooks.length > 0) {
+      throw new ConflictException(`Paypal webhook for Trellify already exist`);
     }
 
-    const response = await this.paypalApiService.createWebhook(
-      accessToken,
-      trellifyPlan.paypalPlanId,
-    );
+    const response = await this.paypalApiService.createWebhook(accessToken);
 
     const newWebhook: CreatePaypalWebhookDto = {
-      paypalWebhookId: response?.id,
-      paypalPlanId: trellifyPlan?.paypalPlanId,
-      trellifyPlanId: trellifyPlan?.id,
+      id: response?.id,
       callbackURL: response?.url,
     };
 
@@ -78,7 +52,7 @@ export class PaypalLogicService {
       await this.paypalWebhookRepository.create(newWebhook);
 
     return {
-      message: `Webhook for plan ${trellifyPlanId} created successfully`,
+      message: `Paypal webhook for Trellify created successfully`,
       statusCode: HttpStatus.OK,
       data: createdWebhook,
     };
@@ -89,10 +63,7 @@ export class PaypalLogicService {
 
     const accessToken = await this.paypalApiService.getAccessToken();
 
-    await this.paypalApiService.deleteWebhook(
-      accessToken,
-      existingWebhook.paypalWebhookId,
-    );
+    await this.paypalApiService.deleteWebhook(accessToken, existingWebhook.id);
 
     await this.paypalWebhookRepository.deleteById(existingWebhook.id);
 
@@ -116,23 +87,10 @@ export class PaypalLogicService {
     return webhook;
   }
 
-  async handleWebhookEvent(
-    event: any,
-    subscriptionPlanId: string,
-  ): Promise<void> {
-    console.log(event);
-    const details = event.resource?.amount?.details;
-    console.log('Transaction Details:', details);
-    // Process only if the planId matches the subscriptionPlanId from the route
-    if (event.resource?.plan_id !== subscriptionPlanId) {
-      console.log(
-        `Ignored event for plan ${event.resource?.plan_id} on endpoint for plan ${subscriptionPlanId}`,
-      );
-      return;
-    }
-
+  async handleWebhookEvent(event: any): Promise<void> {
     const eventType = event.event_type;
-    const subscriptionId = event.resource?.id;
+    const subscriptionId =
+      event.resource?.billing_agreement_id || event.resource?.id;
     const planId = event.resource?.plan_id;
     const payerEmail = event.resource?.subscriber?.email_address;
     const paymentCurrency =
@@ -140,17 +98,19 @@ export class PaypalLogicService {
       event.resource?.amount?.currency;
     const paymentAmount =
       event.resource?.shipping_amount?.value || event.resource?.amount?.total;
-
+    const userId = event.resource?.custom_id || event.resource?.custom;
+    const paymentId = event.resource?.id;
     const logData = {
-      'Paypal Plan Id': planId,
       'Event type': eventType,
+      'Paypal Plan Id': planId,
+      'Trellify userId': userId,
       'Subscription id': subscriptionId,
       'Email of payer': payerEmail,
       'Transaction currency': paymentCurrency,
       'Transaction amount': paymentAmount,
+      'Transaction id': paymentId,
     };
     console.log(JSON.stringify(logData, null, 2));
-    console.log(JSON.stringify(event?.resource?.amount?.details, null, 2));
 
     switch (eventType) {
       case 'BILLING.SUBSCRIPTION.ACTIVATED':
@@ -163,7 +123,15 @@ export class PaypalLogicService {
         console.log(`Payment failed for subscription: ${subscriptionId}`);
         break;
       case 'PAYMENT.SALE.COMPLETED':
+        await this.usersService.refreshSubscriptionPayment(
+          subscriptionId,
+          paymentId,
+        );
         console.log(`Payment completed for subscription: ${subscriptionId}`);
+        break;
+      case 'PAYMENT.SALE.REFUNDED':
+        await this.usersService.handleRefundedSubscriptionPayment(paymentId);
+        console.log(`Payment refunded: ${paymentId}`);
         break;
       default:
         console.log(`Unhandled event: ${eventType}`);
@@ -171,14 +139,14 @@ export class PaypalLogicService {
   }
 
   async cancelSubscription(
-    subscriptionId: string,
+    paypalSubscriptionId: string,
     reason: string,
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
     const subscriptionInfo = await this.paypalApiService.getSubscription(
       accessToken,
-      subscriptionId,
+      paypalSubscriptionId,
     );
 
     if (subscriptionInfo?.status === 'CANCELLED') {
@@ -189,14 +157,14 @@ export class PaypalLogicService {
 
     const response = await this.paypalApiService.cancelSubscription(
       accessToken,
-      subscriptionId,
+      paypalSubscriptionId,
       reason,
     );
 
     return response;
   }
 
-  async confirmSubscriptionPayment(
+  async confirmSubscriptionActivation(
     paypalPlanId: string,
     paypalSubscriptionId: string,
     amount: string,
@@ -210,21 +178,52 @@ export class PaypalLogicService {
         i18n,
       );
 
-    const paymentDate = new Date();
+    const subscriber = await this.usersService.getUser(userId, i18n);
 
     const updatedUser = await this.usersService.changeSubscriptionPlan(
-      userId,
+      subscriber,
       correspondingSubscription.id,
       paypalSubscriptionId,
       amount,
-      paymentDate,
       i18n,
     );
+
+    if (subscriber?.subscription?.paypalSubscriptionId !== null) {
+      await this.cancelSubscription(
+        subscriber?.subscription?.paypalSubscriptionId,
+        `Subcription upgraded from ${subscriber?.subscription?.plan} to ${correspondingSubscription?.name}`,
+      );
+    }
 
     return {
       message: `Subscription plan ${correspondingSubscription.name} activated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser.data,
     };
+  }
+
+  async getLastSubscriptionPayment(subscriptionId: string): Promise<any> {
+    const accessToken = await this.paypalApiService.getAccessToken();
+
+    // NECCESSARY BECAUSE PAYPAL SENDS WEBHOOK EVENT THAT SALE COMPLETED BEFORE
+    // TRANSACTION STORED IN PAYPAL DATABASE, SO WE NEED TO WAIT.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await this.paypalApiService.getSubscriptionTransactions(
+        accessToken,
+        subscriptionId,
+      );
+
+      if (response?.transactions?.length > 0) {
+        return response.transactions[0];
+      }
+
+      console.warn(
+        `[PayPal] Attempt ${attempt + 1}: No transaction found, retrying...`,
+      );
+      await new Promise((res) => setTimeout(res, 3000)); // Wait 3 seconds before retry
+    }
+
+    console.error('[PayPal] No transactions found after retries');
+    return {};
   }
 }

@@ -1,4 +1,3 @@
-// paypal.controller.ts
 import {
   Body,
   Controller,
@@ -38,9 +37,9 @@ export class PaypalController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
-  @Post('webhook/:trellifyPlanId')
-  createWebhook(@Param('trellifyPlanId') trellifyPlanId: string) {
-    return this.paypalLogicService.createWebhook(trellifyPlanId);
+  @Post('webhook')
+  createWebhook() {
+    return this.paypalLogicService.createWebhook();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,24 +49,12 @@ export class PaypalController {
     return this.paypalLogicService.deleteWebhook(webhookId);
   }
 
-  // @SkipThrottle()
-  // @Get('webhook/callback/:subscriptionPlanId')
-  // @ApiExcludeEndpoint()
-  // handleTrelloWebhookUrlCheck() {}
-
   @ApiExcludeEndpoint()
   @SkipThrottle()
-  // paypal.controller.ts
-  @Post('webhook/callback/:subscriptionPlanId')
-  async paypalWebhook(
-    @Param('subscriptionPlanId') subscriptionPlanId: string,
-    @Body() payload: any,
-  ) {
+  @Post('webhook/callback')
+  async paypalWebhook(@Body() payload: any) {
     try {
-      await this.paypalLogicService.handleWebhookEvent(
-        payload,
-        subscriptionPlanId,
-      );
+      await this.paypalLogicService.handleWebhookEvent(payload);
       return {
         statusCode: HttpStatus.OK,
       };
@@ -90,13 +77,13 @@ export class PaypalController {
     type: User,
   })
   @Get('subscription-payment')
-  async confirmSubscriptionPayment(
+  async confirmSubscriptionActivation(
     @Query('paypalPlanId') paypalPlanId: string,
     @Query('paypalSubscriptionId') paypalSubscriptionId: string,
     @Query('amount') amount: string,
     @Req() req,
   ) {
-    return this.paypalLogicService.confirmSubscriptionPayment(
+    return this.paypalLogicService.confirmSubscriptionActivation(
       paypalPlanId,
       paypalSubscriptionId,
       amount,

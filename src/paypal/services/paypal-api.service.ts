@@ -61,32 +61,29 @@ export class PaypalApiService {
     }
   }
 
-  async createWebhook(
-    accessToken: string,
-    subscriptionPlanId: string,
-  ): Promise<any> {
+  async createWebhook(accessToken: string): Promise<any> {
     try {
       const response = await axios.post(
         `${this.baseURL}/v1/notifications/webhooks`,
         {
-          url: `${this.configService.get(configServiceKeys.BACKEND_LINK)}/paypal/webhook/callback/${subscriptionPlanId}`,
+          url: `${this.configService.get(configServiceKeys.BACKEND_LINK)}/paypal/webhook/callback`,
           event_types: [
-            { name: '*' },
+            // { name: '*' },
             // // 🔄 Subscription lifecycle
-            // { name: 'BILLING.SUBSCRIPTION.CREATED' },
-            // { name: 'BILLING.SUBSCRIPTION.ACTIVATED' },
+            { name: 'BILLING.SUBSCRIPTION.CREATED' },
+            { name: 'BILLING.SUBSCRIPTION.ACTIVATED' },
             // { name: 'BILLING.SUBSCRIPTION.UPDATED' },
             // { name: 'BILLING.SUBSCRIPTION.SUSPENDED' },
             // { name: 'BILLING.SUBSCRIPTION.RE-ACTIVATED' },
-            // { name: 'BILLING.SUBSCRIPTION.CANCELLED' },
+            { name: 'BILLING.SUBSCRIPTION.CANCELLED' },
             // { name: 'BILLING.SUBSCRIPTION.EXPIRED' },
             // { name: 'BILLING.SUBSCRIPTION.PAYMENT.FAILED' },
 
             // // 💰 Payment related to subscriptions
-            // { name: 'PAYMENT.SALE.COMPLETED' },
+            { name: 'PAYMENT.SALE.COMPLETED' },
             // { name: 'PAYMENT.SALE.DENIED' },
             // { name: 'PAYMENT.SALE.PENDING' },
-            // { name: 'PAYMENT.SALE.REFUNDED' },
+            { name: 'PAYMENT.SALE.REFUNDED' },
             // { name: 'PAYMENT.SALE.REVERSED' },
           ],
         },
@@ -166,6 +163,36 @@ export class PaypalApiService {
         console.error('[PayPal] Unexpected error:', error);
       }
       throw new Error('Failed to get PayPal subscription');
+    }
+  }
+
+  async getSubscriptionTransactions(
+    accessToken: string,
+    subscriptionId: string,
+  ): Promise<any> {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/transactions?start_time=2025-01-01T00:00:00.000Z&end_time=2030-01-01T00:00:00.000Z`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      if (axios.isAxiosError(error)) {
+        console.error(
+          '[PayPal] Subscription transaction fetch Axios error:',
+          error.response?.data || error.message,
+        );
+      } else {
+        console.error('[PayPal] Unexpected error:', error);
+      }
+      throw new Error('Failed to get PayPal subscription transactions');
     }
   }
 
