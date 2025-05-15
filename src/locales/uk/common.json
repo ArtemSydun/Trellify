@@ -1,245 +1,260 @@
 {
-    "fields": {
-        "author": "Автор",
-        "target": "Адресат",
-        "board": "Дошка",
-        "card": "Картка",
-        "date": "Дата",
-        "settings": "Налаштування",
-        "dashboard": "Панель управління"
+  "fields": {
+    "author": "Автор",
+    "target": "Адресат",
+    "board": "Дошка",
+    "card": "Картка",
+    "date": "Дата",
+    "settings": "Налаштування",
+    "dashboard": "Панель управління"
+  },
+  "messages": {
+    "general": {
+      "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
+      "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
+      "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
+      "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
+      "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
+      "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",
+      "profileFound": "Ваш аккаунт вже авторизовано. Щоб налаштувати сповіщення слідуйте [інструкції]({infoUrl})",
+      "help": {
+        "introMessage": "Привіт! Це Trellify — бот для сповіщень про події з Trello. \nЩоб користуватись нашим сервісом, будь ласка, виконайте декілька кроків",
+        "steps": [
+          "**Зареєструйтесь на сайті Trellify**: Відвідайте наш [вебсайт]({websiteUrl}) і створіть обліковий запис.",
+          "**Підключіть ваш Trello профіль**: Авторизуйтесь у Trello та зв'яжіть свій обліковий запис із Trellify.",
+          "**Підключіть ваш месенджер**: Використовуйте цього бота, щоб підключити ваш месенджер для отримання сповіщень.",
+          "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
+        ],
+        "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
+      }
     },
-    "messages": {
-        "general": {
-            "notificationsConnected": "Сповіщення до дошки [{boardName}]({boardUrl}) підключено успішно. Будь ласка, перевірте налаштування",
-            "notificationsDisconnected": "Сповіщення до дошки [{boardName}]({boardUrl}) були відключені. Будь ласка, перевірте статус сповіщень",
-            "connectionMessage": "Бот-сповіщувач Trellify успішно авторизований, щоб налаштувати сповіщення перейдіть за [посиланням]({workspacesLink})",
-            "disconnectionMessage": "Бот-сповіщувач Trellify успішно відключений",
-            "greetingsMessage": "Привіт {name}, авторизуйся щоб розпочати Trellify інтеграцію",
-            "authorizeThroughWebsite": "Авторизуйтесь через наш вебсайт",
-            "profileFound": "Ваш аккаунт вже авторизовано. Щоб налаштувати сповіщення слідуйте [інструкції]({infoUrl})",
-            "help": {
-                "introMessage": "Привіт! Це Trellify — бот для сповіщень про події з Trello. \nЩоб користуватись нашим сервісом, будь ласка, виконайте декілька кроків",
-                "steps": [
-                    "**Зареєструйтесь на сайті Trellify**: Відвідайте наш [вебсайт]({websiteUrl}) і створіть обліковий запис.",
-                    "**Підключіть ваш Trello профіль**: Авторизуйтесь у Trello та зв'яжіть свій обліковий запис із Trellify.",
-                    "**Підключіть ваш месенджер**: Використовуйте цього бота, щоб підключити ваш месенджер для отримання сповіщень.",
-                    "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
-                ],
-                "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
-            }
-        },
-        "email": {
-            "registrationEmailSubject": "Підтвердіть вашу пошту",
-            "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
-            "registrationEmailSentMessage": "Посилання для підтвердження реєстрації надіслано на вашу пошту {email}",
-            "deleteUserEmailSubject": "Запит на видалення аккаунту Trellify",
-            "deleteUserEmailMessage": "Якщо ви справді збираєтесь видалити свій аккаунт Trellify, перейдіть за посиланням",
-            "deleteUserEmailSentMessage": "Посилання для підтвердження видалення аккаунту Trellify надіслано на вашу пошту {email}",
-            "resetPasswordEmailSubject": "Запит на скидання паролю",
-            "resetPasswordEmailMessage": "Натисніть на посилання, щоб скинути ваш пароль",
-            "resetPasswordEmailSentMessage": "Посилання для підтвердження скидування паролю надіслано на вашу пошту {email}",
-            "changeMailEmailSubject": "Запит на зміну пошти",
-            "changeMailEmailMessage": "Натисніть на посилання щоб підтвердити зміну пошти",
-            "changeMailEmailSentMessage": "Посилання для підтвердження зміни пошти надіслано на вашу пошту {email}",
-            "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин",
-            "ignoreEmailDefaultMessage": "Якщо ви не робили запит на цю подію, будь ласка, проігноруйте цей лист",
-            "linkAvailableDefaultMessage": "Це посилання дійсне 15 хвилин"
-        },
-        "user": {
-            "created": "Користувача було успішно створено",
-            "updated": "Користувача {email} оновлено успішно",
-            "deleted": "Усі дані про користувача {email} було видалено.",
-            "subscriptionUpdated": "Підписку користувача {email} було успішно змінено на {subscription}",
-            "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
-            "passwordChangedSuccessfully": "Пароль було успішно змінено",
-            "emailChangedSuccessfully": "Пошту було успішно змінено"
-        },
-        "telegram": {
-            "connectedSuccessfully": "Телеграм аккаунт підключено успішно",
-            "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно",
-            "disconnectConfirmation": "Ви впевнені що бажаєте відключити телеграм аккаунт? Ви більше не будете отримувати сповіщення від Trellify",
-            "contactSupport": "Не знайшли відповідь на своє запитання? Сконтактуйте з нашою підтримкою {supportLink}"
-        },
-        "discord": {
-            "connectedSuccessfully": "Діскорд аккаунт підключено успішно",
-            "disconnectedSuccessfully": "Діскорд аккаунт відключено успішно",
-            "disconnectConfirmation": "Ви впевнені що бажаєте відключити діскорд аккаунт? Ви більше не будете отримувати сповіщення від Trellify"
-        },
-        "trello": {
-            "connectedSuccessfully": "Трело {username} підключено успішно",
-            "disconnectedSuccessfully": "Трело {username} відключено успішно",
-            "webhook": {
-                "webhookHealthIsOk": "Вебхук до дошки {board} активний",
-                "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз",
-                "webhooksWasUpdated": "Вебхуки було оновлено успішно",
-                "webhookWasDeleted": "Вебхук {webhook} успішно видалено з Trello і всіх підключених користувачів"
-            }
-        },
-        "subscription": {
-            "expiring": "Привіт. Дружнє нагадування, що твоя {subscription} підписка закінчується протягом 24 годин.",
-            "createdSuccessfully": "План підписки {subscription} створено усіпшно",
-            "updatedSuccessfully": "План підписки {subscription} оновлено успішно",
-            "deletedSuccessfully": "План підписки {subscription} видалено успішно",
-            "userChangedSuccessfully": "Користувач {email} успішно змінив свою підписку на {subscription}"
-        },
-        "distribution": {
-            "subscribed": "Ви будете отримувати новини з Trellify на пошту {email}",
-            "unsubscribed": "Пошта {email} видалена з підписки на новини Trellify",
-            "preferencesUpdated": "Налаштування підписки оновлено успішно для {email}"
-        },
-        "notifications": {
-            "personal": {
-                "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
-                "cardMemberRemovedSelf": "{userInitials}, вас було видалено з картки [{cardName}]({cardUrl}).",
-                "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
-                "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
-                "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
-                "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
-                "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
-            },
-            "card": {
-                "cardCreated": "Створено нову картку [{cardName}]({cardUrl}) на дошці [{boardName}]({boardUrl}).",
-                "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
-                "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
-                "cardUnarchived": "Картку [{cardName}]({cardUrl}) було розархівовано.",
-                "cardDeleted": "Картку було видалено зі списку {listName}.",
-                "cardMemberAdded": "Додано нового учасника [{memberName}]({memberUrl}) до картки [{cardName}]({cardUrl}).",
-                "cardMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з картки [{cardName}]({cardUrl}).",
-                "cardMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до картки [{cardName}]({cardUrl}).",
-                "cardMemberLeft": "Учасник [{memberName}]({memberUrl}) вийшов з картки [{cardName}]({cardUrl}).",
-                "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
-                "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
-                "cardDescriptionChanged": "Опис картки [{cardName}]({cardUrl}) було змінено.",
-                "cardCommentAdded": "До картки [{cardName}]({cardUrl}) додано коментар від користувача [{actionAuthor}]({actionAuthorUrl}): \n  '{commentText}'",
-                "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
-                "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
-                "cardStartDateRemoved": "Видалено дату початку в картці [{cardName}]({cardUrl}).",
-                "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
-                "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
-                "cardDueDateRemoved": "Дату виконання видалено з картки [{cardName}]({cardUrl}).",
-                "cardDueDateMarkedCompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як виконану.",
-                "cardDueDateMarkedIncompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як невиконану.",
-                "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
-                "cardAttachmentRemoved": "Видалено вкладення картки [{cardName}]({cardUrl}).",
-                "cardCustomFieldUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
-                "cardMovedFromBoard": "Картку [{cardName}]({cardUrl}) переміщено з дошки [{boardBefore}]({boardBeforeUrl}) в дошку [{boardAfter}]({boardAfterUrl}).",
-                "cardMovedToBoard": "Картку [{cardName}]({cardUrl}) переміщено в дошку [{boardAfter}]({boardAfterUrl}) з дошки [{boardBefore}]({boardBeforeUrl}).",
-                "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
-            },
-            "checklist": {
-                "checklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
-                "checklistRenamed": "Чек-лист '{oldChecklistName}' було перейменовано на '{checklistName}' в картці [{cardName}]({cardUrl}).",
-                "checklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
-                "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
-                "checklistItemRenamed": "Елемент чеклиста, '{oldChecklistItemName}', було перейменовано в '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
-                "checklistItemMemberAdded": "Додано учасника [{memberName}]({memberUrl}) до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemMemberLeft": "Учасник [{memberName}]({memberUrl}) залишив елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
-                "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
-                "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
-                "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку."
-            },
-            "list": {
-                "listCreated": "Список {listName} було створено на дошці [{boardName}]({boardUrl})",
-                "listRenamed": "Список {oldListName} було перейменовано на {listName} на дошці [{boardName}]({boardUrl})",
-                "listArchived": "Список {listName} було заархівовано на дошці [{boardName}]({boardUrl})",
-                "listUnarchived": "Список {listName} було розархівовано на дошці [{boardName}]({boardUrl})",
-                "listDeleted": "Список {listName} було видалено з дошки [{boardName}]({boardUrl})"
-            },
-            "board": {
-                "boardRenamed": "Дошку '{oldBoardName}' було перейменовано на [{boardName}]({boardUrl}).",
-                "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}.",
-                "boardClosed": "Дошку {boardName} було закрито.",
-                "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито.",
-                "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
-                "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
-                "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
-                "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
-                "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
-                "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
-                "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
-                "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
-                "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
-                "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}."
-            }
-        },
-        "usedTrial": {
-            "deleted": "Пробний період скинуто для користувача Трело {trelloUserId}"
-        }
+    "email": {
+      "registrationEmailSubject": "Підтвердіть вашу пошту",
+      "registrationEmailMessage": "Будь ласка, підтвердьте вашу пошту, перейшовши за наступним посиланням",
+      "registrationEmailSentMessage": "Посилання для підтвердження реєстрації надіслано на вашу пошту {email}",
+      "deleteUserEmailSubject": "Запит на видалення аккаунту Trellify",
+      "deleteUserEmailMessage": "Якщо ви справді збираєтесь видалити свій аккаунт Trellify, перейдіть за посиланням",
+      "deleteUserEmailSentMessage": "Посилання для підтвердження видалення аккаунту Trellify надіслано на вашу пошту {email}",
+      "resetPasswordEmailSubject": "Запит на скидання паролю",
+      "resetPasswordEmailMessage": "Натисніть на посилання, щоб скинути ваш пароль",
+      "resetPasswordEmailSentMessage": "Посилання для підтвердження скидування паролю надіслано на вашу пошту {email}",
+      "changeMailEmailSubject": "Запит на зміну пошти",
+      "changeMailEmailMessage": "Натисніть на посилання щоб підтвердити зміну пошти",
+      "changeMailEmailSentMessage": "Посилання для підтвердження зміни пошти надіслано на вашу пошту {email}",
+      "contactUsEmailSentMessage": "Ваше повідомлення було надіслано команді Trellify. Очікуйте відповідь в межах 12 - 48 годин",
+      "ignoreEmailDefaultMessage": "Якщо ви не робили запит на цю подію, будь ласка, проігноруйте цей лист",
+      "linkAvailableDefaultMessage": "Це посилання дійсне 15 хвилин"
     },
-    "errors": {
-        "general": {
-            "default": "Сталася помилка, спробуйте трішки пізніше або зв'яжіться з підтримкою",
-            "invalidRequest": "Запит для поля {field} є недійсним.",
-            "invalidCredentials": "Недійсні облікові дані.",
-            "forbiddenResource": "Доступ до ресурсу заборонено",
-            "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
-            "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію",
-            "actionCanceled": "Виконання події відмінено"
-        },
-        "jwt": {
-            "invalidToken": "Ваш токен не є дійсним або закінчився термін дії"
-        },
-        "auth": {
-            "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
-            "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
-            "changeEmailSameAdress": "Нова адреса пошти не може співпадати з поточною"
-        },
-        "user": {
-            "notFoundByEmail": "Користувача з поштою {email} не знайдено",
-            "alreadyExist": "Користувач з поштою {email} вже існує",
-            "notFoundById": "Користувача з ідентифікатором {id} не знайдено",
-            "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
-        },
-        "telegram": {
-            "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify",
-            "botIsNotConnected": "Цей телеграм аккаунт не підключено до аккаунту Trellify",
-            "rateLimitExceeded": "Забагато запитів. Зачекай будь ласка {seconds} секунд"
-        },
-        "discord": {
-            "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify",
-            "botIsNotConnected": "Цей діскорд аккаунт не підключено до аккаунту Trellify"
-        },
-        "trello": {
-            "webhook": {
-                "youAreNotConnectedToWebhook": "Ви не підключені до цього вебхука",
-                "userIsNotConnectedToWebhook": "Користувач не підключений до вебхука {webhookId}",
-                "webhookIsAlreadyExist": "Вебхук для дошки {boardName} вже існує для цього користувача.",
-                "webhookNotFoundById": "Вебхук з ідентифікатором {webhookId} не знайдено",
-                "webhookNotFoundByBoardId": "Вебхук з ідентифікатором дошки {boardId} не знайдено",
-                "webhooksDisconnect": "Помилка відключення всіх вебхуків Trello",
-                "invalidWebhookId": "Невірний формат ідентифікатора вебхука",
-                "unathorizedPermission": "Автор токену не має дозволу переглядати цей контент",
-                "failedToUpdateWebhooks": "Сповіщення до дошок {failedWebhooks} не вдалося оновити"
-            },
-            "profile": {
-                "invalidToken": "Невалідний токен Trello. Будь ласка, переконайтеся в працездатності вашого токену",
-                "invalidAppKey": "Trellify не може отримати дані. Будь ласка, перевірте свій токен Трело, або напишіть в підтримку",
-                "checkConnection": "Будь ласка, перевірте ваше підключення до Trello",
-                "expiredToken": "Будь ласка, надайте токен з дійсною датою завершення",
-                "disconnectFirst": "Вам потрібно відключити наявний Trello аккаунт перед підключенням нового",
-                "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
-            },
-            "invalidEntityId": "Сутність не знайдено або вона була видалена"
-        },
-        "subscription": {
-            "hasSubscribers": "План підписки {subscription} досі має підписників",
-            "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
-            "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
-            "alreadyExist": "План підписки {subscription} вже існує",
-            "notFound": "Плану підписки {subscription} не існує",
-            "trialExpired": "Термін пробної підписки для цього користувача закінчився"
-        },
-        "distribution": {
-            "emailIsNotSubscribed": "Пошта {email} не підписана на розсилку новин Trellify",
-            "trellifyUserIsNotSubscribed": "Користувач Trellify {userId} не підписаний на розсилку новин"
-        },
-        "usedTrial": {
-            "notFound": "Пробна підписка не знайдена для користувача Трело {trelloUserId}"
-        }
+    "user": {
+      "created": "Користувача було успішно створено",
+      "updated": "Користувача {email} оновлено успішно",
+      "deleted": "Усі дані про користувача {email} було видалено.",
+      "subscriptionUpdated": "Підписку користувача {email} було успішно змінено на {subscription}",
+      "allWebhooksDisconnected": "Користувача {email} відключено від усіх сповіщень",
+      "passwordChangedSuccessfully": "Пароль було успішно змінено",
+      "emailChangedSuccessfully": "Пошту було успішно змінено"
+    },
+    "telegram": {
+      "connectedSuccessfully": "Телеграм аккаунт підключено успішно",
+      "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно",
+      "disconnectConfirmation": "Ви впевнені що бажаєте відключити телеграм аккаунт? Ви більше не будете отримувати сповіщення від Trellify",
+      "contactSupport": "Не знайшли відповідь на своє запитання? Сконтактуйте з нашою підтримкою {supportLink}"
+    },
+    "discord": {
+      "connectedSuccessfully": "Діскорд аккаунт підключено успішно",
+      "disconnectedSuccessfully": "Діскорд аккаунт відключено успішно",
+      "disconnectConfirmation": "Ви впевнені що бажаєте відключити діскорд аккаунт? Ви більше не будете отримувати сповіщення від Trellify"
+    },
+    "trello": {
+      "connectedSuccessfully": "Трело {username} підключено успішно",
+      "disconnectedSuccessfully": "Трело {username} відключено успішно",
+      "webhook": {
+        "webhookHealthIsOk": "Вебхук до дошки {board} активний",
+        "webhookWasRecreated": "Вебхук до дошки {board} був перестворений. Будь ласка, оновіть сторінку й спробуйте ще раз",
+        "webhooksWasUpdated": "Вебхуки було оновлено успішно",
+        "webhookWasDeleted": "Вебхук {webhook} успішно видалено з Trello і всіх підключених користувачів"
+      }
+    },
+    "subscription": {
+      "expiring": "Привіт. Дружнє нагадування, що твоя {subscription} підписка закінчується протягом 24 годин.",
+      "activated": "План підписки {subscription} буде активовано протягом 3 - 10 хвилин",
+      "cancelled": "План підписки {subscription} скасовано успішно. Ми не стягнемо оплату за наступний місяць",
+      "createdSuccessfully": "План підписки {subscription} створено усіпшно",
+      "updatedSuccessfully": "План підписки {subscription} оновлено успішно",
+      "deletedSuccessfully": "План підписки {subscription} видалено успішно",
+      "userChangedSuccessfully": "Користувач {email} успішно змінив свою підписку на {subscription}"
+    },
+    "distribution": {
+      "subscribed": "Ви будете отримувати новини з Trellify на пошту {email}",
+      "unsubscribed": "Пошта {email} видалена з підписки на новини Trellify",
+      "preferencesUpdated": "Налаштування підписки оновлено успішно для {email}"
+    },
+    "notifications": {
+      "personal": {
+        "cardMemberAddedSelf": "{userInitials}, вас було додано до картки [{cardName}]({cardUrl}).",
+        "cardMemberRemovedSelf": "{userInitials}, вас було видалено з картки [{cardName}]({cardUrl}).",
+        "checklistItemMemberAddedSelf": "{userInitials}, вас було додано до чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
+        "checklistItemMemberRemovedSelf": "{userInitials}, вас було видалено з чек-листа '{checklistItemName}', в картці [{cardName}]({cardUrl}).",
+        "boardAdminAddedSelf": "{userInitials}, вас було підвищено до адміністратора на дошці [{boardName}]({boardUrl}).",
+        "boardNormalRoleAddedSelf": "{userInitials}, вам було видано роль користувача на дошці [{boardName}]({boardUrl}).",
+        "boardMemberRemovedSelf": "{userInitials}, вас було видалено з дошки {boardName}."
+      },
+      "card": {
+        "cardCreated": "Створено нову картку [{cardName}]({cardUrl}) на дошці [{boardName}]({boardUrl}).",
+        "cardRenamed": "Картку перейменовано з {oldCardName} на [{cardName}]({cardUrl}).",
+        "cardArchived": "Картку [{cardName}]({cardUrl}) архівовано.",
+        "cardUnarchived": "Картку [{cardName}]({cardUrl}) було розархівовано.",
+        "cardDeleted": "Картку було видалено зі списку {listName}.",
+        "cardMemberAdded": "Додано нового учасника [{memberName}]({memberUrl}) до картки [{cardName}]({cardUrl}).",
+        "cardMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з картки [{cardName}]({cardUrl}).",
+        "cardMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до картки [{cardName}]({cardUrl}).",
+        "cardMemberLeft": "Учасник [{memberName}]({memberUrl}) вийшов з картки [{cardName}]({cardUrl}).",
+        "cardLabelAdded": "Додано мітку до картки [{cardName}]({cardUrl}).",
+        "cardLabelRemoved": "Видалено мітку з картки [{cardName}]({cardUrl}).",
+        "cardDescriptionChanged": "Опис картки [{cardName}]({cardUrl}) було змінено.",
+        "cardCommentAdded": "До картки [{cardName}]({cardUrl}) додано коментар від користувача [{actionAuthor}]({actionAuthorUrl}): \n  '{commentText}'",
+        "cardStartDateAdded": "Додано дату початку до картки [{cardName}]({cardUrl}).",
+        "cardStartDateChanged": "Оновлено дату початку в картці [{cardName}]({cardUrl}).",
+        "cardStartDateRemoved": "Видалено дату початку в картці [{cardName}]({cardUrl}).",
+        "cardDueDateAdded": "Додано дату виконання до картки [{cardName}]({cardUrl}).",
+        "cardDueDateChanged": "Оновлено дату виконання в картці [{cardName}]({cardUrl}).",
+        "cardDueDateRemoved": "Дату виконання видалено з картки [{cardName}]({cardUrl}).",
+        "cardDueDateMarkedCompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як виконану.",
+        "cardDueDateMarkedIncompleted": "Дату виконання картки [{cardName}]({cardUrl}) було позначено як невиконану.",
+        "cardAttachmentAdded": "Додано вкладення картки [{cardName}]({cardUrl}).",
+        "cardAttachmentRemoved": "Видалено вкладення картки [{cardName}]({cardUrl}).",
+        "cardCustomFieldUpdated": "Оновлено Статус поля {customFieldName} в картці [{cardName}]({cardUrl}).",
+        "cardMovedFromBoard": "Картку [{cardName}]({cardUrl}) переміщено з дошки [{boardBefore}]({boardBeforeUrl}) в дошку [{boardAfter}]({boardAfterUrl}).",
+        "cardMovedToBoard": "Картку [{cardName}]({cardUrl}) переміщено в дошку [{boardAfter}]({boardAfterUrl}) з дошки [{boardBefore}]({boardBeforeUrl}).",
+        "cardMovedToList": "Картку [{cardName}]({cardUrl}) було переміщено з {listBefore} до {listAfter}."
+      },
+      "checklist": {
+        "checklistAdded": "Додано чек-лист картки [{cardName}]({cardUrl}).",
+        "checklistRenamed": "Чек-лист '{oldChecklistName}' було перейменовано на '{checklistName}' в картці [{cardName}]({cardUrl}).",
+        "checklistRemoved": "Видалено чек-лист з картки [{cardName}]({cardUrl}).",
+        "checklistItemAdded": "Додано елемент чек-листа '{checklistItemName}' до картки [{cardName}]({cardUrl}).",
+        "checklistItemRenamed": "Елемент чеклиста, '{oldChecklistItemName}', було перейменовано в '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemDeleted": "Видалено елемент чек-листа '{checklistItemName}' з картки [{cardName}]({cardUrl}).",
+        "checklistItemMemberAdded": "Додано учасника [{memberName}]({memberUrl}) до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemMemberRemoved": "Видалено учасника [{memberName}]({memberUrl}) з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemMemberJoined": "Учасник [{memberName}]({memberUrl}) приєднався до елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemMemberLeft": "Учасник [{memberName}]({memberUrl}) залишив елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemDueDateUpdated": "Оновлено дату виконання для елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemDueDateDeleted": "Видалено Дату виконання з елемента чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}).",
+        "checklistItemCompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як виконаний.",
+        "checklistItemIncompleted": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було позначено як невиконаний.",
+        "checklistItemConvertedToCard": "Елемент чек-листа '{checklistItemName}' в картці [{cardName}]({cardUrl}) було перетворено на нову картку."
+      },
+      "list": {
+        "listCreated": "Список {listName} було створено на дошці [{boardName}]({boardUrl})",
+        "listRenamed": "Список {oldListName} було перейменовано на {listName} на дошці [{boardName}]({boardUrl})",
+        "listArchived": "Список {listName} було заархівовано на дошці [{boardName}]({boardUrl})",
+        "listUnarchived": "Список {listName} було розархівовано на дошці [{boardName}]({boardUrl})",
+        "listDeleted": "Список {listName} було видалено з дошки [{boardName}]({boardUrl})"
+      },
+      "board": {
+        "boardRenamed": "Дошку '{oldBoardName}' було перейменовано на [{boardName}]({boardUrl}).",
+        "boardPermLevelChanged": "Змінено видимість дошки [{boardName}]({boardUrl}) на {permissionLevelName}.",
+        "boardClosed": "Дошку {boardName} було закрито.",
+        "boardReopened": "Дошку [{boardName}]({boardUrl}) було знову відкрито.",
+        "boardMemberJoined": "Новий учасник [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}).",
+        "boardMemberInvitationJoined": "Користувач [{memberName}]({memberUrl}) приєднався до дошки [{boardName}]({boardUrl}) за запрошенням.",
+        "boardMemberLeft": "Користувач [{memberName}]({memberUrl}) залишив дошку [{boardName}]({boardUrl}).",
+        "boardMemberRemoved": "Користувача [{memberName}]({memberUrl}) було видалено з дошки [{boardName}]({boardUrl}).",
+        "boardAdminAdded": "На дошці [{boardName}]({boardUrl}) було додано нового адміністратора [{memberName}]({memberUrl}).",
+        "boardNormalRoleAdded": "На дошці [{boardName}]({boardUrl}) було змінено роль на звичайну для користувача [{memberName}]({memberUrl}).",
+        "boardNormalRoleBecame": "На дошці [{boardName}]({boardUrl}) користувач [{memberName}]({memberUrl}) понизив свою роль.",
+        "customFieldCreated": "На дошці [{boardName}]({boardUrl}) створено нове спеціальне поле {customFieldName}.",
+        "customFieldRenamed": "На дошці [{boardName}]({boardUrl}) перейменовано спеціальне поле з {oldCustomFieldName} на {customFieldName}.",
+        "customFieldDeleted": "На дошці [{boardName}]({boardUrl}) видалено спеціальне поле {customFieldName}."
+      }
+    },
+    "usedTrial": {
+      "deleted": "Пробний період скинуто для користувача Трело {trelloUserId}"
+    },
+    "payPal": {
+      "webhook": {
+        "createdSuccessfully": "Вебхук з пейпал для Треліфай створено успішно",
+        "deletedSuccessfully": "Вебхук з пейпал {webhookId} видалено успішно"
+      }
     }
+  },
+  "errors": {
+    "general": {
+      "default": "Сталася помилка, спробуйте трішки пізніше або зв'яжіться з підтримкою",
+      "invalidRequest": "Запит для поля {field} є недійсним.",
+      "invalidCredentials": "Недійсні облікові дані.",
+      "forbiddenResource": "Доступ до ресурсу заборонено",
+      "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
+      "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію",
+      "actionCanceled": "Виконання події відмінено"
+    },
+    "jwt": {
+      "invalidToken": "Ваш токен не є дійсним або закінчився термін дії"
+    },
+    "auth": {
+      "resetPasswordMismatch": "Пароль і повторний пароль не співпадають",
+      "changePasswordSamePass": "Новий пароль не може співпадати з попереднім",
+      "changeEmailSameAdress": "Нова адреса пошти не може співпадати з поточною"
+    },
+    "user": {
+      "notFoundByEmail": "Користувача з поштою {email} не знайдено",
+      "alreadyExist": "Користувач з поштою {email} вже існує",
+      "notFoundById": "Користувача з ідентифікатором {id} не знайдено",
+      "notFoundByProperty": "Користувача з параметром {path}: {value} не знайдено"
+    },
+    "telegram": {
+      "botAlreadyConnected": "Цей телеграм аккаунт уже підключений до аккаунту Trellify",
+      "botIsNotConnected": "Цей телеграм аккаунт не підключено до аккаунту Trellify",
+      "rateLimitExceeded": "Забагато запитів. Зачекай будь ласка {seconds} секунд"
+    },
+    "discord": {
+      "botAlreadyConnected": "Цей діскорд аккаунт уже підключений до аккаунту Trellify",
+      "botIsNotConnected": "Цей діскорд аккаунт не підключено до аккаунту Trellify"
+    },
+    "trello": {
+      "webhook": {
+        "youAreNotConnectedToWebhook": "Ви не підключені до цього вебхука",
+        "userIsNotConnectedToWebhook": "Користувач не підключений до вебхука {webhookId}",
+        "webhookIsAlreadyExist": "Вебхук для дошки {boardName} вже існує для цього користувача.",
+        "webhookNotFoundById": "Вебхук з ідентифікатором {webhookId} не знайдено",
+        "webhookNotFoundByBoardId": "Вебхук з ідентифікатором дошки {boardId} не знайдено",
+        "webhooksDisconnect": "Помилка відключення всіх вебхуків Trello",
+        "invalidWebhookId": "Невірний формат ідентифікатора вебхука",
+        "unathorizedPermission": "Автор токену не має дозволу переглядати цей контент",
+        "failedToUpdateWebhooks": "Сповіщення до дошок {failedWebhooks} не вдалося оновити"
+      },
+      "profile": {
+        "invalidToken": "Невалідний токен Trello. Будь ласка, переконайтеся в працездатності вашого токену",
+        "invalidAppKey": "Trellify не може отримати дані. Будь ласка, перевірте свій токен Трело, або напишіть в підтримку",
+        "checkConnection": "Будь ласка, перевірте ваше підключення до Trello",
+        "expiredToken": "Будь ласка, надайте токен з дійсною датою завершення",
+        "disconnectFirst": "Вам потрібно відключити наявний Trello аккаунт перед підключенням нового",
+        "alreadyConnected": "Цей профіль Trello вже прив'язаний до іншого користувача"
+      },
+      "invalidEntityId": "Сутність не знайдено або вона була видалена"
+    },
+    "subscription": {
+      "hasSubscribers": "План підписки {subscription} досі має підписників",
+      "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
+      "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
+      "alreadyExist": "План підписки {subscription} вже існує",
+      "alreadyCancelled": "Підписку {subscription} вже скасовано",
+      "notFound": "Плану підписки {subscription} не існує",
+      "trialExpired": "Термін пробної підписки для цього користувача закінчився"
+    },
+    "distribution": {
+      "emailIsNotSubscribed": "Пошта {email} не підписана на розсилку новин Trellify",
+      "trellifyUserIsNotSubscribed": "Користувач Trellify {userId} не підписаний на розсилку новин"
+    },
+    "usedTrial": {
+      "notFound": "Пробна підписка не знайдена для користувача Трело {trelloUserId}"
+    },
+    "payPal": {
+      "webhook": {
+        "alreadyExist": "Вебхук з пейпалу для Треліфай уже існує",
+        "doesNotExist": "Вебхук з пейпалу {webhookId} не існує"
+      }
+    }
+  }
 }

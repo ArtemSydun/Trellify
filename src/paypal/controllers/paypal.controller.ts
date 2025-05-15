@@ -45,8 +45,8 @@ export class PaypalController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Delete('webhook/:webhookId')
-  deleteWebhook(@Param('webhookId') webhookId: string) {
-    return this.paypalLogicService.deleteWebhook(webhookId);
+  deleteWebhook(@Param('webhookId') webhookId: string, @Req() req) {
+    return this.paypalLogicService.deleteWebhook(webhookId, req.i18nContext);
   }
 
   @ApiExcludeEndpoint()

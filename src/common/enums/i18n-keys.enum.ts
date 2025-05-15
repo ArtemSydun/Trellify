@@ -70,6 +70,8 @@ export enum I18nKeys {
   MESSAGES_TRELLO_WEBHOOKS_WAS_DELETED = 'common.messages.trello.webhook.webhookWasDeleted',
   //Subscriptions messages
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
+  MESSAGES_SUBSCRIPTION_ACTIVATED = 'common.messages.subscription.activated',
+  MESSAGES_SUBSCRIPTION_CANCELLED = 'common.messages.subscription.cancelled',
   MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY = 'common.messages.subscription.createdSuccessfully',
   MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY = 'common.messages.subscription.updatedSuccessfully',
   MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
@@ -168,6 +170,10 @@ export enum I18nKeys {
   // Used trials
   MESSAGES_USED_TRIAL_DELETED = 'common.messages.usedTrial.deleted',
 
+  // Paypal
+  MESSAGES_PAYPAL_WEBHOOK_CREATED_SUCCESSFULLY = 'common.messages.payPal.webhook.createdSuccessfully',
+  MESSAGES_PAYPAL_WEBHOOK_DELETED_SUCCESSFULLY = 'common.messages.payPal.webhook.deletedSuccessfully',
+
   // General Errors
   ERRORS_GENERAL_DEFAULT = 'common.errors.general.default',
   ERRORS_GENERAL_INVALID_REQUEST = 'common.errors.general.invalidRequest',
@@ -223,6 +229,7 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_NOT_SUBSCRIBED = 'common.errors.subscription.userNotSubscribed',
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
+  ERRORS_SUBSCRIPTION_ALREADY_CANCELLED = 'common.errors.subscription.alreadyCancelled',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
 
@@ -230,5 +237,10 @@ export enum I18nKeys {
   ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED = 'common.errors.distribution.emailIsNotSubscribed',
   ERRORS_DISTRIBUTION_TRELLIFY_USER_IS_NOT_SUBSCRIBED = 'common.errors.distribution.trellifyUserIsNotSubscribed',
 
+  // Used trials
   ERRORS_USED_TRIAL_NOT_FOUND = 'common.errors.usedTrial.notFound',
+
+  // PayPal
+  ERRORS_PAYPAL_WEBHOOK_ALREADY_EXIST = 'common.errors.payPal.webhook.alreadyExist',
+  ERRORS_PAYPAL_WEBHOOK_DOES_NOT_EXIST = 'common.errors.payPal.webhook.doesNotExist',
 }

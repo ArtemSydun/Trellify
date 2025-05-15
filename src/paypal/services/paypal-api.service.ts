@@ -13,26 +13,30 @@ export class PaypalApiService {
 
   private clientId = this.sharedConfigService.getPaypalClientId();
   private clientSecret = this.sharedConfigService.getPaypalClientSecret();
-  private baseURL = this.sharedConfigService.getPaypalApiUrl(); // change to live later
+  private baseURL = this.sharedConfigService.getPaypalApiUrl(); // switch to live if needed
 
   public async getAccessToken(): Promise<string> {
     const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
       'base64',
     );
 
-    const response = await axios.post(
-      `${this.baseURL}/v1/oauth2/token`,
-      'grant_type=client_credentials',
-      {
-        headers: {
-          Authorization: `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/v1/oauth2/token`,
+        'grant_type=client_credentials',
+        {
+          headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         },
-      },
-    );
+      );
 
-    console.log('access token: ', response.data.access_token);
-    return response.data.access_token;
+      console.log('access token: ', response.data.access_token);
+      return response.data.access_token;
+    } catch (error: any) {
+      this.handleError('[PayPal] Access Token Error', error);
+    }
   }
 
   async findWebhooks(accessToken: string): Promise<any> {
@@ -48,16 +52,8 @@ export class PaypalApiService {
       );
 
       return response.data?.webhooks;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Find Webhook Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to find PayPal webhooks');
+    } catch (error: any) {
+      this.handleError('[PayPal] Find Webhook', error);
     }
   }
 
@@ -68,23 +64,11 @@ export class PaypalApiService {
         {
           url: `${this.configService.get(configServiceKeys.BACKEND_LINK)}/paypal/webhook/callback`,
           event_types: [
-            // { name: '*' },
-            // // 🔄 Subscription lifecycle
             { name: 'BILLING.SUBSCRIPTION.CREATED' },
             { name: 'BILLING.SUBSCRIPTION.ACTIVATED' },
-            // { name: 'BILLING.SUBSCRIPTION.UPDATED' },
-            // { name: 'BILLING.SUBSCRIPTION.SUSPENDED' },
-            // { name: 'BILLING.SUBSCRIPTION.RE-ACTIVATED' },
             { name: 'BILLING.SUBSCRIPTION.CANCELLED' },
-            // { name: 'BILLING.SUBSCRIPTION.EXPIRED' },
-            // { name: 'BILLING.SUBSCRIPTION.PAYMENT.FAILED' },
-
-            // // 💰 Payment related to subscriptions
             { name: 'PAYMENT.SALE.COMPLETED' },
-            // { name: 'PAYMENT.SALE.DENIED' },
-            // { name: 'PAYMENT.SALE.PENDING' },
             { name: 'PAYMENT.SALE.REFUNDED' },
-            // { name: 'PAYMENT.SALE.REVERSED' },
           ],
         },
         {
@@ -97,16 +81,8 @@ export class PaypalApiService {
 
       console.log('[PayPal] Webhook created:', response.data);
       return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Create Webhook Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to create PayPal webhook');
+    } catch (error: any) {
+      this.handleError('[PayPal] Create Webhook', error);
     }
   }
 
@@ -124,16 +100,8 @@ export class PaypalApiService {
 
       console.log('[PayPal] Webhook deleted:', response.data);
       return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Delete Webhook Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to delete PayPal webhook');
+    } catch (error: any) {
+      this.handleError('[PayPal] Delete Webhook', error);
     }
   }
 
@@ -153,16 +121,8 @@ export class PaypalApiService {
       );
 
       return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Subscription fetch Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to get PayPal subscription');
+    } catch (error: any) {
+      this.handleError('[PayPal] Subscription Fetch', error);
     }
   }
 
@@ -182,17 +142,8 @@ export class PaypalApiService {
       );
 
       return response.data;
-    } catch (error) {
-      console.log(error);
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Subscription transaction fetch Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to get PayPal subscription transactions');
+    } catch (error: any) {
+      this.handleError('[PayPal] Subscription Transactions Fetch', error);
     }
   }
 
@@ -204,9 +155,7 @@ export class PaypalApiService {
     try {
       const response = await axios.post(
         `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/cancel`,
-        {
-          reason,
-        },
+        { reason },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -217,16 +166,21 @@ export class PaypalApiService {
 
       console.log('[PayPal] Subscription canceled:', response.data);
       return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(
-          '[PayPal] Subscription cancelation Axios error:',
-          error.response?.data || error.message,
-        );
-      } else {
-        console.error('[PayPal] Unexpected error:', error);
-      }
-      throw new Error('Failed to cancel PayPal subscription');
+    } catch (error: any) {
+      this.handleError('[PayPal] Cancel Subscription', error);
     }
+  }
+
+  // ✅ Simplified reusable error handler
+  private handleError(
+    context: string,
+    error: any,
+    translatedMessage?: string,
+  ): never {
+    console.error(
+      `${context} error:`,
+      error?.response?.data || error?.message || error,
+    );
+    throw new Error(translatedMessage || 'PayPal request failed');
   }
 }

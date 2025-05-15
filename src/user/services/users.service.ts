@@ -683,17 +683,18 @@ export class UsersService {
       );
     }
 
+    // order matters
     const oldSubscription = await this.subscriptionService.getSubscription(
       userToUpdate.subscription.id,
     );
-
-    const newSubscription =
-      await this.subscriptionService.getSubscription(subscription);
 
     await this.subscriptionService.removeSubscriberFromPlan(
       oldSubscription,
       userToUpdate.id,
     );
+
+    const newSubscription =
+      await this.subscriptionService.getSubscription(subscription);
 
     await this.subscriptionService.addSubscriberToPlan(
       newSubscription,
@@ -1246,90 +1247,28 @@ export class UsersService {
 
     if (subscriber.id !== userId) {
       throw new BadRequestException(
-        'You are not allowed to cancel somebodys subscription',
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'You are not allowed to cancel somebodys subscription',
       );
     }
 
     await this.subscriptionService.cancelPaypalSubscription(
       paypalSubscriptionId,
       reason,
+      i18n,
     );
 
     return {
-      message: 'Subscription cancelled successfully',
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
+          args: {
+            subscription: subscriber?.subscription?.plan,
+          },
+        }) || 'Subscription cancelled successfully',
       statusCode: HttpStatus.OK,
     };
   }
 
-  //user self change after payment
-  // public async changeSubscriptionPlan(
-  //   user: string | User,
-  //   targetSubscriptionId: string,
-  //   paypalSubscriptionId: string,
-  //   amount: string,
-  //   paymentDate: Date,
-  //   i18n?: I18nContext,
-  // ): Promise<DefaultResponse<User>> {
-  //   const userToUpdate = await this.getUser(user, i18n);
-
-  //   const oldSubscription = await this.subscriptionService.getSubscription(
-  //     userToUpdate.subscription.id,
-  //     i18n,
-  //   );
-
-  //   await this.subscriptionService.removeSubscriberFromPlan(
-  //     oldSubscription,
-  //     userToUpdate,
-  //     i18n,
-  //   );
-
-  //   const newSubscription = await this.subscriptionService.getSubscription(
-  //     targetSubscriptionId,
-  //     i18n,
-  //   );
-
-  //   await this.subscriptionService.addSubscriberToPlan(
-  //     newSubscription,
-  //     userToUpdate,
-  //     i18n,
-  //   );
-
-  //   const parsedAmount = parseFloat(amount);
-  //   if (isNaN(parsedAmount)) {
-  //     throw new Error(`Invalid amount value: ${amount}`);
-  //   }
-
-  //   const nextPaymentDate = new Date(paymentDate);
-  //   nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
-
-  //   const updatedUser = await this.updateUser(userToUpdate, {
-  //     subscription: {
-  //       ...userToUpdate.subscription,
-  //       id: newSubscription.id,
-  //       plan: newSubscription.name as SubscriptionPlans,
-  //       expired: false,
-  //       paypalSubscriptionId,
-  //       lastPaymentId: null,
-  //       lastAmount: parsedAmount,
-  //       totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
-  //       lastPaymentDate: paymentDate,
-  //       nextPaymentDate,
-  //     },
-  //   });
-
-  //   return {
-  //     message:
-  //       i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
-  //         args: {
-  //           email: userToUpdate.email,
-  //           subscription: newSubscription.name,
-  //         },
-  //       }) ||
-  //       `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
-  //     statusCode: HttpStatus.OK,
-  //     data: updatedUser.data,
-  //   };
-  // }
   public async changeSubscriptionPlan(
     user: string | User,
     targetSubscriptionId: string,
@@ -1362,6 +1301,7 @@ export class UsersService {
     );
 
     const parsedAmount = parseFloat(amount);
+
     if (isNaN(parsedAmount)) {
       throw new Error(`Invalid amount value: ${amount}`);
     }

@@ -1,14 +1,15 @@
 import {
-  BadRequestException,
   ConflictException,
   forwardRef,
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { I18nContext } from 'nestjs-i18n';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { User } from 'src/user/entities/user.entity';
@@ -21,6 +22,7 @@ import { PaypalApiService } from './paypal-api.service';
 
 @Injectable()
 export class PaypalLogicService {
+  private readonly logger = new Logger(PaypalLogicService.name);
   constructor(
     private readonly configService: ConfigService,
     private readonly sharedConfigService: SharedConfigService,
@@ -32,13 +34,16 @@ export class PaypalLogicService {
     private readonly usersService: UsersService,
   ) {}
 
-  async createWebhook(): Promise<any> {
+  async createWebhook(i18n?: I18nContext): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
     const webhooks = await this.paypalWebhookRepository.findAllPaypalWebhooks();
 
     if (webhooks.length > 0) {
-      throw new ConflictException(`Paypal webhook for Trellify already exist`);
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_PAYPAL_WEBHOOK_ALREADY_EXIST) ||
+          `Paypal webhook for Trellify already exist`,
+      );
     }
 
     const response = await this.paypalApiService.createWebhook(accessToken);
@@ -52,13 +57,15 @@ export class PaypalLogicService {
       await this.paypalWebhookRepository.create(newWebhook);
 
     return {
-      message: `Paypal webhook for Trellify created successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_PAYPAL_WEBHOOK_CREATED_SUCCESSFULLY) ||
+        `Paypal webhook for Trellify created successfully`,
       statusCode: HttpStatus.OK,
       data: createdWebhook,
     };
   }
 
-  async deleteWebhook(webhookId: string): Promise<any> {
+  async deleteWebhook(webhookId: string, i18n?: I18nContext): Promise<any> {
     const existingWebhook = await this.findWebhookById(webhookId);
 
     const accessToken = await this.paypalApiService.getAccessToken();
@@ -68,7 +75,12 @@ export class PaypalLogicService {
     await this.paypalWebhookRepository.deleteById(existingWebhook.id);
 
     return {
-      message: `Webhook ${webhookId} deleted successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_PAYPAL_WEBHOOK_DELETED_SUCCESSFULLY, {
+          args: {
+            webhookId,
+          },
+        }) || `Webhook ${webhookId} deleted successfully`,
       statusCode: HttpStatus.OK,
     };
   }
@@ -77,11 +89,18 @@ export class PaypalLogicService {
     return await this.paypalWebhookRepository.findAllPaypalWebhooks();
   }
 
-  async findWebhookById(webhookId: string): Promise<PaypalWebhook> {
+  async findWebhookById(
+    webhookId: string,
+    i18n?: I18nContext,
+  ): Promise<PaypalWebhook> {
     const webhook = await this.paypalWebhookRepository.findOneById(webhookId);
 
     if (!webhook) {
-      throw new NotFoundException(`Paypal webhook ${webhookId} does not exist`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_PAYPAL_WEBHOOK_DOES_NOT_EXIST, {
+          args: { webhookId },
+        }) || `Paypal webhook ${webhookId} does not exist`,
+      );
     }
 
     return webhook;
@@ -141,6 +160,7 @@ export class PaypalLogicService {
   async cancelSubscription(
     paypalSubscriptionId: string,
     reason: string,
+    i18n?: I18nContext,
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
@@ -150,9 +170,15 @@ export class PaypalLogicService {
     );
 
     if (subscriptionInfo?.status === 'CANCELLED') {
-      throw new BadRequestException(
-        'This subscription has been already cancelled',
+      this.logger.log(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_CANCELLED, {
+          args: {
+            subscription: paypalSubscriptionId,
+          },
+        }) || 'This subscription has been already cancelled',
       );
+
+      return;
     }
 
     const response = await this.paypalApiService.cancelSubscription(
