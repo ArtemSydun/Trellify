@@ -142,6 +142,8 @@ export class PaypalLogicService {
         console.log(`Payment failed for subscription: ${subscriptionId}`);
         break;
       case 'PAYMENT.SALE.COMPLETED':
+        // for test purposes, we got this event twice for some reason
+        console.log(event);
         await this.usersService.refreshSubscriptionPayment(
           subscriptionId,
           paymentId,
@@ -230,10 +232,10 @@ export class PaypalLogicService {
 
   async getLastSubscriptionPayment(subscriptionId: string): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
-
+    // 30 SECONDS TO VERIFY PAYMENT.
     // NECCESSARY BECAUSE PAYPAL SENDS WEBHOOK EVENT THAT SALE COMPLETED BEFORE
     // TRANSACTION STORED IN PAYPAL DATABASE, SO WE NEED TO WAIT.
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 10; attempt++) {
       const response = await this.paypalApiService.getSubscriptionTransactions(
         accessToken,
         subscriptionId,

@@ -1166,6 +1166,14 @@ export class UsersService {
       paypalSubscriptionId,
     );
 
+    if (paymentId && userToRefresh?.subscription?.lastPaymentId == paymentId) {
+      this.logger.warn(
+        `Payment ${paymentId} for user ${userToRefresh?.email} was already processed`,
+      );
+
+      return;
+    }
+
     const sub = userToRefresh?.subscription;
 
     const correspondingSubscription =
