@@ -72,6 +72,8 @@ export enum I18nKeys {
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
   MESSAGES_SUBSCRIPTION_ACTIVATED = 'common.messages.subscription.activated',
   MESSAGES_SUBSCRIPTION_CANCELLED = 'common.messages.subscription.cancelled',
+  MESSAGES_SUBSCRIPTION_REACTIVATED = 'common.messages.subscription.reactivated',
+  MESSAGES_SUBSCRIPTION_PAUSED = 'common.messages.subscription.paused',
   MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY = 'common.messages.subscription.createdSuccessfully',
   MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY = 'common.messages.subscription.updatedSuccessfully',
   MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
@@ -230,6 +232,8 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
   ERRORS_SUBSCRIPTION_ALREADY_CANCELLED = 'common.errors.subscription.alreadyCancelled',
+  ERRORS_SUBSCRIPTION_ALREADY_ACTIVATED = 'common.errors.subscription.alreadyActivated',
+  ERRORS_SUBSCRIPTION_ALREADY_PAUSED = 'common.errors.subscription.alreadyPaused',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
 

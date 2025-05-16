@@ -91,4 +91,22 @@ export class PaypalController {
       req.i18nContext,
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check subscription payment if something is wrong',
+    description: 'Check subscription payment if something is wrong.',
+  })
+  @ApiOkResponse({
+    description: 'Subscription payment checked. Everything is good',
+    type: User,
+  })
+  @Get('subscription-payment/check')
+  async checkSubscriptionPayment(@Req() req) {
+    return this.paypalLogicService.checkSubscriptionPayment(
+      req.user.id,
+      req.i18nContext,
+    );
+  }
 }

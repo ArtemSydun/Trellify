@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   HttpStatus,
@@ -8,6 +9,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { addDays, differenceInDays, parseISO } from 'date-fns';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
@@ -116,7 +118,8 @@ export class PaypalLogicService {
       event.resource?.shipping_amount?.currency_code ||
       event.resource?.amount?.currency;
     const paymentAmount =
-      event.resource?.shipping_amount?.value || event.resource?.amount?.total;
+      parseFloat(event.resource?.shipping_amount?.value) ||
+      parseFloat(event.resource?.amount?.total);
     const userId = event.resource?.custom_id || event.resource?.custom;
     const paymentId = event.resource?.id;
     const logData = {
@@ -129,6 +132,7 @@ export class PaypalLogicService {
       'Transaction amount': paymentAmount,
       'Transaction id': paymentId,
     };
+    const eventDate = event.resource?.create_time;
     console.log(JSON.stringify(logData, null, 2));
 
     switch (eventType) {
@@ -144,9 +148,11 @@ export class PaypalLogicService {
       case 'PAYMENT.SALE.COMPLETED':
         // for test purposes, we got this event twice for some reason
         console.log(event);
-        await this.usersService.refreshSubscriptionPayment(
+        await this.usersService.handlePaymentSaleCompleted(
           subscriptionId,
           paymentId,
+          paymentAmount,
+          eventDate,
         );
         console.log(`Payment completed for subscription: ${subscriptionId}`);
         break;
@@ -157,6 +163,68 @@ export class PaypalLogicService {
       default:
         console.log(`Unhandled event: ${eventType}`);
     }
+  }
+
+  async activateSubscription(
+    paypalSubscriptionId: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const accessToken = await this.paypalApiService.getAccessToken();
+
+    const subscriptionInfo = await this.paypalApiService.getSubscription(
+      accessToken,
+      paypalSubscriptionId,
+    );
+
+    if (subscriptionInfo?.status === 'ACTIVE') {
+      this.logger.log(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_CANCELLED, {
+          args: {
+            subscription: paypalSubscriptionId,
+          },
+        }) || 'This subscription has been already activated',
+      );
+
+      return;
+    }
+
+    const response = await this.paypalApiService.activateSubscription(
+      accessToken,
+      paypalSubscriptionId,
+    );
+
+    return response;
+  }
+
+  async pauseSubscription(
+    paypalSubscriptionId: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const accessToken = await this.paypalApiService.getAccessToken();
+
+    const subscriptionInfo = await this.paypalApiService.getSubscription(
+      accessToken,
+      paypalSubscriptionId,
+    );
+
+    if (subscriptionInfo?.status === 'SUSPENDED') {
+      this.logger.log(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_CANCELLED, {
+          args: {
+            subscription: paypalSubscriptionId,
+          },
+        }) || 'This subscription has been already paused',
+      );
+
+      return;
+    }
+
+    const response = await this.paypalApiService.pauseSubscription(
+      accessToken,
+      paypalSubscriptionId,
+    );
+
+    return response;
   }
 
   async cancelSubscription(
@@ -212,7 +280,6 @@ export class PaypalLogicService {
       subscriber,
       correspondingSubscription.id,
       paypalSubscriptionId,
-      amount,
       i18n,
     );
 
@@ -224,9 +291,72 @@ export class PaypalLogicService {
     }
 
     return {
-      message: `Subscription plan ${correspondingSubscription.name} activated successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+          args: {
+            email: updatedUser.email,
+            subscription: correspondingSubscription.name,
+          },
+        }) ||
+        `User ${updatedUser.email} successfully changed plan to ${correspondingSubscription.name}`,
       statusCode: HttpStatus.OK,
-      data: updatedUser.data,
+      data: updatedUser,
+    };
+  }
+
+  async checkSubscriptionPayment(
+    userId: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const requestedUser = await this.usersService.getUser(userId, i18n);
+
+    const sub = requestedUser?.subscription;
+
+    const lastPayment = await this.getLastSubscriptionPayment(
+      sub.paypalSubscriptionId,
+    );
+
+    if (!lastPayment?.time) {
+      throw new BadRequestException(
+        `No transactions found for your subscription`,
+      );
+    }
+
+    const lastPaymentDate = parseISO(lastPayment.time);
+    const now = new Date();
+
+    const daysSincePayment = differenceInDays(now, lastPaymentDate);
+
+    if (sub.expired && daysSincePayment <= 30) {
+      const lastAmount = parseFloat(
+        lastPayment?.amount_with_breakdown?.gross_amount?.value || '0',
+      );
+
+      const updatedSubscription = {
+        ...sub,
+        expired: false,
+        nextPaymentDate: addDays(parseISO(lastPayment.time), 30),
+        lastPaymentId: lastPayment.id,
+        lastAmount,
+        totalAmount: (sub.totalAmount || 0) + lastAmount,
+      };
+
+      const updatedUser = await this.usersService.updateUser(requestedUser, {
+        subscription: updatedSubscription,
+      });
+
+      return {
+        message: 'Your last transaction verified. Your subscription renewed',
+        statusCode: HttpStatus.OK,
+        data: updatedUser.data,
+      };
+    }
+
+    return {
+      message:
+        'Subscription is already active. If it`s not, contact Trellify support then',
+      statusCode: HttpStatus.OK,
+      data: requestedUser,
     };
   }
 
@@ -246,6 +376,7 @@ export class PaypalLogicService {
       }
 
       console.warn(
+        console.log(response?.transactions),
         `[PayPal] Attempt ${attempt + 1}: No transaction found, retrying...`,
       );
       await new Promise((res) => setTimeout(res, 3000)); // Wait 3 seconds before retry

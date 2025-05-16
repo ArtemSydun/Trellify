@@ -16,6 +16,7 @@ import {
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
+import { addDays } from 'date-fns';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
@@ -141,6 +142,8 @@ export class UsersService {
         lastAmount: 0,
         totalAmount: 0,
         expired: trialExpired,
+        isCancelled: false,
+        isPaused: false,
         lastPaymentDate: null,
         nextPaymentDate:
           usedTrial?.trialEnds ||
@@ -1159,20 +1162,11 @@ export class UsersService {
 
   public async refreshSubscriptionPayment(
     paypalSubscriptionId: string,
-    paymentId?: string,
   ): Promise<DefaultResponse<User>> {
     const userToRefresh = await this.findUserByProperty(
       UserSearchPath.PaypalSubscriptionId,
       paypalSubscriptionId,
     );
-
-    if (paymentId && userToRefresh?.subscription?.lastPaymentId == paymentId) {
-      this.logger.warn(
-        `Payment ${paymentId} for user ${userToRefresh?.email} was already processed`,
-      );
-
-      return;
-    }
 
     const sub = userToRefresh?.subscription;
 
@@ -1190,7 +1184,6 @@ export class UsersService {
       nextPaymentDate:
         paymentCheckResult?.nextPaymentDate || sub.nextPaymentDate,
       expired: !paymentCheckResult,
-      lastPaymentId: paymentId || sub.lastPaymentId,
     };
 
     if (paymentCheckResult) {
@@ -1199,6 +1192,61 @@ export class UsersService {
       updatedSubscription.totalAmount =
         (sub.totalAmount || 0) + (correspondingSubscription?.price || 0);
     }
+
+    const updatedUser = await this.updateUser(userToRefresh, {
+      subscription: updatedSubscription,
+    });
+
+    return {
+      message: `User monthly plan payment verified successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
+  public async handlePaymentSaleCompleted(
+    paypalSubscriptionId: string,
+    paymentId: string,
+    paymentAmount: number,
+    eventDate: string,
+  ): Promise<DefaultResponse<User>> {
+    const userToRefresh = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+    );
+
+    if (paymentId && userToRefresh?.subscription?.lastPaymentId == paymentId) {
+      this.logger.warn(
+        `Payment ${paymentId} for user ${userToRefresh?.email} was already processed`,
+      );
+
+      return;
+    }
+
+    const sub = userToRefresh?.subscription;
+    const paymentDate = new Date(eventDate);
+    const nextPaymentDate = addDays(paymentDate, 30);
+
+    const correspondingSubscription =
+      await this.subscriptionService.findSubscriptionById(sub?.id);
+
+    if (correspondingSubscription?.price !== paymentAmount) {
+      this.logger.warn(
+        `User ${userToRefresh?.email} paid ${paymentAmount} for subscription plan ${correspondingSubscription?.name}\n` +
+          `Current price: ${correspondingSubscription?.price}`,
+      );
+    }
+
+    const updatedSubscription = {
+      ...sub,
+      lastPaymentDate: paymentDate,
+      nextPaymentDate,
+      expired: false,
+      paypalSubscriptionId,
+      lastPaymentId: paymentId,
+      lastAmount: paymentAmount,
+      totalAmount: sub.totalAmount + paymentAmount,
+    };
 
     const updatedUser = await this.updateUser(userToRefresh, {
       subscription: updatedSubscription,
@@ -1238,6 +1286,86 @@ export class UsersService {
       message: `Subscription expired due to refund`,
       statusCode: HttpStatus.OK,
       data: updatedUser.data,
+    };
+  }
+
+  public async activateUserSubscription(
+    paypalSubscriptionId: string,
+    userId: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const subscriber = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    if (subscriber.id !== userId) {
+      throw new BadRequestException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'You are not allowed to pause somebodys subscription',
+      );
+    }
+
+    await this.subscriptionService.activatePaypalSubscription(
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    const newUserSubscription = {
+      ...subscriber.subscription,
+      isPaused: false,
+    };
+
+    const updatedUser = await this.updateUser(
+      subscriber,
+      { subscription: newUserSubscription },
+      i18n,
+    );
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
+          args: {
+            subscription: subscriber?.subscription?.plan,
+          },
+        }) || 'Subscription reactivated successfully',
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
+  public async pauseUserSubscription(
+    paypalSubscriptionId: string,
+    userId: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const subscriber = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    if (subscriber.id !== userId) {
+      throw new BadRequestException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'You are not allowed to pause somebodys subscription',
+      );
+    }
+
+    await this.subscriptionService.pausePaypalSubscription(
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
+          args: {
+            subscription: subscriber?.subscription?.plan,
+          },
+        }) || 'Subscription paused successfully',
+      statusCode: HttpStatus.OK,
     };
   }
 
@@ -1281,9 +1409,8 @@ export class UsersService {
     user: string | User,
     targetSubscriptionId: string,
     paypalSubscriptionId: string,
-    amount: string,
     i18n?: I18nContext,
-  ): Promise<DefaultResponse<User>> {
+  ): Promise<User> {
     const userToUpdate = await this.getUser(user, i18n);
 
     const oldSubscription = await this.subscriptionService.getSubscription(
@@ -1308,37 +1435,17 @@ export class UsersService {
       i18n,
     );
 
-    const parsedAmount = parseFloat(amount);
-
-    if (isNaN(parsedAmount)) {
-      throw new Error(`Invalid amount value: ${amount}`);
-    }
-
     const updatedUser = await this.updateUser(userToUpdate, {
       subscription: {
         ...userToUpdate.subscription,
         id: newSubscription.id,
         plan: newSubscription.name as SubscriptionPlans,
-        expired: true,
+        expired: false,
         paypalSubscriptionId: paypalSubscriptionId,
-        lastPaymentId: null,
-        lastAmount: parsedAmount,
-        totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
       },
     });
 
-    return {
-      message:
-        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
-          args: {
-            email: userToUpdate.email,
-            subscription: newSubscription.name,
-          },
-        }) ||
-        `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
-      statusCode: HttpStatus.OK,
-      data: updatedUser.data,
-    };
+    return updatedUser.data;
   }
 
   public async contactUs(

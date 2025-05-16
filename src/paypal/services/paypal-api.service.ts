@@ -126,6 +126,7 @@ export class PaypalApiService {
     }
   }
 
+  // from 2025 to 2030, could be refactored to accept dynamic dates
   async getSubscriptionTransactions(
     accessToken: string,
     subscriptionId: string,
@@ -144,6 +145,50 @@ export class PaypalApiService {
       return response.data;
     } catch (error: any) {
       this.handleError('[PayPal] Subscription Transactions Fetch', error);
+    }
+  }
+
+  async pauseSubscription(
+    accessToken: string,
+    subscriptionId: string,
+  ): Promise<any> {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/suspend`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      console.log('[PayPal] Subscription paused:', response.data);
+      return response.data;
+    } catch (error: any) {
+      this.handleError('[PayPal] Pause Subscription', error);
+    }
+  }
+
+  async activateSubscription(
+    accessToken: string,
+    subscriptionId: string,
+  ): Promise<any> {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/activate`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      console.log('[PayPal] Subscription reactivated:', response.data);
+      return response.data;
+    } catch (error: any) {
+      this.handleError('[PayPal] Reactivate Subscription', error);
     }
   }
 
