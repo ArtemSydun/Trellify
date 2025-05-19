@@ -151,10 +151,12 @@ export class PaypalApiService {
   async pauseSubscription(
     accessToken: string,
     subscriptionId: string,
+    reason: string,
   ): Promise<any> {
     try {
       const response = await axios.post(
         `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/suspend`,
+        { reason },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

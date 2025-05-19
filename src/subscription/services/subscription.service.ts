@@ -336,10 +336,12 @@ export class SubscriptionService {
 
   async pausePaypalSubscription(
     paypalSubscriptionId: string,
+    reason: string,
     i18n?: I18nContext,
   ): Promise<any> {
     const response = await this.paypalService.pauseSubscription(
       paypalSubscriptionId,
+      reason,
       i18n,
     );
 

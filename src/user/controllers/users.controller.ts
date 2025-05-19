@@ -632,6 +632,55 @@ export class UsersController {
       req.i18nContext,
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/subscription/:paypalSubscriptionId/activate')
+  @ApiOperation({
+    summary: 'User subscription reactivating',
+    description: 'This endpoint allows user to reactivate his subscription',
+  })
+  @ApiOkResponse({
+    description: 'User subscription reactivated successfully',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  activateSubscriptionById(
+    @Param('paypalSubscriptionId') paypalSubscriptionId: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.activateUserSubscription(
+      paypalSubscriptionId,
+      req.user.id,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/subscription/:paypalSubscriptionId/pause')
+  @ApiOperation({
+    summary: 'User subscription pausing',
+    description: 'This endpoint allows user to pause his subscription',
+  })
+  @ApiOkResponse({
+    description: 'User subscription paused successfully',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  pauseSubscriptionById(
+    @Param('paypalSubscriptionId') paypalSubscriptionId: string,
+    @Body('reason') reason: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.pauseUserSubscription(
+      paypalSubscriptionId,
+      req.user.id,
+      reason,
+      req.i18nContext,
+    );
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('/subscription/:paypalSubscriptionId/cancel')
   @ApiOperation({

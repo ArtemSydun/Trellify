@@ -297,6 +297,20 @@ export class UsersService {
       targetUser,
     );
 
+    if (
+      targetUser?.subscription?.paypalSubscriptionId &&
+      targetUser?.subscription?.isCancelled
+    ) {
+      try {
+        await this.subscriptionService.cancelPaypalSubscription(
+          targetUser?.subscription?.paypalSubscriptionId,
+          'User deleted from Trellify',
+        );
+      } catch (err) {
+        this.logger.warn(err);
+      }
+    }
+
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
         AdminBotActions.USER_DELETED,
@@ -309,6 +323,7 @@ export class UsersService {
       periodStatsKeys.DELETED_USERS,
       targetUser.email,
     );
+
     await this.redisService.updateWeeklyStats(
       periodStatsKeys.DELETED_USERS,
       targetUser.email,
@@ -1300,7 +1315,7 @@ export class UsersService {
       i18n,
     );
 
-    if (subscriber.id !== userId) {
+    if (subscriber?.id !== userId) {
       throw new BadRequestException(
         i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
           'You are not allowed to pause somebodys subscription',
@@ -1338,6 +1353,7 @@ export class UsersService {
   public async pauseUserSubscription(
     paypalSubscriptionId: string,
     userId: string,
+    reason: string,
     i18n?: I18nContext,
   ): Promise<any> {
     const subscriber = await this.findUserByProperty(
@@ -1355,6 +1371,7 @@ export class UsersService {
 
     await this.subscriptionService.pausePaypalSubscription(
       paypalSubscriptionId,
+      reason,
       i18n,
     );
 

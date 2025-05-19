@@ -198,6 +198,7 @@ export class PaypalLogicService {
 
   async pauseSubscription(
     paypalSubscriptionId: string,
+    reason: string,
     i18n?: I18nContext,
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
@@ -222,6 +223,7 @@ export class PaypalLogicService {
     const response = await this.paypalApiService.pauseSubscription(
       accessToken,
       paypalSubscriptionId,
+      reason,
     );
 
     return response;
@@ -354,7 +356,7 @@ export class PaypalLogicService {
 
     return {
       message:
-        'Subscription is already active. If it`s not, contact Trellify support then',
+        'Subscription is already active. If it is not, contact Trellify support then',
       statusCode: HttpStatus.OK,
       data: requestedUser,
     };
