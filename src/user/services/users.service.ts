@@ -299,7 +299,7 @@ export class UsersService {
 
     if (
       targetUser?.subscription?.paypalSubscriptionId &&
-      targetUser?.subscription?.isCancelled
+      !targetUser?.subscription?.isCancelled
     ) {
       try {
         await this.subscriptionService.cancelPaypalSubscription(
