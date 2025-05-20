@@ -178,7 +178,7 @@ export class PaypalLogicService {
 
     if (subscriptionInfo?.status === 'ACTIVE') {
       this.logger.log(
-        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_CANCELLED, {
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_ACTIVATED, {
           args: {
             subscription: paypalSubscriptionId,
           },
@@ -210,7 +210,7 @@ export class PaypalLogicService {
 
     if (subscriptionInfo?.status === 'SUSPENDED') {
       this.logger.log(
-        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_CANCELLED, {
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_PAUSED, {
           args: {
             subscription: paypalSubscriptionId,
           },
@@ -320,7 +320,8 @@ export class PaypalLogicService {
 
     if (!lastPayment?.time) {
       throw new BadRequestException(
-        `No transactions found for your subscription`,
+        i18n?.t(I18nKeys.ERRORS_PAYPAL_PAYMENT_NOT_FOUND) ||
+          `No transactions found for your subscription`,
       );
     }
 
@@ -348,7 +349,9 @@ export class PaypalLogicService {
       });
 
       return {
-        message: 'Your last transaction verified. Your subscription renewed',
+        message:
+          i18n?.t(I18nKeys.MESSAGES_PAYPAL_PAYMENT_VERIFIED) ||
+          'Your last transaction verified. Your subscription renewed',
         statusCode: HttpStatus.OK,
         data: updatedUser.data,
       };
@@ -356,7 +359,7 @@ export class PaypalLogicService {
 
     return {
       message:
-        'Subscription is already active. If it is not, contact Trellify support then',
+        'Subscription is already active. If it is not, please, contact Trellify support then',
       statusCode: HttpStatus.OK,
       data: requestedUser,
     };

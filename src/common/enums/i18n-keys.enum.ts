@@ -71,9 +71,9 @@ export enum I18nKeys {
   //Subscriptions messages
   MESSAGES_SUBSCRIPTION_EXPIRING = 'common.messages.subscription.expiring',
   MESSAGES_SUBSCRIPTION_ACTIVATED = 'common.messages.subscription.activated',
-  MESSAGES_SUBSCRIPTION_CANCELLED = 'common.messages.subscription.cancelled',
-  MESSAGES_SUBSCRIPTION_REACTIVATED = 'common.messages.subscription.reactivated',
   MESSAGES_SUBSCRIPTION_PAUSED = 'common.messages.subscription.paused',
+  MESSAGES_SUBSCRIPTION_REACTIVATED = 'common.messages.subscription.reactivated',
+  MESSAGES_SUBSCRIPTION_CANCELLED = 'common.messages.subscription.cancelled',
   MESSAGES_SUBSCRIPTION_CREATED_SUCCESSFULLY = 'common.messages.subscription.createdSuccessfully',
   MESSAGES_SUBSCRIPTION_UPDATED_SUCCESSFULLY = 'common.messages.subscription.updatedSuccessfully',
   MESSAGES_SUBSCRIPTION_DELETED_SUCCESSFULLY = 'common.messages.subscription.deletedSuccessfully',
@@ -173,6 +173,7 @@ export enum I18nKeys {
   MESSAGES_USED_TRIAL_DELETED = 'common.messages.usedTrial.deleted',
 
   // Paypal
+  MESSAGES_PAYPAL_PAYMENT_VERIFIED = 'common.messages.payPal.paymentVerified',
   MESSAGES_PAYPAL_WEBHOOK_CREATED_SUCCESSFULLY = 'common.messages.payPal.webhook.createdSuccessfully',
   MESSAGES_PAYPAL_WEBHOOK_DELETED_SUCCESSFULLY = 'common.messages.payPal.webhook.deletedSuccessfully',
 
@@ -231,9 +232,9 @@ export enum I18nKeys {
   ERRORS_SUBSCRIPTION_USER_NOT_SUBSCRIBED = 'common.errors.subscription.userNotSubscribed',
   ERRORS_SUBSCRIPTION_USER_ALREADY_SUBSCRIBED = 'common.errors.subscription.userAlreadySubscribed',
   ERRORS_SUBSCRIPTION_ALREADY_EXIST = 'common.errors.subscription.alreadyExist',
-  ERRORS_SUBSCRIPTION_ALREADY_CANCELLED = 'common.errors.subscription.alreadyCancelled',
   ERRORS_SUBSCRIPTION_ALREADY_ACTIVATED = 'common.errors.subscription.alreadyActivated',
   ERRORS_SUBSCRIPTION_ALREADY_PAUSED = 'common.errors.subscription.alreadyPaused',
+  ERRORS_SUBSCRIPTION_ALREADY_CANCELLED = 'common.errors.subscription.alreadyCancelled',
   ERRORS_SUBSCRIPTION_DOES_NOT_EXIST = 'common.errors.subscription.notFound',
   ERRORS_SUBSCRIPTION_TRIAL_EXPIRED = 'common.errors.subscription.trialExpired',
 
@@ -245,6 +246,7 @@ export enum I18nKeys {
   ERRORS_USED_TRIAL_NOT_FOUND = 'common.errors.usedTrial.notFound',
 
   // PayPal
+  ERRORS_PAYPAL_PAYMENT_NOT_FOUND = 'common.errors.payPal.paymentNotFound',
   ERRORS_PAYPAL_WEBHOOK_ALREADY_EXIST = 'common.errors.payPal.webhook.alreadyExist',
   ERRORS_PAYPAL_WEBHOOK_DOES_NOT_EXIST = 'common.errors.payPal.webhook.doesNotExist',
 }

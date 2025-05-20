@@ -1355,7 +1355,7 @@ export class UsersService {
     userId: string,
     reason: string,
     i18n?: I18nContext,
-  ): Promise<any> {
+  ): Promise<DefaultResponse<User>> {
     const subscriber = await this.findUserByProperty(
       UserSearchPath.PaypalSubscriptionId,
       paypalSubscriptionId,
@@ -1375,6 +1375,17 @@ export class UsersService {
       i18n,
     );
 
+    const updatedSubcription = {
+      ...subscriber.subscription,
+      isPaused: true,
+    };
+
+    const updatedUser = await this.updateUser(
+      subscriber,
+      { subscription: updatedSubcription },
+      i18n,
+    );
+
     return {
       message:
         i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
@@ -1383,6 +1394,7 @@ export class UsersService {
           },
         }) || 'Subscription paused successfully',
       statusCode: HttpStatus.OK,
+      data: updatedUser.data,
     };
   }
 
@@ -1391,7 +1403,7 @@ export class UsersService {
     userId: string,
     reason: string,
     i18n?: I18nContext,
-  ): Promise<any> {
+  ): Promise<DefaultResponse<User>> {
     const subscriber = await this.findUserByProperty(
       UserSearchPath.PaypalSubscriptionId,
       paypalSubscriptionId,
@@ -1411,6 +1423,17 @@ export class UsersService {
       i18n,
     );
 
+    const updatedSubscription = {
+      ...subscriber.subscription,
+      isCancelled: true,
+    };
+
+    const updatedUser = await this.updateUser(
+      subscriber,
+      { subscription: updatedSubscription },
+      i18n,
+    );
+
     return {
       message:
         i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
@@ -1419,6 +1442,7 @@ export class UsersService {
           },
         }) || 'Subscription cancelled successfully',
       statusCode: HttpStatus.OK,
+      data: updatedUser?.data,
     };
   }
 

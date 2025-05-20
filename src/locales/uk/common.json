@@ -175,6 +175,7 @@
       "deleted": "Пробний період скинуто для користувача Трело {trelloUserId}"
     },
     "payPal": {
+      "paymentVerified": "Останню транзакцію підтверджено, вашу підписку оновлено відповідно до останньої оплати",
       "webhook": {
         "createdSuccessfully": "Вебхук з пейпал для Треліфай створено успішно",
         "deletedSuccessfully": "Вебхук з пейпал {webhookId} видалено успішно"
@@ -241,6 +242,8 @@
       "userNotSubscribed": "Користувач {user} не є підписником {subscription} плану",
       "userAlreadySubscribed": "Користувач {user} уже підписник {subscription} плану",
       "alreadyExist": "План підписки {subscription} вже існує",
+      "alreadyActivated": "Підписку {subscription} вже активовано",
+      "alreadyPaused": "Підписку {subscription} вже призупинено",
       "alreadyCancelled": "Підписку {subscription} вже скасовано",
       "notFound": "Плану підписки {subscription} не існує",
       "trialExpired": "Термін пробної підписки для цього користувача закінчився"
@@ -253,6 +256,7 @@
       "notFound": "Пробна підписка не знайдена для користувача Трело {trelloUserId}"
     },
     "payPal": {
+      "paymentNotFound": "Не знайдено успішної транзакції до вашої підписки",
       "webhook": {
         "alreadyExist": "Вебхук з пейпалу для Треліфай уже існує",
         "doesNotExist": "Вебхук з пейпалу {webhookId} не існує"
