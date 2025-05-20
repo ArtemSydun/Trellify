@@ -282,11 +282,12 @@ export class CronService {
           await this.usersService.refreshSubscriptionStatus(
             user?.subscription?.paypalSubscriptionId,
           );
-          const result = await this.usersService.refreshSubscriptionPayment(
-            user?.subscription?.paypalSubscriptionId,
-          );
+          const updatedUser =
+            await this.usersService.refreshSubscriptionPayment(
+              user?.subscription?.paypalSubscriptionId,
+            );
 
-          return result.data.subscription.expired ? 'expired' : 'renewed';
+          return updatedUser?.subscription?.expired ? 'expired' : 'renewed';
         } catch (error) {
           this.logger.error(
             `Failed to process subscription for user ${user.id}`,

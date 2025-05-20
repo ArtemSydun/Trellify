@@ -1181,7 +1181,7 @@ export class UsersService {
 
   public async refreshSubscriptionPayment(
     paypalSubscriptionId: string,
-  ): Promise<DefaultResponse<User>> {
+  ): Promise<User> {
     const userToRefresh = await this.findUserByProperty(
       UserSearchPath.PaypalSubscriptionId,
       paypalSubscriptionId,
@@ -1216,11 +1216,7 @@ export class UsersService {
       subscription: updatedSubscription,
     });
 
-    return {
-      message: `User monthly plan payment verified successfully`,
-      statusCode: HttpStatus.OK,
-      data: updatedUser.data,
-    };
+    return updatedUser?.data;
   }
 
   public async refreshSubscriptionStatus(
