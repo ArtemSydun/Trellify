@@ -179,6 +179,7 @@ export class PaypalApiService {
     try {
       const response = await axios.post(
         `${this.baseURL}/v1/billing/subscriptions/${subscriptionId}/activate`,
+        { reason: 'Reactivating subscription' },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
