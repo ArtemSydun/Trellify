@@ -279,6 +279,9 @@ export class CronService {
     const results = await Promise.all(
       usersToRefresh.data.map(async (user) => {
         try {
+          await this.usersService.refreshSubscriptionStatus(
+            user?.subscription?.paypalSubscriptionId,
+          );
           const result = await this.usersService.refreshSubscriptionPayment(
             user?.subscription?.paypalSubscriptionId,
           );

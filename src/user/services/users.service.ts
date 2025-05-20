@@ -706,13 +706,17 @@ export class UsersService {
       userToUpdate.subscription.id,
     );
 
+    const newSubscription =
+      await this.subscriptionService.getSubscription(subscription);
+
+    if (oldSubscription?.name === newSubscription?.name) {
+      throw new ConflictException('User already has the same subscription');
+    }
+
     await this.subscriptionService.removeSubscriberFromPlan(
       oldSubscription,
       userToUpdate.id,
     );
-
-    const newSubscription =
-      await this.subscriptionService.getSubscription(subscription);
 
     await this.subscriptionService.addSubscriberToPlan(
       newSubscription,
@@ -1219,6 +1223,51 @@ export class UsersService {
     };
   }
 
+  public async refreshSubscriptionStatus(
+    paypalSubscriptionId: string,
+  ): Promise<User> {
+    const userToRefresh = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+    );
+
+    const sub = userToRefresh?.subscription;
+
+    const paypalSubscription =
+      await this.paypalLogicService.getSubscriptionInfo(paypalSubscriptionId);
+
+    const status = paypalSubscription?.status;
+
+    let isCancelled = false;
+    let isPaused = false;
+
+    switch (status) {
+      case 'CANCELLED':
+        isCancelled = true;
+        break;
+      case 'SUSPENDED':
+        isPaused = true;
+        break;
+      case 'ACTIVE':
+      default:
+        isCancelled = false;
+        isPaused = false;
+        break;
+    }
+
+    const updatedSubscription = {
+      ...sub,
+      isCancelled,
+      isPaused,
+    };
+
+    const updatedUser = await this.updateUser(userToRefresh, {
+      subscription: updatedSubscription,
+    });
+
+    return updatedUser.data;
+  }
+
   public async handlePaymentSaleCompleted(
     paypalSubscriptionId: string,
     paymentId: string,
@@ -1425,6 +1474,7 @@ export class UsersService {
 
     const updatedSubscription = {
       ...subscriber.subscription,
+      isPaused: false,
       isCancelled: true,
     };
 
@@ -1483,6 +1533,8 @@ export class UsersService {
         plan: newSubscription.name as SubscriptionPlans,
         expired: false,
         paypalSubscriptionId: paypalSubscriptionId,
+        isCancelled: false,
+        isPaused: false,
       },
     });
 

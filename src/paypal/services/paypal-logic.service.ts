@@ -171,7 +171,7 @@ export class PaypalLogicService {
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
-    const subscriptionInfo = await this.paypalApiService.getSubscription(
+    const subscriptionInfo = await this.paypalApiService.getSubscriptionInfo(
       accessToken,
       paypalSubscriptionId,
     );
@@ -203,12 +203,12 @@ export class PaypalLogicService {
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
-    const subscriptionInfo = await this.paypalApiService.getSubscription(
+    const subscriptionInfo = await this.paypalApiService.getSubscriptionInfo(
       accessToken,
       paypalSubscriptionId,
     );
 
-    if (subscriptionInfo?.status === 'SUSPENDED') {
+    if (subscriptionInfo?.status !== 'ACTIVE') {
       this.logger.log(
         i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_ALREADY_PAUSED, {
           args: {
@@ -236,7 +236,7 @@ export class PaypalLogicService {
   ): Promise<any> {
     const accessToken = await this.paypalApiService.getAccessToken();
 
-    const subscriptionInfo = await this.paypalApiService.getSubscription(
+    const subscriptionInfo = await this.paypalApiService.getSubscriptionInfo(
       accessToken,
       paypalSubscriptionId,
     );
@@ -363,6 +363,17 @@ export class PaypalLogicService {
       statusCode: HttpStatus.OK,
       data: requestedUser,
     };
+  }
+
+  async getSubscriptionInfo(subscriptionId: string): Promise<any> {
+    const accessToken = await this.paypalApiService.getAccessToken();
+
+    const response = await this.paypalApiService.getSubscriptionInfo(
+      accessToken,
+      subscriptionId,
+    );
+
+    return response;
   }
 
   async getLastSubscriptionPayment(subscriptionId: string): Promise<any> {

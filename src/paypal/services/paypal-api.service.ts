@@ -105,7 +105,7 @@ export class PaypalApiService {
     }
   }
 
-  async getSubscription(
+  async getSubscriptionInfo(
     accessToken: string,
     subscriptionId: string,
   ): Promise<any> {
