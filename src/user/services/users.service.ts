@@ -1251,6 +1251,14 @@ export class UsersService {
         break;
     }
 
+    // Check if any values actually changed
+    const hasChanged =
+      sub?.isCancelled !== isCancelled || sub?.isPaused !== isPaused;
+
+    if (!hasChanged) {
+      return userToRefresh;
+    }
+
     const updatedSubscription = {
       ...sub,
       isCancelled,
@@ -1385,7 +1393,7 @@ export class UsersService {
 
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_REACTIVATED, {
           args: {
             subscription: subscriber?.subscription?.plan,
           },
@@ -1433,7 +1441,7 @@ export class UsersService {
 
     return {
       message:
-        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_CANCELLED, {
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_PAUSED, {
           args: {
             subscription: subscriber?.subscription?.plan,
           },
