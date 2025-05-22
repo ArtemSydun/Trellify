@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { SharedConfigService } from 'src/config/services/shared.config.service';
 
 @Injectable()
@@ -57,12 +56,12 @@ export class PaypalApiService {
     }
   }
 
-  async createWebhook(accessToken: string): Promise<any> {
+  async createWebhook(accessToken: string, callbackURL: string): Promise<any> {
     try {
       const response = await axios.post(
         `${this.baseURL}/v1/notifications/webhooks`,
         {
-          url: `${this.configService.get(configServiceKeys.BACKEND_LINK)}/paypal/webhook/callback`,
+          url: callbackURL,
           event_types: [
             { name: 'BILLING.SUBSCRIPTION.CREATED' },
             { name: 'BILLING.SUBSCRIPTION.ACTIVATED' },

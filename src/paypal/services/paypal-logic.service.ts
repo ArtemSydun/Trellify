@@ -41,14 +41,19 @@ export class PaypalLogicService {
 
     const webhooks = await this.paypalWebhookRepository.findAllPaypalWebhooks();
 
-    if (webhooks.length > 0) {
+    const url = this.sharedConfigService.getPaypalWebhookUrl();
+
+    if (webhooks.find((webhook) => webhook.callbackURL === url)) {
       throw new ConflictException(
         i18n?.t(I18nKeys.ERRORS_PAYPAL_WEBHOOK_ALREADY_EXIST) ||
           `Paypal webhook for Trellify already exist`,
       );
     }
 
-    const response = await this.paypalApiService.createWebhook(accessToken);
+    const response = await this.paypalApiService.createWebhook(
+      accessToken,
+      url,
+    );
 
     const newWebhook: CreatePaypalWebhookDto = {
       id: response?.id,
@@ -122,6 +127,7 @@ export class PaypalLogicService {
       parseFloat(event.resource?.amount?.total);
     const userId = event.resource?.custom_id || event.resource?.custom;
     const paymentId = event.resource?.id;
+    const refundId = event.resource?.sale_id;
     const logData = {
       'Event type': eventType,
       'Paypal Plan Id': planId,
@@ -130,7 +136,7 @@ export class PaypalLogicService {
       'Email of payer': payerEmail,
       'Transaction currency': paymentCurrency,
       'Transaction amount': paymentAmount,
-      'Transaction id': paymentId,
+      'Transaction id': refundId || paymentId,
     };
     const eventDate = event.resource?.create_time;
     console.log(JSON.stringify(logData, null, 2));
@@ -157,8 +163,9 @@ export class PaypalLogicService {
         console.log(`Payment completed for subscription: ${subscriptionId}`);
         break;
       case 'PAYMENT.SALE.REFUNDED':
-        await this.usersService.handleRefundedSubscriptionPayment(paymentId);
-        console.log(`Payment refunded: ${paymentId}`);
+        console.log(event);
+        await this.usersService.handleRefundedSubscriptionPayment(refundId);
+        console.log(`Payment refunded: ${refundId}`);
         break;
       default:
         console.log(`Unhandled event: ${eventType}`);

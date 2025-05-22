@@ -1335,20 +1335,22 @@ export class UsersService {
       paymentId,
     );
 
+    await this.subscriptionService.cancelPaypalSubscription(
+      refundedUser?.subscription?.paypalSubscriptionId,
+      'Refund requested',
+    );
+
     const updatedSubscription = {
       ...refundedUser?.subscription,
       nextPaymentDate: null,
       expired: true,
+      isCancelled: true,
+      isPaused: false,
     };
 
     const updatedUser = await this.updateUser(refundedUser, {
       subscription: updatedSubscription,
     });
-
-    await this.subscriptionService.cancelPaypalSubscription(
-      refundedUser?.subscription?.paypalSubscriptionId,
-      'Refund requested',
-    );
 
     return {
       message: `Subscription expired due to refund`,
