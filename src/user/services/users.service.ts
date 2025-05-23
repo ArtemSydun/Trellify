@@ -709,6 +709,12 @@ export class UsersService {
     const newSubscription =
       await this.subscriptionService.getSubscription(subscription);
 
+    if (newSubscription?.name !== SubscriptionPlans.LIFETIME) {
+      throw new BadRequestException(
+        'Only lifetime plan could be given manually',
+      );
+    }
+
     if (oldSubscription?.name === newSubscription?.name) {
       throw new ConflictException('User already has the same subscription');
     }
