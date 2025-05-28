@@ -896,7 +896,7 @@ export class UsersService {
       }
 
       await this.discordService.sendDirectMessage(
-        userToUpdate.id,
+        userId,
         i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
           args: {
             workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
