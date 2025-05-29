@@ -667,6 +667,8 @@ export class TrelloWebhooksLogicService {
         idModel: webhook.idModel,
         modelName: webhook.boardName,
         webhookId: webhook.id,
+        discordChannelId: null,
+        telegramChannelId: null,
       };
 
       if (
@@ -748,6 +750,8 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        discordChannels: [],
+        telegramChannels: [],
         totalSubscribers: 1,
         subscribers: [
           {
@@ -1192,6 +1196,20 @@ export class TrelloWebhooksLogicService {
 
     let notifiedTargetUser: string | null = '';
     let notifiedAuthorUser: string | null = '';
+
+    try {
+      await this.actionsService.handleGroupAction(
+        webhook,
+        boardData,
+        detailedActionType,
+        webhookAction,
+        cardData,
+      );
+    } catch (err) {
+      console.warn(
+        `Unable to send group messsage: ${err.message || err.response.message}`,
+      );
+    }
 
     // If the action author is a webhook subscriber and has authorNotifications enabled (authorNotifications: true),
     // we do not send them notifications about actions they have performed (notifiedAuthorUser = null).

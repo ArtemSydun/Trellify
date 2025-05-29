@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Schema as MongooseSchema } from 'mongoose';
 import { WebhookAuthor } from '../dto/author.dto';
+import { MessangerChannel } from '../dto/messanger-channel.dto';
 import { NotificationCategoriesDto } from '../dto/notifications.dto';
 import { WebhookSubscriber } from '../dto/subscriber.dto';
 
@@ -83,6 +84,20 @@ export class Webhook {
   })
   @Prop({ type: MongooseSchema.Types.Mixed, required: false })
   notifications: NotificationCategoriesDto;
+
+  @ApiProperty({
+    description: 'Id of discord channels where notifications should be sent',
+    type: [MessangerChannel],
+  })
+  @Prop({ type: [MessangerChannel], required: false, default: [] })
+  discordChannels: MessangerChannel[];
+
+  @ApiProperty({
+    description: 'Id of telegram channels where notifications should be sent',
+    type: [MessangerChannel],
+  })
+  @Prop({ type: [MessangerChannel], required: false, default: [] })
+  telegramChannels: MessangerChannel[];
 
   @Prop()
   createdAt?: Date;

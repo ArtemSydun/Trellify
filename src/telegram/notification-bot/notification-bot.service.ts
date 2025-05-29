@@ -15,6 +15,7 @@ import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { TelegramCommandsEnum } from 'src/common/enums/telegram-commands.enum';
+import { TrelloWebhooksLogicService } from 'src/trello/services/logic';
 import { TelegramSettings } from 'src/user/dto/telegram.settings.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UserSearchPath } from 'src/user/enums/query.enum';
@@ -43,6 +44,8 @@ export class NotificationBotService implements OnModuleInit {
     private readonly userRepository: UsersRepository,
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
+    @Inject(forwardRef(() => TrelloWebhooksLogicService))
+    private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly i18n: I18nService,
   ) {
     this.notificationBotUtils = new NotificationBotUtils();
@@ -55,6 +58,7 @@ export class NotificationBotService implements OnModuleInit {
 
   private setupCommands() {
     this.bot.start(async (ctx: any) => {
+      console.log(ctx.update);
       const userLanguage =
         ctx?.update?.message?.from?.language_code || Languages.EN;
 
@@ -207,6 +211,114 @@ export class NotificationBotService implements OnModuleInit {
 
       await ctx.reply(helpMessage, { parse_mode: 'Markdown' });
     });
+
+    // this.bot.command(TelegramCommandsEnum.GROUP, async (ctx: any) => {
+    //   console.log(ctx.update);
+    //   const isGroupChat = ctx?.update?.message?.chat?.type === 'group';
+    //   let userLanguage =
+    //     ctx?.update?.message?.from?.language_code || Languages.EN;
+
+    //   if (!isGroupChat) {
+    //     return ctx.reply(
+    //       this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_BOT_ALREADY_CONNECTED),
+    //     );
+    //   }
+
+    //   const chatId = ctx?.from?.id?.toString();
+    //   const chatID: number = ctx?.update?.message?.chat?.id;
+    //   const username: string = ctx?.update?.message?.chat?.username;
+
+    //   const isLimited = await this.telegramRateLimiter.isLimited(
+    //     chatId,
+    //     NotificationBotService.name,
+    //   );
+
+    //   if (isLimited) {
+    //     const wait = Math.ceil(
+    //       (await this.telegramRateLimiter.getRemainingTTL(
+    //         chatId,
+    //         NotificationBotService.name,
+    //       )) / 1000,
+    //     );
+
+    //     return ctx.reply(
+    //       this.i18n?.t(I18nKeys.ERRORS_TELEGRAM_RATE_LIMIT_EXCEEDED, {
+    //         args: { seconds: wait },
+    //         lang: userLanguage,
+    //       }) || `Too many requests. Please wait ${wait}s.`,
+    //     );
+    //   }
+
+    //   if (!chatID) {
+    //     await ctx.reply(`${BOT_MESSAGES.ERROR.GENERAL}`);
+    //     return;
+    //   }
+
+    //   try {
+    //     const user: User | null = await this.userRepository.findUserByProperty(
+    //       UserSearchPath.TelegramChatId,
+    //       chatID,
+    //     );
+
+    //     if (!user) {
+    //       throw new Error('User not found');
+    //     }
+
+    //     userLanguage = user.language;
+    //     const userWebhooks = user.trello.webhooks;
+
+    //     const connectedWebhookIds =
+    //       await this.trelloWebhooksLogicService.findUserSubscribedWebhooks(
+    //         user,
+    //       );
+
+    //     const webhookOptions = userWebhooks.map((webhook) => {
+    //       const isConnected = connectedWebhookIds.includes(webhook.id);
+    //       return [
+    //         {
+    //           text: `${isConnected ? '✅ ' : ''}${webhook.modelName}`,
+    //           callback_data: `toggleWebhook:${webhook.id}:${chatID}`,
+    //         },
+    //       ];
+    //     });
+
+    //     await ctx.reply(
+    //       this.i18n?.t(I18nKeys.MESSAGES_SELECT_WEBHOOKS_TO_CONNECT, {
+    //         lang: userLanguage,
+    //       }) ||
+    //         'Select which Trello webhooks you want to connect or disconnect:',
+    //       {
+    //         reply_markup: {
+    //           inline_keyboard: webhookOptions,
+    //         },
+    //       },
+    //     );
+    //   } catch (error) {
+    //     await ctx.reply(
+    //       this.i18n?.t(I18nKeys.ERRORS_GENERAL_PROFILE_NOT_FOUND, {
+    //         lang: userLanguage,
+    //       }),
+    //       {
+    //         reply_markup: {
+    //           inline_keyboard: [
+    //             [
+    //               {
+    //                 text:
+    //                   this.i18n?.t(
+    //                     I18nKeys.MESSAGES_GENERAL_AUTHORIZE_THROUGH_WEBSITE,
+    //                     { lang: userLanguage },
+    //                   ) || 'Authorize through website',
+    //                 url: `${this.configService.get<string>(
+    //                   configServiceKeys.FRONTEND_LINK,
+    //                 )}/settings?chatId=${chatID}&username=${username}`,
+    //               },
+    //             ],
+    //           ],
+    //         },
+    //       },
+    //     );
+    //   }
+    // });
 
     this.bot.command(TelegramCommandsEnum.MY_PROFILE, async (ctx: any) => {
       const chatId = ctx?.from?.id?.toString();
@@ -420,6 +532,30 @@ export class NotificationBotService implements OnModuleInit {
     } catch (err) {
       this.logger.warn(
         `Telegram message was not sent to ${telegramInfo.username}:`,
+        err.response.description,
+      );
+    }
+  }
+
+  async sendMessageToChannel(
+    channelId: number,
+    message: string,
+    html?: boolean,
+    replyMarkup?: any,
+  ) {
+    try {
+      if (channelId) {
+        const parseMode = html ? 'HTML' : 'Markdown';
+        await this.bot.telegram.sendMessage(channelId, message, {
+          parse_mode: parseMode,
+          reply_markup: replyMarkup?.inline_keyboard
+            ? replyMarkup
+            : { inline_keyboard: replyMarkup },
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Telegram message was not sent to channel ${channelId}:`,
         err.response.description,
       );
     }
