@@ -185,6 +185,7 @@ export enum I18nKeys {
   ERRORS_GENERAL_FAILED_SEND_EMAIL = 'common.errors.general.failedSendEmail',
   ERRORS_GENERAL_PROFILE_NOT_FOUND = 'common.errors.general.profileNotFound',
   ERRORS_GENERAL_ACTION_CANCELED = 'common.errors.general.actionCanceled',
+  ERRORS_GENERAL_BOT_COMMAND_GROUP_ONLY = 'common.errors.general.botCommandGroupOnly',
 
   // JWT Errors
   ERRORS_JWT_INVALID_TOKEN = 'common.errors.jwt.invalidToken',

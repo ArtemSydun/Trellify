@@ -8,6 +8,7 @@ import {
   TelegrafI18nContext,
 } from 'nestjs-telegraf-i18n';
 import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
+import { RedisModule } from 'src/redis/redis.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersModule } from 'src/user/users.module';
 import { session } from 'telegraf';
@@ -63,6 +64,7 @@ import { TelegramRateLimiterService } from './rate-limiter/telegram-rate-limiter
 
     forwardRef(() => UsersModule),
     forwardRef(() => TrelloModule),
+    forwardRef(() => RedisModule),
     HttpModule,
   ],
   controllers: [],

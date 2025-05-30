@@ -190,7 +190,8 @@
       "forbiddenResource": "Forbidden resource",
       "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
       "profileNotFound": "Your Trellify profile was not found. Please check if you are registered",
-      "actionCanceled": "Action canceled"
+      "actionCanceled": "Action canceled",
+      "botCommandGroupOnly": "This command is for group chat only"
     },
     "jwt": {
       "invalidToken": "Your authorization token is not valid or expired"
