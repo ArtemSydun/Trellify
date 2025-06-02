@@ -5,6 +5,11 @@ export const commandTranslations = {
   en: [
     { command: `/${TelegramCommandsEnum.START}`, description: '🚀 Start bot' },
     {
+      command: `/${TelegramCommandsEnum.GROUP}`,
+      description: '👥 Notifications for group',
+    },
+
+    {
       command: `/${TelegramCommandsEnum.MY_PROFILE}`,
       description: '👤 Profile',
     },
@@ -17,6 +22,10 @@ export const commandTranslations = {
   ],
   uk: [
     { command: `/${TelegramCommandsEnum.START}`, description: '🚀 Розпочати' },
+    {
+      command: `/${TelegramCommandsEnum.GROUP}`,
+      description: '👥 Групові сповіщення',
+    },
     {
       command: `/${TelegramCommandsEnum.MY_PROFILE}`,
       description: '👤 Профіль',

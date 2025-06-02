@@ -21,6 +21,7 @@ export enum I18nKeys {
   MESSAGES_GENERAL_HELP_INTRO_MESSAGE = 'common.messages.general.help.introMessage',
   MESSAGES_GENERAL_HELP_STEPS = 'common.messages.general.help.steps',
   MESSAGES_GENERAL_HELP_CLOSING = 'common.messages.general.help.closingMessage',
+  MESSAGES_GENERAL_SETTINGS_SAVED = 'common.messages.general.settingsSaved',
 
   // Email Messages
   MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT = 'common.messages.email.registrationEmailSubject',
@@ -54,6 +55,7 @@ export enum I18nKeys {
   MESSAGES_TELEGRAM_DISCONNECTED_SUCCESSFULLY = 'common.messages.telegram.disconnectedSuccessfully',
   MESSAGES_TELEGRAM_DISCONNECT_CONFIRMATION = 'common.messages.telegram.disconnectConfirmation',
   MESSAGES_TELEGRAM_CONTACT_SUPPORT = 'common.messages.telegram.contactSupport',
+  MESSAGES_TELEGRAM_SELECT_WEBHOOKS = 'common.messages.telegram.selectWebhooks',
 
   //Discord
   MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY = 'common.messages.discord.connectedSuccessfully',
@@ -185,6 +187,7 @@ export enum I18nKeys {
   ERRORS_GENERAL_FAILED_SEND_EMAIL = 'common.errors.general.failedSendEmail',
   ERRORS_GENERAL_PROFILE_NOT_FOUND = 'common.errors.general.profileNotFound',
   ERRORS_GENERAL_ACTION_CANCELED = 'common.errors.general.actionCanceled',
+  ERRORS_GENERAL_WAITING_TIME_EXPIRED = 'common.errors.general.waitingTimeExpired',
   ERRORS_GENERAL_BOT_COMMAND_GROUP_ONLY = 'common.errors.general.botCommandGroupOnly',
 
   // JWT Errors

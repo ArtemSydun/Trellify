@@ -26,7 +26,8 @@
           "**Налаштуйте сповіщення**: Увімкніть сповіщення для дошок, які хочете відстежувати, у налаштуваннях Trellify."
         ],
         "closingMessage": "Якщо у вас є запитання, зверніться до підтримки. Вдалого планування! 🎉"
-      }
+      },
+      "settingsSaved": "Нові налаштування збережено"
     },
     "email": {
       "registrationEmailSubject": "Підтвердіть вашу пошту",
@@ -58,7 +59,8 @@
       "connectedSuccessfully": "Телеграм аккаунт підключено успішно",
       "disconnectedSuccessfully": "Телеграм аккаунт відключено успішно",
       "disconnectConfirmation": "Ви впевнені що бажаєте відключити телеграм аккаунт? Ви більше не будете отримувати сповіщення від Trellify",
-      "contactSupport": "Не знайшли відповідь на своє запитання? Сконтактуйте з нашою підтримкою {supportLink}"
+      "contactSupport": "Не знайшли відповідь на своє запитання? Сконтактуйте з нашою підтримкою {supportLink}",
+      "selectWebhooks": "Оберіть дошки з яких ви хочете отримувати сповіщення в групу:"
     },
     "discord": {
       "connectedSuccessfully": "Діскорд аккаунт підключено успішно",
@@ -188,9 +190,10 @@
       "invalidRequest": "Запит для поля {field} є недійсним.",
       "invalidCredentials": "Недійсні облікові дані.",
       "forbiddenResource": "Доступ до ресурсу заборонено",
-      "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
+      "failedSendEmail": "Не вдалося надіслати повідомлення, спробуйте пізніше або напишіть звернення на {adminEmail}",
       "profileNotFound": "Ваш профіль не знайдено, будь ласка, перевірте реєстрацію",
       "actionCanceled": "Виконання події відмінено",
+      "waitingTimeExpired": "Час на виконання вичерпано. Будь ласка, спробуйте ще раз",
       "botCommandGroupOnly": "Ця команда доступна тільки в груповому чаті"
     },
     "jwt": {

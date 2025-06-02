@@ -57,11 +57,11 @@ export class NotificationBotService implements OnModuleInit {
   // ✅ Initialize bot commands when module loads
   async onModuleInit() {
     this.setupCommands();
+    setLocalizedCommands(this.bot);
   }
 
   private setupCommands() {
     this.bot.start(async (ctx: any) => {
-      console.log(ctx.update);
       const userLanguage =
         ctx?.update?.message?.from?.language_code || Languages.EN;
 
@@ -219,7 +219,11 @@ export class NotificationBotService implements OnModuleInit {
       const isGroupChat = ctx?.update?.message?.chat?.type === 'group';
       const userID = ctx?.update?.message?.from?.id;
       const chatID: number = ctx?.update?.message?.chat?.id;
-      const username: string = ctx?.update?.message?.chat?.username;
+
+      const userTelegramName: string =
+        ctx?.update?.message?.from?.first_name ||
+        ctx?.update?.message?.from?.last_name ||
+        ctx?.update?.message?.from?.username;
 
       let userLanguage =
         ctx?.update?.message?.from?.language_code || Languages.EN;
@@ -233,8 +237,7 @@ export class NotificationBotService implements OnModuleInit {
       }
 
       if (!chatID || !userID) {
-        console.log(chatID, userID);
-        return ctx.reply(BOT_MESSAGES.ERROR.GENERAL);
+        return ctx.reply('Telegram error occured');
       }
 
       const isLimited = await this.telegramRateLimiter.isLimited(
@@ -265,7 +268,15 @@ export class NotificationBotService implements OnModuleInit {
         );
 
         if (!user) {
-          throw new Error('User not found');
+          await ctx.reply(
+            this.i18n?.t(I18nKeys.MESSAGES_GENERAL_GREETINGS_MESSAGE, {
+              lang: userLanguage,
+              args: {
+                name: userTelegramName,
+              },
+            }) ||
+              `Hello ${userTelegramName}, authorize through website to start Trellify integration`,
+          );
         }
 
         userLanguage = user.language || Languages.EN;
@@ -298,7 +309,11 @@ export class NotificationBotService implements OnModuleInit {
           // Store in Redis for consistent toggle experience
           await this.redisService.setValue(
             redisKey,
-            JSON.stringify(Array.from(selectedWebhookIds)),
+            JSON.stringify({
+              selectedWebhookIds: Array.from(selectedWebhookIds),
+              language: userLanguage,
+            }),
+            300,
           );
         } else {
           try {
@@ -331,7 +346,10 @@ export class NotificationBotService implements OnModuleInit {
         ]);
 
         const reply = await ctx.reply(
-          'Select which Trello webhooks you want to connect or disconnect:',
+          this.i18n.t(I18nKeys.MESSAGES_TELEGRAM_SELECT_WEBHOOKS, {
+            lang: userLanguage,
+          }) ||
+            'Select which Trello webhooks you want to connect or disconnect:',
           {
             reply_markup: {
               inline_keyboard: webhookOptions,
@@ -347,46 +365,14 @@ export class NotificationBotService implements OnModuleInit {
               reply.chat.id,
               reply.message_id,
               undefined,
-              '⚠️ Selection expired. Please send the command again to manage your webhooks.',
+              '⚠️ ' +
+                this.i18n?.t(I18nKeys.ERRORS_GENERAL_WAITING_TIME_EXPIRED, {
+                  lang: userLanguage,
+                }) ||
+                '⚠️ Selection expired. Please send the command again to manage your webhooks.',
             )
             .catch((err) => console.warn('Failed to expire message:', err));
         }, 60 * 1000);
-
-        // await ctx.reply(
-        //   'Select which Trello webhooks you want to connect or disconnect:',
-        //   {
-        //     reply_markup: {
-        //       inline_keyboard: webhookOptions,
-        //     },
-        //   },
-        // );
-
-        // const webhookOptions = userWebhooks.map((webhook) => {
-        //   const isConnected = subscribedWebhooks.some(
-        //     (sw) =>
-        //       sw.id === webhook.webhookId &&
-        //       sw.telegramChannels?.some((ch) => ch.channelId === chatID),
-        //   );
-
-        //   return [
-        //     {
-        //       text: `${isConnected ? '✅ ' : ''}${webhook.modelName}`,
-        //       callback_data: `toggleWebhook:${webhook.webhookId}:${chatID}`,
-        //     },
-        //   ];
-        // });
-
-        // await ctx.reply(
-        //   // this.i18n?.t(I18nKeys.MESSAGES_SELECT_WEBHOOKS_TO_CONNECT, {
-        //   //   lang: userLanguage,
-        //   // }) ||
-        //   'Select which Trello webhooks you want to connect or disconnect:',
-        //   {
-        //     reply_markup: {
-        //       inline_keyboard: webhookOptions,
-        //     },
-        //   },
-        // );
       } catch (error) {
         console.log(error);
       }
@@ -607,126 +593,6 @@ export class NotificationBotService implements OnModuleInit {
         return ctx.answerCbQuery('❌ An unexpected error occurred.');
       }
     });
-
-    // this.bot.on('callback_query', async (ctx: any) => {
-    //   const data = ctx?.update?.callback_query?.data;
-    //   const [action, webhookId, chatID] = data.split(':');
-    //   const userID = ctx?.update?.callback_query?.from?.id;
-
-    //   if (!userID || !chatID) return;
-
-    //   const redisKey = `webhook_selection:${userID}:${chatID}`;
-
-    //   if (action === 'toggleWebhook') {
-    //     const rawValue = await this.redisService.getValue(redisKey);
-    //     let selection: Set<string> = new Set();
-
-    //     if (rawValue) {
-    //       try {
-    //         selection = new Set(JSON.parse(rawValue));
-    //       } catch (err) {
-    //         console.warn(
-    //           `Failed to parse selection from Redis: ${rawValue}`,
-    //           err,
-    //         );
-    //       }
-    //     }
-
-    //     if (selection.has(webhookId)) {
-    //       selection.delete(webhookId);
-    //     } else {
-    //       selection.add(webhookId);
-    //     }
-
-    //     await this.redisService.setValue(
-    //       redisKey,
-    //       JSON.stringify(Array.from(selection)),
-    //     );
-
-    //     // Rebuild the keyboard with updated ✅ statuses
-    //     const user = await this.userRepository.findUserByProperty(
-    //       UserSearchPath.TelegramChatId,
-    //       userID,
-    //     );
-    //     const webhooks = user.trello.webhooks;
-
-    //     const keyboard = webhooks.map((webhook) => {
-    //       const isSelected = selection.has(webhook.webhookId);
-    //       return [
-    //         {
-    //           text: `${isSelected ? '✅ ' : ''}${webhook.modelName}`,
-    //           callback_data: `toggleWebhook:${webhook.webhookId}:${chatID}`,
-    //         },
-    //       ];
-    //     });
-
-    //     keyboard.push([
-    //       { text: '💾 Save', callback_data: `saveWebhooks:null:${chatID}` },
-    //       { text: '❌ Cancel', callback_data: `cancelWebhooks:null:${chatID}` },
-    //     ]);
-
-    //     await ctx.editMessageReplyMarkup({ inline_keyboard: keyboard });
-    //     return ctx.answerCbQuery('✅ Updated selection.');
-    //   }
-
-    //   // Toggle webhook
-    //   // if (action === 'toggleWebhook') {
-    //   //   const rawValue = await this.redisService.getValue(redisKey);
-    //   //   let selection: Set<string> = new Set();
-
-    //   //   if (rawValue) {
-    //   //     try {
-    //   //       selection = new Set(JSON.parse(rawValue));
-    //   //     } catch (err) {
-    //   //       console.warn(
-    //   //         `Failed to parse selection from Redis: ${rawValue}`,
-    //   //         err,
-    //   //       );
-    //   //     }
-    //   //   }
-
-    //   //   if (selection.has(webhookId)) {
-    //   //     selection.delete(webhookId);
-    //   //   } else {
-    //   //     selection.add(webhookId);
-    //   //   }
-
-    //   //   await this.redisService.setValue(
-    //   //     redisKey,
-    //   //     JSON.stringify(Array.from(selection)),
-    //   //   );
-
-    //   //   return ctx.answerCbQuery('✅ Updated selection.');
-    //   // }
-
-    //   // Save webhooks
-    //   if (action === 'saveWebhooks') {
-    //     const rawValue = await this.redisService.getValue(redisKey);
-    //     const selection = rawValue ? JSON.parse(rawValue) : [];
-
-    //     if (selection.length > 0) {
-    //       console.log(`Saving selection for user ${userID}:`, selection);
-
-    //       await this.redisService.deleteValue(redisKey);
-
-    //       // TODO: Call your service method here to update selected webhooks in DB
-    //       // await this.trelloWebhooksLogicService.updateTelegramChannelsForUser(userID, Number(chatID), selection);
-
-    //       await ctx.editMessageText('✅ Your webhook settings were saved.');
-    //     } else {
-    //       await ctx.answerCbQuery('⚠️ Please select at least one webhook.');
-    //     }
-
-    //     return;
-    //   }
-
-    //   // Cancel selection
-    //   if (action === 'cancelWebhooks') {
-    //     await this.redisService.deleteValue(redisKey);
-    //     await ctx.editMessageText('❌ Selection cancelled.');
-    //     return;
-    //   }
-    // });
   }
 
   async sendMessageToUser(
@@ -801,13 +667,17 @@ export class NotificationBotService implements OnModuleInit {
 
     const redisKey = `webhook_selection:${userID}:${chatID}`;
     const rawValue = await this.redisService.getValue(redisKey);
+
     let selection: Set<string> = new Set();
+    let userLanguage = Languages.EN;
 
     if (rawValue) {
       try {
-        selection = new Set(JSON.parse(rawValue));
+        const parsed = JSON.parse(rawValue);
+        selection = new Set(parsed.selectedWebhookIds || []);
+        userLanguage = parsed.language || Languages.EN;
       } catch (err) {
-        console.warn(`Failed to parse selection from Redis: ${rawValue}`, err);
+        console.warn(`Failed to parse selection from Redis: `, err);
       }
     }
 
@@ -819,14 +689,18 @@ export class NotificationBotService implements OnModuleInit {
 
     await this.redisService.setValue(
       redisKey,
-      JSON.stringify(Array.from(selection)),
+      JSON.stringify({
+        selectedWebhookIds: Array.from(selection),
+        language: userLanguage,
+      }),
+      300,
     );
 
-    // Rebuild the keyboard
     const user = await this.userRepository.findUserByProperty(
       UserSearchPath.TelegramChatId,
       userID,
     );
+
     const webhooks = user.trello.webhooks;
 
     const keyboard = webhooks.map((webhook) => {
@@ -854,18 +728,34 @@ export class NotificationBotService implements OnModuleInit {
 
     const redisKey = `webhook_selection:${userID}:${chatID}`;
     const rawValue = await this.redisService.getValue(redisKey);
-    const selection: string[] = rawValue ? JSON.parse(rawValue) : [];
 
-    if (selection.length > 0) {
-      // TODO: Implement actual update logic
-      // await this.trelloWebhooksLogicService.updateTelegramChannelsForUser(userID, Number(chatID), selection);
+    let selectedWebhookIds: string[] = [];
+    let userLanguage = Languages.EN;
 
-      console.log(selection);
-      await this.redisService.deleteValue(redisKey);
-      await ctx.editMessageText('✅ Your webhook settings were saved.');
-    } else {
-      await ctx.answerCbQuery('⚠️ Please select at least one webhook.');
+    if (rawValue) {
+      try {
+        const parsed = JSON.parse(rawValue);
+        selectedWebhookIds = parsed.selectedWebhookIds || [];
+        userLanguage = parsed.language || Languages.EN;
+      } catch (err) {
+        console.warn('Failed to parse Redis data on save', err);
+      }
     }
+
+    await this.trelloWebhooksLogicService.updateTelegramChannelsForWebhook(
+      userID,
+      Number(chatID),
+      selectedWebhookIds,
+    );
+
+    await this.redisService.deleteValue(redisKey);
+
+    await ctx.editMessageText(
+      '✅ ' +
+        (this.i18n.t(I18nKeys.MESSAGES_GENERAL_SETTINGS_SAVED, {
+          lang: userLanguage,
+        }) || '✅ New settings were saved.'),
+    );
   }
 
   private async handleCancelWebhooks(ctx: any, chatID: string) {
@@ -873,8 +763,26 @@ export class NotificationBotService implements OnModuleInit {
     if (!userID || !chatID) return;
 
     const redisKey = `webhook_selection:${userID}:${chatID}`;
+    const rawValue = await this.redisService.getValue(redisKey);
+
+    let userLanguage = Languages.EN;
+
+    if (rawValue) {
+      try {
+        const parsed = JSON.parse(rawValue);
+        userLanguage = parsed.language || Languages.EN;
+      } catch (err) {
+        console.warn('Failed to parse Redis data on cancel', err);
+      }
+    }
+
     await this.redisService.deleteValue(redisKey);
 
-    await ctx.editMessageText('❌ Selection cancelled.');
+    await ctx.editMessageText(
+      '❌ ' +
+        (this.i18n.t(I18nKeys.ERRORS_GENERAL_ACTION_CANCELED, {
+          lang: userLanguage,
+        }) || '❌ Selection cancelled.'),
+    );
   }
 }
