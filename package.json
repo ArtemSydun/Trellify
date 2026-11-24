@@ -102,7 +102,7 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": [
+      "^.+\\.ts$": [
         "ts-jest",
         {
           "isolatedModules": true
@@ -118,7 +118,8 @@
       "^src/(.*)$": "<rootDir>/$1",
       "^@trello/logic$": "<rootDir>/trello/services/logic",
       "^@trello/api$": "<rootDir>/trello/services/api",
-      "^@trello/controllers$": "<rootDir>/trello/controllers"
+      "^@trello/controllers$": "<rootDir>/trello/controllers",
+      "^@nestjs/terminus$": "<rootDir>/../test/mocks/terminus.js"
     }
   }
 }

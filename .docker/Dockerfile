@@ -1,10 +1,10 @@
 FROM node:20-alpine AS base
 WORKDIR /app
-COPY package.json .
+COPY package.json package-lock.json ./
 
 FROM base AS builder
 WORKDIR /app
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 
