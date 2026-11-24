@@ -6,6 +6,9 @@ import {
   NotFoundException,
   Logger,
   ForbiddenException,
+  forwardRef,
+  Inject,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -13,9 +16,9 @@ import {
   TrelloTokensLogicService,
   TrelloWebhooksLogicService,
 } from '@trello/logic';
-import { I18nContext } from 'nestjs-i18n';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { I18nContext, I18nService } from 'nestjs-i18n';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import {
@@ -27,9 +30,16 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
+import { PaypalLogicService } from 'src/paypal/services/paypal-logic.service';
+import { periodStatsKeys } from 'src/redis/enums/daily-stats-keys.enum';
 import { RedisService } from 'src/redis/services/redis.service';
+import { Subscription } from 'src/subscription/entities/subscription.entity';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { UsedTrialService } from 'src/subscription/services/used-trial.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 
@@ -43,7 +53,7 @@ import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 
 import { UsersRepository } from '../repositories/users.repository';
@@ -51,19 +61,30 @@ import { UsersRepository } from '../repositories/users.repository';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private readonly encryptionKey: string;
 
   constructor(
     private readonly userRepository: UsersRepository,
     private readonly configService: ConfigService,
+    private readonly sharedConfigService: SharedConfigService,
     private readonly trelloMembersLogicService: TrelloMembersLogicService,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly trelloWebhooksLogicService: TrelloWebhooksLogicService,
     private readonly notificationBotService: NotificationBotService,
     private readonly adminBotService: AdminBotService,
     private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => PaypalLogicService))
+    private readonly paypalLogicService: PaypalLogicService,
+    private readonly usedTrialService: UsedTrialService,
+    @Inject(forwardRef(() => RedisService))
     private readonly redisService: RedisService,
     private readonly mailerService: MailerService,
-  ) {}
+    private readonly i18nService: I18nService,
+  ) {
+    this.encryptionKey = this.sharedConfigService.getEncryptionKey();
+  }
 
   public async getUser(user: string | User, i18n?: I18nContext): Promise<User> {
     if (typeof user === 'string') {
@@ -73,6 +94,8 @@ export class UsersService {
     return user; // If it's already a User object, return it as-is
   }
 
+  //all commented parts will be used when payments will be implemented
+  //lifetimeSubscriptionPlan should be changed to trialSubscriptionPlan then
   public async createUser(
     createUserDto: CreateUserDto,
     i18n?: I18nContext,
@@ -92,15 +115,91 @@ export class UsersService {
       );
     }
 
+    const trialSubscriptionPlan =
+      await this.subscriptionService.findSubscriptionByName(
+        SubscriptionPlans.TRIAL,
+        i18n,
+      );
+
+    let trialExpired = false;
+    const currentDate = new Date();
+    const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+      createUserDto.email,
+    );
+
+    if (usedTrial?.trialEnds < currentDate) {
+      trialExpired = true;
+    }
+
     const newUser = {
       id: randomUUID(),
       ...createUserDto,
       password: await hashPassword(createUserDto.password),
+      subscription: {
+        id: trialSubscriptionPlan.id,
+        plan: trialSubscriptionPlan.name,
+        lastAmount: 0,
+        totalAmount: 0,
+        expired: trialExpired,
+        lastPaymentDate: null,
+        nextPaymentDate:
+          usedTrial?.trialEnds ||
+          (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 14);
+            return date;
+          })(),
+        paypalSubscriptionId: null,
+        lastPaymentId: null,
+      },
+      trello: { userId: null, token: null, webhooks: [], updatedAt: null },
+      telegram: {
+        username: null,
+        chatId: null,
+        updatedAt: null,
+      },
+      discord: {
+        userId: null,
+        username: null,
+        updatedAt: null,
+      },
     };
 
     const createdUser = await this.userRepository.create(newUser);
+
+    if (!usedTrial) {
+      await this.usedTrialService.createUsedTrial({
+        email: createdUser.email,
+        userId: createdUser.id,
+        trelloUserId: null,
+        trialStarts: createdUser.createdAt,
+        trialEnds: createdUser.subscription.nextPaymentDate,
+      });
+      this.logger.log(
+        `User with email ${createdUser.email} gain trial subscription to ${createdUser.subscription.nextPaymentDate}`,
+      );
+    }
+
+    await this.redisService.updateDailyStats(
+      periodStatsKeys.NEW_USERS,
+      newUser.email,
+    );
+
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.NEW_USERS,
+      newUser.email,
+    );
+
+    if (createdUser) {
+      await this.subscriptionService.addSubscriberToPlan(
+        trialSubscriptionPlan,
+        createdUser,
+        i18n,
+      );
+    }
+
     this.logger.log(
-      `User with email ${createUserDto.email} created successfully`,
+      `User with email ${createdUser.email} created successfully`,
     );
     return createdUser;
   }
@@ -178,7 +277,7 @@ export class UsersService {
 
       const decryptedTargetUserToken = decryptText(
         targetUser.trello.token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+        this.encryptionKey,
       );
 
       await this.trelloTokensLogicService.deleteUserToken(
@@ -190,13 +289,27 @@ export class UsersService {
     // Perform the user deletion
     await this.userRepository.delete(targetUser.id);
 
+    await this.subscriptionService.removeSubscriberFromPlan(
+      targetUser.subscription.id,
+      targetUser,
+    );
+
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         targetUser,
       );
 
     await this.adminBotService.notifyAdmins(notificationMessage);
+
+    await this.redisService.updateDailyStats(
+      periodStatsKeys.DELETED_USERS,
+      targetUser.email,
+    );
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.DELETED_USERS,
+      targetUser.email,
+    );
 
     this.logger.log(`User ${targetUser.email} deleted successfully`);
     return {
@@ -214,6 +327,10 @@ export class UsersService {
     filters: UserQueryDto = {},
   ): Promise<DefaultPaginatedResponse<User>> {
     return this.userRepository.getAll(filters);
+  }
+
+  public async findTotal(): Promise<number> {
+    return this.userRepository.getTotal();
   }
 
   public async findUserById(id: string, i18n?: I18nContext): Promise<User> {
@@ -254,19 +371,11 @@ export class UsersService {
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Partial<User>> {
-    const userToFind = await this.getUser(user);
-    if (!user) {
-      this.logger.warn(`User with ID ${userToFind.id} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_ID, {
-          args: { id: userToFind.id },
-        }) || `User with id ${userToFind.id} not found`,
-      );
-    }
+    const userToFind = await this.getUser(user, i18n);
 
     delete userToFind.password;
-    delete userToFind.telegram.chatId;
-    delete userToFind.trello.token;
+    delete userToFind.telegram?.chatId;
+    delete userToFind.trello?.token;
 
     return userToFind;
   }
@@ -287,7 +396,6 @@ export class UsersService {
       );
     }
 
-    this.logger.log(`User with Trello ID ${trelloUserId} found`);
     return userByTrelloId;
   }
 
@@ -298,11 +406,15 @@ export class UsersService {
     return usersByTrelloId;
   }
 
+  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
+    return this.userRepository.findUsersConnectedToWebhook(webhookId);
+  }
+
   public async findWebhooksUserIsSubscribedOn(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
-    const subscriber = await this.getUser(user);
+    const subscriber = await this.getUser(user, i18n);
 
     const webhooks =
       await this.trelloWebhooksLogicService.findUserSubscribedWebhooks(
@@ -313,9 +425,114 @@ export class UsersService {
     return webhooks;
   }
 
+  public async findUserByProperty(
+    path: UserSearchPath,
+    value: any,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const user = await this.userRepository.findUserByProperty(path, value);
+    if (!user) {
+      this.logger.warn(`User with property ${path}: ${value} not found`);
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
+          args: { path, value },
+        }) || `User with property ${path}: ${value} not found`,
+      );
+    }
+
+    this.logger.log(`User with property ${path}: ${value} found`);
+    delete user.password;
+    return user;
+  }
+
   public async doesUserExist(email: string): Promise<boolean> {
     this.logger.log(`Checking if user exists with email: ${email}`);
     return await this.userRepository.existsByEmail(email);
+  }
+
+  public async updateUserEmail(
+    user: string | User,
+    newEmail: string,
+    i18n?: I18nContext,
+  ): Promise<User> {
+    const userToUpdate = await this.getUser(user);
+
+    const oldEmail = userToUpdate.email;
+
+    if (oldEmail === newEmail) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_AUTH_CHANGE_EMAIL_SAME_ADRESS) ||
+          'New email must be different from current',
+      );
+    }
+
+    const isEmailUsed = await this.doesUserExist(newEmail);
+
+    if (isEmailUsed) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_USER_ALREADY_EXIST, {
+          args: {
+            email: newEmail,
+          },
+        }) || `User ${newEmail} already exists`,
+      );
+    }
+
+    const createdWebhooks =
+      await this.trelloWebhooksLogicService.findMyCreatedWebhooks(
+        userToUpdate,
+        i18n,
+      );
+
+    const connectedWebhooks =
+      await this.trelloWebhooksLogicService.findMyConnectedWebhooks(
+        userToUpdate,
+        i18n,
+      );
+
+    const operations: any[] = [];
+
+    // Prepare bulk operations for createdWebhooks (update author.email)
+    for (const webhook of createdWebhooks) {
+      operations.push({
+        updateOne: {
+          filter: { id: webhook.id },
+          update: { 'author.email': newEmail },
+        },
+      });
+    }
+
+    // Prepare bulk operations for connectedWebhooks (update subscriber emails)
+    for (const webhook of connectedWebhooks) {
+      const needsUpdate = webhook.subscribers.some(
+        (subscriber: any) => subscriber.email === oldEmail,
+      );
+
+      if (needsUpdate) {
+        const updatedSubscribers = webhook.subscribers.map((subscriber: any) =>
+          subscriber.email === oldEmail
+            ? { ...subscriber, email: newEmail }
+            : subscriber,
+        );
+
+        operations.push({
+          updateOne: {
+            filter: { id: webhook.id },
+            update: { subscribers: updatedSubscribers },
+          },
+        });
+      }
+    }
+
+    if (operations.length > 0) {
+      await this.trelloWebhooksLogicService.updateManyWebhooks(operations);
+    }
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      email: newEmail,
+    });
+
+    return updatedUser;
   }
 
   public async updateUser(
@@ -324,11 +541,35 @@ export class UsersService {
     i18n?: I18nContext,
     reqUser?: Partial<User>,
   ): Promise<DefaultResponse<User>> {
-    if (reqUser?.role !== UserRoles.superadmin) {
+    const userToUpdate = await this.getUser(user, i18n);
+
+    if (updateUserDto.email) {
+      const updatedUser = await this.updateUserEmail(
+        user,
+        updateUserDto.email,
+        i18n,
+      );
+      return {
+        message:
+          i18n?.t(I18nKeys.MESSAGES_USER_UPDATED, {
+            args: {
+              email: userToUpdate.email,
+            },
+          }) || `User ${userToUpdate.email} updated successfully`,
+        statusCode: HttpStatus.OK,
+        data: updatedUser,
+      };
+    }
+
+    //do not let update roles for not superadmins, and do not let superadmin lower his role
+    if (
+      reqUser?.role !== UserRoles.superadmin ||
+      (reqUser?.role === UserRoles.superadmin &&
+        userToUpdate.id === reqUser?.id)
+    ) {
       delete updateUserDto.role;
     }
 
-    const userToUpdate = await this.getUser(user, i18n);
     const updatedUserProps: Partial<User> = {};
 
     for (const [key, value] of Object.entries(updateUserDto)) {
@@ -341,7 +582,7 @@ export class UsersService {
           ) {
             updatedUserProps.trello.token = encryptText(
               value.token,
-              this.configService.get(configServiceEnum.ENCRYPTION_KEY),
+              this.encryptionKey,
             );
           } else {
             updatedUserProps.trello.token = userToUpdate.trello.token;
@@ -379,7 +620,12 @@ export class UsersService {
     delete updatedUser.password;
 
     return {
-      message: `User ${userToUpdate.id} updated successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_UPDATED, {
+          args: {
+            email: userToUpdate.email,
+          },
+        }) || `User ${userToUpdate.email} updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -420,6 +666,70 @@ export class UsersService {
     };
   }
 
+  //superadmin subscription change
+  public async updateUserSubscription(
+    user: string | User,
+    subscription: string | Subscription,
+    reqUser: Partial<User>,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user, i18n);
+    const adminUser = await this.getUser(reqUser.id);
+
+    if (adminUser.role !== UserRoles.superadmin) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          `Forbidden resource`,
+      );
+    }
+
+    const oldSubscription = await this.subscriptionService.getSubscription(
+      userToUpdate.subscription.id,
+    );
+
+    const newSubscription =
+      await this.subscriptionService.getSubscription(subscription);
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      oldSubscription,
+      userToUpdate.id,
+    );
+
+    await this.subscriptionService.addSubscriberToPlan(
+      newSubscription,
+      userToUpdate.id,
+    );
+
+    const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
+      subscription: {
+        ...userToUpdate.subscription,
+        id: newSubscription.id,
+        plan: newSubscription.name as SubscriptionPlans,
+        expired:
+          newSubscription.name === SubscriptionPlans.LIFETIME
+            ? false
+            : userToUpdate.subscription.expired,
+        nextPaymentDate:
+          newSubscription.name === SubscriptionPlans.LIFETIME
+            ? null
+            : userToUpdate.subscription.nextPaymentDate,
+      },
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_USER_SUBSCRIPTION_UPDATED, {
+          args: {
+            email: userToUpdate.email,
+            subscription: newSubscription.name,
+          },
+        }) ||
+        `User ${userToUpdate.email} subscription plan successfully changed to ${newSubscription.name} plan`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser,
+    };
+  }
+
   public async resetPassword(
     id: string,
     newPassword: string,
@@ -436,42 +746,34 @@ export class UsersService {
     this.logger.log(`Password for user with ID ${id} reset successfully`);
   }
 
-  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.userRepository.findUsersConnectedToWebhook(webhookId);
-  }
-
-  public async findUserByProperty(
-    path: UserSearchPathEnum,
-    value: any,
-    i18n?: I18nContext,
-  ): Promise<User> {
-    const user = await this.userRepository.findUserByProperty(path, value);
-    if (!user) {
-      this.logger.warn(`User with property ${path}: ${value} not found`);
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_USER_NOT_FOUND_BY_PROPERTY, {
-          args: { path, value },
-        }) || `User with property ${path}: ${value} not found`,
-      );
-    }
-
-    this.logger.log(`User with property ${path}: ${value} found`);
-    delete user.password;
-    return user;
-  }
-
   public async manageUserTelegramConnection(
-    user: string | User,
+    userId: string | User,
+    reqUser: string | User,
     connectTelegramDto: ConnectTelegramDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user, i18n);
+    const userToUpdate = await this.getUser(userId, i18n);
+
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
     const { chatId, username } = connectTelegramDto;
+
     const updateDate = new Date();
 
     if (chatId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         chatId,
       );
 
@@ -484,8 +786,9 @@ export class UsersService {
     } else {
       await this.notificationBotService.sendMessageToUser(
         userToUpdate.telegram,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          `Trello notifier bot disconnected successfully`,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE, {
+          lang: userToUpdate.language,
+        }) || `Trellify bot disconnected successfully`,
       );
     }
 
@@ -498,14 +801,22 @@ export class UsersService {
       connectTelegramDto,
       i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
         args: {
-          workspacesLink: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces`,
+          workspacesLink: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces`,
         },
+        lang: userToUpdate.language,
       }) || `Trellify authorized successfully`,
     );
 
     this.logger.log(
-      `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully`,
+      `Telegram ${username} ${chatId ? 'connected' : 'disconnected'} successfully by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
     );
+
     return {
       message:
         i18n?.t(
@@ -519,27 +830,33 @@ export class UsersService {
   }
 
   public async manageUserDiscordConnection(
-    user: string | User,
+    targetUser: string | User,
+    reqUser: string | User,
     connectDiscordDto: DiscordSettings,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User>> {
-    const userToUpdate = await this.getUser(user, i18n);
+    const userToUpdate = await this.getUser(targetUser, i18n);
+
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
     const { userId, username } = connectDiscordDto;
     const updateDate = new Date();
 
     if (userId && username) {
       const connectedUser = await this.userRepository.findUserByProperty(
-        UserSearchPathEnum.DiscordUserId,
+        UserSearchPath.DiscordUserId,
         userId,
-      );
-
-      await this.discordService.sendDirectMessage(
-        userId,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
-          args: {
-            workspacesLink: `<${this.configService.get<string>(configServiceEnum.FRONTEND_LINK)}/workspaces?`,
-          },
-        }) || 'Discord connected successfully',
       );
 
       if (connectedUser) {
@@ -548,11 +865,22 @@ export class UsersService {
             `Trellify bot is already connected for another discord user`,
         );
       }
+
+      await this.discordService.sendDirectMessage(
+        userToUpdate.id,
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_CONNECTION_MESSAGE, {
+          args: {
+            workspacesLink: `<${this.configService.get<string>(configServiceKeys.FRONTEND_LINK)}/workspaces?`,
+          },
+          lang: userToUpdate.language,
+        }) || 'Discord connected successfully',
+      );
     } else {
       await this.discordService.sendDirectMessage(
         userToUpdate.discord.userId,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE) ||
-          'Discord connected successfully',
+        i18n?.t(I18nKeys.MESSAGES_GENERAL_DISCONNECTION_MESSAGE, {
+          lang: userToUpdate.language,
+        }) || 'Discord disconnected successfully',
       );
     }
 
@@ -562,7 +890,13 @@ export class UsersService {
     });
 
     this.logger.log(
-      `Discord ${username ? username : userToUpdate.discord.username} ${userId ? 'connected' : 'disconnected'} successfully`,
+      `Discord ${username || userToUpdate.discord?.username} ${userId ? 'connected' : 'disconnected'} by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
     );
 
     return {
@@ -571,60 +905,95 @@ export class UsersService {
           userId
             ? I18nKeys.MESSAGES_DISCORD_CONNECTED_SUCCESSFULLY
             : I18nKeys.MESSAGES_DISCORD_DISCONNECTED_SUCCESSFULLY,
-        ) || `Discord ${userId ? 'connected' : 'disconnected '} successfully`,
+        ) || `Discord ${userId ? 'connected' : 'disconnected'} successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
   }
 
   public async manageUserTrelloConnection(
-    user: string | User,
+    targetUser: string | User,
+    reqUser: string | User,
     connectTrelloDto: ConnectTrelloDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<User | string>> {
-    const userToUpdate = await this.getUser(user, i18n);
-    const { token } = connectTrelloDto;
+    const userToUpdate = await this.getUser(targetUser, i18n);
 
+    const requestedUser = await this.getUser(reqUser, i18n);
+    const isUpdatingSomeoneElse = userToUpdate.id !== requestedUser.id;
+
+    const isNotSuperadmin = requestedUser.role !== UserRoles.superadmin;
+    const targetIsSuperadmin = userToUpdate.role === UserRoles.superadmin;
+
+    if (isNotSuperadmin && (isUpdatingSomeoneElse || targetIsSuperadmin)) {
+      throw new ForbiddenException(
+        i18n?.t(I18nKeys.ERRORS_GENERAL_FORBIDDEN_RESOURCE) ||
+          'Forbidden resource',
+      );
+    }
+
+    const { token } = connectTrelloDto;
     const updateDate = new Date();
+    const updatedUserProps: Partial<User> = {
+      trello: { ...userToUpdate.trello, updatedAt: updateDate },
+      lastActivityDate: updateDate,
+    };
 
     if (!token) {
       await this.trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks(
         userToUpdate,
         i18n,
       );
+
+      updatedUserProps.trello = {
+        userId: null,
+        username: null,
+        webhooks: [],
+        token: null,
+        updatedAt: updateDate,
+      };
+
       const updatedUser = await this.userRepository.updateById(
         userToUpdate.id,
-        {
-          trello: { userId: null, username: null, webhooks: [], token: null },
-          lastActivityDate: updateDate,
-        },
+        updatedUserProps,
       );
 
-      this.logger.log(`Trello profile disconnected for user ${user}`);
+      this.logger.log(
+        `Trello profile disconnected for user ${userToUpdate.trello.username} by ${
+          reqUser
+            ? typeof reqUser === 'string'
+              ? reqUser
+              : reqUser.email
+            : 'self'
+        }`,
+      );
+
       return {
-        message: `Trello ${userToUpdate.trello.username} disconnected successfully`,
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_DISCONNECTED_SUCCESSFULLY, {
+            args: { username: userToUpdate.trello.username },
+          }) ||
+          `Trello ${userToUpdate.trello.username} disconnected successfully`,
         statusCode: HttpStatus.OK,
         data: updatedUser,
       };
     }
 
+    if (userToUpdate.trello?.userId && token) {
+      throw new ConflictException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_DISCONNECT_FIRST) ||
+          `You should disconnect your Trello account first before connecting a new one.`,
+      );
+    }
+
     await this.trelloTokensLogicService.isTokenInfinite(token, i18n);
 
-    const updatedUserProps: Partial<User> = {
-      trello: { ...userToUpdate.trello },
-    };
-
-    if (!userToUpdate.trello.token || userToUpdate.trello.token !== token) {
-      updatedUserProps.trello.token = encryptText(
-        token,
-        this.configService.get(configServiceEnum.ENCRYPTION_KEY),
-      );
-    } else {
-      updatedUserProps.trello.token = userToUpdate.trello.token;
+    if (!userToUpdate.trello?.token || userToUpdate.trello.token !== token) {
+      updatedUserProps.trello.token = encryptText(token, this.encryptionKey);
     }
 
     const trelloToken =
-      updatedUserProps.trello.token || userToUpdate.trello.token;
+      updatedUserProps.trello?.token || userToUpdate.trello.token;
 
     const trelloProfile =
       await this.trelloMembersLogicService.findMemberProfile(
@@ -634,7 +1003,7 @@ export class UsersService {
       );
 
     const connectedUser = await this.userRepository.findUserByProperty(
-      UserSearchPathEnum.TrelloUserId,
+      UserSearchPath.TrelloUserId,
       trelloProfile.id,
     );
 
@@ -647,15 +1016,69 @@ export class UsersService {
 
     updatedUserProps.trello.userId = trelloProfile.id;
     updatedUserProps.trello.username = trelloProfile.username;
+    updatedUserProps.trello.webhooks = [];
+
+    // Handle trial plan updates
+    if (userToUpdate.subscription.plan === SubscriptionPlans.TRIAL) {
+      const usedTrial = await this.usedTrialService.findUserTrialByEmail(
+        userToUpdate.email,
+      );
+      const usedTrialByTrelloId =
+        await this.usedTrialService.findUsedTrialByTrelloUserId(
+          trelloProfile.id,
+        );
+
+      if (usedTrialByTrelloId) {
+        if (new Date(usedTrialByTrelloId.trialEnds) < new Date()) {
+          throw new ConflictException(
+            i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_TRIAL_EXPIRED) ||
+              `This user's trial version has already expired.`,
+          );
+        }
+
+        await this.usedTrialService.updateUsedTrialById(
+          usedTrialByTrelloId.id,
+          {
+            email: userToUpdate.email,
+          },
+        );
+
+        if (usedTrial && usedTrial.email !== usedTrialByTrelloId.email) {
+          await this.usedTrialService.deleteUserTrialById(usedTrial.id);
+        }
+
+        updatedUserProps.subscription = {
+          ...userToUpdate.subscription,
+          nextPaymentDate: usedTrialByTrelloId.trialEnds,
+        };
+      }
+
+      if (!usedTrialByTrelloId && usedTrial && !usedTrial.trelloUserId) {
+        await this.usedTrialService.updateUsedTrialById(usedTrial.id, {
+          trelloUserId: trelloProfile.id,
+        });
+      }
+    }
 
     const updatedUser = await this.userRepository.updateById(userToUpdate.id, {
       ...updatedUserProps,
-      lastActivityDate: updateDate,
     });
 
-    this.logger.log(`Trello profile connected for user ${userToUpdate.id}`);
+    this.logger.log(
+      `Trello profile connected for user ${userToUpdate.id} by ${
+        reqUser
+          ? typeof reqUser === 'string'
+            ? reqUser
+            : reqUser.email
+          : 'self'
+      }`,
+    );
+
     return {
-      message: `Trello ${updatedUser.trello.username} connected successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_TRELLO_CONNECTED_SUCCESSFULLY, {
+          args: { username: updatedUser.trello.username },
+        }) || `Trello ${updatedUser.trello.username} connected successfully`,
       statusCode: HttpStatus.OK,
       data: updatedUser,
     };
@@ -680,7 +1103,7 @@ export class UsersService {
         filter: { id: user.id },
         update: {
           $pull: {
-            [UserSearchPathEnum.TrelloWebhooks]: {
+            [UserSearchPath.TrelloWebhooks]: {
               webhookId: webhookToRemove.id,
             },
           },
@@ -693,14 +1116,29 @@ export class UsersService {
 
       this.notificationBotService.sendMessageToUser(
         user.telegram,
-        i18n?.t(I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED, {
-          lang: userLanguage,
-          args: {
-            boardName: webhookToRemove.boardName,
-            boardUrl: webhookToRemove.boardUrl,
+        this.i18nService.t(
+          I18nKeys.MESSAGES_GENERAL_NOTIFICATIONS_DISCONNECTED,
+          {
+            lang: userLanguage,
+            args: {
+              boardName: webhookToRemove.boardName,
+              boardUrl: webhookToRemove.boardUrl,
+            },
           },
-        }) ||
+        ) ||
           `Notifications for board [${webhookToRemove.boardName}](${webhookToRemove.boardUrl}) has been disconnected. Please, reconnect notifications`,
+        false,
+        [
+          [
+            {
+              text:
+                this.i18nService.t(I18nKeys.FIELDS_SETTINGS, {
+                  lang: userLanguage,
+                }) || 'Settings',
+              url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhookToRemove.idWorkspace}`,
+            },
+          ],
+        ],
       );
     });
 
@@ -708,7 +1146,7 @@ export class UsersService {
       if (bulkUpdateOperations.length > 0) {
         const result = await this.updateManyUsers(bulkUpdateOperations);
         this.logger.log(result);
-        Promise.all([sendTelegramNotification]);
+        await Promise.all(sendTelegramNotification);
       }
     } catch (err) {
       this.logger.error(`Error during bulk update: ${err.message || err}`);
@@ -716,6 +1154,243 @@ export class UsersService {
         this.logger.error(`Bulk write error: ${err.writeErrors}`);
       }
     }
+  }
+
+  public async refreshSubscriptionPayment(
+    paypalSubscriptionId: string,
+    paymentId?: string,
+  ): Promise<DefaultResponse<User>> {
+    const userToRefresh = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+    );
+
+    const sub = userToRefresh?.subscription;
+
+    const correspondingSubscription =
+      await this.subscriptionService.findSubscriptionById(sub?.id);
+
+    const paymentCheckResult =
+      await this.subscriptionService.checkSubscriptionPayment(
+        sub.paypalSubscriptionId,
+        userToRefresh,
+      );
+
+    const updatedSubscription = {
+      ...sub,
+      nextPaymentDate:
+        paymentCheckResult?.nextPaymentDate || sub.nextPaymentDate,
+      expired: !paymentCheckResult,
+      lastPaymentId: paymentId || sub.lastPaymentId,
+    };
+
+    if (paymentCheckResult) {
+      updatedSubscription.lastPaymentDate = paymentCheckResult.lastPaymentDate;
+      updatedSubscription.lastAmount = correspondingSubscription?.price;
+      updatedSubscription.totalAmount =
+        (sub.totalAmount || 0) + (correspondingSubscription?.price || 0);
+    }
+
+    const updatedUser = await this.updateUser(userToRefresh, {
+      subscription: updatedSubscription,
+    });
+
+    return {
+      message: `User monthly plan payment verified successfully`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
+  public async handleRefundedSubscriptionPayment(
+    paymentId: string,
+  ): Promise<DefaultResponse<User>> {
+    const refundedUser = await this.findUserByProperty(
+      UserSearchPath.LastPaymentId,
+      paymentId,
+    );
+
+    const updatedSubscription = {
+      ...refundedUser?.subscription,
+      nextPaymentDate: null,
+      expired: true,
+    };
+
+    const updatedUser = await this.updateUser(refundedUser, {
+      subscription: updatedSubscription,
+    });
+
+    await this.subscriptionService.cancelPaypalSubscription(
+      refundedUser?.subscription?.paypalSubscriptionId,
+      'Refund requested',
+    );
+
+    return {
+      message: `Subscription expired due to refund`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
+  }
+
+  public async cancelUserSubscription(
+    paypalSubscriptionId: string,
+    userId: string,
+    reason: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const subscriber = await this.findUserByProperty(
+      UserSearchPath.PaypalSubscriptionId,
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    if (subscriber.id !== userId) {
+      throw new BadRequestException(
+        'You are not allowed to cancel somebodys subscription',
+      );
+    }
+
+    await this.subscriptionService.cancelPaypalSubscription(
+      paypalSubscriptionId,
+      reason,
+    );
+
+    return {
+      message: 'Subscription cancelled successfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  //user self change after payment
+  // public async changeSubscriptionPlan(
+  //   user: string | User,
+  //   targetSubscriptionId: string,
+  //   paypalSubscriptionId: string,
+  //   amount: string,
+  //   paymentDate: Date,
+  //   i18n?: I18nContext,
+  // ): Promise<DefaultResponse<User>> {
+  //   const userToUpdate = await this.getUser(user, i18n);
+
+  //   const oldSubscription = await this.subscriptionService.getSubscription(
+  //     userToUpdate.subscription.id,
+  //     i18n,
+  //   );
+
+  //   await this.subscriptionService.removeSubscriberFromPlan(
+  //     oldSubscription,
+  //     userToUpdate,
+  //     i18n,
+  //   );
+
+  //   const newSubscription = await this.subscriptionService.getSubscription(
+  //     targetSubscriptionId,
+  //     i18n,
+  //   );
+
+  //   await this.subscriptionService.addSubscriberToPlan(
+  //     newSubscription,
+  //     userToUpdate,
+  //     i18n,
+  //   );
+
+  //   const parsedAmount = parseFloat(amount);
+  //   if (isNaN(parsedAmount)) {
+  //     throw new Error(`Invalid amount value: ${amount}`);
+  //   }
+
+  //   const nextPaymentDate = new Date(paymentDate);
+  //   nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+
+  //   const updatedUser = await this.updateUser(userToUpdate, {
+  //     subscription: {
+  //       ...userToUpdate.subscription,
+  //       id: newSubscription.id,
+  //       plan: newSubscription.name as SubscriptionPlans,
+  //       expired: false,
+  //       paypalSubscriptionId,
+  //       lastPaymentId: null,
+  //       lastAmount: parsedAmount,
+  //       totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
+  //       lastPaymentDate: paymentDate,
+  //       nextPaymentDate,
+  //     },
+  //   });
+
+  //   return {
+  //     message:
+  //       i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+  //         args: {
+  //           email: userToUpdate.email,
+  //           subscription: newSubscription.name,
+  //         },
+  //       }) ||
+  //       `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
+  //     statusCode: HttpStatus.OK,
+  //     data: updatedUser.data,
+  //   };
+  // }
+  public async changeSubscriptionPlan(
+    user: string | User,
+    targetSubscriptionId: string,
+    paypalSubscriptionId: string,
+    amount: string,
+    i18n?: I18nContext,
+  ): Promise<DefaultResponse<User>> {
+    const userToUpdate = await this.getUser(user, i18n);
+
+    const oldSubscription = await this.subscriptionService.getSubscription(
+      userToUpdate.subscription.id,
+      i18n,
+    );
+
+    await this.subscriptionService.removeSubscriberFromPlan(
+      oldSubscription,
+      userToUpdate,
+      i18n,
+    );
+
+    const newSubscription = await this.subscriptionService.getSubscription(
+      targetSubscriptionId,
+      i18n,
+    );
+
+    await this.subscriptionService.addSubscriberToPlan(
+      newSubscription,
+      userToUpdate,
+      i18n,
+    );
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) {
+      throw new Error(`Invalid amount value: ${amount}`);
+    }
+
+    const updatedUser = await this.updateUser(userToUpdate, {
+      subscription: {
+        ...userToUpdate.subscription,
+        id: newSubscription.id,
+        plan: newSubscription.name as SubscriptionPlans,
+        expired: true,
+        paypalSubscriptionId: paypalSubscriptionId,
+        lastPaymentId: null,
+        lastAmount: parsedAmount,
+        totalAmount: userToUpdate.subscription.totalAmount + parsedAmount,
+      },
+    });
+
+    return {
+      message:
+        i18n?.t(I18nKeys.MESSAGES_SUBSCRIPTION_USER_CHANGED_SUCCESSFULLY, {
+          args: {
+            email: userToUpdate.email,
+            subscription: newSubscription.name,
+          },
+        }) ||
+        `User ${userToUpdate.email} successfully changed plan to ${newSubscription.name}`,
+      statusCode: HttpStatus.OK,
+      data: updatedUser.data,
+    };
   }
 
   public async contactUs(
@@ -733,7 +1408,7 @@ export class UsersService {
 
     const notificationMessage =
       await this.adminBotService.actionAdminNotification(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         {
           email,
           subject,
@@ -744,7 +1419,11 @@ export class UsersService {
 
     await this.adminBotService.notifyAdmins(notificationMessage);
 
-    await this.redisService.updateDailyStats('contactUs', 1);
+    await this.redisService.updateDailyStats(periodStatsKeys.CONTACT_US, email);
+    await this.redisService.updateWeeklyStats(
+      periodStatsKeys.CONTACT_US,
+      email,
+    );
 
     return {
       message:

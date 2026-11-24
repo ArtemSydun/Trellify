@@ -3,10 +3,11 @@ import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { CommonQueryParams } from 'src/common/dto/common.query.dto';
 
 // Sorting options
-export enum WebhookOrderByEnum {
+export enum WebhookOrderBy {
   CreatedAt = 'createdAt',
   UpdatedAt = 'updatedAt',
   BoardName = 'boardName',
+  TotalSubscribers = 'totalSubscribers',
 }
 
 export class WebhookQueryDto extends CommonQueryParams {
@@ -42,11 +43,11 @@ export class WebhookQueryDto extends CommonQueryParams {
 
   @ApiPropertyOptional({
     description: 'Sort by field',
-    enum: WebhookOrderByEnum,
+    enum: WebhookOrderBy,
   })
   @IsOptional()
-  @IsEnum(WebhookOrderByEnum)
-  orderBy?: WebhookOrderByEnum;
+  @IsEnum(WebhookOrderBy)
+  orderBy?: WebhookOrderBy;
 
   @ApiPropertyOptional({ description: 'Filter by createdAt date (YYYY-MM-DD)' })
   @IsOptional()

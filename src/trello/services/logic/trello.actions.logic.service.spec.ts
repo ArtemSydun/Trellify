@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import {
   TrelloActionsLogicService,
   TrelloWebhooksLogicService,
@@ -19,14 +19,17 @@ import {
 } from 'src/trello/__mocks__/trello.stub';
 import { User } from 'src/user/entities/user.entity';
 import {
-  TrelloWebhookAdminActions,
   TrelloWebhookBoardActions,
+  TrelloWebhookChecklistActions,
+  TrelloWebhookListActions,
   TrelloWebhookPersonalActions,
 } from 'src/trello/enums/trello.actions.enum';
 import { I18nService } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { HttpStatus } from '@nestjs/common';
 import { DiscordService } from 'src/discord/discord.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { RedisService } from 'src/redis/services/redis.service';
 
 jest.mock('src/common/helpers/trello-notifications', () => ({
   notificationMessageGenerator: jest.fn().mockImplementation(() => 'message'),
@@ -34,14 +37,12 @@ jest.mock('src/common/helpers/trello-notifications', () => ({
     personal: {},
     board: {},
     card: {},
-    admin: {},
   }),
   getUpdatedWebhookNotifications: jest.fn().mockReturnValue({}),
   mapNotificationsToBoolean: jest.fn().mockReturnValue({
     personal: {},
     board: {},
     card: {},
-    admin: {},
   }),
 }));
 
@@ -52,6 +53,8 @@ describe('TrelloActionsLogicService', () => {
   let trelloWebhooksLogicService: TrelloWebhooksLogicService;
   let usersService: UsersService;
   let notificationBotService: NotificationBotService;
+  // let subscriptionService: SubscriptionService;
+  // let redisService: RedisService;
 
   let userStubData: User;
   let usersToNotify: User[];
@@ -88,6 +91,14 @@ describe('TrelloActionsLogicService', () => {
           provide: DiscordService,
           useValue: createMock<DiscordService>(),
         },
+        {
+          provide: SubscriptionService,
+          useValue: createMock<SubscriptionService>(),
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
+        },
         { provide: I18nService, useValue: createMock<I18nService>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
       ],
@@ -104,6 +115,10 @@ describe('TrelloActionsLogicService', () => {
     notificationBotService = moduleRef.get<NotificationBotService>(
       NotificationBotService,
     );
+    // subscriptionService = moduleRef.get<SubscriptionService>(
+    //   NotificationBotService,
+    // );
+    // redisService = moduleRef.get<RedisService>(RedisService);
     usersService = moduleRef.get<UsersService>(UsersService);
 
     userStubData = { ...userStub() };
@@ -143,7 +158,8 @@ describe('TrelloActionsLogicService', () => {
         action: {
           ...webhookActionMock.action,
           display: {
-            translationKey: TrelloWebhookPersonalActions.CARD_MEMBER_ADDED,
+            translationKey:
+              TrelloWebhookPersonalActions.CARD_MEMBER_ADDED_PERSONAL,
           },
         },
       };
@@ -183,7 +199,8 @@ describe('TrelloActionsLogicService', () => {
         action: {
           ...webhookActionMock.action,
           display: {
-            translationKey: TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED,
+            translationKey:
+              TrelloWebhookPersonalActions.BOARD_MEMBER_REMOVED_PERSONAL,
           },
         },
       };
@@ -257,6 +274,88 @@ describe('TrelloActionsLogicService', () => {
     });
   });
 
+  describe('handleChecklistActions', () => {
+    it('should send messages to all subscribed users', async () => {
+      const webhookAction = {
+        ...webhookActionMock,
+      };
+
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue(undefined);
+
+      await trelloActionsLogicService.handleChecklistActions(
+        [usersToNotify[0].trello.userId, usersToNotify[1].trello.userId],
+        trelloBoardMock,
+        trelloCardMock,
+        TrelloWebhookChecklistActions.CHECKLIST_ITEM_ADDED,
+        webhookAction,
+      );
+
+      expect(usersService.findUsersByTrelloIds).toHaveBeenCalledWith(
+        usersToNotifyIds,
+      );
+
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
+        usersToNotifyIds.length,
+      );
+    });
+  });
+
+  describe('handleListActions', () => {
+    it('should send messages to all subscribed users', async () => {
+      const webhookAction = {
+        ...webhookActionMock,
+        action: {
+          ...webhookActionMock.action,
+          display: {
+            translationKey: TrelloWebhookListActions.LIST_CREATED,
+          },
+        },
+      };
+
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue(undefined);
+
+      await trelloActionsLogicService.handleListActions(
+        usersToNotifyIds,
+        trelloBoardMock,
+        TrelloWebhookListActions.LIST_CREATED,
+        webhookAction,
+      );
+
+      expect(usersService.findUsersByTrelloIds).toHaveBeenCalledWith(
+        usersToNotifyIds,
+      );
+
+      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
+        usersToNotifyIds.length,
+      );
+    });
+
+    it('should not send messages when there are no subscribed users', async () => {
+      const webhookAction = {
+        ...webhookActionMock,
+      };
+
+      jest.spyOn(usersService, 'findUsersByTrelloIds').mockResolvedValue([]);
+
+      jest
+        .spyOn(notificationBotService, 'sendMessageToUser')
+        .mockResolvedValue(undefined);
+
+      await trelloActionsLogicService.handleListActions(
+        usersToNotifyIds,
+        trelloBoardMock,
+        TrelloWebhookListActions.LIST_DELETED,
+        webhookAction,
+      );
+
+      expect(notificationBotService.sendMessageToUser).not.toHaveBeenCalled();
+    });
+  });
+
   describe('handleBoardAction', () => {
     it('should send messages to all subscribed users', async () => {
       const webhookAction = {
@@ -286,46 +385,6 @@ describe('TrelloActionsLogicService', () => {
 
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
         usersToNotifyIds.length,
-      );
-    });
-  });
-
-  describe('handleAdminAction', () => {
-    it('should send messages to all subscribed board admins', async () => {
-      const adminsToNotifyIds = [superAdminStub().trello.userId];
-
-      const webhookAction = {
-        ...webhookActionMock,
-        action: {
-          ...webhookActionMock.action,
-          display: {
-            translationKey:
-              TrelloWebhookAdminActions.BOARD_MEMBER_INVITATION_JOINED,
-          },
-        },
-      };
-
-      jest
-        .spyOn(usersService, 'findUsersByTrelloIds')
-        .mockResolvedValue([superAdminStub()]);
-
-      jest
-        .spyOn(notificationBotService, 'sendMessageToUser')
-        .mockResolvedValue(undefined);
-
-      await trelloActionsLogicService.handleAdminActions(
-        adminsToNotifyIds,
-        trelloBoardMock,
-        webhookAction.action?.display?.translationKey,
-        webhookAction,
-      );
-
-      expect(usersService.findUsersByTrelloIds).toHaveBeenCalledWith(
-        adminsToNotifyIds,
-      );
-
-      expect(notificationBotService.sendMessageToUser).toHaveBeenCalledTimes(
-        adminsToNotifyIds.length,
       );
     });
   });

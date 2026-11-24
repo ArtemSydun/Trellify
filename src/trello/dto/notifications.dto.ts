@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmptyObject,
   ValidateNested,
@@ -14,12 +15,18 @@ import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum'
 
 export class NotificationCategoriesDto {
   @ApiProperty({
-    description:
-      'Notifications related to personal actions (related to certain user)',
+    description: 'Notifications related to card events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').personal,
+    example: initializeNotificationArrays('userId1').card,
   })
-  personal: Record<string, string[]>;
+  card: Record<string, string[]>;
+
+  @ApiProperty({
+    description: 'Notifications related to checklist events with user IDs.',
+    type: Object,
+    example: initializeNotificationArrays('userId1').checklist,
+  })
+  checklist: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
@@ -29,30 +36,31 @@ export class NotificationCategoriesDto {
   board: Record<string, string[]>;
 
   @ApiProperty({
-    description: 'Notifications related to card events with user IDs.',
+    description: 'Notifications related to list events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').card,
+    example: initializeNotificationArrays('userId1').list,
   })
-  card: Record<string, string[]>;
-
-  @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
-    type: Object,
-    example: initializeNotificationArrays('userId1').admin,
-  })
-  admin: Record<string, string[]>;
+  list: Record<string, string[]>;
 }
 
 export class NotificationBooleansDto {
   @ApiProperty({
-    description:
-      'Notifications related to personal actions (related to certain user)',
+    description: 'Notifications related to card events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .personal,
+      .card,
   })
   @IsNotEmptyObject()
-  personal: Record<string, boolean>;
+  card: Record<string, boolean>;
+
+  @ApiProperty({
+    description: 'Notifications related to checklist events with user IDs.',
+    type: Object,
+    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
+      .checklist,
+  })
+  @IsNotEmptyObject()
+  checklist: Record<string, boolean>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
@@ -64,22 +72,13 @@ export class NotificationBooleansDto {
   board: Record<string, boolean>;
 
   @ApiProperty({
-    description: 'Notifications related to card events with user IDs.',
+    description: 'Notifications related to list events with user IDs.',
     type: Object,
     example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .card,
+      .list,
   })
   @IsNotEmptyObject()
-  card: Record<string, boolean>;
-
-  @ApiProperty({
-    description: 'Notifications related to admin events with user IDs.',
-    type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .admin,
-  })
-  @IsNotEmptyObject()
-  admin: Record<string, boolean>;
+  list: Record<string, boolean>;
 }
 
 export class UpdateNotificationsDto {
@@ -101,6 +100,13 @@ export class UpdateNotificationsDto {
     message: 'notificationProfile must be a valid profile value',
   })
   notificationProfile: TrelloWebhookNotificationProfiles;
+
+  @ApiProperty({
+    description: 'Status of author notifications enabling',
+    example: true,
+  })
+  @IsBoolean()
+  authorNotifications: boolean;
 }
 
 export class UpdateManyNotificationsDto extends UpdateNotificationsDto {

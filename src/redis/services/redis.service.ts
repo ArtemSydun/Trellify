@@ -1,26 +1,47 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
-import { dailyStatsEnum } from '../enums/daily-stats.enum';
-import { redisKeysEnum } from '../enums/redis-keys.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
+import { periodStatsKeys } from '../enums/daily-stats-keys.enum';
+import { redisKeys } from '../enums/redis-keys.enum';
 
 @Injectable()
 export class RedisService {
   constructor(
     @InjectRedis() private readonly redis: Redis,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService,
     private readonly jwtService: JwtService,
   ) {}
 
   async onModuleInit() {
-    const exists = await this.getValue(redisKeysEnum.DAILY_STATS);
+    // Fetch data from Redis
+    const dailyStatsString = await this.getValue(redisKeys.DAILY_STATS);
+    const weeklyStatsString = await this.getValue(redisKeys.WEEKLY_STATS);
 
-    if (!exists) {
-      console.log('Initializing daily stats memory data');
+    console.log('Refreshing subscription plans');
+    await this.initializeSubscriptionPlans();
+
+    if (!dailyStatsString) {
+      console.log('Initializing daily stats...');
       await this.initializeDailyStats();
     }
+
+    if (!weeklyStatsString) {
+      console.log('Initializing weekly stats...');
+      await this.initializeWeeklyStats();
+    }
+
+    console.log('Cleanup completed successfully!');
   }
 
   async setValue(key: string, value: string): Promise<string> {
@@ -57,36 +78,108 @@ export class RedisService {
   }
 
   async initializeDailyStats(): Promise<string> {
-    // Convert dailyStatsEnum values into an object with all values set to 0
-    const dailyStatsKeys = Object.values(dailyStatsEnum);
-    const dailyStats = dailyStatsKeys.reduce(
+    // Convert dailyStatsEnum values into an object with all values set to []
+    const dailyStatsVars = Object.values(periodStatsKeys);
+    const dailyStats = dailyStatsVars.reduce(
       (acc, key) => {
-        acc[key] = 0;
+        acc[key] = [];
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, string[]>,
     );
 
     return await this.setValue(
-      redisKeysEnum.DAILY_STATS,
+      redisKeys.DAILY_STATS,
       JSON.stringify(dailyStats),
     );
   }
 
-  async updateDailyStats(key: string, value: number): Promise<string> {
-    const dailyStats = await this.getValue(redisKeysEnum.DAILY_STATS);
+  async initializeWeeklyStats(): Promise<string> {
+    // Convert dailyStatsEnum values into an object with all values set to 0
+    const weeklyStatsVars = Object.values(periodStatsKeys);
+    const weeklyStats = weeklyStatsVars.reduce(
+      (acc, key) => {
+        acc[key] = [];
+        return acc;
+      },
+      {} as Record<string, string[]>,
+    );
 
+    return await this.setValue(
+      redisKeys.WEEKLY_STATS,
+      JSON.stringify(weeklyStats),
+    );
+  }
+
+  async initializeSubscriptionPlans(): Promise<string> {
+    // Fetch all subscription plans
+    const subscriptionPlans = await this.subscriptionService.findAll();
+
+    // Transform array into an object with plan names as keys and notifications as values
+    const subscriptionPlansObject = subscriptionPlans.reduce(
+      (acc, plan) => {
+        acc[plan.name] = {
+          price: plan.price,
+          notifications: plan.notifications,
+          paypaylPlanId: plan.paypalPlanId,
+        };
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+
+    // Store the transformed object in Redis
+    return await this.setValue(
+      redisKeys.SUBSCRIPTION_PLANS,
+      JSON.stringify(subscriptionPlansObject),
+    );
+  }
+
+  async updateDailyStats(key: string, value: string): Promise<string> {
+    const dailyStats = await this.getValue(redisKeys.DAILY_STATS);
     const keyValue = JSON.parse(dailyStats)[key];
+
+    if (keyValue.includes(value)) {
+      return dailyStats;
+    }
+
+    const newKeyValue = [...keyValue, value];
 
     const updatedDailyStats = {
       ...JSON.parse(dailyStats),
-      [key]: keyValue + value,
+      [key]: newKeyValue,
     };
 
     return await this.setValue(
-      redisKeysEnum.DAILY_STATS,
+      redisKeys.DAILY_STATS,
       JSON.stringify(updatedDailyStats),
     );
+  }
+
+  async updateWeeklyStats(key: string, value: string): Promise<string> {
+    const weeklyStats = await this.getValue(redisKeys.WEEKLY_STATS);
+
+    const keyValue = JSON.parse(weeklyStats)[key];
+
+    if (keyValue.includes(value)) {
+      return weeklyStats;
+    }
+
+    const newKeyValue = [...keyValue, value];
+
+    const updatedWeeklyStats = {
+      ...JSON.parse(weeklyStats),
+      [key]: newKeyValue,
+    };
+
+    return await this.setValue(
+      redisKeys.WEEKLY_STATS,
+      JSON.stringify(updatedWeeklyStats),
+    );
+  }
+
+  async getSubscriptionPlans(): Promise<NotificationProfiles> {
+    return JSON.parse(await this.getValue(redisKeys.SUBSCRIPTION_PLANS));
   }
 
   async makeTokenInvalid(token: string): Promise<void> {

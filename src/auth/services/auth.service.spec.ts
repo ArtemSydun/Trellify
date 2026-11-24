@@ -20,7 +20,7 @@ import { AuthService } from './auth.service';
 import { UsersRepository } from 'src/user/repositories/users.repository';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ChangeEmailDto } from 'src/user/dto/change-email.dto';
 import { ChangePasswordDto } from 'src/user/dto/change-password.dto';
 import { RedisService } from 'src/redis/services/redis.service';
@@ -289,7 +289,7 @@ describe('AuthService', () => {
       );
 
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.USER_REGISTERED,
+        AdminBotActions.USER_REGISTERED,
         {
           email: 'test@example.com',
           password: 'hashedpassword',
@@ -384,6 +384,7 @@ describe('AuthService', () => {
       };
 
       jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+      jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(false);
       (verifyPassword as jest.Mock).mockResolvedValue(true); // Mock password validation to fail
 
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
@@ -429,6 +430,21 @@ describe('AuthService', () => {
         authService.initiateChangeUserEmail(userStub.id, changeEmailDto),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('should throw ConflictException if new email is already taken by other user', async () => {
+      const userStub = superAdminStub();
+      const changeEmailDto: ChangeEmailDto = {
+        newEmail: userStub.email,
+        password: 'correctpassword',
+      };
+
+      jest.spyOn(usersRepository, 'findOneById').mockResolvedValue(userStub);
+      jest.spyOn(usersService, 'doesUserExist').mockResolvedValue(true);
+
+      await expect(
+        authService.initiateChangeUserEmail(userStub.id, changeEmailDto),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('confirmChangeUserEmail', () => {
@@ -441,14 +457,18 @@ describe('AuthService', () => {
       };
 
       jest.spyOn(authService, 'verifyToken').mockReturnValue(decodedToken);
-      jest.spyOn(usersService, 'updateUser').mockResolvedValue(undefined);
+
+      jest.spyOn(usersService, 'updateUserEmail').mockResolvedValue(undefined); // Assuming it resolves with nothing
 
       const result = await authService.confirmChangeUserEmail(token, undefined);
 
       expect(authService.verifyToken).toHaveBeenCalledWith(token, undefined);
-      expect(usersRepository.updateById).toHaveBeenCalledWith(userStub.id, {
-        email: decodedToken.newEmail,
-      });
+
+      expect(usersService.updateUserEmail).toHaveBeenCalledWith(
+        userStub.id,
+        decodedToken.newEmail,
+        undefined,
+      );
 
       expect(result).toEqual({
         message: expect.any(String),

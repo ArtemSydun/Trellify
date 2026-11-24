@@ -19,7 +19,7 @@ export function parseTrelloError(err: any, i18n?: I18nContext): string {
     case 'invalid key':
       message =
         i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_APP_KEY) ||
-        'Trello responded with "invalid key". Something is wrong with Trellify';
+        'Trello responded with "invalid key". Please ensure your Trello token is valid, or contact Trellify support';
       break;
     case 'invalid app token':
       message =
@@ -35,6 +35,11 @@ export function parseTrelloError(err: any, i18n?: I18nContext): string {
       message =
         i18n?.t(I18nKeys.ERRORS_TRELLO_INVALID_WEBHOOK_ID) ||
         `Invalid value for idWebhook`;
+      break;
+    case 'unauthorized permission requested':
+      message =
+        i18n?.t(I18nKeys.ERRORS_TRELLO_UNATHORIZED_PERMISSION) ||
+        `Author token does not have permissions to get this content`;
       break;
 
     default:

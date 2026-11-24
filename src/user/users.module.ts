@@ -1,10 +1,12 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'src/auth/auth.module';
-import { SharedConfigService } from 'src/config/shared.config.service';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { MailerModule } from 'src/mailer/mailer.module';
+import { PaypalModule } from 'src/paypal/pay-pal.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { SubscriptionModule } from 'src/subscription/subscription.module';
 import { TelegramModule } from 'src/telegram/telegram.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersController } from './controllers/users.controller';
@@ -16,10 +18,12 @@ import { UsersService } from './services/users.service';
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MailerModule,
-    RedisModule,
+    forwardRef(() => RedisModule),
     forwardRef(() => AuthModule),
     forwardRef(() => TrelloModule),
     forwardRef(() => TelegramModule),
+    forwardRef(() => SubscriptionModule),
+    forwardRef(() => PaypalModule),
     DiscordModule,
   ],
   controllers: [UsersController],

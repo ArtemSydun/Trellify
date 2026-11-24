@@ -1,4 +1,4 @@
-import { Prop } from '@nestjs/mongoose';
+import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserWebhookDto } from './user.webhook.dto';
 
@@ -9,7 +9,6 @@ export class TrelloSettings {
     required: false,
     nullable: true,
   })
-  @Prop({ required: false })
   token?: string | null;
 
   @ApiProperty({
@@ -19,7 +18,6 @@ export class TrelloSettings {
     nullable: true,
     type: String,
   })
-  @Prop({ required: false })
   userId?: string | null;
 
   @ApiProperty({
@@ -28,7 +26,6 @@ export class TrelloSettings {
     required: false,
     nullable: true,
   })
-  @Prop({ required: false })
   username?: string | null;
 
   @ApiProperty({
@@ -42,6 +39,8 @@ export class TrelloSettings {
     ],
     required: false,
   })
-  @Prop({ required: false, type: [UserWebhookDto] })
   webhooks?: UserWebhookDto[];
+
+  @Optional()
+  updatedAt?: Date;
 }

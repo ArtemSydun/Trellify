@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Res,
+  Req,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -14,6 +15,7 @@ import {
   ApiNotFoundResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/auth.role.decorator';
@@ -32,25 +34,30 @@ import { DistributionService } from '../services/distribution.service';
 export class DistributionController {
   constructor(private readonly distributionService: DistributionService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRoles.superadmin, UserRoles.admin)
-  @Post('send')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Send distribution to subscribers',
-    description: 'Send distribution to subscibers.',
-  })
-  @ApiOkResponse({
-    description: 'Distribution send to all newsletter subscribers',
-  })
-  @ApiCustomUnathorizedResponse()
-  @ApiCustomForbiddenResponse()
-  sendDistribution(@Body() distribution: { subject: string }) {
-    return this.distributionService.sendDistribution(distribution.subject);
-  }
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(UserRoles.superadmin, UserRoles.admin)
+  // @Post('send')
+  // @ApiBearerAuth()
+  // @ApiOperation({
+  //   summary: 'Send distribution to subscribers',
+  //   description: 'Send distribution to subscibers.',
+  // })
+  // @ApiOkResponse({
+  //   description: 'Distribution send to all newsletter subscribers',
+  // })
+  // @ApiCustomUnathorizedResponse()
+  // @ApiCustomForbiddenResponse()
+  // sendDistribution(@Body() distribution: { subject: string }) {
+  //   return this.distributionService.sendDistribution(distribution.subject);
+  // }
 
+  @Throttle({
+    default: {
+      limit: 1,
+      ttl: 60 * 1000,
+    },
+  })
   @Post('subscribe')
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Subscribe to newsletter',
     description: 'Subscribe to newsletter by email.',
@@ -60,9 +67,11 @@ export class DistributionController {
   })
   create(
     @Body() createDistributionDto: CreateDistributionSubscriberDto,
+    @Req() req,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
     return this.distributionService.createDistributionSubscriber(
       createDistributionDto,
+      req.i18nContext,
     );
   }
 
@@ -99,8 +108,11 @@ export class DistributionController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiNotFoundResponse()
-  findOneByEmail(@Param('email') email: string) {
-    return this.distributionService.findDistributionSubscriberByEmail(email);
+  findOneByEmail(@Param('email') email: string, @Req() req) {
+    return this.distributionService.findDistributionSubscriberByEmail(
+      email,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -118,14 +130,14 @@ export class DistributionController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomForbiddenResponse()
   @ApiNotFoundResponse()
-  findOneByTrellifyUserId(@Param('userId') userId: string) {
+  findOneByTrellifyUserId(@Param('userId') userId: string, @Req() req) {
     return this.distributionService.findDistributionSubscriberByTrellifyUserId(
       userId,
+      req.i18nContext,
     );
   }
 
   @Patch('subscribers/:email')
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update distribution subscription by email',
     description: 'Update distribution subscription.',
@@ -139,12 +151,16 @@ export class DistributionController {
   update(
     @Param('email') email: string,
     @Body() updateDistributionDto: UpdateDistributionDto,
+    @Req() req,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
-    return this.distributionService.updateByEmail(email, updateDistributionDto);
+    return this.distributionService.updateByEmail(
+      email,
+      updateDistributionDto,
+      req.i18nContext,
+    );
   }
 
-  @Get('unsubscribe/:id')
-  @ApiBearerAuth()
+  @Get('unsubscribe/:email')
   @ApiOperation({
     summary: 'Unsubscribe from Trellify distribution',
     description: 'Unsubscribe from Trellify distribution.',
@@ -155,8 +171,14 @@ export class DistributionController {
     type: DistributionSubscriber,
   })
   @ApiNotFoundResponse()
-  remove(@Param('id') id: string): Promise<DefaultResponse<null>> {
-    return this.distributionService.removeDistributionSubscriber(id);
+  remove(
+    @Param('email') email: string,
+    @Req() req,
+  ): Promise<DefaultResponse<null>> {
+    return this.distributionService.removeDistributionSubscriber(
+      email,
+      req.i18nContext,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

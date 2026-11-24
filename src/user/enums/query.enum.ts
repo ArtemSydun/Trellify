@@ -1,4 +1,4 @@
-export enum UserSearchPathEnum {
+export enum UserSearchPath {
   // Nested paths for 'trello' object
   TrelloUserId = 'trello.userId',
   TrelloUsername = 'trello.username',
@@ -15,6 +15,14 @@ export enum UserSearchPathEnum {
   // Nested paths for 'discord' object
   DiscordUsername = 'discord.username',
   DiscordUserId = 'discord.userId',
+
+  //Subscription
+  SubscriptionPlan = 'subscription.plan',
+  SubscriptionExpired = 'subscription.expired',
+  SubscriptionLastPayment = 'subscription.lastPaymentDate',
+  SubscriptionNextPayment = 'subscription.nextPaymentDate',
+  LastPaymentId = 'subscription.lastPaymentId',
+  PaypalSubscriptionId = 'subscription.paypalSubscriptionId',
 
   // Simple properties
   Email = 'email',

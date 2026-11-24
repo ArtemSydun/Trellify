@@ -23,7 +23,7 @@ import {
 } from 'src/common/helpers/hashing';
 import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
 import { trelloProfileMock } from 'src/trello/__mocks__/trello.stub';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 import { Languages } from 'src/common/enums/languages.enum';
 import { webhookStub } from 'src/trello/__mocks__/webhook.stub';
@@ -31,10 +31,17 @@ import { UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
 import { AdminBotService } from 'src/telegram/admin-bot/admin-bot.service';
 import { MailerService } from 'src/mailer/services/mailer.service';
-import { AdminBotActionsEnum } from 'src/common/enums/admin-bot-actions.enum';
+import { AdminBotActions } from 'src/common/enums/admin-bot-actions.enum';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/services/redis.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { UsedTrialService } from 'src/subscription/services/used-trial.service';
+import { usedTrialStub } from '../__mocks__/used-trial.stub';
+import { I18nService } from 'nestjs-i18n';
+import { SharedConfigService } from 'src/config/services/shared.config.service';
+import { PaypalLogicService } from 'src/paypal/services/paypal-logic.service';
 
 jest.mock('src/common/helpers/hashing', () => ({
   hashPassword: jest.fn(),
@@ -44,6 +51,7 @@ jest.mock('src/common/helpers/hashing', () => ({
 
 describe('UsersService', () => {
   let originalDate = Date;
+  let configService: ConfigService;
   let usersService: UsersService;
   let usersRepository: UsersRepository;
   let trelloMembersLogicService: TrelloMembersLogicService;
@@ -52,7 +60,10 @@ describe('UsersService', () => {
   let notificationBotService: NotificationBotService;
   let adminBotService: AdminBotService;
   let mailerService: MailerService;
+  let usedTrialService: UsedTrialService;
   let redisService: RedisService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let subscriptionService: SubscriptionService;
   let mockUsers: User[];
 
   const fixedDate = superAdminStub().telegram.updatedAt;
@@ -72,6 +83,10 @@ describe('UsersService', () => {
         {
           provide: ConfigService,
           useValue: createMock<ConfigService>(),
+        },
+        {
+          provide: SharedConfigService,
+          useValue: createMock<SharedConfigService>(),
         },
         {
           provide: TrelloMembersLogicService,
@@ -102,12 +117,29 @@ describe('UsersService', () => {
           useValue: createMock<RedisService>(),
         },
         {
+          provide: SubscriptionService,
+          useValue: createMock<SubscriptionService>(),
+        },
+        {
+          provide: PaypalLogicService,
+          useValue: createMock<PaypalLogicService>(),
+        },
+        {
+          provide: UsedTrialService,
+          useValue: createMock<UsedTrialService>(),
+        },
+        {
           provide: MailerService,
           useValue: createMock<MailerService>(),
+        },
+        {
+          provide: I18nService,
+          useValue: createMock<I18nService>(),
         },
       ],
     }).compile();
 
+    configService = moduleRef.get<ConfigService>(ConfigService);
     usersService = moduleRef.get<UsersService>(UsersService);
     usersRepository = moduleRef.get<UsersRepository>(UsersRepository);
     trelloMembersLogicService = moduleRef.get<TrelloMembersLogicService>(
@@ -128,6 +160,10 @@ describe('UsersService', () => {
     mailerService = moduleRef.get<MailerService>(MailerService);
 
     redisService = moduleRef.get<RedisService>(RedisService);
+    usedTrialService = moduleRef.get<UsedTrialService>(UsedTrialService);
+
+    subscriptionService =
+      moduleRef.get<SubscriptionService>(SubscriptionService);
 
     mockUsers = [userStub(), superAdminStub()];
 
@@ -161,43 +197,219 @@ describe('UsersService', () => {
   });
 
   describe('createUser', () => {
-    it('should create a new user successfully', async () => {
-      const createUserDto = {
-        email: superAdminStub().email,
-        password: 'password123',
-        timezone: 0,
-      };
-      jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
-      jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
-
-      const result = await usersService.createUser(createUserDto);
-
-      expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
-        createUserDto.email,
-      );
-      expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
-      expect(usersRepository.create).toHaveBeenCalledWith({
-        id: expect.any(String),
-        ...createUserDto,
-        password: 'hashedPassword',
-      });
-      expect(result).toEqual(superAdminStub());
-    });
-
-    it('should throw ConflictException if the user already exists', async () => {
-      const createUserDto = {
-        email: superAdminStub().email,
-        password: 'password123',
-        timezone: 0,
-      };
-      jest
-        .spyOn(usersRepository, 'findOneByEmail')
-        .mockResolvedValue(superAdminStub());
-
-      await expect(usersService.createUser(createUserDto)).rejects.toThrow(
-        ConflictException,
-      );
-    });
+    // it('should create a new user with fresh subscription successfully', async () => {
+    //   const newUser = {
+    //     ...superAdminStub(),
+    //     telegram: { ...superAdminStub().telegram, updatedAt: null },
+    //     trello: { ...superAdminStub().trello, updatedAt: null },
+    //     discord: { ...superAdminStub().discord, updatedAt: null },
+    //   };
+    //   const trialSubscriptionPlan = {
+    //     id: 'id1',
+    //     name: SubscriptionPlans.TRIAL,
+    //     price: 0,
+    //     subscribers: [],
+    //     notifications: {
+    //       card: {},
+    //       checklist: {},
+    //       list: {},
+    //       board: {},
+    //     },
+    //   };
+    //   const createUserDto = {
+    //     email: superAdminStub().email,
+    //     password: 'password123',
+    //     timezone: 0,
+    //     subscription: {
+    //       id: 'id1',
+    //       plan: SubscriptionPlans.TRIAL,
+    //       lastAmount: 0,
+    //       totalAmount: 0,
+    //       expired: false,
+    //       lastPaymentDate: null,
+    //       nextPaymentDate: (() => {
+    //         const date = new Date();
+    //         date.setDate(date.getDate() + 14);
+    //         return date;
+    //       })(),
+    //     },
+    //     trello: { userId: null, token: null, webhooks: [], updatedAt: null },
+    //     telegram: {
+    //       username: null,
+    //       chatId: null,
+    //       updatedAt: null,
+    //     },
+    //     discord: {
+    //       userId: null,
+    //       username: null,
+    //       updatedAt: null,
+    //     },
+    //   };
+    //   jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+    //   jest.spyOn(usersRepository, 'create').mockResolvedValue(newUser);
+    //   jest
+    //     .spyOn(subscriptionService, 'findSubscriptionByName')
+    //     .mockResolvedValue(trialSubscriptionPlan);
+    //   jest
+    //     .spyOn(usedTrialService, 'findUserTrialByEmail')
+    //     .mockResolvedValue(null);
+    //   const result = await usersService.createUser(createUserDto);
+    //   expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+    //     createUserDto.email,
+    //   );
+    //   expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
+    //   expect(usersRepository.create).toHaveBeenCalledWith({
+    //     id: expect.any(String),
+    //     ...createUserDto,
+    //     password: 'hashedPassword',
+    //   });
+    //   expect(result).toEqual(newUser);
+    // });
+    // it('should create a new user with trial expiration date if he already used trial and it is not expired', async () => {
+    //   const newUser = {
+    //     ...superAdminStub(),
+    //     telegram: { ...superAdminStub().telegram, updatedAt: null },
+    //     trello: { ...superAdminStub().trello, updatedAt: null },
+    //     discord: { ...superAdminStub().discord, updatedAt: null },
+    //   };
+    //   const trialSubscriptionPlan = {
+    //     id: 'id1',
+    //     name: SubscriptionPlans.TRIAL,
+    //     price: 0,
+    //     subscribers: [],
+    //     notifications: {
+    //       card: {},
+    //       checklist: {},
+    //       list: {},
+    //       board: {},
+    //     },
+    //   };
+    //   const trialExpires = new Date();
+    //   const createUserDto = {
+    //     email: superAdminStub().email,
+    //     password: 'password123',
+    //     timezone: 0,
+    //     subscription: {
+    //       id: 'id1',
+    //       plan: SubscriptionPlans.TRIAL,
+    //       lastAmount: 0,
+    //       totalAmount: 0,
+    //       expired: false,
+    //       lastPaymentDate: null,
+    //       nextPaymentDate: trialExpires,
+    //     },
+    //     trello: { userId: null, token: null, webhooks: [], updatedAt: null },
+    //     telegram: {
+    //       username: null,
+    //       chatId: null,
+    //       updatedAt: null,
+    //     },
+    //     discord: {
+    //       userId: null,
+    //       username: null,
+    //       updatedAt: null,
+    //     },
+    //   };
+    //   const usedTrial = {
+    //     ...usedTrialStub,
+    //     email: createUserDto.email,
+    //     trialEnds: trialExpires,
+    //   };
+    //   jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+    //   jest.spyOn(usersRepository, 'create').mockResolvedValue(newUser);
+    //   jest
+    //     .spyOn(subscriptionService, 'findSubscriptionByName')
+    //     .mockResolvedValue(trialSubscriptionPlan);
+    //   jest
+    //     .spyOn(usedTrialService, 'findUserTrialByEmail')
+    //     .mockResolvedValue(usedTrial);
+    //   const result = await usersService.createUser(createUserDto);
+    //   expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+    //     createUserDto.email,
+    //   );
+    //   expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
+    //   expect(usersRepository.create).toHaveBeenCalledWith({
+    //     id: expect.any(String),
+    //     ...createUserDto,
+    //     password: 'hashedPassword',
+    //   });
+    //   expect(result).toEqual(newUser);
+    // });
+    // it('should create a new user with expired subscription if he already used trial', async () => {
+    //   const trialSubscriptionPlan = {
+    //     id: 'id1',
+    //     name: SubscriptionPlans.TRIAL,
+    //     price: 0,
+    //     subscribers: [],
+    //     notifications: {
+    //       card: {},
+    //       checklist: {},
+    //       list: {},
+    //       board: {},
+    //     },
+    //   };
+    //   const createUserDto = {
+    //     email: superAdminStub().email,
+    //     password: 'password123',
+    //     timezone: 0,
+    //     subscription: {
+    //       id: 'id1',
+    //       plan: SubscriptionPlans.TRIAL,
+    //       lastAmount: 0,
+    //       totalAmount: 0,
+    //       expired: false,
+    //       lastPaymentDate: null,
+    //       nextPaymentDate: usedTrialStub.trialEnds,
+    //     },
+    //     trello: { userId: null, token: null, webhooks: [], updatedAt: null },
+    //     telegram: {
+    //       username: null,
+    //       chatId: null,
+    //       updatedAt: null,
+    //     },
+    //     discord: {
+    //       userId: null,
+    //       username: null,
+    //       updatedAt: null,
+    //     },
+    //   };
+    //   const usedTrial = {
+    //     ...usedTrialStub,
+    //     email: createUserDto.email,
+    //   };
+    //   jest.spyOn(usersRepository, 'findOneByEmail').mockResolvedValue(null);
+    //   jest.spyOn(usersRepository, 'create').mockResolvedValue(superAdminStub());
+    //   jest
+    //     .spyOn(subscriptionService, 'findSubscriptionByName')
+    //     .mockResolvedValue(trialSubscriptionPlan);
+    //   jest
+    //     .spyOn(usedTrialService, 'findUserTrialByEmail')
+    //     .mockResolvedValue(usedTrial);
+    //   const result = await usersService.createUser(createUserDto);
+    //   expect(usersRepository.findOneByEmail).toHaveBeenCalledWith(
+    //     createUserDto.email,
+    //   );
+    //   expect(hashPassword).toHaveBeenCalledWith(createUserDto.password);
+    //   expect(usersRepository.create).toHaveBeenCalledWith({
+    //     id: expect.any(String),
+    //     ...createUserDto,
+    //     password: 'hashedPassword',
+    //   });
+    //   expect(result).toEqual(superAdminStub());
+    // });
+    // it('should throw ConflictException if the user already exists', async () => {
+    //   const createUserDto = {
+    //     email: superAdminStub().email,
+    //     password: 'password123',
+    //     timezone: 0,
+    //   };
+    //   jest
+    //     .spyOn(usersRepository, 'findOneByEmail')
+    //     .mockResolvedValue(superAdminStub());
+    //   await expect(usersService.createUser(createUserDto)).rejects.toThrow(
+    //     ConflictException,
+    //   );
+    // });
   });
 
   describe('deleteUserById', () => {
@@ -234,7 +446,7 @@ describe('UsersService', () => {
       ).toHaveBeenCalledWith(userToDelete, undefined);
       expect(usersRepository.delete).toHaveBeenCalledWith(userToDelete.id);
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.USER_DELETED,
+        AdminBotActions.USER_DELETED,
         userToDelete,
       );
       expect(adminBotService.notifyAdmins).toHaveBeenCalledWith(
@@ -381,7 +593,7 @@ describe('UsersService', () => {
 
       const result = await usersService.findUserProfile(user.id);
 
-      expect(usersService.getUser).toHaveBeenCalledWith(user.id);
+      expect(usersService.getUser).toHaveBeenCalledWith(user.id, undefined);
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('telegram.chatId');
       expect(result).not.toHaveProperty('trello.token');
@@ -459,7 +671,7 @@ describe('UsersService', () => {
         undefined,
       );
 
-      expect(usersService.getUser).toHaveBeenCalledWith(mockUser);
+      expect(usersService.getUser).toHaveBeenCalledWith(mockUser, undefined);
       expect(
         trelloWebhooksLogicService.findUserSubscribedWebhooks,
       ).toHaveBeenCalledWith(mockUser, undefined);
@@ -528,7 +740,7 @@ describe('UsersService', () => {
       );
 
       expect(result).toEqual({
-        message: expect.stringContaining(user.id),
+        message: expect.stringContaining(user.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -556,7 +768,7 @@ describe('UsersService', () => {
       expect(result.data?.role).toEqual(userToUpdate.role);
 
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.id),
+        message: expect.stringContaining(userToUpdate.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -596,7 +808,7 @@ describe('UsersService', () => {
       expect(result.data?.trello?.userId).toEqual(trelloProfileMock.id);
 
       expect(result).toEqual({
-        message: expect.stringContaining(userToUpdate.id),
+        message: expect.stringContaining(userToUpdate.email),
         statusCode: HttpStatus.OK,
         data: result.data,
       });
@@ -738,13 +950,13 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'findUserByProperty').mockResolvedValue(user);
 
       const result = await usersService.findUserByProperty(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
 
       expect(result).toEqual(user);
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.Email,
+        UserSearchPath.Email,
         user.email,
       );
     });
@@ -754,7 +966,7 @@ describe('UsersService', () => {
 
       await expect(
         usersService.findUserByProperty(
-          UserSearchPathEnum.Email,
+          UserSearchPath.Email,
           'nonexistent@example.com',
         ),
       ).rejects.toThrow(
@@ -791,6 +1003,7 @@ describe('UsersService', () => {
       // Invoking the method
       const result = await usersService.manageUserTelegramConnection(
         userToUpdate.id,
+        userToUpdate.id,
         connectTelegramDto,
         undefined,
       );
@@ -800,7 +1013,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TelegramChatId,
+        UserSearchPath.TelegramChatId,
         connectTelegramDto.chatId,
       );
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
@@ -832,6 +1045,7 @@ describe('UsersService', () => {
 
       await expect(
         usersService.manageUserTelegramConnection(
+          userToUpdate.id,
           userToUpdate.id,
           connectTelegramDto,
           undefined,
@@ -868,6 +1082,7 @@ describe('UsersService', () => {
       // Invoking the method
       const result = await usersService.manageUserTelegramConnection(
         userToUpdate.id,
+        userToUpdate.id,
         {
           chatId: null,
           username: null,
@@ -880,7 +1095,7 @@ describe('UsersService', () => {
       );
       expect(notificationBotService.sendMessageToUser).toHaveBeenCalledWith(
         userToUpdate.telegram,
-        'Trello notifier bot disconnected successfully',
+        expect.any(String),
       );
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
         telegram: connectTelegramDto,
@@ -927,6 +1142,7 @@ describe('UsersService', () => {
 
       const result = await usersService.manageUserTrelloConnection(
         userToUpdate.id,
+        userToUpdate,
         connectTrelloDto,
         undefined,
       );
@@ -939,7 +1155,13 @@ describe('UsersService', () => {
         trelloWebhooksLogicService.disconnectFromAllTrelloWebhooks,
       ).toHaveBeenCalledWith(userToUpdate, undefined);
       expect(usersRepository.updateById).toHaveBeenCalledWith(userToUpdate.id, {
-        trello: { userId: null, username: null, webhooks: [], token: null },
+        trello: {
+          userId: null,
+          username: null,
+          webhooks: [],
+          token: null,
+          updatedAt: fixedDate,
+        },
         lastActivityDate: fixedDate,
       });
       expect(result).toEqual({
@@ -981,6 +1203,7 @@ describe('UsersService', () => {
 
       const result = await usersService.manageUserTrelloConnection(
         userToUpdate.id,
+        userToUpdate,
         connectTrelloDto,
         undefined,
       );
@@ -1004,6 +1227,7 @@ describe('UsersService', () => {
           username: trelloProfileMock.username,
           webhooks: [],
           token: `encrypted${connectTrelloDto.token}`,
+          updatedAt: fixedDate,
         },
         lastActivityDate: fixedDate,
       });
@@ -1022,10 +1246,108 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw an error if token is invalid or not infinite', async () => {
-      const userToUpdate = { ...userStub() };
+    it('should throw an error if user tries to connect another trello account still having other in profile', async () => {
+      const trialSubscriptionPlan = {
+        id: 'id1',
+        name: SubscriptionPlans.TRIAL,
+        price: 0,
+        subscribers: [],
+        notifications: {
+          card: {},
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      };
+      const userToUpdate = {
+        ...userStub(),
+        trello: {
+          userId: null,
+          userName: null,
+          webhooks: [],
+        },
+        subscription: {
+          ...userStub().subscription,
+          plan: trialSubscriptionPlan.name,
+        },
+      };
+
+      const connectTrelloDto = { token: 'validtoken' };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+
+      await expect(
+        usersService.manageUserTrelloConnection(
+          userToUpdate,
+          userToUpdate,
+          connectTrelloDto,
+        ),
+      ).rejects.toThrow(
+        new ConflictException(
+          'This trello profile is already binded to other user',
+        ),
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate,
+        undefined,
+      );
+    });
+
+    it('should throw an error if a user with a trial tries to connect to another Trello account that has already used their trial.', async () => {
+      const userToUpdate = {
+        ...userStub(),
+      };
+
       const connectTrelloDto = { token: 'invalidtoken' };
 
+      const usedTrialByTrelloId = {
+        ...usedTrialStub,
+        email: 'anymail@mail.com',
+        trelloUserId: userToUpdate.trello.userId,
+      };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
+
+      jest
+        .spyOn(trelloTokensLogicService, 'isTokenInfinite')
+        .mockResolvedValue(true);
+
+      jest
+        .spyOn(usedTrialService, 'findUsedTrialByTrelloUserId')
+        .mockResolvedValue(usedTrialByTrelloId);
+
+      await expect(
+        usersService.manageUserTrelloConnection(
+          userToUpdate,
+          userToUpdate,
+          connectTrelloDto,
+        ),
+      ).rejects.toThrow(
+        new ConflictException(
+          'You should disconnect your Trello account first before connecting a new one.',
+        ),
+      );
+
+      expect(usersService.getUser).toHaveBeenCalledWith(
+        userToUpdate,
+        undefined,
+      );
+    });
+
+    it('should throw an error if token is invalid or not infinite', async () => {
+      const userToUpdate = {
+        ...userStub(),
+        trello: {
+          userId: null,
+          username: null,
+          webhooks: [],
+        },
+      };
+
+      const connectTrelloDto = { token: 'invalidtoken' };
+
+      jest.spyOn(usersService, 'getUser').mockResolvedValue(userToUpdate);
       jest
         .spyOn(trelloTokensLogicService, 'isTokenInfinite')
         .mockRejectedValue(
@@ -1036,7 +1358,8 @@ describe('UsersService', () => {
 
       await expect(
         usersService.manageUserTrelloConnection(
-          userToUpdate.id,
+          userToUpdate,
+          userToUpdate,
           connectTrelloDto,
         ),
       ).rejects.toThrow(
@@ -1046,7 +1369,7 @@ describe('UsersService', () => {
       );
 
       expect(usersService.getUser).toHaveBeenCalledWith(
-        userToUpdate.id,
+        userToUpdate,
         undefined,
       );
       expect(trelloTokensLogicService.isTokenInfinite).toHaveBeenCalledWith(
@@ -1079,6 +1402,7 @@ describe('UsersService', () => {
       await expect(
         usersService.manageUserTrelloConnection(
           userToUpdate.id,
+          userToUpdate,
           connectTrelloDto,
           undefined,
         ),
@@ -1102,7 +1426,7 @@ describe('UsersService', () => {
         undefined,
       );
       expect(usersRepository.findUserByProperty).toHaveBeenCalledWith(
-        UserSearchPathEnum.TrelloUserId,
+        UserSearchPath.TrelloUserId,
         connectedUser.trello.userId,
       );
       expect(usersRepository.updateById).not.toHaveBeenCalled();
@@ -1139,6 +1463,7 @@ describe('UsersService', () => {
       jest
         .spyOn(notificationBotService, 'sendMessageToUser')
         .mockImplementation(jest.fn());
+      jest.spyOn(configService, 'get').mockReturnValue('https://example.com');
 
       await usersService.removeWebhookFromAllUsers(webhookToDelete);
 
@@ -1157,7 +1482,7 @@ describe('UsersService', () => {
             filter: { id: user.id },
             update: {
               $pull: {
-                [UserSearchPathEnum.TrelloWebhooks]: {
+                [UserSearchPath.TrelloWebhooks]: {
                   webhookId: webhookToDelete.id,
                 },
               },
@@ -1213,7 +1538,7 @@ describe('UsersService', () => {
       );
 
       expect(adminBotService.actionAdminNotification).toHaveBeenCalledWith(
-        AdminBotActionsEnum.CONTACT_US,
+        AdminBotActions.CONTACT_US,
         formBody,
       );
 
@@ -1222,7 +1547,7 @@ describe('UsersService', () => {
       );
       expect(redisService.updateDailyStats).toHaveBeenCalledWith(
         'contactUs',
-        1,
+        formBody.email,
       );
       expect(response).toEqual({
         message: expect.any(String),

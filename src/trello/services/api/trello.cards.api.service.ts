@@ -3,7 +3,7 @@ import axios from 'axios';
 import { I18nContext } from 'nestjs-i18n';
 import { trelloApiLink } from 'src/common/constants/trello';
 import { parseTrelloError } from 'src/common/helpers/trello-errors';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 
 import { TrelloCard } from '../../dto/card.dto';
 

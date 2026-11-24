@@ -10,6 +10,7 @@ services:
     volumes:
       - mongodb-data:/data/db/
       - mongodb-log:/var/log/mongodb/
+      - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - '${MONGODB_PORT}:${MONGODB_PORT}'
 
@@ -18,7 +19,12 @@ services:
     restart: unless-stopped
     ports:
       - '${REDIS_PORT}:${REDIS_PORT}'
-    command: ['redis-server', '--appendonly', 'yes']
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --requirepass
+      - ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
 

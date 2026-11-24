@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { MailerService as MailService } from '@nestjs-modules/mailer';
 import { I18nContext } from 'nestjs-i18n';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 
@@ -66,7 +66,7 @@ export class MailerService {
   ): Promise<void> {
     try {
       const confirmationLink = this.getLink(
-        this.configService.get(configServiceEnum.FRONTEND_LINK),
+        this.configService.get(configServiceKeys.FRONTEND_LINK),
         `auth/sign-up/${token}`,
         i18n?.t(I18nKeys.MESSAGES_EMAIL_REGISTRATION_EMAIL_SUBJECT) ||
           `Confirm your email`,
@@ -98,7 +98,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const resetLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/auth/reset-password/${token}`;
+      const resetLink = `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/auth/reset-password/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -126,7 +126,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/change-email/${token}`;
+      const emailLink = `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/settings/change-email/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -156,7 +156,7 @@ export class MailerService {
     i18n?: I18nContext,
   ): Promise<void> {
     try {
-      const emailLink = `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/settings/delete-profile/${token}`;
+      const emailLink = `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/settings/delete-profile/${token}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -189,8 +189,8 @@ export class MailerService {
   ) {
     try {
       await this.mailerService.sendMail({
-        to: this.configService.get(configServiceEnum.ADMIN_MAIL),
-        from: this.configService.get(configServiceEnum.MAILER_SENDER),
+        to: this.configService.get(configServiceKeys.ADMIN_MAIL),
+        from: this.configService.get(configServiceKeys.MAILER_SENDER),
         replyTo: fromEmail,
         subject: `Contact Us: ${subject}`,
         text: `${authorized ? `Message from Trellify user` : `Message from website visitor`}\n Email: ${fromEmail}\n\n${message}`,
@@ -202,7 +202,7 @@ export class MailerService {
       throw new BadRequestException(
         i18n?.t(I18nKeys.ERRORS_GENERAL_FAILED_SEND_EMAIL, {
           args: {
-            adminEmail: this.configService.get(configServiceEnum.ADMIN_MAIL),
+            adminEmail: this.configService.get(configServiceKeys.ADMIN_MAIL),
           },
         }) || 'Failed to send message. Please try again later.',
       );

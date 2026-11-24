@@ -196,7 +196,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('telegram')
+  @Post(':id/telegram')
   @ApiOperation({
     summary: 'Connect / Disconnect Telegram',
     description:
@@ -249,11 +249,13 @@ export class UsersController {
       },
     },
   })
-  handleTelegramQuery(
+  handleTelegramConnection(
+    @Param('id') userId: string,
     @Req() req,
     @Body() connectTelegramDto: ConnectTelegramDto,
   ) {
     return this.usersService.manageUserTelegramConnection(
+      userId,
       req.user,
       connectTelegramDto,
       req.i18nContext,
@@ -261,7 +263,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('discord')
+  @Post(':id/discord')
   @ApiOperation({
     summary: 'Connect / Disconnect Discord',
     description:
@@ -313,8 +315,13 @@ export class UsersController {
       },
     },
   })
-  handleDiscordQuery(@Req() req, @Body() connectDiscordDto: DiscordSettings) {
+  handleDiscordConnection(
+    @Param('id') userId: string,
+    @Req() req,
+    @Body() connectDiscordDto: DiscordSettings,
+  ) {
     return this.usersService.manageUserDiscordConnection(
+      userId,
       req.user,
       connectDiscordDto,
       req.i18nContext,
@@ -322,7 +329,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('trello')
+  @Post(':id/trello')
   @ApiOperation({
     summary: 'Connect / Disconnect Trello',
     description:
@@ -354,8 +361,13 @@ export class UsersController {
     'Invalid trello token',
     'Please provide us token with valid expiration date',
   )
-  handleTrelloQuery(@Req() req, @Body() connectTrelloDto: ConnectTrelloDto) {
+  handleTrelloQuery(
+    @Param('id') userId: string,
+    @Req() req,
+    @Body() connectTrelloDto: ConnectTrelloDto,
+  ) {
     return this.usersService.manageUserTrelloConnection(
+      userId,
       req.user,
       connectTrelloDto,
       req.i18nContext,
@@ -574,6 +586,74 @@ export class UsersController {
       updateUserDto,
       req.i18nContext,
       req.user,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRoles.superadmin)
+  @Patch(':id/subscription/:subscriptionId')
+  @ApiOperation({
+    summary: 'Update a user subscription by user id (Superadmin only)',
+    description:
+      'This endpoint allows to update a user subscriptions by user id. It can only be accessed by users with the superadmin role.',
+  })
+  @ApiOkResponse({
+    description: 'User subscription updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'User subscription {{id}} updated successfully',
+        },
+        statusCode: {
+          type: 'number',
+          example: HttpStatus.OK,
+        },
+        data: {
+          type: 'object',
+          $ref: getSchemaPath(User),
+        },
+      },
+    },
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  updateUserSubscriptionById(
+    @Param('id') id: string,
+    @Param('subscriptionId') subscriptionId: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.updateUserSubscription(
+      id,
+      subscriptionId,
+      req.user,
+      req.i18nContext,
+    );
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('/subscription/:paypalSubscriptionId/cancel')
+  @ApiOperation({
+    summary: 'User subscription cancellation',
+    description: 'This endpoint allows to user cancel his subscription',
+  })
+  @ApiOkResponse({
+    description: 'User subscription cancelled successfully',
+  })
+  @ApiCustomUnathorizedResponse()
+  @ApiCustomForbiddenResponse()
+  @ApiCustomNotFoundResponse('User', 'id')
+  cancelSubscriptionById(
+    @Param('paypalSubscriptionId') paypalSubscriptionId: string,
+    @Body('reason') reason: string,
+    @Req() req,
+  ): Promise<DefaultResponse<User>> {
+    return this.usersService.cancelUserSubscription(
+      paypalSubscriptionId,
+      req.user.id,
+      reason,
+      req.i18nContext,
     );
   }
 }

@@ -6,7 +6,7 @@ import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { Organization } from 'src/trello/dto/organization.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { TrelloMember } from '../../dto/member.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here
@@ -79,7 +79,7 @@ export class TrelloMembersLogicService {
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Organization[]> {
-    const userToFind = await this.userService.getUser(user);
+    const userToFind = await this.userService.getUser(user, i18n);
 
     validateTrelloToken(userToFind.trello.token, i18n);
 
@@ -92,6 +92,7 @@ export class TrelloMembersLogicService {
       await this.trelloMembersApiService.fetchMemberOrganizations(
         userToFind.trello.userId,
         decryptedUserToken,
+        i18n,
       );
 
     const normalizedOrganizations: Organization[] = response.map(

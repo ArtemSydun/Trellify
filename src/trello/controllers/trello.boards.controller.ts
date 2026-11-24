@@ -26,7 +26,25 @@ export class TrelloBoardsController {
   })
   @ApiCustomUnathorizedResponse()
   findBoardsMemberBelongsTo(@Req() req): Promise<TrelloBoard[]> {
-    return this.boardsService.findBoardsMemberBelongsTo(req.user, req.i18n);
+    return this.boardsService.findBoardsMemberBelongsTo(
+      req.user,
+      req.i18nContext,
+    );
+  }
+
+  @Get('guest')
+  @ApiOperation({
+    summary: 'Get list of boards user is guest in (user is not in workspace)',
+    description:
+      'Fetches a list of boards user is guest in (user is not in workspace)',
+  })
+  @ApiOkResponse({
+    description: 'List of workspace boards',
+    type: [TrelloBoard],
+  })
+  @ApiCustomUnathorizedResponse()
+  findGuestBoards(@Req() req): Promise<TrelloBoard[]> {
+    return this.boardsService.findGuestBoards(req.user, req.i18nContext);
   }
 
   @Get('organizations/:organizationId')
@@ -46,6 +64,7 @@ export class TrelloBoardsController {
     return this.boardsService.findBoardsInOrganization(
       req.user,
       organizationId,
+      req.i18nContext,
     );
   }
 
@@ -61,6 +80,6 @@ export class TrelloBoardsController {
   @ApiCustomUnathorizedResponse()
   @ApiCustomNotFoundResponse('TrelloBoard', 'id')
   getBoardById(@Req() req, @Param(':id') boardId): Promise<TrelloBoard> {
-    return this.boardsService.findBoardById(req.user, boardId);
+    return this.boardsService.findBoardById(req.user, boardId, req.i18nContext);
   }
 }

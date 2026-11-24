@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DefaultPaginatedResponse } from 'src/common/interfaces/responses';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UserQueryDto } from '../dto/user.query.dto';
+import { UserOrderBy, UserQueryDto } from '../dto/user.query.dto';
 import { User } from '../entities/user.entity';
-import { UserSearchPathEnum } from '../enums/query.enum';
+import { UserSearchPath } from '../enums/query.enum';
 import { UserRoles } from '../enums/role.enum';
 
 @Injectable()
@@ -15,43 +15,43 @@ export class UsersRepository {
     private UserModel: Model<User>,
   ) {}
 
-  async bulkUpdateUsers(operations: any[]): Promise<any> {
-    return this.UserModel.bulkWrite(operations);
+  public async bulkUpdateUsers(operations: any[]): Promise<any> {
+    return await this.UserModel.bulkWrite(operations);
   }
 
-  async findOneByEmail(email: string): Promise<User> {
-    return this.UserModel.findOne({ email }).lean().exec();
+  public async findOneByEmail(email: string): Promise<User> {
+    return await this.UserModel.findOne({ email }).lean().exec();
   }
 
-  async findOneById(id: string): Promise<User> {
-    return this.UserModel.findOne({ id }).lean().exec();
+  public async findOneById(id: string): Promise<User> {
+    return await this.UserModel.findOne({ id }).lean().exec();
   }
 
-  async findOneByTrelloId(trelloUserId: string): Promise<User> {
-    return this.UserModel.findOne({
-      [UserSearchPathEnum.TrelloUserId]: trelloUserId,
+  public async findOneByTrelloId(trelloUserId: string): Promise<User> {
+    return await this.UserModel.findOne({
+      [UserSearchPath.TrelloUserId]: trelloUserId,
     })
       .lean()
       .exec();
   }
 
-  async findAdmins(): Promise<User[]> {
-    return this.UserModel.find({
+  public async findAdmins(): Promise<User[]> {
+    return await this.UserModel.find({
       role: { $in: [UserRoles.admin, UserRoles.superadmin] },
-      // [UserSearchPathEnum.TelegramChatId]: { $exists: true, $ne: null },
+      // [UserSearchPath.TelegramChatId]: { $exists: true, $ne: null },
     }).exec();
   }
 
-  async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {
-    return this.UserModel.find({
-      [UserSearchPathEnum.TrelloUserId]: { $in: trelloUserIds },
+  public async findManyByTrelloIds(trelloUserIds: string[]): Promise<User[]> {
+    return await this.UserModel.find({
+      [UserSearchPath.TrelloUserId]: { $in: trelloUserIds },
     })
       .lean()
       .exec();
   }
 
-  async findUserByProperty(
-    path: UserSearchPathEnum,
+  public async findUserByProperty(
+    path: UserSearchPath,
     value: any,
   ): Promise<User> {
     const query = {};
@@ -62,15 +62,18 @@ export class UsersRepository {
       query[path] = value; // otherwise, match the exact value
     }
 
-    return this.UserModel.findOne(query).lean().exec();
+    return await this.UserModel.findOne(query).lean().exec();
   }
 
-  async existsByEmail(email: string): Promise<boolean> {
+  public async existsByEmail(email: string): Promise<boolean> {
     const user = await this.UserModel.findOne({ email }).lean().exec();
     return user !== null;
   }
 
-  async updateById(id: string, updateData: Partial<User>): Promise<User> {
+  public async updateById(
+    id: string,
+    updateData: Partial<User>,
+  ): Promise<User> {
     const updatedUser = await this.UserModel.findOneAndUpdate(
       { id },
       { $set: updateData },
@@ -81,12 +84,12 @@ export class UsersRepository {
     return updatedUser;
   }
 
-  async create(user: CreateUserDto): Promise<User> {
+  public async create(user: CreateUserDto): Promise<User> {
     return await this.UserModel.create(user);
   }
 
-  async delete(id: string): Promise<void> {
-    return this.UserModel.findOneAndDelete({ id });
+  public async delete(id: string): Promise<void> {
+    return await this.UserModel.findOneAndDelete({ id });
   }
 
   public async getAll(
@@ -94,7 +97,7 @@ export class UsersRepository {
   ): Promise<DefaultPaginatedResponse<User>> {
     const {
       order = 'desc',
-      orderBy = 'createdAt',
+      orderBy = UserOrderBy.CreatedAt,
       limit = 10,
       page = 1,
       email,
@@ -107,6 +110,8 @@ export class UsersRepository {
       telegramChatId,
       telegramUserName,
       language,
+      subscriptionPlan,
+      subscriptionExpired,
     } = filters;
     const perPage = limit; // Elements per page
     const offset = (page - 1) * perPage; // Calculate skip amount
@@ -120,20 +125,25 @@ export class UsersRepository {
       if (fromDate) query[date].$gte = new Date(fromDate);
       if (toDate) query[date].$lte = new Date(toDate);
     }
-    if (trelloUserId) query[UserSearchPathEnum.TrelloUserId] = trelloUserId;
+    if (trelloUserId) query[UserSearchPath.TrelloUserId] = trelloUserId;
     if (trelloUserName)
-      query[UserSearchPathEnum.TrelloUsername] = {
+      query[UserSearchPath.TrelloUsername] = {
         $regex: trelloUserName,
         $options: 'i',
       };
-    if (telegramChatId)
-      query[UserSearchPathEnum.TelegramChatId] = +telegramChatId;
+    if (telegramChatId) query[UserSearchPath.TelegramChatId] = +telegramChatId;
     if (telegramUserName)
-      query[UserSearchPathEnum.TelegramUsername] = {
+      query[UserSearchPath.TelegramUsername] = {
         $regex: telegramUserName,
         $options: 'i',
       };
     if (language) query.language = language;
+
+    if (subscriptionPlan)
+      query[UserSearchPath.SubscriptionPlan] = subscriptionPlan;
+    if (typeof subscriptionExpired === 'boolean') {
+      query[UserSearchPath.SubscriptionExpired] = subscriptionExpired;
+    }
 
     // Define sorting
     const sortOrder = order === 'asc' ? 1 : -1;
@@ -145,7 +155,8 @@ export class UsersRepository {
     const users = await this.UserModel.find(query)
       .sort({ [orderBy]: sortOrder })
       .skip(offset)
-      .limit(perPage);
+      .limit(perPage)
+      .lean();
 
     return {
       total,
@@ -156,9 +167,13 @@ export class UsersRepository {
     };
   }
 
-  async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
-    return this.UserModel.find({
-      [UserSearchPathEnum.TrelloWebhooksIds]: webhookId,
+  public async getTotal(): Promise<number> {
+    return await this.UserModel.countDocuments();
+  }
+
+  public async findUsersConnectedToWebhook(webhookId: string): Promise<User[]> {
+    return await this.UserModel.find({
+      [UserSearchPath.TrelloWebhooksIds]: webhookId,
     }).exec();
   }
 }

@@ -7,7 +7,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { format } from 'fast-csv';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+import { I18nContext } from 'nestjs-i18n';
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
+import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { MailerService } from 'src/mailer/services/mailer.service';
 import { CreateDistributionSubscriberDto } from '../dto/create-distribution-subscriber.dto';
@@ -29,7 +31,7 @@ export class DistributionService {
   public async sendDistribution(
     subject: string,
   ): Promise<DefaultResponse<null>> {
-    const distributor = this.configService.get(configServiceEnum.MAILER_SENDER);
+    const distributor = this.configService.get(configServiceKeys.MAILER_SENDER);
 
     const sendDate = new Date();
 
@@ -37,7 +39,7 @@ export class DistributionService {
 
     const senderPromises = distributionSubscribers.map((subscriber) => {
       const html = htmlTemplate1(
-        this.configService.get(configServiceEnum.BACKEND_LINK),
+        this.configService.get(configServiceKeys.BACKEND_LINK),
         subscriber.id,
       );
 
@@ -63,6 +65,7 @@ export class DistributionService {
 
   public async createDistributionSubscriber(
     createDistributionSubscriberDto: CreateDistributionSubscriberDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
     const { email } = createDistributionSubscriberDto;
     let subscriber: DistributionSubscriber;
@@ -80,7 +83,10 @@ export class DistributionService {
     }
 
     return {
-      message: 'You will receive Trellify updates on your email',
+      message:
+        i18n?.t(I18nKeys.MESSAGES_DISTRIBUTION_SUBSCRIBED, {
+          args: { email },
+        }) || 'You will receive Trellify updates on your email',
       statusCode: HttpStatus.OK,
       data: subscriber,
     };
@@ -94,13 +100,16 @@ export class DistributionService {
 
   public async findDistributionSubscriberByEmail(
     email: string,
+    i18n?: I18nContext,
   ): Promise<DistributionSubscriber> {
     const subscriberByTrellifyId =
       await this.distributionSubscriberRepository.findOneByEmail(email);
 
     if (!subscriberByTrellifyId) {
       throw new NotFoundException(
-        `Email ${email} is not subscribed to Trellify news letter`,
+        i18n?.t(I18nKeys.ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED, {
+          args: { email },
+        }) || `Email ${email} is not subscribed to Trellify news letter`,
       );
     }
 
@@ -109,13 +118,16 @@ export class DistributionService {
 
   public async findDistributionSubscriberByTrellifyUserId(
     id: string,
+    i18n?: I18nContext,
   ): Promise<DistributionSubscriber> {
     const subscriberByTrellifyId =
       await this.distributionSubscriberRepository.findOneByTrellifyUserId(id);
 
     if (!subscriberByTrellifyId) {
       throw new NotFoundException(
-        `Trellify user ${id} is not subscribed to news letter`,
+        i18n?.t(I18nKeys.ERRORS_DISTRIBUTION_TRELLIFY_USER_IS_NOT_SUBSCRIBED, {
+          args: { userId: id },
+        }) || `Trellify user ${id} is not subscribed to news letter`,
       );
     }
 
@@ -125,13 +137,16 @@ export class DistributionService {
   public async updateByEmail(
     email: string,
     updateDistributionDto: UpdateDistributionDto,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<DistributionSubscriber>> {
     const subscriberToUpdate =
       await this.distributionSubscriberRepository.findOneByEmail(email);
 
     if (!subscriberToUpdate) {
       throw new NotFoundException(
-        `Email ${email} is not subscribed to Trellify news letter`,
+        i18n?.t(I18nKeys.ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED, {
+          args: { email },
+        }) || `Email ${email} is not subscribed to Trellify news letter`,
       );
     }
 
@@ -142,21 +157,29 @@ export class DistributionService {
       );
 
     return {
-      message: `Email ${email} mail subscription preferences updated successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_DISTRIBUTION_PREFERENCES_UPDATED, {
+          args: { email },
+        }) ||
+        `Email ${email} mail subscription preferences updated successfully`,
       statusCode: HttpStatus.OK,
       data: updatedSubscriber,
     };
   }
 
   public async removeDistributionSubscriber(
-    id: string,
+    email: string,
+    i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
     const userToUnsubscribe =
-      await this.distributionSubscriberRepository.findOneById(id);
+      await this.distributionSubscriberRepository.findOneByEmail(email);
 
     if (!userToUnsubscribe) {
       throw new NotFoundException(
-        `Email ${userToUnsubscribe.email} is not subscribed to Trellify news letter`,
+        i18n?.t(I18nKeys.ERRORS_DISTRIBUTION_EMAIL_IS_NOT_SUBSCRIBED, {
+          args: { email },
+        }) ||
+          `Email ${userToUnsubscribe.email} is not subscribed to Trellify news letter`,
       );
     }
 
@@ -165,7 +188,11 @@ export class DistributionService {
     );
 
     return {
-      message: `Email ${userToUnsubscribe.email} removed from Trellify mail subscription successfully`,
+      message:
+        i18n?.t(I18nKeys.MESSAGES_DISTRIBUTION_UNSUBSCRIBED, {
+          args: { email },
+        }) ||
+        `Email ${userToUnsubscribe.email} removed from Trellify mail subscription successfully`,
       statusCode: HttpStatus.OK,
     };
   }

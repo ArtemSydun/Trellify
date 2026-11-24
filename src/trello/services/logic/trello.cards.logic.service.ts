@@ -5,7 +5,7 @@ import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { TrelloCard } from '../../dto/card.dto';
 
 /** key=APIKey is this.trelloApiKey of Trello power ups admin app key, which you can find here

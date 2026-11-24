@@ -1,4 +1,5 @@
 import { Languages } from 'src/common/enums/languages.enum';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 import { UserRoles } from '../enums/role.enum';
 
 export const superAdminStub = () => {
@@ -9,6 +10,14 @@ export const superAdminStub = () => {
     email: 'test@gmail.com',
     password: '$2b$10$lGGZKO1AHqLPDEfwP6u5leQZVU0vA9cfqctkibaAZbyfCbkSUqqlG',
     role: UserRoles.superadmin,
+    subscription: {
+      id: 'id1',
+      plan: SubscriptionPlans.FULL,
+      lastAmount: 0,
+      totalAmount: 0,
+      lastPaymentDate: fixedDate,
+      nextPaymentDate: fixedDate,
+    },
     trello: {
       userId: '674ec752cba1224342f87c20',
       username: 'artem11123',
@@ -26,6 +35,7 @@ export const superAdminStub = () => {
       ],
       token:
         'encrypted222sdGVkX19NVU2j8aOHpt1R0D8+nTynmFeZnnFDzDYbYMoTO08c1fq6NM4oFQzkC0TV6U87nCwj4ACu80AHr7y6SKCkumsF344ystozVEQwHCsgWGxa+6mDi/HvM81/',
+      updatedAt: fixedDate,
     },
     telegram: {
       chatId: 123,
@@ -37,6 +47,7 @@ export const superAdminStub = () => {
       username: 'discordusername',
       updatedAt: fixedDate,
     },
+
     language: Languages.EN,
     timezone: 2,
     createdAt: fixedDate,
@@ -54,6 +65,14 @@ export const userStub = () => {
     email: 'test1@gmail.com',
     password: '$2b$10$lGGZKO1AHqLPDEfwP6u5leQZVU0vA9cfqctkibaAZbyfCbkSUqqlG',
     role: UserRoles.user,
+    subscription: {
+      id: 'id1',
+      plan: SubscriptionPlans.FULL,
+      lastAmount: 0,
+      totalAmount: 0,
+      lastPaymentDate: fixedDate,
+      nextPaymentDate: fixedDate,
+    },
     trello: {
       userId: '674ec752cba1224342f87c21',
       username: 'artem11124',

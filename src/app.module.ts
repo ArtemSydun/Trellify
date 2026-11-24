@@ -3,14 +3,18 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { I18nMiddleware, I18nModule, QueryResolver } from 'nestjs-i18n';
+import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
+import { ThrottlerHttpProxyGuard } from './common/guards/custom-throttler';
 import { CronModule } from './cron/cron.module';
 import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from './discord/discord.module';
 import { DistributionModule } from './distribution/distribution.module';
+import { PaypalModule } from './paypal/pay-pal.module';
 import { RedisModule } from './redis/redis.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TrelloModule } from './trello/trello.module';
 import { UsersModule } from './user/users.module';
@@ -46,12 +50,14 @@ import { UsersModule } from './user/users.module';
     CronModule,
     DistributionModule,
     DiscordModule,
+    SubscriptionModule,
+    PaypalModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: ThrottlerHttpProxyGuard,
     },
   ],
   exports: [],

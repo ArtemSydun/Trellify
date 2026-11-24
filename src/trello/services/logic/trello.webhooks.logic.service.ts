@@ -21,20 +21,19 @@ import {
   TrelloTokensLogicService,
 } from '@trello/logic';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { configServiceEnum } from 'src/common/enums/config.service.enum';
+
+import { configServiceKeys } from 'src/common/enums/config-service-keys.enum';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { Languages } from 'src/common/enums/languages.enum';
-import { toCamelCase } from 'src/common/helpers/camelCase';
 import { decryptText } from 'src/common/helpers/hashing';
 import {
   createFilteredWebhookCopy,
   filterUserFromWebhook,
+  getActionEnumKey,
   getCategoriesForAction,
   getUpdatedWebhookNotifications,
   initializeNotificationArrays,
   mapNotificationsToBoolean,
-  notificationProfiles,
-  sortCategories,
 } from 'src/common/helpers/trello-notifications';
 
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
@@ -42,6 +41,10 @@ import {
   DefaultPaginatedResponse,
   DefaultResponse,
 } from 'src/common/interfaces/responses';
+import { RedisService } from 'src/redis/services/redis.service';
+import { Subscription } from 'src/subscription/entities/subscription.entity';
+import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
+import { SubscriptionService } from 'src/subscription/services/subscription.service';
 import { NotificationBotService } from 'src/telegram/notification-bot/notification-bot.service';
 import { TrelloBoard } from 'src/trello/dto/board.dto';
 import { BoardMember } from 'src/trello/dto/member.dto';
@@ -57,10 +60,10 @@ import {
 } from 'src/trello/enums/trello.actions.enum';
 import { NotificationProfiles } from 'src/trello/interfaces/notification-profiles.interface';
 import { User } from 'src/user/entities/user.entity';
-import { UserSearchPathEnum } from 'src/user/enums/query.enum';
+import { UserSearchPath } from 'src/user/enums/query.enum';
 import { UserRoles } from 'src/user/enums/role.enum';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { CreateWebhookDto } from '../../dto/create-webhook.dto';
 import { Webhook } from '../../entities/webhook.entity';
 import { WebhookSearchPath } from '../../enums/query.enum';
@@ -74,7 +77,7 @@ import { TrelloWebhookRepository } from '../../repositories/webhook.repository';
 
 @Injectable()
 export class TrelloWebhooksLogicService {
-  private readonly webhookCallbackURL: string;
+  private readonly trelloWebhookUrl: string;
   private readonly encryptionKey: string;
   private readonly logger = new Logger(TrelloWebhooksLogicService.name);
   private webhookActionCount: number;
@@ -94,14 +97,18 @@ export class TrelloWebhooksLogicService {
     private readonly trelloWebhookRepository: TrelloWebhookRepository,
     private readonly trelloTokensLogicService: TrelloTokensLogicService,
     private readonly notificationBotService: NotificationBotService,
+    @Inject(forwardRef(() => SubscriptionService))
+    private readonly subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => RedisService))
+    private readonly redisService: RedisService,
     private readonly i18nService: I18nService,
   ) {
-    this.webhookCallbackURL = this.sharedConfigService.getWebhookCallbackURL();
+    this.trelloWebhookUrl = this.sharedConfigService.gettrelloWebhookUrl();
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
     this.webhookActionCount = 0;
   }
 
-  async getWebhook(
+  public async getWebhook(
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -112,7 +119,7 @@ export class TrelloWebhooksLogicService {
     return webhook; // If it's already a Webhook object, return it as-is
   }
 
-  async findWebhookById(
+  public async findWebhookById(
     webhookId: string,
     i18n?: I18nContext,
   ): Promise<Webhook> {
@@ -126,27 +133,53 @@ export class TrelloWebhooksLogicService {
       );
     }
 
+    return webhook;
+  }
+
+  public async findWebhookByBoardId(
+    boardId: string,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
+    const webhook =
+      await this.trelloWebhookRepository.findOneByBoardId(boardId);
+
+    if (!webhook) {
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID, {
+          args: { boardId },
+        }) || `Webhook with boardId ${boardId} not found`,
+      );
+    }
+
+    return await this.updateWebhookWithBoardData(webhook, i18n);
+  }
+
+  public async updateWebhookWithBoardData(
+    webhook: string | Webhook,
+    i18n?: I18nContext,
+  ): Promise<Webhook> {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
     const decryptedAuthorToken = decryptText(
-      webhook.author.trelloToken,
+      webhookToUpdate.author.trelloToken,
       this.encryptionKey,
     );
-
     const boardData = await this.trelloBoardsApiService.fetchBoardById(
       decryptedAuthorToken,
-      webhook.idModel,
+      webhookToUpdate.idModel,
+      i18n,
     );
-
     const updatedWebhookProps: any = {};
     let shouldUpdateUsers = false;
 
     if (boardData) {
-      if (boardData.idOrganization !== webhook.idWorkspace) {
+      if (boardData.idOrganization !== webhookToUpdate.idWorkspace) {
         updatedWebhookProps.idWorkspace = boardData.idOrganization;
       }
 
       if (
-        boardData.name !== webhook.boardName ||
-        boardData.url !== webhook.boardUrl
+        boardData.name !== webhookToUpdate.boardName ||
+        boardData.url !== webhookToUpdate.boardUrl
       ) {
         updatedWebhookProps.boardName = boardData.name;
         updatedWebhookProps.boardUrl = boardData.url;
@@ -154,14 +187,12 @@ export class TrelloWebhooksLogicService {
       }
     }
 
-    // If there are updates, update the webhook
     if (Object.keys(updatedWebhookProps).length > 0) {
       const updatedWebhook = await this.trelloWebhookRepository.updateById(
-        webhook.id,
+        webhookToUpdate.id,
         updatedWebhookProps,
       );
 
-      // Only update users if board name or URL changed
       if (shouldUpdateUsers) {
         const usersToUpdate =
           await this.userService.findUsersConnectedToWebhook(updatedWebhook.id);
@@ -169,7 +200,7 @@ export class TrelloWebhooksLogicService {
         const updateUserPromises = usersToUpdate.map((subscriber) => {
           const updatedWebhooks = subscriber.trello.webhooks.map(
             (userWebhook) => {
-              if (userWebhook.webhookId === webhook.id) {
+              if (userWebhook.webhookId === webhookToUpdate.id) {
                 return {
                   ...userWebhook,
                   idModel: updatedWebhook.idModel,
@@ -185,7 +216,7 @@ export class TrelloWebhooksLogicService {
               filter: { id: subscriber.id },
               update: {
                 $set: {
-                  [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+                  [UserSearchPath.TrelloWebhooks]: updatedWebhooks,
                 },
               },
             },
@@ -198,44 +229,24 @@ export class TrelloWebhooksLogicService {
       return updatedWebhook;
     }
 
-    return webhook;
+    return webhookToUpdate;
   }
 
-  async findWebhookByBoardId(
-    boardId: string,
-    i18n?: I18nContext,
-  ): Promise<Webhook> {
-    const webhook =
-      await this.trelloWebhookRepository.findOneByBoardId(boardId);
-
-    if (!webhook) {
-      throw new NotFoundException(
-        i18n?.t(I18nKeys.ERRORS_TRELLO_WEBHOOK_NOT_FOUND_BY_BOARD_ID, {
-          args: { boardId },
-        }) || `Webhook with boardId ${boardId} not found`,
-      );
-    }
-
-    return webhook;
-  }
-
-  async findWebhooks(
+  public async findWebhooks(
     queryParams: WebhookQueryDto,
   ): Promise<DefaultPaginatedResponse<Webhook>> {
     return await this.trelloWebhookRepository.getAll(queryParams);
   }
 
-  async findAllWebhooks(): Promise<Webhook[]> {
+  public async findAllWebhooks(): Promise<Webhook[]> {
     return await this.trelloWebhookRepository.findAll();
   }
 
-  async findMyConnectedWebhooks(
+  public async findMyConnectedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user, i18n);
-
-    validateTrelloToken(requestedUser.trello.token, i18n);
 
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksConnectedToUser(
@@ -245,12 +256,12 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findMyCreatedWebhooks(
+  public async findMyCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
     const requestedUser = await this.userService.getUser(user, i18n);
-    validateTrelloToken(requestedUser.trello.token, i18n);
+
     const webhooks =
       await this.trelloWebhookRepository.findWebhooksCreatedByUser(
         requestedUser.trello.userId,
@@ -259,7 +270,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findUserSubscribedWebhooks(
+  public async findUserSubscribedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -270,7 +281,7 @@ export class TrelloWebhooksLogicService {
     );
   }
 
-  async findUserCreatedWebhooks(
+  public async findUserCreatedWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<Webhook[]> {
@@ -284,7 +295,7 @@ export class TrelloWebhooksLogicService {
     return webhooks;
   }
 
-  async findWebhookSubscribers(
+  public async findWebhookSubscribers(
     webhookId: string,
     i18n?: I18nContext,
   ): Promise<User[]> {
@@ -297,7 +308,7 @@ export class TrelloWebhooksLogicService {
     return subscribers;
   }
 
-  async recreateWebhookIfUnavailable(
+  public async recreateWebhookIfUnavailable(
     webhook: Webhook | string,
     userToUpdate: User | string,
     i18n?: I18nContext,
@@ -317,9 +328,10 @@ export class TrelloWebhooksLogicService {
       this.encryptionKey,
     );
 
-    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${existingWebhook.idModel}`;
+    const boardPersonalWebhookURL = `${this.trelloWebhookUrl}/${existingWebhook.idModel}`;
 
     authorWebhooks = [];
+    let ifAuthorHasAccess = true;
 
     try {
       await this.trelloTokensLogicService.isTokenInfinite(
@@ -336,13 +348,27 @@ export class TrelloWebhooksLogicService {
         this.logger.warn(
           `User ${existingWebhook.author.trelloUserId} has invalid trello token`,
         );
-        // await this.removeAllWebhooksCreatedByUser(webhooksAuthor, i18n);
-        // throw new BadRequestException(`Please refresh page`);
+      }
+    }
+
+    try {
+      await this.trelloBoardsApiService.fetchBoardById(
+        decryptedAuthorToken,
+        existingWebhook?.idModel,
+        i18n,
+      );
+    } catch (err) {
+      this.logger.warn(err.message);
+      if (
+        err.message === i18n?.t(I18nKeys.ERRORS_TRELLO_UNATHORIZED_PERMISSION)
+      ) {
+        ifAuthorHasAccess = false;
       }
     }
 
     if (!webhookBoard) {
       const boardId = existingWebhook.idModel;
+
       webhookBoard = await this.trelloBoardsApiService.fetchBoardById(
         decryptedUserToken,
         boardId,
@@ -359,7 +385,10 @@ export class TrelloWebhooksLogicService {
     }
 
     // Check if the webhook still exists in Trello
-    if (!authorWebhooks.some((webhook) => webhook.id === existingWebhook.id)) {
+    if (
+      !authorWebhooks.some((webhook) => webhook.id === existingWebhook.id) ||
+      !ifAuthorHasAccess
+    ) {
       // Find all users connected to the old webhook
       const usersConnectedToWebhook =
         await this.userService.findUsersConnectedToWebhook(existingWebhook.id);
@@ -373,6 +402,17 @@ export class TrelloWebhooksLogicService {
 
       // Delete old webhook
       await this.trelloWebhookRepository.deleteById(existingWebhookCopy.id);
+      try {
+        await this.trelloWebhookApiService.deleteWebhook(
+          decryptedAuthorToken,
+          existingWebhook.id,
+        );
+      } catch (err) {
+        this.logger.warn(
+          'Error deleting old webhook on recreation: ',
+          err.message,
+        );
+      }
 
       // Create a new webhook using the Trello API
       const newWebhook = await this.trelloWebhookApiService.createWebhook(
@@ -393,6 +433,7 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        totalSubscribers: existingWebhookCopy.subscribers.length,
         subscribers: existingWebhookCopy.subscribers, // Keep old subscribers
         notifications: existingWebhookCopy.notifications, // Keep old notifications
       };
@@ -426,7 +467,7 @@ export class TrelloWebhooksLogicService {
               filter: { id: connectedUser.id },
               update: {
                 $set: {
-                  [UserSearchPathEnum.TrelloWebhooks]: updatedWebhooks,
+                  [UserSearchPath.TrelloWebhooks]: updatedWebhooks,
                 },
               },
             },
@@ -475,7 +516,7 @@ export class TrelloWebhooksLogicService {
     return existingWebhook;
   }
 
-  async webhookHealthCheck(
+  public async webhookHealthCheck(
     webhook: Webhook | string,
     userToUpdate: User | string,
     i18n?: I18nContext,
@@ -511,11 +552,26 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async getProfileNotifications(): Promise<NotificationProfiles> {
-    return notificationProfiles;
+  public async getProfileNotifications(): Promise<NotificationProfiles> {
+    const plans = await this.redisService.getSubscriptionPlans();
+
+    return {
+      basic: {
+        price: plans.basic.price,
+        notifications: plans.basic.notifications,
+      },
+      advanced: {
+        price: plans.advanced.price,
+        notifications: plans.advanced.notifications,
+      },
+      full: {
+        price: plans.full.price,
+        notifications: plans.full.notifications,
+      },
+    };
   }
 
-  async getWebhooksByCreatorToken(
+  public async getWebhooksByCreatorToken(
     creatorToken: string,
     i18n?: I18nContext,
   ): Promise<any> {
@@ -525,13 +581,13 @@ export class TrelloWebhooksLogicService {
     return tokenRelatedWebhooks;
   }
 
-  async createTrelloWebhook(
+  public async createTrelloWebhook(
     user: string | User,
     createWebhookDto: CreateWebhookDto,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<Webhook>> {
     const { boardId } = createWebhookDto;
-    const boardPersonalWebhookURL = `${this.webhookCallbackURL}/${boardId}`;
+    const boardPersonalWebhookURL = `${this.trelloWebhookUrl}/${boardId}`;
     let webhook = await this.trelloWebhookRepository.findOneByBoardId(boardId);
 
     const updateDate = new Date();
@@ -549,6 +605,24 @@ export class TrelloWebhooksLogicService {
       boardId,
       i18n,
     );
+
+    const defaultProfileNotifications = (
+      await this.subscriptionService.findSubscriptionByName(
+        SubscriptionPlans.BASIC,
+      )
+    ).notifications;
+
+    const defaultProfileEnabledActionKeys = [];
+
+    for (const category of Object.keys(defaultProfileNotifications)) {
+      for (const actionKey of Object.keys(
+        defaultProfileNotifications[category],
+      )) {
+        if (defaultProfileNotifications[category][actionKey]) {
+          defaultProfileEnabledActionKeys.push(actionKey);
+        }
+      }
+    }
 
     if (webhook) {
       webhook = await this.recreateWebhookIfUnavailable(
@@ -570,11 +644,13 @@ export class TrelloWebhooksLogicService {
           trelloUserId: userToUpdate.trello.userId,
           trelloToken: userToUpdate.trello.token,
           notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+          authorNotifications: true,
         });
       }
 
       const defaultUserNotifications = initializeNotificationArrays(
         userToUpdate.trello.userId,
+        defaultProfileEnabledActionKeys,
       );
 
       const newUserNotificationBooleans = mapNotificationsToBoolean(
@@ -612,6 +688,7 @@ export class TrelloWebhooksLogicService {
       await Promise.all([
         this.userService.updateUser(userToUpdate, updatedUserProps, i18n),
         this.trelloWebhookRepository.updateById(webhook.id, {
+          totalSubscribers: webhook.subscribers.length,
           subscribers: webhook.subscribers,
           notifications: updatedNotifications,
         }),
@@ -630,7 +707,7 @@ export class TrelloWebhooksLogicService {
             [
               {
                 text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
-                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhook.idWorkspace}/boards/${webhook.idModel}`,
+                url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhook.idWorkspace}/boards/${webhook.idModel}`,
               },
             ],
           ],
@@ -671,6 +748,7 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        totalSubscribers: 1,
         subscribers: [
           {
             userId: userToUpdate.id,
@@ -678,9 +756,13 @@ export class TrelloWebhooksLogicService {
             trelloToken: userToUpdate.trello.token,
             trelloUserId: userToUpdate.trello.userId,
             notificationProfile: TrelloWebhookNotificationProfiles.BASIC,
+            authorNotifications: true,
           },
         ],
-        notifications: initializeNotificationArrays(userToUpdate.trello.userId),
+        notifications: initializeNotificationArrays(
+          userToUpdate.trello.userId,
+          defaultProfileEnabledActionKeys,
+        ),
       };
 
       const userWebhook = {
@@ -717,7 +799,7 @@ export class TrelloWebhooksLogicService {
             [
               {
                 text: i18n?.t(I18nKeys.FIELDS_SETTINGS) || 'Settings',
-                url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${createdWebhook.idWorkspace}/boards/${createdWebhook.idModel}`,
+                url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${createdWebhook.idWorkspace}/boards/${createdWebhook.idModel}`,
               },
             ],
           ],
@@ -744,7 +826,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async updateTrelloWebhookNotifications(
+  public async updateTrelloWebhookNotifications(
     user: string | User,
     webhook: string | Webhook,
     updateWebhookNotificationsDto: UpdateNotificationsDto,
@@ -755,7 +837,7 @@ export class TrelloWebhooksLogicService {
     const subscriberIds = webhookToUpdate.subscribers.map(
       (subscriber) => subscriber.trelloUserId,
     );
-    const { notifications, notificationProfile } =
+    const { notifications, notificationProfile, authorNotifications } =
       updateWebhookNotificationsDto;
 
     if (!subscriberIds.includes(userToUpdate.trello.userId)) {
@@ -793,6 +875,7 @@ export class TrelloWebhooksLogicService {
       );
 
       subscriberToUpdate.notificationProfile = notificationProfile;
+      subscriberToUpdate.authorNotifications = authorNotifications;
 
       const updatedWebhook = await this.trelloWebhookRepository.updateById(
         webhookToUpdate.id,
@@ -820,7 +903,11 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async updateManyTrelloWebhookNotifications(
+  public async updateManyWebhooks(operations: any[]) {
+    return await this.trelloWebhookRepository.bulkUpdateWebhooks(operations);
+  }
+
+  public async updateManyTrelloWebhookNotifications(
     user: string | User,
     updateManyWebhooksDto: UpdateManyNotificationsDto,
     i18n?: I18nContext,
@@ -921,7 +1008,6 @@ export class TrelloWebhooksLogicService {
       userToUpdate,
       {
         lastActivityDate: updateDate,
-        lastLoginDate: updateDate,
       },
       i18n,
     );
@@ -938,7 +1024,71 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async handleTrelloWebhook(webhookAction: any): Promise<any> {
+  public async updateWebhooksForSubscribers(
+    subscription: string | Subscription,
+    newNotifications: any,
+  ): Promise<void> {
+    // Fetch the target subscription plan
+    const targetSubscription =
+      await this.subscriptionService.getSubscription(subscription);
+
+    // Find all webhooks with subscribers using the given subscription name as their notification profile
+    const webhooks =
+      await this.trelloWebhookRepository.findAllWebhooksWithPlanSubscribers(
+        targetSubscription.name as SubscriptionPlans,
+      );
+
+    if (!webhooks.length) return;
+
+    // Update each webhook's notifications and subscribers' profiles
+    await Promise.all(
+      webhooks.map(async (webhook) => {
+        const updatedNotifications = { ...webhook.notifications };
+
+        // Iterate over each category
+        for (const category of Object.keys(newNotifications)) {
+          if (!updatedNotifications[category])
+            updatedNotifications[category] = {};
+
+          // Iterate over each action
+          for (const action of Object.keys(newNotifications[category])) {
+            const allowedUsers = webhook.notifications[category][action] || [];
+
+            // Get all users who have the relevant notification profile for this webhook
+            const usersToUpdate = webhook.subscribers
+              .filter(
+                (subscriber) =>
+                  subscriber.notificationProfile === targetSubscription.name,
+              )
+              .map((subscriber) => subscriber.trelloUserId);
+
+            // If the notification is enabled, ensure all users are listed
+            if (newNotifications[category][action]) {
+              updatedNotifications[category][action] = Array.from(
+                new Set([...allowedUsers, ...usersToUpdate]),
+              );
+            } else {
+              // Remove users from notifications if they are not allowed
+              updatedNotifications[category][action] = allowedUsers.filter(
+                (userId) => !usersToUpdate.includes(userId),
+              );
+            }
+          }
+        }
+
+        // Update the webhook in the database
+        await this.trelloWebhookRepository.updateById(webhook.id, {
+          notifications: updatedNotifications,
+        });
+
+        console.log(`✅ Webhook ${webhook.id} updated successfully.`);
+      }),
+    );
+
+    console.log(`✅ All related webhooks updated successfully.`);
+  }
+
+  public async handleTrelloWebhook(webhookAction: any): Promise<any> {
     // delete webhookAction.model?.prefs;
     // delete webhookAction.model?.labelNames;
     // console.log(JSON.stringify(webhookAction, null, 2));
@@ -988,6 +1138,11 @@ export class TrelloWebhooksLogicService {
       webhookAction?.action?.data?.old?.idMember ||
       '';
 
+    const authorSubscriber = webhook.subscribers.find(
+      (subscriber) =>
+        subscriber.trelloUserId === webhookAction?.action?.memberCreator?.id,
+    );
+
     // to handle unknown detailed type actions which has clear generalActionType etc createCheckItem
     if (detailedActionType === 'unknown') {
       this.logger.warn(
@@ -998,19 +1153,8 @@ export class TrelloWebhooksLogicService {
 
     this.logger.log(`Handling webhook ${detailedActionType} action...`);
 
-    let enumKey = null;
-
     // Check if enum value includes action we got from webhook and transform enum key (CARD_CREATED -> cardCreated)
-    if (
-      Object.values(TrelloWebhookDetailedActions).includes(detailedActionType)
-    ) {
-      enumKey = toCamelCase(
-        Object.keys(TrelloWebhookDetailedActions).find(
-          (key) => TrelloWebhookDetailedActions[key] === detailedActionType,
-        ),
-        '_',
-      );
-    }
+    const enumKey = getActionEnumKey(detailedActionType);
 
     // Get the category dynamically
     const matchingCategories = getCategoriesForAction(enumKey);
@@ -1021,9 +1165,6 @@ export class TrelloWebhooksLogicService {
       );
       return;
     }
-
-    //we ensure that personal category actions will be processed first
-    const sortedCategories = sortCategories(matchingCategories);
 
     let boardData = null;
     let cardData = null;
@@ -1043,40 +1184,40 @@ export class TrelloWebhooksLogicService {
     if (targetBoard) {
       boardData = batchResponseObject.board || null;
       boardMemberships = batchResponseObject.boardMemberships || null;
-      // boardData = await this.trelloBoardsApiService.fetchBoardById(
-      //   authorizedToken,
-      //   targetBoard.id,
-      // );
     }
 
     if (targetCard) {
       cardData = batchResponseObject.card || null;
-      // cardData = await this.trelloCardsApiService.fetchCardById(
-      //   authorizedToken,
-      //   targetCard.id,
-      // );
     }
 
     let notifiedTargetUser: string | null = '';
     let notifiedAuthorUser: string | null = '';
 
-    if (
-      (targetedChecklistUserId &&
-        authorMember?.id === targetedChecklistUserId) ||
-      (!targetedChecklistUserId && !targetMember?.id) ||
-      (targetMember?.id && authorMember?.id === targetMember?.id)
-    ) {
-      notifiedAuthorUser = authorMember?.id;
-    }
+    // If the action author is a webhook subscriber and has authorNotifications enabled (authorNotifications: true),
+    // we do not send them notifications about actions they have performed (notifiedAuthorUser = null).
+    // Otherwise, we check the following conditions to determine if they should be notified:
+    // 1. If a targeted checklist user exists and the author is the targeted user.
+    // 2. If there is no targeted checklist user and no targeted member (general case).
+    // 3. If a target member exists and the author is the same as the target member.
+    // If any of the conditions are met, the author will be notified (notifiedAuthorUser = authorMember?.id).
+    notifiedAuthorUser = authorSubscriber?.authorNotifications
+      ? null
+      : (targetedChecklistUserId &&
+            authorMember?.id === targetedChecklistUserId) ||
+          (!targetedChecklistUserId && !targetMember?.id) ||
+          (targetMember?.id && authorMember?.id === targetMember?.id)
+        ? authorMember?.id
+        : null;
 
-    for (const category of sortedCategories) {
+    for (const category of matchingCategories) {
       const actionSubscribers =
         webhook.notifications[category]?.[enumKey] || [];
 
       if (
         actionSubscribers.length === 0 ||
         (actionSubscribers.length === 1 &&
-          actionSubscribers.includes(notifiedAuthorUser))
+          actionSubscribers.includes(notifiedAuthorUser) &&
+          detailedActionType !== TrelloWebhookDetailedActions.CARD_CREATED)
       ) {
         this.logger.warn(
           `Nobody tracks ${enumKey} action in category ${category}.`,
@@ -1084,8 +1225,98 @@ export class TrelloWebhooksLogicService {
         continue;
       }
 
+      //separate handler because checklist memeber actions does not have
+      // webhookAction?.action?.member even though it is targeted action
+      if (
+        detailedActionType ===
+          TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED ||
+        detailedActionType ===
+          TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
+      ) {
+        if (actionSubscribers.includes(targetedChecklistUserId))
+          await this.actionsService.handlePersonalAction(
+            targetedChecklistUserId,
+            boardData,
+            detailedActionType,
+            webhookAction,
+            webhook,
+            cardData
+              ? await this.trelloCardsApiService.fetchCardById(
+                  authorizedToken,
+                  targetCard.id,
+                )
+              : null,
+          );
+        notifiedTargetUser = targetedChecklistUserId;
+      }
+
+      if (targetMember && actionSubscribers.includes(targetMember.id)) {
+        await this.actionsService.handlePersonalAction(
+          targetMember.id,
+          boardData,
+          detailedActionType,
+          webhookAction,
+          webhook,
+          targetCard
+            ? await this.trelloCardsApiService.fetchCardById(
+                authorizedToken,
+                targetCard.id,
+              )
+            : null,
+        );
+        notifiedTargetUser = targetMember.id;
+      }
+
       switch (category) {
         case TrelloWebhookNotificationCategories.CARD:
+          if (
+            detailedActionType === TrelloWebhookDetailedActions.CARD_CREATED
+          ) {
+            boardMemberships =
+              boardMemberships ??
+              (await this.trelloBoardsApiService.fetchBoardMemberships(
+                authorizedToken,
+                boardData.id,
+              ));
+
+            const membersToNotify = boardMemberships
+              .filter((member) => actionSubscribers.includes(member.idMember))
+              .map((member) => member.idMember);
+
+            await this.actionsService.handleCardActions(
+              membersToNotify,
+              boardData,
+              cardData
+                ? await this.trelloCardsApiService.fetchCardById(
+                    authorizedToken,
+                    targetCard.id,
+                  )
+                : null,
+              detailedActionType,
+              webhookAction,
+            );
+          } else {
+            if (cardData) {
+              const cardMembers = cardData.idMembers || [];
+              const membersToNotify = cardMembers.filter(
+                (memberId) =>
+                  actionSubscribers.includes(memberId) &&
+                  memberId !== notifiedTargetUser &&
+                  memberId !== notifiedAuthorUser,
+              );
+
+              await this.actionsService.handleCardActions(
+                membersToNotify,
+                boardData,
+                cardData,
+                detailedActionType,
+                webhookAction,
+              );
+            }
+          }
+          break;
+
+        case TrelloWebhookNotificationCategories.CHECKLIST:
           if (cardData) {
             const cardMembers = cardData.idMembers || [];
             const membersToNotify = cardMembers.filter(
@@ -1095,7 +1326,7 @@ export class TrelloWebhooksLogicService {
                 memberId !== notifiedAuthorUser,
             );
 
-            await this.actionsService.handleCardActions(
+            await this.actionsService.handleChecklistActions(
               membersToNotify,
               boardData,
               cardData,
@@ -1105,51 +1336,7 @@ export class TrelloWebhooksLogicService {
           }
           break;
 
-        case TrelloWebhookNotificationCategories.PERSONAL:
-          //separate handler because checklist memeber actions does not have
-          // webhookAction?.action?.member even though it is targeted action
-          if (
-            detailedActionType ===
-              TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_ADDED ||
-            detailedActionType ===
-              TrelloWebhookDetailedActions.CHECKLIST_ITEM_MEMBER_REMOVED
-          ) {
-            if (actionSubscribers.includes(targetedChecklistUserId))
-              await this.actionsService.handlePersonalAction(
-                targetedChecklistUserId,
-                boardData,
-                detailedActionType,
-                webhookAction,
-                webhook,
-                cardData
-                  ? await this.trelloCardsApiService.fetchCardById(
-                      authorizedToken,
-                      targetCard.id,
-                    )
-                  : null,
-              );
-            notifiedTargetUser = targetedChecklistUserId;
-          }
-
-          if (targetMember && actionSubscribers.includes(targetMember.id)) {
-            await this.actionsService.handlePersonalAction(
-              targetMember.id,
-              boardData,
-              detailedActionType,
-              webhookAction,
-              webhook,
-              targetCard
-                ? await this.trelloCardsApiService.fetchCardById(
-                    authorizedToken,
-                    targetCard.id,
-                  )
-                : null,
-            );
-            notifiedTargetUser = targetMember.id;
-          }
-          break;
-
-        case TrelloWebhookNotificationCategories.ADMIN:
+        case TrelloWebhookNotificationCategories.LIST:
           if (boardData) {
             boardMemberships =
               boardMemberships ??
@@ -1167,7 +1354,7 @@ export class TrelloWebhooksLogicService {
               )
               .map((member) => member.idMember);
 
-            await this.actionsService.handleAdminActions(
+            await this.actionsService.handleListActions(
               membersToNotify,
               boardData,
               detailedActionType,
@@ -1209,7 +1396,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async disconnectFromTrelloWebhook(
+  public async disconnectFromTrelloWebhook(
     user: string | User,
     webhook: string | Webhook,
     i18n?: I18nContext,
@@ -1259,6 +1446,7 @@ export class TrelloWebhooksLogicService {
     const updatedWebhook = await this.trelloWebhookRepository.updateById(
       webhookToUpdate.id,
       {
+        totalSubscribers: filteredSubcribers.length,
         subscribers: filteredSubcribers,
         notifications: filteredNotifications,
       },
@@ -1282,7 +1470,7 @@ export class TrelloWebhooksLogicService {
           [
             {
               text: i18n?.t(I18nKeys.FIELDS_DASHBOARD) || 'Dashboard',
-              url: `${this.configService.get(configServiceEnum.FRONTEND_LINK)}/workspaces/${webhookToUpdate.idWorkspace}`,
+              url: `${this.configService.get(configServiceKeys.FRONTEND_LINK)}/workspaces/${webhookToUpdate.idWorkspace}`,
             },
           ],
         ],
@@ -1296,7 +1484,7 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async disconnectFromAllTrelloWebhooks(
+  public async disconnectFromAllTrelloWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<string>> {
@@ -1330,8 +1518,11 @@ export class TrelloWebhooksLogicService {
           const updateObject: any = {
             $pull: {
               [WebhookSearchPath.Subscribers]: {
-                trelloUserId: userToDisconnect.trello.userId, // Match objects with the specific `trelloUserId`
+                trelloUserId: userToDisconnect.trello.userId,
               },
+            },
+            $inc: {
+              totalSubscribers: -1,
             },
           };
 
@@ -1392,7 +1583,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async removeTrelloWebhook(
+  public async removeTrelloWebhook(
     webhook: string | Webhook,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -1425,7 +1616,13 @@ export class TrelloWebhooksLogicService {
         `Webhook for model ${webhookToDelete.boardName} deleted successfully`,
       );
       return {
-        message: `Webhook ${webhookId} deleted successfully from Trello and all connected users`,
+        message:
+          i18n?.t(I18nKeys.MESSAGES_TRELLO_WEBHOOKS_WAS_DELETED, {
+            args: {
+              webhook: webhookToDelete.boardName,
+            },
+          }) ||
+          `Webhook ${webhookToDelete.boardName} has been deleted successfully from Trello and all connected users`,
         statusCode: HttpStatus.OK,
       };
     } catch (err) {
@@ -1439,7 +1636,7 @@ export class TrelloWebhooksLogicService {
     }
   }
 
-  async removeAllWebhooksCreatedByUser(
+  public async removeAllWebhooksCreatedByUser(
     user: User | string,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {
@@ -1469,7 +1666,7 @@ export class TrelloWebhooksLogicService {
     };
   }
 
-  async removeAllWebhooks(
+  public async removeAllWebhooks(
     user: string | User,
     i18n?: I18nContext,
   ): Promise<DefaultResponse<null>> {

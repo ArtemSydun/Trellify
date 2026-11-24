@@ -30,7 +30,6 @@ import {
   ApiCustomNotFoundResponse,
   ApiCustomUnathorizedResponse,
 } from 'src/common/decorators/swagger.decorators';
-import { notificationProfiles } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
 import { User } from 'src/user/entities/user.entity';
 import { UserRoles } from 'src/user/enums/role.enum';
@@ -191,7 +190,7 @@ export class TrelloWebhooksController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
+  @Get('by-webhook-id/:id')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get webhook by id',
@@ -204,6 +203,25 @@ export class TrelloWebhooksController {
   @ApiCustomUnathorizedResponse()
   getWebhookById(@Param('id') id: string, @Req() req): Promise<Webhook> {
     return this.webhooksService.findWebhookById(id, req.i18nContext);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('by-board-id/:boardId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get webhook by board id',
+    description: 'This endpoint retrieves a webhook by board id.',
+  })
+  @ApiOkResponse({
+    description: 'Get webhook by board id',
+    type: Webhook,
+  })
+  @ApiCustomUnathorizedResponse()
+  getWebhookByBoardId(
+    @Param('boardId') boardId: string,
+    @Req() req,
+  ): Promise<Webhook> {
+    return this.webhooksService.findWebhookByBoardId(boardId, req.i18nContext);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -231,7 +249,7 @@ export class TrelloWebhooksController {
   @SkipThrottle()
   @Get('provider/:boardId')
   @ApiExcludeEndpoint()
-  handleWebhookCallbackUrlCheck() {}
+  handletrelloWebhookUrlCheck() {}
 
   // This is route where webhook sends data
   @SkipThrottle()
@@ -252,7 +270,41 @@ export class TrelloWebhooksController {
   })
   @ApiOkResponse({
     description: 'Notification profiles',
-    example: notificationProfiles,
+    example: {
+      basic: {
+        price: 1,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+      advanced: {
+        price: 3,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+      full: {
+        price: 5,
+        notifications: {
+          card: {
+            cardCreated: true,
+          },
+          checklist: {},
+          list: {},
+          board: {},
+        },
+      },
+    },
   })
   @ApiCustomUnathorizedResponse()
   getNotificationProfiles(): Promise<NotificationProfiles> {

@@ -1,12 +1,12 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { TrelloBoardsApiService } from '@trello/api';
+import { TrelloBoardsApiService, TrelloMembersApiService } from '@trello/api';
 import { I18nContext } from 'nestjs-i18n';
 import { decryptText } from 'src/common/helpers/hashing';
 import { validateTrelloToken } from 'src/common/helpers/trello-tokens';
 import { BoardMember } from 'src/trello/dto/member.dto';
 import { User } from 'src/user/entities/user.entity';
 import { UsersService } from 'src/user/services/users.service';
-import { SharedConfigService } from '../../../config/shared.config.service';
+import { SharedConfigService } from '../../../config/services/shared.config.service';
 import { TrelloBoard } from '../../dto/board.dto';
 import { TrelloBoardField } from '../../enums/trello.model.fields.enum';
 
@@ -25,6 +25,7 @@ export class TrelloBoardsLogicService {
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly trelloBoardsApiService: TrelloBoardsApiService,
+    private readonly trelloMembersApiService: TrelloMembersApiService,
     private readonly sharedConfigService: SharedConfigService,
   ) {
     this.encryptionKey = this.sharedConfigService.getEncryptionKey();
@@ -96,6 +97,62 @@ export class TrelloBoardsLogicService {
       board.memberships.some(
         (membership) => membership.idMember === requestedUser.trello.userId,
       ),
+    );
+
+    // Transform the response to only include the necessary fields
+    const transformedBoards = filteredBoards.map((board) => ({
+      id: board.id,
+      name: board.name,
+      idOrganization: board.idOrganization,
+      desc: board.desc,
+      closed: board.closed,
+      dateClosed: board.dateClosed,
+      pinned: board.pinned,
+      starred: board.starred,
+      url: board.url,
+      shortLink: board.shortLink,
+      subscribed: board.subscribed,
+      dateLastActivity: board.dateLastActivity,
+      dateLastView: board.dateLastView,
+      shortUrl: board.shortUrl,
+      idMemberCreator: board.idMemberCreator,
+      memberships: board.memberships,
+    }));
+
+    return transformedBoards;
+  }
+
+  async findGuestBoards(
+    user: string | User,
+    i18n?: I18nContext,
+  ): Promise<TrelloBoard[]> {
+    const requestedUser = await this.userService.getUser(user, i18n);
+
+    validateTrelloToken(requestedUser.trello.token, i18n);
+
+    const decryptedUserToken = decryptText(
+      requestedUser.trello.token,
+      this.encryptionKey,
+    );
+
+    const organizations =
+      await this.trelloMembersApiService.fetchMemberOrganizations(
+        requestedUser.trello.userId,
+        decryptedUserToken,
+        i18n,
+      );
+
+    const boards = await this.trelloBoardsApiService.fetchBoardsMemberBelongsTo(
+      decryptedUserToken,
+      requestedUser.trello.userId,
+      i18n,
+    );
+
+    const filteredBoards = boards.filter(
+      (board) =>
+        !organizations.find(
+          (organization) => organization.id === board.idOrganization,
+        ),
     );
 
     // Transform the response to only include the necessary fields
