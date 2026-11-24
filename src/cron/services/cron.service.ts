@@ -264,41 +264,42 @@ export class CronService {
     console.log('All notifications sent.');
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async subscriptionExpirationUpdate() {
     const fromDate = formatISO(startOfDay(subDays(new Date(), 1))); // from the previous day
     const toDate = new Date().toISOString(); // to now
 
-    const expiredUsers = await this.usersService.findAll({
+    const usersToRefresh = await this.usersService.findAll({
       date: UserSearchPath.SubscriptionNextPayment,
       fromDate,
       toDate,
       subscriptionExpired: false,
     });
 
-    let expiredCount = 0;
-    let renewedCount = 0;
-
-    await Promise.all(
-      expiredUsers.data.map(async (user) => {
+    const results = await Promise.all(
+      usersToRefresh.data.map(async (user) => {
         try {
-          const result = await this.usersService.refreshSubscriptionPayment(
+          await this.usersService.refreshSubscriptionStatus(
             user?.subscription?.paypalSubscriptionId,
           );
+          const updatedUser =
+            await this.usersService.refreshSubscriptionPayment(
+              user?.subscription?.paypalSubscriptionId,
+            );
 
-          if (result.data.subscription.expired) {
-            expiredCount++;
-          } else {
-            renewedCount++;
-          }
+          return updatedUser?.subscription?.expired ? 'expired' : 'renewed';
         } catch (error) {
           this.logger.error(
             `Failed to process subscription for user ${user.id}`,
             error,
           );
+          return 'failed';
         }
       }),
     );
+
+    const expiredCount = results.filter((r) => r === 'expired').length;
+    const renewedCount = results.filter((r) => r === 'renewed').length;
 
     this.logger.log(
       `Subscription check complete. Expired: ${expiredCount}, Renewed: ${renewedCount}`,

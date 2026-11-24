@@ -322,13 +322,41 @@ export class SubscriptionService {
     return null;
   }
 
+  async activatePaypalSubscription(
+    paypalSubscriptionId: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const response = await this.paypalService.activateSubscription(
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    return response;
+  }
+
+  async pausePaypalSubscription(
+    paypalSubscriptionId: string,
+    reason: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const response = await this.paypalService.pauseSubscription(
+      paypalSubscriptionId,
+      reason,
+      i18n,
+    );
+
+    return response;
+  }
+
   async cancelPaypalSubscription(
     paypalSubscriptionId: string,
     reason: string,
+    i18n?: I18nContext,
   ): Promise<any> {
     const response = await this.paypalService.cancelSubscription(
       paypalSubscriptionId,
       reason,
+      i18n,
     );
 
     return response;

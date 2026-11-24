@@ -22,7 +22,7 @@ export class SharedConfigService {
       `/trello/webhooks/provider`;
     this.paypalWebhookUrl =
       this.configService.get<string>(configServiceKeys.BACKEND_LINK) +
-      `/paypal/webhook`;
+      `/paypal/webhook/callback`;
     this.paypalClientId =
       this.configService.get<string>(configServiceKeys.PAYPAL_CLIENT_ID) || '';
     this.paypalClientSecret =

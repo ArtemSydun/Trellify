@@ -34,7 +34,7 @@ services:
     image: redis:alpine
     restart: unless-stopped
     ports:
-      - '${REDIS_PORT}:${REDIS_PORT}'
+      - '${REDIS_HOST_PORT}:${REDIS_PORT}'
     command:
       - redis-server
       - --appendonly

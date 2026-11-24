@@ -52,14 +52,28 @@ export class SubscriptionSettings {
     required: true,
     nullable: true,
   })
-  nextPaymentDate?: Date;
+  nextPaymentDate: Date;
 
   @ApiProperty({
     description: 'Boolean value of if subscription is expired or not',
     example: false,
     required: true,
   })
-  expired?: boolean;
+  expired: boolean;
+
+  @ApiProperty({
+    description: 'Boolean value of if subscription was cancelled or not',
+    example: false,
+    required: true,
+  })
+  isCancelled: boolean;
+
+  @ApiProperty({
+    description: 'Boolean value of if subscription is paused or not',
+    example: false,
+    required: true,
+  })
+  isPaused: boolean;
 
   @ApiProperty({
     description: 'PayPal subscription ID (null if not paid via PayPal)',
@@ -69,7 +83,7 @@ export class SubscriptionSettings {
   })
   @IsOptional()
   @IsString()
-  paypalSubscriptionId?: string | null;
+  paypalSubscriptionId: string | null;
 
   @ApiProperty({
     description: 'PayPal last payment ID (null if not paid via PayPal)',
@@ -79,5 +93,5 @@ export class SubscriptionSettings {
   })
   @IsOptional()
   @IsString()
-  lastPaymentId?: string | null;
+  lastPaymentId: string | null;
 }

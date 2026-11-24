@@ -45,8 +45,8 @@ export class PaypalController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRoles.admin, UserRoles.superadmin)
   @Delete('webhook/:webhookId')
-  deleteWebhook(@Param('webhookId') webhookId: string) {
-    return this.paypalLogicService.deleteWebhook(webhookId);
+  deleteWebhook(@Param('webhookId') webhookId: string, @Req() req) {
+    return this.paypalLogicService.deleteWebhook(webhookId, req.i18nContext);
   }
 
   @ApiExcludeEndpoint()
@@ -87,6 +87,24 @@ export class PaypalController {
       paypalPlanId,
       paypalSubscriptionId,
       amount,
+      req.user.id,
+      req.i18nContext,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check subscription payment if something is wrong',
+    description: 'Check subscription payment if something is wrong.',
+  })
+  @ApiOkResponse({
+    description: 'Subscription payment checked. Everything is good',
+    type: User,
+  })
+  @Get('subscription-payment/check')
+  async checkSubscriptionPayment(@Req() req) {
+    return this.paypalLogicService.checkSubscriptionPayment(
       req.user.id,
       req.i18nContext,
     );
