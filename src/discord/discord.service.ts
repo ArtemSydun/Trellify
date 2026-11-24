@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
-import { Client } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 import { Context, ContextOf, Once } from 'necord';
 // import { configService } from 'src/common/enums/config.service.enum';
 
@@ -45,6 +45,25 @@ export class DiscordService {
       }
     } catch (error) {
       console.error(`❌ Error sending message to ${userId}: ${error}`);
+    }
+  }
+
+  public async sendChannelMessage(channelId: string, message: string) {
+    try {
+      const channel = await this.client.channels.fetch(channelId);
+
+      if (!channel || !channel.isTextBased()) {
+        console.error(
+          `❌ Channel with ID ${channelId} is not text-based or does not exist.`,
+        );
+        return;
+      }
+
+      await (channel as TextChannel).send(message);
+    } catch (error) {
+      console.error(
+        `❌ Error sending message to channel ${channelId}: ${error}`,
+      );
     }
   }
 

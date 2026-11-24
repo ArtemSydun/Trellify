@@ -1039,6 +1039,8 @@ describe('TrelloWebhooksLogicService', () => {
           trelloUserId: userStubData.trello.userId,
         },
         totalSubscribers: 1,
+        discordChannels: [],
+        telegramChannels: [],
         subscribers: [
           {
             userId: userStubData.id,
@@ -1164,6 +1166,8 @@ describe('TrelloWebhooksLogicService', () => {
               idModel: newWebhookStubData.idModel,
               webhookId: newWebhookStubData.id,
               modelName: newWebhookStubData.boardName,
+              discordChannelId: null,
+              telegramChannelId: null,
             },
           ],
         },

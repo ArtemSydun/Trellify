@@ -667,6 +667,8 @@ export class TrelloWebhooksLogicService {
         idModel: webhook.idModel,
         modelName: webhook.boardName,
         webhookId: webhook.id,
+        discordChannelId: null,
+        telegramChannelId: null,
       };
 
       if (
@@ -748,6 +750,8 @@ export class TrelloWebhooksLogicService {
           trelloToken: userToUpdate.trello.token,
           trelloUserId: userToUpdate.trello.userId,
         },
+        discordChannels: [],
+        telegramChannels: [],
         totalSubscribers: 1,
         subscribers: [
           {
@@ -1088,6 +1092,232 @@ export class TrelloWebhooksLogicService {
     console.log(`✅ All related webhooks updated successfully.`);
   }
 
+  public async connectTelegramChannelToWebhook(
+    user: string | User,
+    webhook: string | Webhook,
+    telegramChannelId: number,
+  ) {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
+    const authorUser = await this.userService.getUser(user);
+
+    // if webhook is already connected to this telegram channel
+    if (
+      webhookToUpdate?.telegramChannels.find(
+        (ch) => ch.channelId === telegramChannelId,
+      )
+    ) {
+      return;
+    }
+
+    const updatedWebhookChannels = [
+      ...webhookToUpdate.telegramChannels,
+      {
+        channelId: telegramChannelId,
+        authorId: authorUser?.trello?.userId,
+      },
+    ];
+
+    const updatedWebhook = await this.trelloWebhookRepository.updateById(
+      webhookToUpdate.id,
+      {
+        telegramChannels: updatedWebhookChannels,
+      },
+    );
+
+    return updatedWebhook;
+  }
+
+  public async connectDiscordChannelToWebhook(
+    user: string | User,
+    webhook: string | Webhook,
+    discordChannelId: string,
+  ) {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
+    const authorUser = await this.userService.getUser(user);
+
+    // if webhook is already connected to this discord channel
+    if (
+      webhookToUpdate?.discordChannels.find(
+        (ch) => ch.channelId === discordChannelId,
+      )
+    ) {
+      return;
+    }
+
+    const updatedWebhookChannels = [
+      ...webhookToUpdate.discordChannels,
+      {
+        channelId: discordChannelId,
+        authorId: authorUser?.trello?.userId,
+      },
+    ];
+
+    const updatedWebhook = await this.trelloWebhookRepository.updateById(
+      webhookToUpdate.id,
+      {
+        discordChannels: updatedWebhookChannels,
+      },
+    );
+
+    return updatedWebhook;
+  }
+
+  public async disconnectTelegramChannelToWebhook(
+    webhook: string | Webhook,
+    telegramChannelId: number,
+  ) {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
+    // if webhook is already connected to this telegram channel
+    if (
+      !webhookToUpdate.telegramChannels.find(
+        (ch) => ch.channelId === telegramChannelId,
+      )
+    ) {
+      return;
+    }
+
+    const updatedWebhookChannels = webhookToUpdate.telegramChannels.filter(
+      (ch) => ch.channelId !== telegramChannelId,
+    );
+
+    const updatedWebhook = await this.trelloWebhookRepository.updateById(
+      webhookToUpdate.id,
+      {
+        telegramChannels: updatedWebhookChannels,
+      },
+    );
+
+    return updatedWebhook;
+  }
+
+  public async disconnectDiscordChannelToWebhook(
+    webhook: string | Webhook,
+    discordChannelId: string,
+  ) {
+    const webhookToUpdate = await this.getWebhook(webhook);
+
+    // if webhook is already connected to this telegram channel
+    if (
+      !webhookToUpdate.telegramChannels.find(
+        (ch) => ch.channelId === discordChannelId,
+      )
+    ) {
+      return;
+    }
+
+    const updatedWebhookChannels = webhookToUpdate.telegramChannels.filter(
+      (ch) => ch.channelId !== discordChannelId,
+    );
+
+    const updatedWebhook = await this.trelloWebhookRepository.updateById(
+      webhookToUpdate.id,
+      {
+        discordChannels: updatedWebhookChannels,
+      },
+    );
+
+    return updatedWebhook;
+  }
+
+  public async updateTelegramChannelsForWebhook(
+    user: string | User,
+    telegramChannelId: number,
+    selectedWebhookIds: string[],
+  ) {
+    const webhooks = await this.findWebhooks({
+      telegramChannelId,
+      limit: 20,
+    });
+
+    const previousWebhookIDs = webhooks.data.map((w) => w.id);
+
+    const toConnect = selectedWebhookIds.filter(
+      (id) => !previousWebhookIDs.includes(id),
+    );
+
+    const toDisconnect = previousWebhookIDs.filter(
+      (id) => !selectedWebhookIds.includes(id),
+    );
+
+    // Connect new ones
+    if (toConnect.length > 0) {
+      await Promise.all(
+        toConnect.map((webhookId) =>
+          this.connectTelegramChannelToWebhook(
+            user,
+            webhookId,
+            telegramChannelId,
+          ),
+        ),
+      );
+    }
+
+    // Disconnect removed or all
+    if (toDisconnect.length > 0) {
+      await Promise.all(
+        toDisconnect.map((webhookId) =>
+          this.disconnectTelegramChannelToWebhook(webhookId, telegramChannelId),
+        ),
+      );
+    }
+
+    return {
+      connected: toConnect,
+      disconnected: toDisconnect,
+    };
+  }
+
+  public async updateDiscordChannelsForWebhook(
+    user: string | User,
+    discordChannelId: string,
+    selectedWebhookIds: string[],
+  ) {
+    const webhooks = await this.findWebhooks({
+      discordChannelId,
+      limit: 20,
+    });
+
+    const previousWebhookIDs = webhooks.data.map((w) => w.id);
+
+    const toConnect = selectedWebhookIds.filter(
+      (id) => !previousWebhookIDs.includes(id),
+    );
+
+    const toDisconnect = previousWebhookIDs.filter(
+      (id) => !selectedWebhookIds.includes(id),
+    );
+
+    // Connect new ones
+    if (toConnect.length > 0) {
+      await Promise.all(
+        toConnect.map((webhookId) =>
+          this.connectDiscordChannelToWebhook(
+            user,
+            webhookId,
+            discordChannelId,
+          ),
+        ),
+      );
+    }
+
+    // Disconnect removed or all
+    if (toDisconnect.length > 0) {
+      await Promise.all(
+        toDisconnect.map((webhookId) =>
+          this.disconnectDiscordChannelToWebhook(webhookId, discordChannelId),
+        ),
+      );
+    }
+
+    return {
+      connected: toConnect,
+      disconnected: toDisconnect,
+    };
+  }
+
   public async handleTrelloWebhook(webhookAction: any): Promise<any> {
     // delete webhookAction.model?.prefs;
     // delete webhookAction.model?.labelNames;
@@ -1192,6 +1422,20 @@ export class TrelloWebhooksLogicService {
 
     let notifiedTargetUser: string | null = '';
     let notifiedAuthorUser: string | null = '';
+
+    try {
+      await this.actionsService.handleGroupAction(
+        webhook,
+        boardData,
+        detailedActionType,
+        webhookAction,
+        cardData,
+      );
+    } catch (err) {
+      console.warn(
+        `Unable to send group messsage: ${err.message || err.response.message}`,
+      );
+    }
 
     // If the action author is a webhook subscriber and has authorNotifications enabled (authorNotifications: true),
     // we do not send them notifications about actions they have performed (notifiedAuthorUser = null).

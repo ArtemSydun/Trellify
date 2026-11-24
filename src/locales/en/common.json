@@ -26,7 +26,8 @@
           "**Set up notifications**: Enable notifications for the boards you want to monitor in the Trellify settings."
         ],
         "closingMessage": "If you have any questions, reach out to support."
-      }
+      },
+      "settingsSaved": "New settings saved"
     },
     "email": {
       "registrationEmailSubject": "Confirm your email",
@@ -58,7 +59,8 @@
       "connectedSuccessfully": "Telegram account connected successfully",
       "disconnectedSuccessfully": "Telegram account disconnected successfully",
       "disconnectConfirmation": "Are you sure you want to disconnect telegram account? You will not receive any notifications from Trellify anymore",
-      "contactSupport": "Didn't find the answer to your question? Reach out to our live support {supportLink}"
+      "contactSupport": "Didn't find the answer to your question? Reach out to our live support {supportLink}",
+      "selectWebhooks": "Select boards which you want to connect / disconnect:"
     },
     "discord": {
       "connectedSuccessfully": "Discord account connected successfully",
@@ -190,7 +192,9 @@
       "forbiddenResource": "Forbidden resource",
       "failedSendEmail": "Failed to send message. Please try again later, or reach us manually on {adminEmail}",
       "profileNotFound": "Your Trellify profile was not found. Please check if you are registered",
-      "actionCanceled": "Action canceled"
+      "actionCanceled": "Action canceled",
+      "waitingTimeExpired": "Time for this action expired. Please try again later",
+      "botCommandGroupOnly": "This command is for group chat only"
     },
     "jwt": {
       "invalidToken": "Your authorization token is not valid or expired"

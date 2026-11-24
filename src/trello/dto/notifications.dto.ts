@@ -13,32 +13,46 @@ import {
 } from 'src/common/helpers/trello-notifications';
 import { TrelloWebhookNotificationProfiles } from '../enums/trello.actions.enum';
 
+const {
+  card: cardNotificationsExample,
+  checklist: checklistNotificationsExample,
+  board: boardNotificationsExample,
+  list: listNotificationsExample,
+} = initializeNotificationArrays('userId1');
+
+const {
+  card: cardBooleansExample,
+  checklist: checklistBooleansExample,
+  board: boardBooleansExample,
+  list: listBooleansExample,
+} = mapNotificationsToBoolean(initializeNotificationArrays('userId'));
+
 export class NotificationCategoriesDto {
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').card,
+    example: cardNotificationsExample,
   })
   card: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to checklist events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').checklist,
+    example: checklistNotificationsExample,
   })
   checklist: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').board,
+    example: boardNotificationsExample,
   })
   board: Record<string, string[]>;
 
   @ApiProperty({
     description: 'Notifications related to list events with user IDs.',
     type: Object,
-    example: initializeNotificationArrays('userId1').list,
+    example: listNotificationsExample,
   })
   list: Record<string, string[]>;
 }
@@ -47,8 +61,7 @@ export class NotificationBooleansDto {
   @ApiProperty({
     description: 'Notifications related to card events with user IDs.',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .card,
+    example: cardBooleansExample,
   })
   @IsNotEmptyObject()
   card: Record<string, boolean>;
@@ -56,8 +69,7 @@ export class NotificationBooleansDto {
   @ApiProperty({
     description: 'Notifications related to checklist events with user IDs.',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .checklist,
+    example: checklistBooleansExample,
   })
   @IsNotEmptyObject()
   checklist: Record<string, boolean>;
@@ -65,8 +77,7 @@ export class NotificationBooleansDto {
   @ApiProperty({
     description: 'Notifications related to board events with user IDs.',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .board,
+    example: boardBooleansExample,
   })
   @IsNotEmptyObject()
   board: Record<string, boolean>;
@@ -74,8 +85,7 @@ export class NotificationBooleansDto {
   @ApiProperty({
     description: 'Notifications related to list events with user IDs.',
     type: Object,
-    example: mapNotificationsToBoolean(initializeNotificationArrays('userId'))
-      .list,
+    example: listBooleansExample,
   })
   @IsNotEmptyObject()
   list: Record<string, boolean>;

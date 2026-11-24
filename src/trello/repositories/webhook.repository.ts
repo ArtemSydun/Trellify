@@ -97,10 +97,13 @@ export class TrelloWebhookRepository {
       orderBy = WebhookOrderBy.CreatedAt,
       limit = 10,
       page = 1,
+      webhookIds,
       idModel,
       boardName,
       authorId,
       subscriberId,
+      telegramChannelId,
+      discordChannelId,
       createdAt,
       updatedAt,
       fromDate,
@@ -112,12 +115,24 @@ export class TrelloWebhookRepository {
 
     const query: any = {};
 
+    if (webhookIds?.length) {
+      query.id = { $in: webhookIds };
+    }
+
     if (idModel) query.idModel = idModel;
     if (boardName) query.boardName = { $regex: boardName, $options: 'i' };
     if (authorId) query[WebhookSearchPath.AuthorTrelloUserId] = authorId;
 
     if (subscriberId)
       query['subscribers.trelloUserId'] = { $in: [subscriberId] };
+
+    if (telegramChannelId) {
+      query['telegramChannels.channelId'] = telegramChannelId;
+    }
+
+    if (discordChannelId) {
+      query['discordChannels.channelId'] = discordChannelId;
+    }
 
     // Date filtering
     if (createdAt) query.createdAt = { $gte: new Date(createdAt) };

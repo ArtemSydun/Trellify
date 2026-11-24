@@ -11,6 +11,11 @@ export enum WebhookOrderBy {
 }
 
 export class WebhookQueryDto extends CommonQueryParams {
+  @ApiPropertyOptional({ description: 'Filter by Trello webhook Ids' })
+  @IsOptional()
+  @IsString({ each: true })
+  webhookIds?: string[];
+
   @ApiPropertyOptional({ description: 'Filter by Trello model ID' })
   @IsOptional()
   @IsString()
@@ -35,6 +40,20 @@ export class WebhookQueryDto extends CommonQueryParams {
   @IsOptional()
   @IsString()
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by connected Telegram channel ID',
+  })
+  @IsOptional()
+  @IsString()
+  telegramChannelId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by connected Discord channel ID',
+  })
+  @IsOptional()
+  @IsString()
+  discordChannelId?: string;
 
   @ApiPropertyOptional({ description: 'Sort order (asc or desc)' })
   @IsOptional()
