@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { SubscriptionPlans } from 'src/subscription/enum/subscription-plan.enum';
 
 export class SubscriptionSettings {
@@ -52,12 +52,46 @@ export class SubscriptionSettings {
     required: true,
     nullable: true,
   })
-  nextPaymentDate?: Date;
+  nextPaymentDate: Date;
 
   @ApiProperty({
     description: 'Boolean value of if subscription is expired or not',
     example: false,
     required: true,
   })
-  expired?: boolean;
+  expired: boolean;
+
+  @ApiProperty({
+    description: 'Boolean value of if subscription was cancelled or not',
+    example: false,
+    required: true,
+  })
+  isCancelled: boolean;
+
+  @ApiProperty({
+    description: 'Boolean value of if subscription is paused or not',
+    example: false,
+    required: true,
+  })
+  isPaused: boolean;
+
+  @ApiProperty({
+    description: 'PayPal subscription ID (null if not paid via PayPal)',
+    example: 'I-9WX9XYY3GAXX',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  paypalSubscriptionId: string | null;
+
+  @ApiProperty({
+    description: 'PayPal last payment ID (null if not paid via PayPal)',
+    example: 'I-9WX9XYY3GAXX',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPaymentId: string | null;
 }

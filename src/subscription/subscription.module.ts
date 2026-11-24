@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from 'src/auth/auth.module';
+import { PaypalModule } from 'src/paypal/pay-pal.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { TrelloModule } from 'src/trello/trello.module';
 import { UsersModule } from 'src/user/users.module';
@@ -31,6 +32,7 @@ import { UsedTrialService } from './services/used-trial.service';
     forwardRef(() => AuthModule),
     forwardRef(() => RedisModule),
     forwardRef(() => TrelloModule),
+    forwardRef(() => PaypalModule),
   ],
   controllers: [SubscriptionController],
   providers: [

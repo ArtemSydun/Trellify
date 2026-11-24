@@ -44,8 +44,18 @@ export class RedisService {
     console.log('Cleanup completed successfully!');
   }
 
-  async setValue(key: string, value: string): Promise<string> {
-    return await this.redis.set(key, value);
+  async setValue(
+    key: string,
+    value: string,
+    ttlSeconds?: number,
+  ): Promise<string> {
+    if (ttlSeconds) {
+      await this.redis.set(key, value, 'EX', ttlSeconds);
+    } else {
+      await this.redis.set(key, value);
+    }
+
+    return value;
   }
 
   async getValue(key: string): Promise<string | null> {
@@ -121,6 +131,7 @@ export class RedisService {
         acc[plan.name] = {
           price: plan.price,
           notifications: plan.notifications,
+          paypaylPlanId: plan.paypalPlanId,
         };
         return acc;
       },

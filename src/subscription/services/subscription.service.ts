@@ -5,12 +5,15 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { addDays, differenceInHours, parseISO } from 'date-fns';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nKeys } from 'src/common/enums/i18n-keys.enum';
 import { getActionEnumKey } from 'src/common/helpers/trello-notifications';
 import { DefaultResponse } from 'src/common/interfaces/responses';
+import { PaypalLogicService } from 'src/paypal/services/paypal-logic.service';
 import { RedisService } from 'src/redis/services/redis.service';
 import { TrelloWebhooksLogicService } from 'src/trello/services/logic';
 import { User } from 'src/user/entities/user.entity';
@@ -23,10 +26,13 @@ import { SubscriptionRepository } from '../repositories/subscription.repository'
 
 @Injectable()
 export class SubscriptionService {
+  private readonly logger = new Logger(SubscriptionService.name);
   constructor(
     private readonly subscriptionRepository: SubscriptionRepository,
     @Inject(forwardRef(() => UsersService))
-    private readonly userService: UsersService,
+    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => PaypalLogicService))
+    private readonly paypalService: PaypalLogicService,
     @Inject(forwardRef(() => RedisService))
     private readonly redisService: RedisService,
     @Inject(forwardRef(() => TrelloWebhooksLogicService))
@@ -87,6 +93,25 @@ export class SubscriptionService {
         i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
           args: { subscription: id },
         }) || `Subscription plan ${id} does not exist`,
+      );
+    }
+
+    return subscription;
+  }
+
+  async findSubscriptionByPayPalPlanId(
+    paypalPlanId: string,
+    i18n?: I18nContext,
+  ): Promise<Subscription> {
+    const subscription =
+      await this.subscriptionRepository.findOneByPayPalPlanId(paypalPlanId);
+
+    if (!subscription) {
+      throw new NotFoundException(
+        i18n?.t(I18nKeys.ERRORS_SUBSCRIPTION_DOES_NOT_EXIST, {
+          args: { subscription: paypalPlanId },
+        }) ||
+          `Subscription plan to paypalPlanId ${paypalPlanId} does not exist`,
       );
     }
 
@@ -164,7 +189,7 @@ export class SubscriptionService {
   ): Promise<Subscription> {
     const subscriptionToUpdate = await this.getSubscription(subscription);
 
-    const subscriberToUpdate = await this.userService.getUser(subscriber);
+    const subscriberToUpdate = await this.usersService.getUser(subscriber);
 
     if (subscriptionToUpdate.subscribers.includes(subscriberToUpdate.id)) {
       throw new ConflictException(
@@ -198,7 +223,7 @@ export class SubscriptionService {
   ): Promise<Subscription> {
     const subscriptionToUpdate = await this.getSubscription(subscription);
 
-    const subscriberToUpdate = await this.userService.getUser(subscriber);
+    const subscriberToUpdate = await this.usersService.getUser(subscriber);
 
     if (!subscriptionToUpdate.subscribers.includes(subscriberToUpdate.id)) {
       throw new BadRequestException(
@@ -250,6 +275,91 @@ export class SubscriptionService {
         }) || `Subscription ${subscriptionToDelete.name} deleted successfully`,
       statusCode: HttpStatus.OK,
     };
+  }
+
+  async checkSubscriptionPayment(
+    paypalSubscriptionId: string,
+    user: string | User,
+  ): Promise<{
+    nextPaymentDate: Date;
+    lastPaymentDate: Date;
+  } | null> {
+    const lastTransaction =
+      await this.paypalService.getLastSubscriptionPayment(paypalSubscriptionId);
+
+    const userToCheck = await this.usersService.getUser(user);
+    const subscription = await this.findSubscriptionById(
+      userToCheck?.subscription?.id,
+    );
+
+    const amount = parseFloat(
+      lastTransaction?.amount_with_breakdown?.gross_amount?.value || '',
+    );
+    const status = lastTransaction?.status;
+    const time = lastTransaction?.time;
+
+    if (status === 'COMPLETED' && amount === subscription?.price && time) {
+      const paymentDate = parseISO(time);
+      const hoursSincePayment = differenceInHours(new Date(), paymentDate);
+
+      //if payment was made last 24 hours
+      if (hoursSincePayment <= 24) {
+        const nextPaymentDate = addDays(paymentDate, 30);
+
+        return {
+          nextPaymentDate,
+          lastPaymentDate: paymentDate,
+        };
+      }
+    }
+
+    if (status !== 'COMPLETED') {
+      this.logger.warn(
+        `Last transaction for user ${userToCheck.id} not completed. Status: ${status}`,
+      );
+    }
+
+    return null;
+  }
+
+  async activatePaypalSubscription(
+    paypalSubscriptionId: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const response = await this.paypalService.activateSubscription(
+      paypalSubscriptionId,
+      i18n,
+    );
+
+    return response;
+  }
+
+  async pausePaypalSubscription(
+    paypalSubscriptionId: string,
+    reason: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const response = await this.paypalService.pauseSubscription(
+      paypalSubscriptionId,
+      reason,
+      i18n,
+    );
+
+    return response;
+  }
+
+  async cancelPaypalSubscription(
+    paypalSubscriptionId: string,
+    reason: string,
+    i18n?: I18nContext,
+  ): Promise<any> {
+    const response = await this.paypalService.cancelSubscription(
+      paypalSubscriptionId,
+      reason,
+      i18n,
+    );
+
+    return response;
   }
 
   async actionAvailablePlans(actionType: any): Promise<string[]> {

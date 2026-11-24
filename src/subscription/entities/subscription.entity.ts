@@ -12,6 +12,10 @@ export class Subscription {
   @Prop({ default: () => randomUUID() })
   id: string;
 
+  @ApiProperty({ description: 'Paypal subscription plan id' })
+  @Prop({ required: true })
+  paypalPlanId: string;
+
   @ApiProperty({
     description: 'Name of the subscription plan',
     enum: SubscriptionPlans,

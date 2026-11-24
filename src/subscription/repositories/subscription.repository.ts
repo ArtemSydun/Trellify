@@ -20,6 +20,10 @@ export class SubscriptionRepository {
     return this.SubscriptionModel.findOne({ id }).lean().exec();
   }
 
+  async findOneByPayPalPlanId(paypalPlanId: string): Promise<Subscription> {
+    return this.SubscriptionModel.findOne({ paypalPlanId }).lean().exec();
+  }
+
   async findOneByName(name: SubscriptionPlans): Promise<Subscription> {
     return this.SubscriptionModel.findOne({ name }).lean().exec();
   }

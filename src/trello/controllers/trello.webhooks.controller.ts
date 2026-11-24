@@ -249,7 +249,7 @@ export class TrelloWebhooksController {
   @SkipThrottle()
   @Get('provider/:boardId')
   @ApiExcludeEndpoint()
-  handleWebhookCallbackUrlCheck() {}
+  handletrelloWebhookUrlCheck() {}
 
   // This is route where webhook sends data
   @SkipThrottle()

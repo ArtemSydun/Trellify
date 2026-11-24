@@ -4,7 +4,7 @@ set -e
 
 : ${BACKUP_ROOT:="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"}
 
-PROJECT_ROOT="$(cd "${BACKUP_ROOT}/.." && pwd)"
+PROJECT_ROOT="$(cd "${BACKUP_ROOT}/../.." && pwd)"
 
 source "${PROJECT_ROOT}/.env.production"
 source "${BACKUP_ROOT}/backup.conf"

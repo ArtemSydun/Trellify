@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsString,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -19,6 +20,12 @@ export class CreateSubscriptionDto {
   @IsEnum(SubscriptionPlans)
   @IsNotEmpty()
   name: SubscriptionPlans;
+
+  @ApiProperty({
+    description: 'PayPal subscription plan id',
+  })
+  @IsString()
+  paypalPlanId: string;
 
   @ApiProperty({ description: 'Price of the subscription in USD', example: 3 })
   @IsNumber()
